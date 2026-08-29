@@ -49,7 +49,8 @@
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --dur-micro: 120ms;
   --dur-short: 220ms;
-  --dur-stagger: 25ms;
+  --dur-long: 420ms;
+  --dur-stagger: 100ms;
 
   --radius-input: 0;
   --radius-card: 0;

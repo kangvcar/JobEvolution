@@ -1,6 +1,20 @@
 [
   {
     "date": "2026-08-29",
+    "macrostructure": "Workbench",
+    "theme": "paper-plex-warm",
+    "enrichment": "none",
+    "brief": "Redesign diagnose: idle bench+dock, run dual frames, done caption+instruments"
+  },
+  {
+    "date": "2026-08-29",
+    "macrostructure": "Stat-Led",
+    "theme": "paper-plex-warm",
+    "enrichment": "none",
+    "brief": "Redesign home inspector: readable Stat-Led lead (萌芽 6) plus stories"
+  },
+  {
+    "date": "2026-08-29",
     "macrostructure": "Map / Diagram",
     "theme": "Cobalt",
     "enrichment": "none",
