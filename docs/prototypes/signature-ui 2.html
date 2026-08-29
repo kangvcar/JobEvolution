@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>岗位图谱</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600&family=Noto+Serif+SC:wght@600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./tokens.css">
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  font-family: var(--font-body);
+  font-size: var(--text-md);
+  color: var(--color-ink);
+  background: var(--color-shell);
+  line-height: 1.5;
+}
+h1, h2 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  margin: 0;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+button, a, input { font-family: inherit; color: inherit; }
+button { cursor: pointer; border: 0; background: none; }
+:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+
+.app {
+  height: 100%;
+  display: grid;
+  grid-template-rows: var(--top-h) 1fr;
+}
+.top {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--color-rule);
+  background: var(--color-shell);
+}
+.logo {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.125rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.tabs { display: flex; gap: 4px; }
+.tabs a {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-muted);
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+}
+.tabs a:hover { color: var(--color-ink); background: var(--color-board); }
+.tabs a[aria-current="page"] { color: var(--color-ink); background: var(--color-board); }
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  text-decoration: none;
+  transition: transform var(--dur-short) var(--ease-out), background var(--dur-short) var(--ease-out);
+}
+.btn:active { transform: scale(0.97); }
+.btn-fill {
+  margin-inline-start: auto;
+  background: var(--color-ink);
+  color: var(--color-shell);
+}
+.btn-fill:hover { filter: brightness(1.15); }
+.btn-line {
+  border: 1px solid var(--color-rule);
+  background: var(--color-chip);
+}
+.btn-line:hover { border-color: var(--color-ink); }
+
+#app { min-height: 0; display: grid; }
+.shell {
+  display: grid;
+  grid-template-columns: var(--rail-w) minmax(0, 1fr) var(--pane-w);
+  height: 100%;
+  min-height: 0;
+}
+.rail, .pane {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-shell);
+}
+.rail { border-inline-end: 1px solid var(--color-rule); }
+.pane { border-inline-start: 1px solid var(--color-rule); }
+.rail-h, .pane-h {
+  padding: 16px 16px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-muted);
+  letter-spacing: 0.04em;
+}
+.search {
+  margin: 0 12px 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  background: var(--color-chip);
+  font-size: var(--text-sm);
+  min-height: 40px;
+}
+.search:hover { border-color: var(--color-muted); }
+.jobs {
+  overflow: auto;
+  padding: 4px 8px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.job {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  text-align: start;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  min-height: 52px;
+}
+.job:hover { background: var(--color-board); }
+.job.is-on { background: var(--color-board); box-shadow: inset 0 0 0 1px var(--color-ink); }
+.job .n { font-weight: 500; font-size: 0.9rem; }
+.job .m { font-size: 12px; color: var(--color-muted); }
+.tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--color-board);
+  color: var(--color-muted);
+}
+.tag.seed {
+  background: oklch(95% 0.05 62);
+  color: oklch(42% 0.1 55);
+}
+
+.board-wrap {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  background: var(--color-board);
+  background-image: radial-gradient(var(--color-dot) 1.1px, transparent 1.2px);
+  background-size: 20px 20px;
+}
+.stage { position: relative; min-height: 0; overflow: clip; }
+.wires { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.edge { fill: none; stroke: var(--color-line); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.edge.build { stroke-dasharray: 5 6; }
+.edge.live {
+  stroke: var(--color-live);
+  stroke-dasharray: 7 9;
+  animation: flow 1.1s linear infinite;
+}
+@keyframes flow { to { stroke-dashoffset: -16; } }
+
+.node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: max-content;
+  max-width: 11.5rem;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  background: var(--color-chip);
+  box-shadow: var(--shadow-chip);
+  text-align: start;
+  transition: transform var(--dur-short) var(--ease-out), box-shadow var(--dur-short) var(--ease-out);
+}
+.node:hover { transform: translate(-50%, calc(-50% - 2px)); box-shadow: var(--shadow-chip-hover); }
+.node:active { transform: translate(-50%, -50%) scale(0.98); }
+.node.is-on { box-shadow: var(--shadow-chip), 0 0 0 2px var(--color-ink); }
+.node.is-dim { opacity: 0.28; }
+.node.is-miss { box-shadow: inset 0 0 0 1.5px oklch(50% 0.02 250 / 0.5); background: color-mix(in oklch, var(--color-chip) 70%, var(--color-board)); }
+.node.is-ok { box-shadow: var(--shadow-chip), 0 0 0 2px var(--color-ok); }
+.node .k { display: block; font-size: 11px; color: var(--color-muted); margin-bottom: 2px; }
+.node .n { font-family: var(--font-display); font-size: 0.95rem; font-weight: 600; }
+.node.is-skill { padding: 8px 12px; }
+.node.is-skill .n { font-family: var(--font-body); font-size: 0.8125rem; font-weight: 500; }
+
+.timebar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  background: color-mix(in oklch, var(--color-shell) 82%, transparent);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid color-mix(in oklch, var(--color-rule) 70%, transparent);
+}
+.timebar .play {
+  flex: 0 0 auto;
+  min-width: 64px;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: var(--radius-sm);
+  background: var(--color-chip);
+  box-shadow: var(--shadow-chip);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+.timebar .play:hover { box-shadow: var(--shadow-chip-hover); }
+.ticks { display: flex; flex: 1; gap: 4px; }
+.ticks button {
+  flex: 1;
+  min-height: 36px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-muted);
+}
+.ticks button:hover { background: var(--color-chip); color: var(--color-ink); }
+.ticks button[aria-pressed="true"] {
+  background: var(--color-ink);
+  color: var(--color-shell);
+}
+
+.pane-body { overflow: auto; padding: 0 20px 20px; flex: 1; }
+.pane-body h1 { font-size: 1.45rem; margin: 0 0 8px; }
+.lede { margin: 0 0 16px; color: var(--color-muted); font-size: var(--text-sm); }
+.req { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+.req th {
+  text-align: start;
+  font-weight: 500;
+  color: var(--color-muted);
+  font-size: 12px;
+  padding: 0 8px 8px 0;
+}
+.req td { padding: 10px 8px 10px 0; border-top: 1px solid var(--color-rule); vertical-align: top; }
+.req td:last-child { padding-inline-end: 0; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 8px; }
+.path { margin: 16px 0 0; padding: 0; display: grid; gap: 8px; }
+.path li { list-style: none; font-size: var(--text-sm); }
+.path a { color: var(--color-live); }
+.live {
+  margin-top: auto;
+  padding: 12px 16px;
+  border-top: 1px solid var(--color-rule);
+  font-size: 12px;
+  color: var(--color-muted);
+}
+.live b { color: var(--color-ink); font-weight: 500; }
+.live i {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--color-live);
+  margin-inline-end: 8px;
+  vertical-align: 1px;
+  animation: pulse 2s ease infinite;
+}
+@keyframes pulse { 50% { opacity: 0.35; } }
+
+.page-board { padding: 28px 28px 40px; overflow: auto; }
+.page-board h1 { font-size: 1.6rem; margin-bottom: 8px; }
+.cards { display: grid; gap: 12px; margin-top: 20px; max-width: 36rem; }
+.card {
+  background: var(--color-chip);
+  border-radius: var(--radius);
+  padding: 20px 22px;
+  box-shadow: var(--shadow-chip);
+}
+.card h1 { font-size: 1.45rem; margin-bottom: 8px; }
+.card h2 { font-size: 1.15rem; margin: 6px 0 4px; }
+.card p { margin: 0; color: var(--color-muted); font-size: var(--text-sm); }
+form { display: grid; gap: 10px; max-width: 16rem; margin-top: 16px; }
+label { font-size: var(--text-sm); display: grid; gap: 6px; }
+input[type="password"] {
+  padding: 10px 12px;
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  background: var(--color-chip);
+  min-height: 40px;
+}
+
+@media (max-width: 960px) {
+  .shell { grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
+  .rail { display: none; }
+  .pane {
+    border-inline-start: 0;
+    border-top: 1px solid var(--color-rule);
+    max-height: 42vh;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .edge.live, .live i { animation: none; }
+  .node, .btn { transition: none; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="top">
+  <a class="logo" href="#" data-go="graph">岗位图谱</a>
+  <nav class="tabs" aria-label="主导航">
+    <a href="#" data-go="graph" aria-current="page">图谱</a>
+    <a href="#" data-go="diag">诊断</a>
+    <a href="#" data-go="emerging">新兴岗位</a>
+    <a href="#" data-go="admin">管理</a>
+  </nav>
+  <a class="btn btn-fill" href="#" data-go="diag">对照简历</a>
+</header>
+<div id="app"></div>
+</div>
+
+<script>
+const T = ["2024-09","2025-03","2025-09","2026-03","2026-08"];
+const EV = [
+  ["Greenhouse","写入一条岗位说明"],
+  ["NCSS","高校公开岗入流"],
+  ["抽取","职责段出现 RAG"],
+  ["簇","Agent 工程师达到 3 家独立源"]
+];
+const JOBS = [
+  {id:"j", name:"大模型应用工程师", state:"成型", meta:"人工智能 · 必备 3", body:"把大模型接到业务系统里：接口、检索、评测。", skills:[
+    {id:"s2", name:"FastAPI", need:"必备", level:"熟练"},
+    {id:"s3", name:"RAG", need:"必备", level:"熟练"},
+    {id:"s4", name:"评测集构建", need:"必备", level:"了解", recent:true}
+  ]},
+  {id:"e", name:"Agent 工程师", state:"萌芽", meta:"3 家独立源 · 90 天内", body:"相对成型岗位，多要求编排与评测。尚未写入职业分类大典。", skills:[
+    {id:"s2", name:"FastAPI", need:"必备", level:"熟练"},
+    {id:"s1", name:"LangGraph", need:"必备", level:"了解"},
+    {id:"s4", name:"评测集构建", need:"必备", level:"了解"}
+  ]},
+  {id:"m", name:"模型评测工程师", state:"萌芽", meta:"4 家独立源 · 待审", body:"建集、打分、回归。已达萌芽门槛，仍在待审队列。", skills:[
+    {id:"s4", name:"评测集构建", need:"必备", level:"精通"}
+  ]},
+  {id:"ml", name:"机器学习工程师", state:"成型", meta:"人工智能 · 必备 2", body:"训练与上线传统机器学习系统。当前画布展开的是大模型切片。", skills:[
+    {name:"PyTorch", need:"必备", level:"熟练"},
+    {name:"特征工程", need:"必备", level:"熟练"}
+  ]}
+];
+const N = [
+  {id:"d", x:14, y:50, name:"人工智能", k:"领域", skill:false},
+  {id:"j", x:38, y:52, name:"大模型应用工程师", k:"成型岗位", skill:false, from:0},
+  {id:"e", x:38, y:22, name:"Agent 工程师", k:"萌芽岗位", skill:false, from:2},
+  {id:"s2", x:66, y:40, name:"FastAPI", k:"必备 · 熟练", skill:true, from:0},
+  {id:"s3", x:66, y:72, name:"RAG", k:"必备 · 熟练", skill:true, from:1},
+  {id:"s1", x:66, y:18, name:"LangGraph", k:"必备 · 了解", skill:true, from:2},
+  {id:"s4", x:88, y:52, name:"评测集构建", k:"近 90 天写入", skill:true, from:3}
+];
+const E = [["d","j",0,""],["j","s2",0,""],["j","s3",1,""],["d","e",2,"build"],["e","s1",2,"build"],["j","s4",3,""],["e","s4",3,"build"]];
+const HAVE = {s2:"ok", s3:"mid"};
+
+const boot = new URLSearchParams(location.search).get("s");
+let screen = ["graph","diag","emerging","admin"].includes(boot) ? boot : "graph";
+let t=4, play=false, ei=0, live=0, sel="j", q="", timers=[];
+if (screen==="diag") sel="j";
+if (screen==="emerging") sel="e";
+
+function job(id){ return JOBS.find(x=>x.id===id); }
+function node(id){ return N.find(x=>x.id===id); }
+function clear(){ timers.forEach(clearInterval); timers=[]; play=false; }
+
+function wires(){
+  return E.map((e,i)=>{
+    const a=node(e[0]), b=node(e[1]);
+    const on=t>=e[2];
+    return `<path class="edge ${e[3]} ${i===live?"live":""}" opacity="${on?1:0.18}" d="M${a.x} ${a.y} L${b.x} ${b.y}"/>`;
+  }).join("");
+}
+
+function spots(){
+  return N.map(s=>{
+    const dim = (s.from!==undefined && t<s.from) ? "is-dim" : "";
+    const on = sel===s.id ? "is-on" : "";
+    let extra = "";
+    if(screen==="diag" && s.skill){
+      extra = HAVE[s.id]==="ok" ? "is-ok" : "is-miss";
+    }
+    return `<button type="button" class="node ${s.skill?"is-skill":""} ${dim} ${on} ${extra}" style="left:${s.x}%;top:${s.y}%" data-id="${s.id}">
+      <span class="k">${s.k}</span><span class="n">${s.name}</span>
+    </button>`;
+  }).join("");
+}
+
+function railJobs(){
+  const list = JOBS.filter(j=>{
+    if(screen==="emerging" && j.state!=="萌芽") return false;
+    if(q && !j.name.includes(q)) return false;
+    return true;
+  });
+  if(!list.length) return `<p class="lede" style="padding:8px 12px">没有叫这个名字的岗位。改几个字再找。</p>`;
+  return list.map(j=>`<button type="button" class="job ${sel===j.id?"is-on":""}" data-id="${j.id}">
+    <span class="n">${j.name}</span>
+    <span class="m"><span class="tag ${j.state==="萌芽"?"seed":""}">${j.state}</span> ${j.meta}</span>
+  </button>`).join("");
+}
+
+function paneFor(){
+  if(screen==="diag"){
+    const j = job(sel) || JOBS[0];
+    const rows = j.skills.map(s=>{
+      const you = HAVE[s.id]==="ok" ? `<td style="color:var(--color-ok)">已具备</td>`
+        : HAVE[s.id]==="mid" ? `<td>了解，还差一档</td>`
+        : `<td>缺少</td>`;
+      return `<tr><td>${s.name}</td><td>${s.need} · ${s.level}</td>${you}</tr>`;
+    }).join("");
+    return `<div class="pane-h">对照这份岗位</div>
+      <div class="pane-body">
+        <h1>${j.name}</h1>
+        <p class="lede">技能分接入后显示。经验、学历不计入。</p>
+        <div class="actions">
+          <button class="btn btn-line" type="button">换简历</button>
+          <button class="btn btn-line" type="button">换目标岗位</button>
+        </div>
+        <table class="req">
+          <thead><tr><th>技能点</th><th>要求</th><th>你这边</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+        <ol class="path">
+          <li>RAG · <a href="https://python.langchain.com/docs/tutorials/rag/" target="_blank" rel="noreferrer">LangChain 检索教程</a></li>
+          <li>LangGraph · <a href="https://github.com/langchain-ai/langgraph" target="_blank" rel="noreferrer">langchain-ai/langgraph</a></li>
+          <li>评测集构建 · 检索接入后换成真实资源</li>
+        </ol>
+      </div>`;
+  }
+  const j = job(sel);
+  const n = node(sel);
+  if(j){
+    const rows = j.skills.map(s=>`<tr><td>${s.name}</td><td>${s.need}</td><td>${s.level}${s.recent?" · 近 90 天":""}</td></tr>`).join("");
+    return `<div class="pane-h">${j.state==="萌芽"?"刚出现的岗位":"岗位说明"}</div>
+      <div class="pane-body">
+        ${j.state==="萌芽"?'<span class="tag seed">萌芽</span>':""}
+        <h1>${j.name}</h1>
+        <p class="lede">${j.body}</p>
+        <table class="req">
+          <thead><tr><th>技能点</th><th>类型</th><th>熟练级</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+        <div class="actions"><button class="btn btn-fill" type="button" data-go="diag" style="margin:0">对照简历</button></div>
+      </div>`;
+  }
+  if(n){
+    return `<div class="pane-h">${n.skill?"技能点":"领域"}</div>
+      <div class="pane-body">
+        <h1>${n.name}</h1>
+        <p class="lede">${n.skill?"岗位要求边上的对账单位。点左侧岗位，看它在哪些岗位上是必备还是加分。":"新一代信息技术四个领域之一。当前画布展开人工智能切片。"}</p>
+      </div>`;
+  }
+  return `<div class="pane-h">说明</div><div class="pane-body"><p class="lede">在左侧选一个岗位，或点画布上的节点。</p></div>`;
+}
+
+function graphShell(railTitle, extraRail=""){
+  const ev = EV[ei%EV.length];
+  const years = T.map((y,i)=>`<button type="button" aria-pressed="${i===t}" data-t="${i}">${y}</button>`).join("");
+  return `<div class="shell">
+    <aside class="rail">
+      <div class="rail-h">${railTitle}</div>
+      <input class="search" type="search" placeholder="找岗位" value="${q.replaceAll('"','')}" id="q" autocomplete="off">
+      ${extraRail}
+      <div class="jobs">${railJobs()}</div>
+    </aside>
+    <div class="board-wrap">
+      <div class="stage">
+        <svg class="wires" viewBox="0 0 100 100" preserveAspectRatio="none">${wires()}</svg>
+        ${spots()}
+      </div>
+      <div class="timebar">
+        <button class="play" type="button" id="play">${play?"暂停":"回放"}</button>
+        <div class="ticks">${years}</div>
+      </div>
+    </div>
+    <aside class="pane">
+      ${paneFor()}
+      <div class="live"><i></i><b>${ev[0]}</b> · ${ev[1]}</div>
+    </aside>
+  </div>`;
+}
+
+function emergingBoard(){
+  return graphShell("萌芽岗位");
+}
+
+function adminView(ok){
+  if(!ok){
+    return `<div class="shell">
+      <aside class="rail"><div class="rail-h">管理</div><p class="lede" style="padding:0 16px">审核入谱前的变更。</p></aside>
+      <div class="board-wrap"><div class="page-board">
+        <article class="card" style="max-width:22rem">
+          <h1>管理</h1>
+          <p class="lede">原型里口令填任意非空即可。</p>
+          <form id="f"><label>口令<input type="password" name="pw" autocomplete="current-password" required></label>
+          <button class="btn btn-fill" type="submit" style="margin:0;justify-self:start">进入待审</button></form>
+        </article>
+      </div></div>
+      <aside class="pane"><div class="pane-h">说明</div>
+        <div class="pane-body"><p class="lede">直通只跳过中、高置信。没有证据的低置信不会自动入谱。</p></div>
+      </aside>
+    </div>`;
+  }
+  return `<div class="shell">
+    <aside class="rail">
+      <div class="rail-h">待审</div>
+      <div style="padding:0 12px 8px"><button class="btn btn-line" id="sw" type="button">直通：关</button></div>
+      <div class="jobs">
+        <button type="button" class="job is-on"><span class="n">Agent 工程师入谱</span><span class="m"><span class="tag seed">中置信</span> 3 家独立源</span></button>
+        <button type="button" class="job"><span class="n">增加评测集构建</span><span class="m"><span class="tag">高置信</span> 成型岗位更新</span></button>
+      </div>
+    </aside>
+    <div class="board-wrap"><div class="page-board">
+      <span class="tag seed">萌芽</span>
+      <h1>Agent 工程师</h1>
+      <p class="lede">3 家互不抄袭的公司在 90 天内提出。相对大模型应用工程师，多 LangGraph 与评测集构建。</p>
+      <div class="cards">
+        <article class="card"><h2>证据</h2><p>Greenhouse ×2、NCSS ×1。正文 simhash 已去重。</p></article>
+      </div>
+    </div></div>
+    <aside class="pane">
+      <div class="pane-h">处理</div>
+      <div class="pane-body">
+        <div class="actions">
+          <button class="btn btn-fill" type="button" style="margin:0">批准入谱</button>
+          <button class="btn btn-line" type="button">驳回</button>
+        </div>
+        <p class="lede">批准后岗位状态为萌芽，出现在求职者的新兴岗位里。</p>
+      </div>
+    </aside>
+  </div>`;
+}
+
+function render(){
+  const app=document.getElementById("app");
+  if(screen==="admin") app.innerHTML=adminView(window.__in);
+  else if(screen==="emerging") app.innerHTML=emergingBoard();
+  else if(screen==="diag") app.innerHTML=graphShell("对照结果");
+  else app.innerHTML=graphShell("岗位");
+
+  document.querySelectorAll(".tabs a[data-go]").forEach(a=>{
+    if(a.dataset.go===screen) a.setAttribute("aria-current","page");
+    else a.removeAttribute("aria-current");
+  });
+  const search=document.getElementById("q");
+  if(search){
+    search.oninput=()=>{
+      q=search.value;
+      const box=document.querySelector(".jobs");
+      if(box) box.innerHTML=railJobs();
+      bindSelect();
+    };
+  }
+  bindSelect();
+  document.querySelectorAll("[data-t]").forEach(b=> b.onclick=()=>{ t=+b.dataset.t; render(); });
+  const p=document.getElementById("play");
+  if(p) p.onclick=()=>{
+    play=!play;
+    if(play) timers.push(setInterval(()=>{ t=(t+1)%T.length; ei++; live=(live+1)%E.length; render(); },1200));
+    else clear();
+    render();
+  };
+  document.querySelectorAll("button[data-go]").forEach(b=> b.onclick=()=>go(b.dataset.go));
+  const f=document.getElementById("f");
+  if(f) f.onsubmit=e=>{ e.preventDefault(); window.__in=true; render(); };
+  const sw=document.getElementById("sw");
+  if(sw) sw.onclick=()=>{ sw.textContent=sw.textContent.includes("关")?"直通：开":"直通：关"; };
+}
+
+function bindSelect(){
+  document.querySelectorAll(".job[data-id], .node[data-id]").forEach(b=>{
+    b.onclick=()=>{ sel=b.dataset.id; render(); };
+  });
+}
+
+function go(s){
+  if(s!=="graph" && s!=="diag" && s!=="emerging") clear();
+  screen=s;
+  if(s==="diag") sel="j";
+  if(s==="emerging" && job(sel)?.state!=="萌芽") sel="e";
+  render();
+}
+
+document.querySelector(".top").addEventListener("click", e=>{
+  const a=e.target.closest("[data-go]");
+  if(!a || !a.closest(".top")) return;
+  e.preventDefault();
+  go(a.dataset.go);
+});
+
+render();
+setInterval(()=>{
+  if(screen==="admin") return;
+  ei++; live=(live+1)%E.length;
+  const ev=EV[ei%EV.length];
+  const el=document.querySelector(".live");
+  if(el) el.innerHTML=`<i></i><b>${ev[0]}</b> · ${ev[1]}`;
+  document.querySelectorAll(".edge").forEach((p,i)=>p.classList.toggle("live", i===live));
+}, 2800);
+</script>
+</body>
+</html>
