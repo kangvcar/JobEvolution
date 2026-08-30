@@ -61,6 +61,8 @@ def job_detail(job_id: str):
     if row is None:
         raise HTTPException(404, "not found")
     row["events"] = graph.list_job_events(job_id)
+    evidence = graph.list_job_evidence(job_id)
+    row["sources"] = sorted({item["company"] for item in evidence if item.get("company")})
     return row
 
 
@@ -71,11 +73,23 @@ def job_slice(job_id: str):
         raise HTTPException(404, "not found")
     requires = graph.list_requires(job_id)
     skills = [
-        {"id": edge["skill_id"], "name": edge["name"]} for edge in requires
+        {
+            "id": edge["skill_id"],
+            "name": edge["name"],
+            "category_id": edge.get("category_id"),
+            "category": edge.get("category"),
+        }
+        for edge in requires
     ]
+    categories = {}
+    for edge in requires:
+        category_id = edge.get("category_id")
+        category_name = edge.get("category")
+        if category_id and category_name:
+            categories[category_id] = {"id": category_id, "name": category_name}
     return {
         "job": row,
-        "categories": [],
+        "categories": list(categories.values()),
         "skills": skills,
         "requires": requires,
         "period_delta": graph.period_delta(job_id),
@@ -247,4 +261,3 @@ def admin_passthrough_put(
     enabled = bool(body.enabled) if body else False
     set_passthrough(enabled)
     return {"enabled": passthrough_enabled()}
-
