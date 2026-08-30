@@ -103,6 +103,8 @@ def apply_event(event_id: str, *, review: str, payload: dict | None = None) -> d
     if isinstance(data, str):
         data = json.loads(data)
     event["payload"] = data
+    if data.get("layer") == "low" and review == "auto_passed":
+        review = "pending"
     event["review"] = review
     if data.get("kind") != "extract_failed" and review in ("approved", "auto_passed"):
         graph.apply_requires(data)

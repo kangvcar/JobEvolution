@@ -9,7 +9,14 @@ type QueueEvent = {
   kind: string;
   at: string;
   confidence: number;
-  payload?: { job_name?: string; skill_name?: string; excerpt?: string; error?: string };
+  payload?: {
+    job_name?: string;
+    skill_name?: string;
+    excerpt?: string;
+    error?: string;
+    layer?: "high" | "mid" | "low";
+    [key: string]: unknown;
+  };
 };
 
 function kindLabel(kind: string) {
@@ -23,6 +30,8 @@ export default function AdminPage() {
   const [password, setPassword] = useState("");
   const [queue, setQueue] = useState<QueueEvent[] | null>(null);
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState<string | null>(null);
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
 
   async function enter(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -35,6 +44,26 @@ export default function AdminPage() {
       return;
     }
     setQueue(await response.json());
+  }
+
+  async function review(item: QueueEvent, decision: "approved" | "rejected") {
+    setBusy(item.id);
+    setError("");
+    const payload = item.payload ? { ...item.payload } : undefined;
+    const draft = drafts[item.id];
+    if (decision === "approved" && payload && draft !== undefined) payload.excerpt = draft;
+    const response = await fetch(`${API}/admin/queue/${item.id}/${decision === "approved" ? "approve" : "reject"}`, {
+      method: "POST",
+      headers: { "X-Admin-Password": password, "Content-Type": "application/json" },
+      body: decision === "approved" ? JSON.stringify({ payload }) : undefined,
+    });
+    if (!response.ok) {
+      setError("审核操作失败，请重试");
+      setBusy(null);
+      return;
+    }
+    setQueue((items) => items?.filter(({ id }) => id !== item.id) ?? []);
+    setBusy(null);
   }
 
   if (queue === null) {
@@ -62,16 +91,29 @@ export default function AdminPage() {
       <h1>待审队列</h1>
       <p className="hint">口令通过后显示尚未入谱的演化事件。</p>
       {queue.length === 0 ? <p className="empty">暂无待审演化事件</p> : null}
+      {error ? <p className="admin-error" role="alert">{error}</p> : null}
       <ul className="admin-queue" aria-label="待审演化事件">
         {queue.map((item) => {
           const payload = item.payload ?? {};
           const subject = payload.job_name || payload.skill_name || "未标注岗位或技能点";
           const summary = payload.excerpt || payload.error || "暂无摘要";
+          const layerLabel = payload.layer === "low" ? "低置信，不可直通" : payload.layer === "mid" ? "中置信，需审核" : payload.layer === "high" ? "高置信，需审核" : "";
           return (
             <li key={item.id}>
               <div className="admin-event-head"><strong>{kindLabel(item.kind)}</strong><time dateTime={item.at}>{item.at.slice(0, 10)}</time></div>
               <p className="admin-event-subject">{subject}</p>
               <p className="hint">{summary}</p>
+              {layerLabel ? <p className="hint">{layerLabel}</p> : null}
+              {item.kind !== "extract_failed" ? (
+                <label>
+                  改写摘要
+                  <textarea value={drafts[item.id] ?? (payload.excerpt || "")} onChange={(event) => setDrafts((current) => ({ ...current, [item.id]: event.target.value }))} rows={3} />
+                </label>
+              ) : null}
+              <div className="row">
+                <button className="primary" type="button" disabled={busy === item.id} onClick={() => review(item, "approved")}>确认发布</button>
+                <button className="ghost" type="button" disabled={busy === item.id} onClick={() => review(item, "rejected")}>驳回</button>
+              </div>
             </li>
           );
         })}
