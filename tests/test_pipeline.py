@@ -99,6 +99,34 @@ def test_select_snapshots_caps_per_job_and_company(tmp_path):
     assert {d["company"] for d in agent} == {"甲", "乙"}
 
 
+def test_select_snapshots_agent_stays_in_recent_window(tmp_path):
+    jd = tmp_path / "jd"
+    jd.mkdir()
+    rows = [
+        ("jd-old.json", "Agent 工程师", "甲", "2024-08-19"),
+        ("jd-a.json", "Agent 工程师", "乙", "2025-08-01"),
+        ("jd-b.json", "Agent 工程师", "丙", "2025-08-10"),
+        ("jd-c.json", "Agent 工程师", "丁", "2025-08-19"),
+        ("jd-d.json", "Agent 工程师", "戊", "2025-08-18"),
+    ]
+    for name, title, company, observed_at in rows:
+        (jd / name).write_text(
+            json.dumps(
+                {
+                    "title": title,
+                    "company": company,
+                    "body": "x",
+                    "id": name,
+                    "observed_at": observed_at,
+                }
+            ),
+            encoding="utf-8",
+        )
+    picked = select_snapshots(jd, per_job=8)
+    agent = [d for d in picked if d.get("title") == "Agent 工程师"]
+    assert [d["company"] for d in agent] == ["丁", "戊", "丙"]
+
+
 def test_coerce_maps_model_aliases():
     coerced = coerce_extracted(
         {

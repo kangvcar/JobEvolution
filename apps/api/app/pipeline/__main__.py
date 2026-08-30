@@ -9,7 +9,12 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
+from app.pipeline.constants import EMERGING_SOURCES, EMERGING_WINDOW_DAYS
+from app.pipeline.status import _parse_at
 from app.targets import JOB_TARGET_NAMES
+
+AGENT_JOB = "Agent 工程师"
+
 
 def default_jd_dir() -> Path:
     env = os.environ.get("JD_DIR")
@@ -42,15 +47,34 @@ def select_snapshots(jd_dir: Path, per_job: int) -> list[dict]:
         name = match_target(doc.get("title") or "")
         if not name:
             continue
-        companies = {row.get("company") for row in buckets[name]}
-        if doc.get("company") in companies:
-            continue
-        if len(buckets[name]) >= per_job:
-            continue
         buckets[name].append(doc)
     out: list[dict] = []
     for name in JOB_TARGET_NAMES:
-        out.extend(buckets[name])
+        docs = sorted(
+            buckets.get(name) or [],
+            key=lambda row: row.get("observed_at") or "",
+            reverse=True,
+        )
+        cap = EMERGING_SOURCES if name == AGENT_JOB else per_job
+        latest = None
+        picked: list[dict] = []
+        companies: set[str] = set()
+        for doc in docs:
+            company = doc.get("company")
+            if not company or company in companies:
+                continue
+            at = _parse_at(doc.get("observed_at") or "")
+            if name == AGENT_JOB:
+                if latest is None and at is not None:
+                    latest = at
+                if latest is not None and at is not None:
+                    if (latest - at).days > EMERGING_WINDOW_DAYS:
+                        continue
+            companies.add(company)
+            picked.append(doc)
+            if len(picked) >= cap:
+                break
+        out.extend(picked)
     return out
 
 
