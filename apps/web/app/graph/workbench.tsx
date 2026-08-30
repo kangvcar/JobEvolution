@@ -129,6 +129,9 @@ export function Workbench() {
     if (expired.size) categories.push({ id: "expired", name: "本周期失效" });
     const categoryFor = (skill: Requirement) =>
       expired.has(skill.skill_id) ? "expired" : skill.category_id || skill.category || "uncategorized";
+    if (requires.some((skill) => categoryFor(skill) === "uncategorized")) {
+      categories.push({ id: "uncategorized", name: "未分类" });
+    }
     const nodes = [
       { id: "job", data: { label: current?.name || detail?.name || "岗位", k: "job" } },
       ...categories.map((category) => ({ id: `category-${category.id}`, data: { label: category.name, k: "category" } })),
