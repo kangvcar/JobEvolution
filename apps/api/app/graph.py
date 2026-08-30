@@ -375,18 +375,19 @@ def get_event(event_id: str) -> dict | None:
     return data
 
 
-def list_pending_events() -> list[dict]:
+def list_pending_events(*, include_auto_passed: bool = False) -> list[dict]:
     if _driver is None:
         return []
     with _driver.session() as session:
         rows = session.run(
             """
             MATCH (e:EvolutionEvent)
-            WHERE e.review = 'pending'
+            WHERE e.review = 'pending' OR ($include_auto_passed AND e.review = 'auto_passed')
             RETURN e.id AS id, e.kind AS kind, e.at AS at, e.confidence AS confidence,
                    e.review AS review, e.payload AS payload
             ORDER BY e.at
-            """
+            """,
+            include_auto_passed=include_auto_passed,
         )
         out = []
         for row in rows:

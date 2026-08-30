@@ -9,6 +9,7 @@ type QueueEvent = {
   kind: string;
   at: string;
   confidence: number;
+  review?: "pending" | "auto_passed";
   payload?: {
     job_name?: string;
     skill_name?: string;
@@ -26,24 +27,55 @@ function kindLabel(kind: string) {
   return kind;
 }
 
+function reviewLabel(review: QueueEvent["review"]) {
+  return review === "auto_passed" ? "自动通过" : "待审";
+}
+
 export default function AdminPage() {
   const [password, setPassword] = useState("");
   const [queue, setQueue] = useState<QueueEvent[] | null>(null);
+  const [passthrough, setPassthrough] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
 
-  async function enter(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError("");
+  async function loadQueue() {
     const response = await fetch(`${API}/admin/queue`, {
       headers: { "X-Admin-Password": password },
     });
-    if (!response.ok) {
-      setError("口令错误");
-      return;
-    }
+    if (!response.ok) throw new Error("口令错误");
     setQueue(await response.json());
+  }
+
+  async function enter(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    try {
+      const response = await fetch(`${API}/admin/passthrough`, {
+        headers: { "X-Admin-Password": password },
+      });
+      if (!response.ok) throw new Error("口令错误");
+      setPassthrough((await response.json()).enabled);
+      await loadQueue();
+    } catch {
+      setError("口令错误");
+    }
+  }
+
+  async function togglePassthrough() {
+    setError("");
+    try {
+      const response = await fetch(`${API}/admin/passthrough`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "X-Admin-Password": password },
+        body: JSON.stringify({ enabled: !passthrough }),
+      });
+      if (!response.ok) throw new Error("开关更新失败");
+      setPassthrough((await response.json()).enabled);
+      await loadQueue();
+    } catch {
+      setError("开关更新失败");
+    }
   }
 
   async function review(item: QueueEvent, decision: "approved" | "rejected") {
@@ -88,7 +120,12 @@ export default function AdminPage() {
 
   return (
     <main id="main" className="page admin-page">
-      <h1>待审队列</h1>
+      <div className="admin-event-head">
+        <h1>待审队列</h1>
+        <button className="ghost" type="button" aria-pressed={passthrough} onClick={togglePassthrough}>
+          {passthrough ? "直通开启" : "直通关闭"}
+        </button>
+      </div>
       <p className="hint">口令通过后显示尚未入谱的演化事件。</p>
       {queue.length === 0 ? <p className="empty">暂无待审演化事件</p> : null}
       {error ? <p className="admin-error" role="alert">{error}</p> : null}
@@ -100,20 +137,22 @@ export default function AdminPage() {
           const layerLabel = payload.layer === "low" ? "低置信，不可直通" : payload.layer === "mid" ? "中置信，需审核" : payload.layer === "high" ? "高置信，需审核" : "";
           return (
             <li key={item.id}>
-              <div className="admin-event-head"><strong>{kindLabel(item.kind)}</strong><time dateTime={item.at}>{item.at.slice(0, 10)}</time></div>
+              <div className="admin-event-head"><strong>{kindLabel(item.kind)} · {reviewLabel(item.review)}</strong><time dateTime={item.at}>{item.at.slice(0, 10)}</time></div>
               <p className="admin-event-subject">{subject}</p>
               <p className="hint">{summary}</p>
               {layerLabel ? <p className="hint">{layerLabel}</p> : null}
-              {item.kind !== "extract_failed" ? (
+              {item.review !== "auto_passed" && item.kind !== "extract_failed" ? (
                 <label>
                   改写摘要
                   <textarea value={drafts[item.id] ?? (payload.excerpt || "")} onChange={(event) => setDrafts((current) => ({ ...current, [item.id]: event.target.value }))} rows={3} />
                 </label>
               ) : null}
+              {item.review !== "auto_passed" ? (
               <div className="row">
                 <button className="primary" type="button" disabled={busy === item.id} onClick={() => review(item, "approved")}>确认发布</button>
                 <button className="ghost" type="button" disabled={busy === item.id} onClick={() => review(item, "rejected")}>驳回</button>
               </div>
+              ) : null}
             </li>
           );
         })}
