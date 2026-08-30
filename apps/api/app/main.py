@@ -58,6 +58,7 @@ def job_slice(job_id: str):
     row = graph.get_public_job(job_id)
     if row is None:
         raise HTTPException(404, "not found")
+    # ponytail: empty slice until the pipeline writes REQUIRES
     return {
         "job": row,
         "categories": [],
