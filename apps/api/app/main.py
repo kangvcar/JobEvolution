@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 
 from app import graph
 from app.matching.report import neighbor_name, wrap_report
-from app.matching.resume import ResumeError, extract_text, skills_from_text
+from app.matching.resume import ResumeError, extract_text, parse_resume
 from app.matching.session import load as load_session
 from app.matching.session import save as save_session
 from app.pipeline.gate import apply_event, passthrough_enabled, set_passthrough
@@ -94,18 +94,22 @@ async def create_session(file: UploadFile = File(...)):
         text = extract_text(data, file.filename or "")
     except ResumeError as exc:
         raise HTTPException(400, exc.detail) from exc
-    skills = skills_from_text(text, graph.list_skills(with_embed=False))
+    parsed = parse_resume(text, graph.list_skills())
     session_id = save_session(
         {
             "preview_text": text[:4000],
-            "skills": skills,
+            "skills": parsed["skills"],
+            "experience": parsed["experience"],
+            "education": parsed["education"],
             "filename": file.filename,
         }
     )
     return {
         "session_id": session_id,
-        "skills": skills,
+        "skills": parsed["skills"],
         "preview_text": text[:2000],
+        "experience": parsed["experience"],
+        "education": parsed["education"],
     }
 
 

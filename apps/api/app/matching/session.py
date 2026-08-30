@@ -9,7 +9,7 @@ from app.collectors.sink import connect_redis
 TTL = 3600
 PREFIX = "session:"
 
-_mem: dict[str, tuple[float, dict]] = {}
+_mem: dict[str, tuple[float, object]] = {}
 
 
 def _redis():
@@ -30,6 +30,31 @@ def save(payload: dict) -> str:
     else:
         _mem[sid] = (time.time() + TTL, payload)
     return sid
+
+
+def cache_get(key: str) -> str | None:
+    if not key:
+        return None
+    client = _redis()
+    if client is not None:
+        raw = client.get(key)
+        return raw if isinstance(raw, str) else None
+    row = _mem.get(key)
+    if row is None or row[0] < time.time():
+        _mem.pop(key, None)
+        return None
+    value = row[1]
+    return value if isinstance(value, str) else None
+
+
+def cache_set(key: str, value: str, ttl: int) -> None:
+    if not key:
+        return
+    client = _redis()
+    if client is not None:
+        client.set(key, value, ex=ttl)
+        return
+    _mem[key] = (time.time() + ttl, value)
 
 
 def load(sid: str) -> dict | None:

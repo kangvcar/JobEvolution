@@ -1,9 +1,11 @@
 from __future__ import annotations
 
-from urllib.parse import quote
+from concurrent.futures import ThreadPoolExecutor
+from urllib.parse import quote, urlparse
 
 from app.matching.bands import PATH_MAX
 from app.matching.score import WATCHING_COPY, compare_job
+from app.matching.session import cache_get, cache_set
 
 NEIGHBOR = {
     "大模型应用工程师": "Agent 工程师",
@@ -16,27 +18,80 @@ PRESET_URL = {
     "neo4j": "https://neo4j.com/docs/",
     "rag": "https://python.langchain.com/docs/concepts/rag/",
 }
+RESOURCE_TTL = 7 * 24 * 3600
+RESOURCE_PROMPT = (
+    "Return JSON {url: https://...} with one official docs or open tutorial URL "
+    "for this skill. No markdown."
+)
 
 
-def resource_url(name: str) -> str:
+def _preset_url(name: str) -> str | None:
     key = (name or "").casefold()
     for token, url in PRESET_URL.items():
         if token in key:
             return url
-    return "https://www.bing.com/search?q=" + quote(name or "skill")
+    return None
+
+
+def _valid_url(value) -> str | None:
+    text = str(value or "").strip()
+    parsed = urlparse(text)
+    if parsed.scheme in ("http", "https") and parsed.netloc:
+        return text
+    return None
+
+
+def lookup_resource(skill_id: str, name: str, complete_json=None) -> str:
+    key = f"resource:{skill_id}" if skill_id else ""
+    if key:
+        cached = cache_get(key)
+        if cached:
+            return cached
+    url = _preset_url(name)
+    if url is None:
+        if complete_json is None:
+            from app.llm.client import complete_json as complete_json
+        try:
+            payload = complete_json(
+                None,
+                [
+                    {"role": "system", "content": RESOURCE_PROMPT},
+                    {"role": "user", "content": name or skill_id},
+                ],
+            )
+            url = _valid_url((payload or {}).get("url") if isinstance(payload, dict) else None)
+        except Exception:
+            url = None
+    if not url:
+        url = "https://www.bing.com/search?q=" + quote(name or skill_id or "skill")
+    if key:
+        cache_set(key, url, RESOURCE_TTL)
+    return url
+
+
+def resource_url(name: str) -> str:
+    return lookup_resource("", name)
 
 
 def neighbor_name(job_name: str) -> str | None:
     return NEIGHBOR.get(job_name)
 
 
-def attach_urls(path: list[dict]) -> list[dict]:
-    out = []
-    for step in path:
+def attach_urls(path: list[dict], complete_json=None) -> list[dict]:
+    if not path:
+        return []
+
+    def one(step: dict) -> dict:
         item = dict(step)
-        item["url"] = step.get("url") or resource_url(step.get("name") or "")
-        out.append(item)
-    return out
+        item["url"] = step.get("url") or lookup_resource(
+            step.get("skill_id") or "",
+            step.get("name") or "",
+            complete_json=complete_json,
+        )
+        return item
+
+    with ThreadPoolExecutor(max_workers=min(5, len(path))) as pool:
+        return list(pool.map(one, path))
 
 
 def wrap_report(
