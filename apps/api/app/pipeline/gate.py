@@ -1,0 +1,271 @@
+from __future__ import annotations
+
+import hashlib
+import json
+from collections import defaultdict
+from datetime import datetime, timezone
+
+from app.collectors.normalize import is_channel_name, normalize_company
+from app.collectors.sink import STREAM_KEY, connect_redis
+from app.llm.embed import embed
+from app.pipeline.align import align_job, align_skill, cluster_texts
+from app.pipeline.constants import COVERAGE_THRESHOLD, PASSTHROUGH_KEY
+from app.pipeline.extract import parse_extracted
+from app.pipeline.sections import section_of
+
+_passthrough = False
+
+
+def set_passthrough(enabled: bool) -> None:
+    global _passthrough
+    _passthrough = bool(enabled)
+    try:
+        connect_redis().set(PASSTHROUGH_KEY, "1" if enabled else "0")
+    except Exception:
+        pass
+
+
+def passthrough_enabled() -> bool:
+    try:
+        value = connect_redis().get(PASSTHROUGH_KEY)
+        if value is not None:
+            return str(value) in ("1", "true", "True")
+    except Exception:
+        pass
+    return _passthrough
+
+
+def confidence_layer(*, excerpt: str, n_sources: int, extract_confidence: float) -> str:
+    if not (excerpt or "").strip():
+        return "low"
+    if n_sources >= 3 and extract_confidence >= 0.8:
+        return "high"
+    if extract_confidence >= 0.5:
+        return "mid"
+    return "low"
+
+
+def coverage(*, mentioned_in: int, cluster_size: int) -> float:
+    if cluster_size <= 0:
+        return 0.0
+    return mentioned_in / cluster_size
+
+
+def pool_skill(*, section: str, coverage_rate: float) -> bool:
+    if section in ("benefit", "intro"):
+        return False
+    return coverage_rate >= COVERAGE_THRESHOLD
+
+
+def _stable_id(prefix: str, name: str) -> str:
+    digest = hashlib.sha256(name.encode("utf-8")).hexdigest()[:16]
+    return f"{prefix}{digest}"
+
+
+def _event_id(payload: dict) -> str:
+    raw = json.dumps(payload, ensure_ascii=False, sort_keys=True)
+    return "evt-" + hashlib.sha256(raw.encode("utf-8")).hexdigest()[:20]
+
+
+def enqueue_extract_failure(snapshot: dict, error: str) -> dict:
+    from app import graph
+
+    payload = {
+        "kind": "extract_failed",
+        "path": snapshot.get("path"),
+        "evidence_id": snapshot.get("id"),
+        "error": error,
+        "layer": "low",
+    }
+    event = {
+        "id": _event_id(payload),
+        "kind": "extract_failed",
+        "at": datetime.now(timezone.utc).isoformat(),
+        "confidence": 0.0,
+        "review": "pending",
+        "payload": payload,
+    }
+    graph.upsert_event(event, job_id=None)
+    _emit("review_enqueued", event)
+    return event
+
+
+def apply_event(event_id: str, *, review: str, payload: dict | None = None) -> dict:
+    from app import graph
+
+    event = graph.get_event(event_id)
+    if event is None:
+        raise KeyError(event_id)
+    data = payload if payload is not None else event["payload"]
+    if isinstance(data, str):
+        data = json.loads(data)
+    event["payload"] = data
+    event["review"] = review
+    if data.get("kind") != "extract_failed" and review in ("approved", "auto_passed"):
+        graph.apply_requires(data)
+    graph.upsert_event(event, job_id=data.get("job_id"))
+    return event
+
+
+def run_extract_and_gate(snapshots: list[dict], complete_json=None) -> list[dict]:
+    from app import graph
+    from app.llm.client import complete_json as default_complete
+
+    if graph._driver is None:
+        graph.init_graph()
+    complete = complete_json or default_complete
+    extracted_rows = []
+    events: list[dict] = []
+    for snap in snapshots:
+        try:
+            parsed = parse_extracted(complete, retry=True, snapshot=snap)
+        except ValueError as exc:
+            events.append(enqueue_extract_failure(snap, str(exc)))
+            continue
+        extracted_rows.append((snap, parsed))
+
+    by_job: dict[str, list] = defaultdict(list)
+    for snap, parsed in extracted_rows:
+        job_name = align_job(parsed.job_name) or parsed.job_name
+        by_job[job_name].append((snap, parsed, job_name))
+
+    index: list[dict] = graph.list_skills()
+    for job_name, rows in by_job.items():
+        events.extend(_gate_job(job_name, rows, index))
+    return events
+
+
+def _gate_job(job_name: str, rows: list, index: list[dict]) -> list[dict]:
+    from app import graph
+
+    job_id = _stable_id("job-", job_name)
+    domain = rows[0][1].domain or rows[0][0].get("domain") or "ai"
+    graph.upsert_job(id=job_id, name=job_name, domain=domain, status="candidate")
+
+    company_by_evidence = {
+        snap["id"]: snap.get("company") or "" for snap, _, _ in rows
+    }
+    mentions: dict[str, dict] = {}
+    cluster_size = len(rows)
+    pending_names: list[tuple] = []
+
+    for snap, parsed, _ in rows:
+        for skill in parsed.skills:
+            section = section_of(snap.get("body") or "", skill.excerpt)
+            if not skill.excerpt:
+                section = skill.section
+            if section in ("benefit", "intro"):
+                continue
+            pending_names.append((snap, skill, section))
+
+    names = [sk.name for _, sk, _ in pending_names]
+    clustered = cluster_texts(names) if names else []
+    centroid_for = {}
+    for group in clustered:
+        centroid = max(group, key=len)
+        for name in group:
+            centroid_for[name] = (centroid, group)
+
+    for snap, skill, section in pending_names:
+        centroid, group = centroid_for.get(skill.name, (skill.name, [skill.name]))
+        hit = align_skill(centroid, index) or align_skill(skill.name, index)
+        if hit is None:
+            skill_id = _stable_id("skill-", centroid)
+            hit = {
+                "id": skill_id,
+                "name": centroid,
+                "synonyms": list(dict.fromkeys(group)),
+                "embedding": embed([centroid])[0],
+            }
+            graph.upsert_skill(hit)
+            index.append(hit)
+        elif skill.name not in (hit.get("synonyms") or []) and skill.name != hit.get("name"):
+            hit.setdefault("synonyms", []).append(skill.name)
+            graph.upsert_skill(hit)
+        rec = mentions.setdefault(
+            hit["id"],
+            {
+                "skill": hit,
+                "evidence": set(),
+                "kind": skill.kind,
+                "proficiency": skill.proficiency,
+                "confidence": skill.confidence,
+                "excerpt": skill.excerpt,
+                "section": section,
+            },
+        )
+        rec["evidence"].add(snap["id"])
+        rec["confidence"] = max(rec["confidence"], skill.confidence)
+        if skill.excerpt:
+            rec["excerpt"] = skill.excerpt
+
+    watching = []
+    pooled = []
+    for skill_id, rec in mentions.items():
+        rate = coverage(mentioned_in=len(rec["evidence"]), cluster_size=cluster_size)
+        if not pool_skill(section=rec["section"], coverage_rate=rate):
+            watching.append(skill_id)
+        else:
+            pooled.append((skill_id, rec))
+    events = []
+    for skill_id, rec in pooled:
+        companies = set()
+        for eid in rec["evidence"]:
+            company = normalize_company(company_by_evidence.get(eid, ""))
+            if company and not is_channel_name(company):
+                companies.add(company)
+        layer = confidence_layer(
+            excerpt=rec["excerpt"],
+            n_sources=len(companies),
+            extract_confidence=rec["confidence"],
+        )
+        payload = {
+            "kind": "requires_add",
+            "job_id": job_id,
+            "job_name": job_name,
+            "domain": domain,
+            "skill_id": skill_id,
+            "skill_name": rec["skill"]["name"],
+            "kind_edge": rec["kind"],
+            "proficiency": rec["proficiency"],
+            "layer": layer,
+            "confidence": rec["confidence"],
+            "sources": sorted(rec["evidence"]),
+            "excerpt": rec["excerpt"],
+            "watching": watching,
+            "weight": 1.0,
+            "levels": ["junior", "mid", "senior"],
+        }
+        review = "pending"
+        if passthrough_enabled() and layer in ("high", "mid"):
+            review = "auto_passed"
+        event = {
+            "id": _event_id(payload),
+            "kind": "requires_add",
+            "at": datetime.now(timezone.utc).isoformat(),
+            "confidence": rec["confidence"],
+            "review": review,
+            "payload": payload,
+        }
+        graph.upsert_event(event, job_id=job_id)
+        _emit("review_enqueued", event)
+        if review == "auto_passed":
+            graph.apply_requires(payload)
+        events.append(event)
+    graph.set_watching(job_id, watching)
+    return events
+
+
+def _emit(event_type: str, event: dict) -> None:
+    try:
+        redis = connect_redis()
+        redis.xadd(
+            STREAM_KEY,
+            {
+                "id": event["id"],
+                "type": event_type,
+                "payload": json.dumps(event.get("payload") or {}, ensure_ascii=False),
+            },
+        )
+    except Exception:
+        pass

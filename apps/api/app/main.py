@@ -1,10 +1,15 @@
+import hmac
+import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Query
+from pydantic import BaseModel
+
+from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app import graph
+from app.pipeline.gate import apply_event, passthrough_enabled, set_passthrough
 
 
 @asynccontextmanager
@@ -58,11 +63,100 @@ def job_slice(job_id: str):
     row = graph.get_public_job(job_id)
     if row is None:
         raise HTTPException(404, "not found")
-    # ponytail: empty slice until the pipeline writes REQUIRES
+    requires = graph.list_requires(job_id)
+    skills = [
+        {"id": edge["skill_id"], "name": edge["name"]} for edge in requires
+    ]
     return {
         "job": row,
         "categories": [],
-        "skills": [],
-        "requires": [],
+        "skills": skills,
+        "requires": requires,
         "period_delta": {"added": [], "promoted": [], "expired": []},
     }
+
+
+class ApproveBody(BaseModel):
+    payload: dict | None = None
+
+
+class PassthroughBody(BaseModel):
+    enabled: bool = False
+
+
+def _passwords_match(given: str, expected: str) -> bool:
+    left = given.encode("utf-8")
+    right = expected.encode("utf-8")
+    if len(left) != len(right):
+        hmac.compare_digest(right, right)
+        return False
+    return hmac.compare_digest(left, right)
+
+
+def _require_admin(
+    request: Request,
+    x_admin_password: str | None = Header(default=None, alias="X-Admin-Password"),
+):
+    expected = os.environ.get("ADMIN_PASSWORD", "change-me")
+    given = x_admin_password or request.cookies.get("admin_password") or ""
+    if not _passwords_match(given, expected):
+        raise HTTPException(401, "unauthorized")
+
+
+@app.get("/admin/queue")
+def admin_queue(
+    request: Request,
+    x_admin_password: str | None = Header(default=None, alias="X-Admin-Password"),
+):
+    _require_admin(request, x_admin_password)
+    return graph.list_pending_events()
+
+
+@app.post("/admin/queue/{event_id}/approve")
+def admin_approve(
+    event_id: str,
+    request: Request,
+    x_admin_password: str | None = Header(default=None, alias="X-Admin-Password"),
+    body: ApproveBody | None = None,
+):
+    _require_admin(request, x_admin_password)
+    payload = body.payload if body else None
+    try:
+        return apply_event(event_id, review="approved", payload=payload)
+    except KeyError:
+        raise HTTPException(404, "not found") from None
+
+
+@app.post("/admin/queue/{event_id}/reject")
+def admin_reject(
+    event_id: str,
+    request: Request,
+    x_admin_password: str | None = Header(default=None, alias="X-Admin-Password"),
+):
+    _require_admin(request, x_admin_password)
+    try:
+        return apply_event(event_id, review="rejected")
+    except KeyError:
+        raise HTTPException(404, "not found") from None
+
+
+@app.get("/admin/passthrough")
+def admin_passthrough_get(
+    request: Request,
+    x_admin_password: str | None = Header(default=None, alias="X-Admin-Password"),
+):
+    _require_admin(request, x_admin_password)
+    return {"enabled": passthrough_enabled()}
+
+
+@app.put("/admin/passthrough")
+def admin_passthrough_put(
+    request: Request,
+    x_admin_password: str | None = Header(default=None, alias="X-Admin-Password"),
+    body: PassthroughBody | None = None,
+):
+    _require_admin(request, x_admin_password)
+    enabled = bool(body.enabled) if body else False
+    set_passthrough(enabled)
+    return {"enabled": passthrough_enabled()}
+

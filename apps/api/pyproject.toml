@@ -5,6 +5,7 @@ requires-python = ">=3.12"
 dependencies = [
   "fastapi",
   "neo4j",
+  "openai",
   "redis",
   "uvicorn[standard]",
 ]

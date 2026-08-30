@@ -1,0 +1,7 @@
+import os
+
+COVERAGE_THRESHOLD = 0.30
+ALIGN_THRESHOLD = float(os.environ.get("ALIGN_THRESHOLD", "0.85"))
+JOB_ALIGN_THRESHOLD = 0.80
+EXTRACT_RETRY = 1
+PASSTHROUGH_KEY = "gate:passthrough"
