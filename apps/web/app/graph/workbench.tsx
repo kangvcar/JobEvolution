@@ -13,13 +13,24 @@ const LEVELS = [
   { value: "senior", label: "高" },
 ] as const;
 
+type Domain = { id: string; name: string };
 type Job = { id: string; name: string };
 
 export function Workbench() {
   const canvas = useRef<HTMLDivElement>(null);
+  const [domains, setDomains] = useState<Domain[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [domain, setDomain] = useState("");
   const [q, setQ] = useState("");
+
+  useEffect(() => {
+    fetch(`${API}/meta`)
+      .then((r) => r.json())
+      .then((body: { domains?: Domain[] }) =>
+        setDomains(Array.isArray(body.domains) ? body.domains : []),
+      )
+      .catch(() => setDomains([]));
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -39,8 +50,10 @@ export function Workbench() {
       container: el,
       autoFit: "view",
       data: { nodes: [], edges: [] },
+      behaviors: ["drag-canvas", "zoom-canvas"],
     });
     graph.render();
+    el.focus();
     const onResize = () => {
       graph.resize();
       graph.fitView();
@@ -59,10 +72,11 @@ export function Workbench() {
           领域
           <select aria-label="领域" value={domain} onChange={(e) => setDomain(e.target.value)}>
             <option value="">全部</option>
-            <option value="ai">人工智能</option>
-            <option value="data">大数据</option>
-            <option value="system">智能系统</option>
-            <option value="iot">物联网</option>
+            {domains.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.name}
+              </option>
+            ))}
           </select>
         </label>
         <label>
@@ -90,7 +104,19 @@ export function Workbench() {
           搜索岗位
           <input type="search" aria-label="搜索岗位" value={q} onChange={(e) => setQ(e.target.value)} />
         </label>
-        <p className="empty">{jobs.length === 0 ? "未接数据" : null}</p>
+        {jobs.length === 0 ? (
+          <p className="empty">未接数据</p>
+        ) : (
+          <ul className="job-list">
+            {jobs.map((job) => (
+              <li key={job.id}>
+                <button type="button" className="job-item">
+                  {job.name}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </aside>
       <section className="graph-stage">
         <p className="graph-hint">
@@ -101,7 +127,7 @@ export function Workbench() {
           ref={canvas}
           tabIndex={0}
           role="application"
-          aria-label="岗位切片画布。方向键平移，加减号缩放，Home 适配窗口，Esc 取消选中。"
+          aria-label="岗位切片画布"
         />
       </section>
       <aside className="graph-detail">

@@ -58,21 +58,23 @@ def list_domains():
     return [{"id": d["id"], "name": found[d["id"]]} for d in DOMAINS if d["id"] in found]
 
 
+_PUBLIC_JOB = """
+MATCH (j:Job)-[:IN_DOMAIN]->(d:Domain)
+WHERE (j.status IS NULL OR j.status <> 'candidate')
+  AND ($domain IS NULL OR d.id = $domain)
+  AND ($status IS NULL OR j.status = $status)
+  AND ($q IS NULL OR toLower(j.name) CONTAINS toLower($q))
+RETURN j.id AS id, j.name AS name, j.status AS status, d.id AS domain,
+       j.code AS code, j.esco_id AS esco_id, j.onet_id AS onet_id
+"""
+
+
 def list_jobs(*, domain: str | None, status: str | None, q: str | None) -> list[dict]:
     # ponytail: no admin auth yet, candidate lists stay empty until the review gate exists
     if status == "candidate":
         return []
-    cypher = """
-    MATCH (j:Job)-[:IN_DOMAIN]->(d:Domain)
-    WHERE (j.status IS NULL OR j.status <> 'candidate')
-      AND ($domain IS NULL OR d.id = $domain)
-      AND ($status IS NULL OR j.status = $status)
-      AND ($q IS NULL OR toLower(j.name) CONTAINS toLower($q))
-    RETURN j.id AS id, j.name AS name, j.status AS status, d.id AS domain,
-           j.code AS code, j.esco_id AS esco_id, j.onet_id AS onet_id
-    """
     with _driver.session() as session:
-        return [dict(row) for row in session.run(cypher, domain=domain, status=status, q=q)]
+        return [dict(row) for row in session.run(_PUBLIC_JOB, domain=domain, status=status, q=q)]
 
 
 def get_public_job(job_id: str) -> dict | None:
