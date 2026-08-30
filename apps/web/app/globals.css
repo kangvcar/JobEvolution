@@ -378,6 +378,18 @@ a {
   border: 1px solid transparent;
 }
 
+.admin-page { max-width: 58rem; }
+.admin-gate { width: min(28rem, 100%); }
+.admin-gate form { display: grid; gap: var(--space-xs); margin-top: var(--space-lg); }
+.admin-gate input { font: inherit; padding: var(--space-xs); border: 1px solid var(--color-rule); background: var(--color-paper); color: var(--color-ink); }
+.row { display: flex; gap: var(--space-sm); align-items: center; margin-top: var(--space-sm); }
+.admin-error { color: var(--color-danger) !important; margin-top: var(--space-sm); }
+.admin-queue { list-style: none; margin: var(--space-lg) 0 0; padding: 0; border-top: 1px solid var(--color-rule); }
+.admin-queue li { padding: var(--space-md) 0; border-bottom: 1px solid var(--color-rule); }
+.admin-event-head { display: flex; justify-content: space-between; gap: var(--space-md); }
+.admin-event-head time { color: var(--color-muted); font-family: var(--font-plex-mono), var(--font-mono); font-size: var(--text-xs); }
+.admin-event-subject { margin: var(--space-2xs) 0 0 !important; color: var(--color-ink) !important; }
+
 .primary {
   background: var(--color-accent);
   color: var(--color-accent-ink);
