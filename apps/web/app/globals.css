@@ -373,6 +373,31 @@ a {
   border-color: var(--color-ink);
 }
 
+.mini-graph {
+  display: grid;
+  gap: var(--space-xs);
+  padding: var(--space-sm);
+  border: 1px solid var(--color-rule);
+  max-height: 16rem;
+  overflow: auto;
+  font-size: var(--text-sm);
+}
+
+.mini-node,
+.mini-skill {
+  display: inline-block;
+  border: 1px solid var(--color-rule);
+  padding: 0.15rem 0.4rem;
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.mini-job { background: var(--color-ink); color: var(--color-paper); }
+.mini-category { display: grid; grid-template-columns: 7rem 1fr; gap: var(--space-xs); align-items: start; }
+.mini-skills { display: flex; flex-wrap: wrap; gap: var(--space-2xs); }
+.mini-skill[data-delta="1"] { border-color: var(--color-fall); }
+.graph-detail li[data-selected="1"] { font-weight: 600; color: var(--color-accent); }
+
 .ledger {
   width: 100%;
   border-collapse: collapse;

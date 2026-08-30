@@ -154,12 +154,24 @@ def diagnose(body: DiagnoseBody):
     for sid in job.get("watching") or []:
         skill = index.get(sid) or {}
         watching.append({"skill_id": sid, "name": skill.get("name") or sid})
+    categories = {}
+    for edge in requires:
+        if edge.get("category_id") and edge.get("category"):
+            categories[edge["category_id"]] = {
+                "id": edge["category_id"],
+                "name": edge["category"],
+            }
     return wrap_report(
         job=job,
         requires=requires,
         resume=resume,
         neighbor=neighbor,
         watching=watching,
+        slice_data={
+            "categories": list(categories.values()),
+            "requires": requires,
+            "period_delta": graph.period_delta(body.job_id),
+        },
     )
 
 

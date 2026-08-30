@@ -25,6 +25,7 @@ type Requirement = {
   kind?: string;
   proficiency?: string;
   levels?: string[];
+  sources?: string[];
 };
 type JobDetail = Job & { sources?: string[] };
 type Slice = {
@@ -40,6 +41,7 @@ export function Workbench() {
   const canvas = useRef<HTMLDivElement>(null);
   const params = useSearchParams();
   const wanted = params.get("job") || params.get("job_id") || "";
+  const wantedSkill = params.get("skill_id") || "";
   const [domains, setDomains] = useState<Domain[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [domain, setDomain] = useState("");
@@ -47,6 +49,7 @@ export function Workbench() {
   const [level, setLevel] = useState("");
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState(wanted);
+  const [selectedSkill, setSelectedSkill] = useState(wantedSkill);
   const [detail, setDetail] = useState<JobDetail | null>(null);
   const [slice, setSlice] = useState<Slice | null>(null);
   const [evidenceTarget, setEvidenceTarget] = useState<EvidenceTarget | null>(null);
@@ -100,7 +103,8 @@ export function Workbench() {
 
   useEffect(() => {
     if (wanted) setSelected(wanted);
-  }, [wanted]);
+    if (wantedSkill) setSelectedSkill(wantedSkill);
+  }, [wanted, wantedSkill]);
 
   useEffect(() => {
     if (jobs[0] && !jobs.some((job) => job.id === selected)) setSelected(jobs[0].id);
@@ -170,7 +174,7 @@ export function Workbench() {
         const isExpired = expired.has(skill.skill_id);
         return {
           id: `skill-${skill.skill_id}`,
-          data: { label: `${isDelta ? "+" : ""}${skill.name}`, k: "skill", delta: isDelta ? "added" : isExpired ? "expired" : "" },
+          data: { label: `${isDelta ? "+" : ""}${skill.name}`, k: "skill", selected: skill.skill_id === selectedSkill, delta: isDelta ? "added" : isExpired ? "expired" : "" },
         };
       }),
     ];
@@ -189,7 +193,7 @@ export function Workbench() {
           size: (d: { data?: { k?: string } }) => (d.data?.k === "job" ? [104, 34] : d.data?.k === "category" ? [108, 30] : [120, 28]),
           radius: 0,
           fill: (d: { data?: { k?: string } }) => (d.data?.k === "job" ? cInk : d.data?.k === "category" ? cPaper2 : cPaper),
-          stroke: (d: { data?: { k?: string; delta?: string } }) => d.data?.delta === "added" ? cFall : d.data?.delta === "expired" ? cRise : d.data?.k === "job" ? cInk : cRule,
+          stroke: (d: { data?: { k?: string; delta?: string; selected?: boolean } }) => d.data?.selected ? cInk : d.data?.delta === "added" ? cFall : d.data?.delta === "expired" ? cRise : d.data?.k === "job" ? cInk : cRule,
           lineWidth: (d: { data?: { k?: string; delta?: string } }) => d.data?.delta ? 2 : 1,
           labelText: (d: { data?: { label?: string } }) => d.data?.label || "",
           labelFill: (d: { data?: { k?: string } }) => d.data?.k === "job" ? cPaper : cInk,
@@ -212,6 +216,7 @@ export function Workbench() {
       const skill = (slice?.requires || []).find((item) => item.skill_id === skillId) || expired;
       if (skill) {
         opener.current = el;
+        setSelectedSkill(skillId);
         setEvidenceTarget({ ...skill, expired: Boolean(expired) });
       }
     });
@@ -225,7 +230,7 @@ export function Workbench() {
       window.removeEventListener("resize", onResize);
       graph.destroy();
     };
-  }, [current?.name, detail?.name, slice]);
+  }, [current?.name, detail?.name, slice, selectedSkill]);
 
   return (
     <>
@@ -310,13 +315,19 @@ export function Workbench() {
                 <h3>{sliceCategory.name}</h3>
                 <ul>
                   {visibleRequires.filter((skill) => skill.category === sliceCategory.name).map((skill) => (
-                    <li key={skill.skill_id}><button type="button" className="skill-link" onClick={(event) => { opener.current = event.currentTarget; setEvidenceTarget(skill); }}>{skill.name}</button></li>
+                    <li key={skill.skill_id} data-selected={skill.skill_id === selectedSkill ? "1" : undefined}>
+                      <button type="button" className="skill-link" onClick={(event) => { opener.current = event.currentTarget; setSelectedSkill(skill.skill_id); setEvidenceTarget(skill); }}>{skill.name}</button>
+                    </li>
                   ))}
                 </ul>
               </section>
             ))}
             {!(slice?.categories?.length) && (
-              <ul>{visibleRequires.map((skill) => <li key={skill.skill_id}><button type="button" className="skill-link" onClick={(event) => { opener.current = event.currentTarget; setEvidenceTarget(skill); }}>{skill.name}</button></li>)}</ul>
+              <ul>{visibleRequires.map((skill) => (
+                <li key={skill.skill_id} data-selected={skill.skill_id === selectedSkill ? "1" : undefined}>
+                  <button type="button" className="skill-link" onClick={(event) => { opener.current = event.currentTarget; setSelectedSkill(skill.skill_id); setEvidenceTarget(skill); }}>{skill.name}</button>
+                </li>
+              ))}</ul>
             )}
             {slice && visibleRequires.length === 0 && <p className="empty">当前筛选没有技能点，请换个筛选</p>}
             <Link className="primary" href={`/diagnose?job_id=${encodeURIComponent(detail.id)}`}>
@@ -335,9 +346,15 @@ export function Workbench() {
           <header><div><p className="mono">要求边证据</p><h2 id="evidence-title">{evidenceTarget.name}</h2></div><button type="button" onClick={closeEvidence} aria-label="关闭证据抽屉">关闭</button></header>
           {evidenceTarget.expired && <p className="evidence-status">本周期失效</p>}
           <ul className="evidence-list">
-            {(slice?.evidence || []).map((item) => <li key={item.id}><strong>{item.company || item.id}</strong><span>{item.id} · {item.source || "未知来源"} · {(item.observed_at || "").slice(0, 10)}</span></li>)}
+            {(slice?.evidence || []).filter((item) => {
+              const ids = evidenceTarget.sources || [];
+              return !ids.length || ids.includes(item.id);
+            }).map((item) => <li key={item.id}><strong>{item.company || item.id}</strong><span>{item.id} · {item.source || "未知来源"} · {(item.observed_at || "").slice(0, 10)}</span></li>)}
           </ul>
-          {!(slice?.evidence?.length) && <p className="empty">暂无证据记录</p>}
+          {!(slice?.evidence || []).filter((item) => {
+            const ids = evidenceTarget.sources || [];
+            return !ids.length || ids.includes(item.id);
+          }).length && <p className="empty">暂无证据记录</p>}
         </aside>
       </>
     )}
