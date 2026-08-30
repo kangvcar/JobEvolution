@@ -9,6 +9,7 @@ type QueueEvent = {
   kind: string;
   at: string;
   confidence: number;
+  review: "pending" | "auto_passed";
   payload?: { job_name?: string; skill_name?: string; excerpt?: string; error?: string };
 };
 
@@ -19,22 +20,53 @@ function kindLabel(kind: string) {
   return kind;
 }
 
+function reviewLabel(review: QueueEvent["review"]) {
+  return review === "auto_passed" ? "自动通过" : "待审";
+}
+
 export default function AdminPage() {
   const [password, setPassword] = useState("");
   const [queue, setQueue] = useState<QueueEvent[] | null>(null);
+  const [passthrough, setPassthrough] = useState(false);
   const [error, setError] = useState("");
+
+  async function loadQueue() {
+    const response = await fetch(`${API}/admin/queue`, {
+      headers: { "X-Admin-Password": password },
+    });
+    if (!response.ok) throw new Error("口令错误");
+    setQueue(await response.json());
+  }
 
   async function enter(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
-    const response = await fetch(`${API}/admin/queue`, {
-      headers: { "X-Admin-Password": password },
-    });
-    if (!response.ok) {
+    try {
+      const response = await fetch(`${API}/admin/passthrough`, {
+        headers: { "X-Admin-Password": password },
+      });
+      if (!response.ok) throw new Error("口令错误");
+      setPassthrough((await response.json()).enabled);
+      await loadQueue();
+    } catch {
       setError("口令错误");
-      return;
     }
-    setQueue(await response.json());
+  }
+
+  async function togglePassthrough() {
+    setError("");
+    try {
+      const response = await fetch(`${API}/admin/passthrough`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "X-Admin-Password": password },
+        body: JSON.stringify({ enabled: !passthrough }),
+      });
+      if (!response.ok) throw new Error("开关更新失败");
+      setPassthrough((await response.json()).enabled);
+      await loadQueue();
+    } catch {
+      setError("开关更新失败");
+    }
   }
 
   if (queue === null) {
@@ -59,7 +91,12 @@ export default function AdminPage() {
 
   return (
     <main id="main" className="page admin-page">
-      <h1>待审队列</h1>
+      <div className="admin-event-head">
+        <h1>待审队列</h1>
+        <button className="ghost" type="button" aria-pressed={passthrough} onClick={togglePassthrough}>
+          {passthrough ? "直通开启" : "直通关闭"}
+        </button>
+      </div>
       <p className="hint">口令通过后显示尚未入谱的演化事件。</p>
       {queue.length === 0 ? <p className="empty">暂无待审演化事件</p> : null}
       <ul className="admin-queue" aria-label="待审演化事件">
@@ -69,7 +106,7 @@ export default function AdminPage() {
           const summary = payload.excerpt || payload.error || "暂无摘要";
           return (
             <li key={item.id}>
-              <div className="admin-event-head"><strong>{kindLabel(item.kind)}</strong><time dateTime={item.at}>{item.at.slice(0, 10)}</time></div>
+              <div className="admin-event-head"><strong>{kindLabel(item.kind)} · {reviewLabel(item.review)}</strong><time dateTime={item.at}>{item.at.slice(0, 10)}</time></div>
               <p className="admin-event-subject">{subject}</p>
               <p className="hint">{summary}</p>
             </li>

@@ -211,7 +211,7 @@ def admin_queue(
     x_admin_password: str | None = Header(default=None, alias="X-Admin-Password"),
 ):
     _require_admin(request, x_admin_password)
-    return graph.list_pending_events()
+    return graph.list_pending_events(include_auto_passed=passthrough_enabled())
 
 
 @app.post("/admin/queue/{event_id}/approve")
