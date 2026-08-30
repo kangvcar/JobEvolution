@@ -1,0 +1,59 @@
+[
+  {
+    "src": "智联招聘数据库2022.csv",
+    "dst": "智联招聘数据库2022.csv",
+    "in": 3871204,
+    "out": 11717,
+    "keep_pct": 0.303,
+    "reasons": {
+      "title": 10542,
+      "domain": 1175
+    },
+    "bytes": 13567803,
+    "out_after_ops_drop": 11652,
+    "dropped_ops": 65
+  },
+  {
+    "src": "智联招聘数据库2023.csv",
+    "dst": "智联招聘数据库2023.csv",
+    "in": 1976995,
+    "out": 5123,
+    "keep_pct": 0.259,
+    "reasons": {
+      "title": 4639,
+      "domain": 482,
+      "desc": 2
+    },
+    "bytes": 6041264,
+    "out_after_ops_drop": 5096,
+    "dropped_ops": 27
+  },
+  {
+    "src": "智联招聘数据库2024.csv",
+    "dst": "智联招聘数据库2024.csv",
+    "in": 2041746,
+    "out": 7456,
+    "keep_pct": 0.365,
+    "reasons": {
+      "title": 6366,
+      "domain": 1006,
+      "desc": 84
+    },
+    "bytes": 8836286,
+    "out_after_ops_drop": 7380,
+    "dropped_ops": 76
+  },
+  {
+    "src": "智联招聘数据库2025.csv",
+    "dst": "智联招聘数据库2025.csv",
+    "in": 95484,
+    "out": 1,
+    "keep_pct": 0.001,
+    "reasons": {
+      "domain": 1
+    },
+    "bytes": 1097,
+    "out_after_ops_drop": 1,
+    "dropped_ops": 0
+  }
+]

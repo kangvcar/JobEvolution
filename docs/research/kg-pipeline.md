@@ -1,5 +1,6 @@
 # 调研:LLM 知识图谱构建管线与图存储选型
 
+> **档案。** 定案以 `docs/tech.md` 为准：自研短管线 + Neo4j，不上 Graphiti 整包。边不能指向边。
 > 对应工单:[#3](https://github.com/kangvcar/JobEvolution/issues/3) · 调研日期:2026-08-28
 >
 > 约束回顾:LLM 使用 DeepSeek 官方 API(OpenAI 兼容端点);后端 Python + FastAPI;单机 docker-compose 部署;图规模约千级岗位 × 万级技能点(节点总量数万、边十万级以内);需支撑「演化事件」(能力项新增/删除/修改)按时间查询与回放。

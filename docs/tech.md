@@ -4,7 +4,7 @@
 
 术语只准用 `CONTEXT.md` 里的词。选型理由在 `docs/research/`，本文只写定案。
 
-一期不做代码之外的事：不自建学习内容库，不把资源节点写进谱，不上 Kafka，不把采集流墙和演化时间轴做成前端交互。
+一期不做代码之外的事：不自建学习内容库，不把资源节点写进谱，不上 Kafka，不把采集流墙和演化时间轴做成前端交互。切片差分要做，对照链接要做。
 
 ## 运行时
 
@@ -24,7 +24,7 @@ apps/api/                 FastAPI
   app/main.py
   app/llm/client.py       DeepSeek chat，唯一出口
   app/llm/embed.py        bge-m3
-  app/collectors/         ATS / NCSS / 天池 / Playwright
+  app/collectors/         data/本地表 / ATS / NCSS / Playwright
   app/pipeline/           抽取、消解、入谱、发现、审核闸
   app/matching/           对齐、匹配分、缺口、学习路径
   app/graph/              Cypher 封装
@@ -40,7 +40,7 @@ docker-compose.yml
 ## 总体架构
 
 ```
-ATS / NCSS / 天池 / Playwright
+data/本地表 / ATS / NCSS / Playwright
         │  fingerprint 幂等
         ▼
   data/jd/{id}.json  +  Redis SET ingest:fp
@@ -72,11 +72,11 @@ Neo4j Community，官方镜像，堆+页缓存合计约 1–2GB。社区版单�
 | 标签 | 关键属性 |
 |---|---|
 | `Domain` | `id` 固定四值：`ai` / `data` / `system` / `iot`，`name` |
-| `Job` | `id`，`name`，大典编码，`esco_id`，`onet_id`，`status`（candidate / emerging / formed），`level_hint` 不分裂节点 |
-| `SkillCategory` | `id`，`name`。只导航，不对账 |
+| `Job` | `id`，`name`，大典编码，`esco_id`，`onet_id`（三码可空），`status`（candidate / emerging / formed），`level_hint` 不分裂节点 |
+| `SkillCategory` | `id`，`name`。只导航，不对账。一期固定桶：语言 / 框架 / 平台 / 工程 / 领域知识 |
 | `Skill` | `id`，`name`，同义词列表，`embedding_ref` |
-| `Evidence` | `id`，`path`（`data/jd/...`），`source`，`company`，`observed_at`，`simhash` |
-| `EvolutionEvent` | `id`，`kind`，`at`，`confidence`，`review`（pending / approved / auto_passed / rejected），`payload` JSON |
+| `Evidence` | `id`，`path`（`data/jd/...`），`source`（渠道：local / ats / ncss / tianchi / playwright），`company`（规范化公司名，独立源计票用这个），`observed_at`，`simhash` |
+| `EvolutionEvent` | `id`，`kind`，`at`，`confidence`，`review`（pending / approved / auto_passed / rejected），`payload` JSON（含 `skill_id`、旧/新边字段） |
 
 预留标签 `Resource`，一期禁止 `CREATE`。学习资源只进 Redis `resource:{skill_id}`。
 
@@ -96,10 +96,11 @@ Neo4j Community，官方镜像，堆+页缓存合计约 1–2GB。社区版单�
     layer: "high"|"mid"|"low",
     sources: [evidence_id]
 }]->(:Skill)
-(:EvolutionEvent)-[:AFFECTS]->(Job|REQUIRES)
-(:Evidence)-[:SUPPORTS]->(REQUIRES)
+(:EvolutionEvent)-[:AFFECTS]->(:Job)
 (:Job)-[:ALIAS_OF]->(:Job)              // 簇判别为别名时
 ```
+
+Community 版关系不能指向关系。证据只当节点，id 写在 `REQUIRES.sources` 和 `EvolutionEvent.payload`。不要建 `SUPPORTS` / `AFFECTS` 指向 `REQUIRES`。
 
 旧要求边写 `valid_to`，不删。某时点切片：
 
@@ -111,15 +112,15 @@ RETURN j, r, s
 
 `EvolutionEvent.at` 建索引。总览流水按 `at` 倒序取边级/节点级事件。时间轴回放等于按序重演这些事件，产品一期不把回放做成页面控件。
 
-冷启动：ESCO 关系填 schema 与岗位—技能骨架；O\*NET Technology Skills 填技能点种子（CC BY 4.0，署名）；大典 2022 填岗位中文名与编码。导入脚本只跑一次，写在 `apps/api/app/pipeline/bootstrap.py`。
+冷启动不手录图谱。代码里只写死四个 `Domain`，以及 [`product.md`](product.md) 的 17 个规范岗位名当对齐靶子。`Job` / `Skill` / `REQUIRES` / 岗位状态由管线从 JD 写入。大典编码、`esco_id`、`onet_id` 可空，ESCO / O\*NET / 大典只作对照。公司名用规则规范化（去「有限公司 / 股份 / 括号地名」），计独立源只认 `Evidence.company`；不要先手写全量别名表。
 
 ## 数据采集
 
 分层：`source` 产出原始记录，`controller` 去重与落盘，`sink` 写 Redis Stream。参考结构见 [`research/jd-collection.md`](research/jd-collection.md)，不要去 pip 装那些已失效的 Scrapy 站群。
 
-**冷启动。** 天池「智联招聘人岗智能匹配」导入 `data/jd/`，先把抽取到图谱跑通。
+**冷启动。** 仓库 `data/` 下所有本地 JD 表（CSV / 日后新丢进来的表都算），不限定智联或某一个文件名。各表字段名不同，`source` 先映射到统一记录：公司、岗位名、正文、发布日、渠道。缺正文的行丢掉。标题用领域词粗滤四领域（人工智能优先），去近重后写入 `data/jd/`，再跑抽取。不要手写赛题 JD，不要先灌 `bootstrap.py`。天池人岗匹配只补条数或字段缺口。
 
-**主力源。** Greenhouse / Lever / Ashby 公开 JSON；NCSS 公开列表。低频、字段稳。
+**主力增量。** Greenhouse / Lever / Ashby 公开 JSON；NCSS 公开列表。低频、字段稳。不挡冷启动。
 
 **增量源。** BOSS / 猎聘 / 智联走 Playwright 已登录会话 + `wait_for_response` 拦 JSON（BOSS：`joblist.json`）。`headless=False` 或持久化 user data dir。主账号会封，文档里写清用小号。合规用户已明示忽略。
 
@@ -133,34 +134,34 @@ RETURN j, r, s
 
 1. **切段。** 职责、要求、福利、公司介绍分开。技能只允许从职责/要求段出。福利和介绍里出现的词不算入池。
 2. **抽取。** DeepSeek JSON，Pydantic 校验。一条 JD 抽出：岗位名、领域、技能点列表（各带必备/加分、熟练级、置信 0–1、原文摘录）。校验失败整单重试一次，再失败进待审并标抽取失败。
-3. **消解。** 技能名先走同义词表（图谱 `Skill` 上的列表）。未命中再 bge 余弦，阈值 0.85，与匹配侧同一函数 `align_skill(text) -> Skill | None`。岗位消解同理，阈值可单独 0.80。对不上的技能点进待审，不让 LLM 逐对决定。
-4. **入池。** 该技能点在岗位去重 JD 簇里的簇内覆盖率 ≥30% 才写 `REQUIRES`。低于此记观测中：可挂在岗位节点属性 `watching[]` 或单独日志，不写要求边，诊断报告里写明不是缺口。
+3. **消解。** 图谱最初没有技能词表。抽出的技能字符串用 bge 聚类（阈值 0.85），簇心写成 `Skill`，簇内原文进同义词。之后 `align_skill(text) -> Skill | None` 先查同义词再余弦，与匹配侧同一函数。岗位名对齐 17 个靶子，阈值可单独 0.80；对不上进发现簇。对不上任何 `Skill` 的新串进待审，不让 LLM 逐对决定。
+4. **入池。** 该技能点在岗位去重 JD 簇里的簇内覆盖率 ≥30% 才写 `REQUIRES`。低于此记观测中：只挂在岗位节点 `watching[]`，不写要求边，诊断报告里写明不是缺口。
 5. **必备/加分。** 覆盖率达标后，抽取出的 `kind` 与簇内多数票合并；平票标中置信进待审。
-6. **置信层。** 高：≥3 独立源且抽取置信 ≥0.8，默认可直通。中：1–2 源或置信 0.5–0.8，待审；直通开启则入谱，边上 `layer=mid`，UI 标「待更多证据」。低：单源且置信 <0.5，或无证据链，永不自动入谱。直通开关跳过的是人批，不是证据底线。
-7. **合并。** 新快照只生成增量子图。与主图比较产出演化事件：要求边新增 / 移除（写 `valid_to`）/ 修改（旧边失效 + 新边）。既有岗「显著变化」：覆盖率从 <15% 跨过 30%，或连续两个采集周期方向一致。删除数据源时只重建受影响岗位子图。
-8. **待审。** 新岗位首次发布、核心必备新增、低置信抽取、消解失败，都进同一队列。管理员批/改/驳。直通默认关，开了只对中高置信记 `auto_passed`。队列实体就是 `EvolutionEvent` 且 `review=pending`。
+6. **置信层。** 按优先级：无证据链 → 低；≥3 独立源且抽取置信 ≥0.8 → 高；抽取置信 ≥0.5 → 中；其余 → 低。高：直通开着时可自动过，关着也进待审。中待审，直通开启则入谱，边上 `layer=mid`，UI 标「待更多证据」。低永不自动入谱，管理员仍可批。直通开关跳过的是人批，不是证据底线。
+7. **合并。** 新快照只生成增量子图。与主图比较产出演化事件：要求边新增 / 移除（写 `valid_to`）/ 修改（旧边失效 + 新边）。既有岗「显著变化」：覆盖率从 <15% 跨过 30%。按 `observed_at` 切年或切周期，不要手写演化事件。删除数据源时只重建受影响岗位子图。技能类目：入池后的技能点归进固定桶，不手录类目树。
+8. **待审。** 新岗位首次发布、核心必备新增、低置信抽取、消解失败，都进同一队列。管理员批/改/驳。直通默认关，开了只对中高置信记 `auto_passed`。低置信批了记 `approved`，不记 `auto_passed`。队列实体就是 `EvolutionEvent` 且 `review=pending`。
 
-LLM 输出必须带摘录。写边时 `Evidence.SUPPORTS` 指向这段原文。没有摘录的边视为无证据链，层=低。
+LLM 输出必须带摘录。写边时把摘录对应的 `Evidence.id` 放进 `REQUIRES.sources`。没有摘录的边视为无证据链，层=低。
 
 ## 新岗位发现
 
 与能力更新同一管线的另一个出口，闸相同。
 
-1. 对近期未对齐到既有岗位的 JD，用「标题 + 已抽出技能点名」拼字符串做 bge 嵌入，聚类（HDBSCAN 或 Agglomerative，最小簇 3 条）。
-2. DeepSeek 只打簇代表，三分类：新岗位 / 既有别名 / 噪声。别名写 `ALIAS_OF` 并入已有岗。噪声丢弃。新词或技能爆发只加簇置信，不当主判据。
+1. 对近期未对齐到既有岗位的 JD，用「标题 + 已抽出技能点名」拼字符串做 bge 嵌入，聚类。一期 sklearn Agglomerative（最小簇 3 条）。不要为演示装 HDBSCAN，也不要用种子跳过聚类。
+2. DeepSeek 只打簇代表，三分类：新岗位 / 既有别名 / 噪声。别名写 `ALIAS_OF` 并入已有岗。源节点可留着挂边，不用 `candidate` 冒充漏斗。噪声丢弃。新词或技能爆发只加簇置信，不当主判据。
 3. 状态机，阈值做成常量（`pipeline/constants.py`），改一处即可：
-   - 候选：仅待审可见，`Job.status=candidate`
+   - 候选：未入谱，`Job.status=candidate`。发现页可展示；`GET /jobs`、`GET /jobs/{id}`、`GET /graph/jobs/{id}`、`POST /diagnose` 无口令时对 candidate 404 / 400
    - 萌芽：≥3 独立源、90 天窗、LLM 判为新岗位。入谱，标新兴
-   - 成型：≥10 独立源，或持续 ≥6 个月，且岗位定义曾 `approved` 或 `auto_passed`
-4. 独立源 = 去重后的公司。simhash 近重的正文不计票。
+   - 成型：(`≥10` 独立源 或 持续 `≥6` 个月) 并且 岗位定义曾 `approved` 或 `auto_passed`
+4. 独立源 = 规范化后的 `Evidence.company`。simhash 近重的正文不计票。渠道名（Greenhouse、NCSS）不计票。
 
-首批覆盖哪些岗由 [决策:首批岗位覆盖清单](https://github.com/kangvcar/JobEvolution/issues/18) 定。技术上四领域都有 `Domain` 节点；种子数据和演示深度优先 `ai`。
+首批覆盖名单见 [`product.md`](product.md)。技术上四领域都有 `Domain` 节点；演示深度优先 `ai`。萌芽/成型一律由独立源计票，缺证据的岗停在候选，不要手补 `status`。赛题那一对须跑管线：Agent 工程师从 ≥3 独立源 JD 入萌芽；大模型应用工程师从旧年快照 + 新年 JD 写出能力变更（覆盖率跨过 30% 的技能入池，不再出现的写 `valid_to`）；「LLM 业务工程师」由簇判别写 `ALIAS_OF`。
 
 ## 匹配与差距分析
 
 ### 简历
 
-PDF：`pdfplumber` 取文本层。`.docx`：`python-docx`。`.doc`：LibreOffice 转 docx。文本层为空（扫描件）直接 400，提示不支持。不要上 pyresparser。
+PDF：`pdfplumber` 取文本层。`.docx`：`python-docx`。`.doc` 和扫描件直接 400，提示不支持。不要上 LibreOffice，不要上 pyresparser。
 
 DeepSeek JSON 拆两个子任务并行：基本信息+教育+经历；技能点列表（引导词表用当前图谱技能名）。输出过 `align_skill`。会话结果进 Redis，TTL 1 小时，key `session:{id}`。字段级 F1 另报，不进三项准确率。
 
@@ -176,15 +177,17 @@ DeepSeek JSON 拆两个子任务并行：基本信息+教育+经历；技能点�
 score = 100 * (req_cover + 0.3 * bonus_cover) / (req_full + 0.3 * bonus_full)
 ```
 
-必备未覆盖记 0；熟练级低于岗位要求记 0.5（半档，进缺口集）。加分缺失不伤必备。简历没标熟练级则只比有无。经验年限、学历旁注，不进分。
+分母为 0 则 `score = 0`。边上的 `weight` 不进分，当 1。必备未覆盖记 0；简历标了熟练级且低于岗位要求记 0.5（半档，进缺口集）。加分缺失不伤必备。简历没标熟练级则只比有无，不算半档。经验年限、学历旁注，不进分。
 
-档位切分写在 `matching/bands.py`，与原型同一组阈值（匹配分先除以 100 再比）：≥0.85 高度匹配，≥0.60 基本匹配，≥0.35 有明显差距，其余不匹配。改文案或阈值只改这一处。
+档位切分写在 `matching/bands.py`，与原型同一组阈值（匹配分先除以 100 再比）：≥0.85 高度匹配，≥0.60 基本匹配，≥0.35 有明显差距，其余不匹配。改文案或阈值只改这一处。换档条件也写在这里：`shift_set(job, skills)` 对缺口与半档做最小补集，使档位升一档。学习路径读这个集合。
 
 缺口集 = 目标岗必备技能点里，对齐后未覆盖或半档不足的集合。三项准确率的匹配项拿缺口集 F1，喂金标简历技能 × 金标岗位要求，不喂解析输出。口径见 `CONTEXT.md`。
 
 ### 学习路径
 
-取缺口与半档前若干项（默认 5）。每项调 DeepSeek 现查一条可打开的资源（官方文档或课程页），缓存 Redis 7 天。抽检：每个缺口至少一条建议。不定准确率。
+按换档条件排序，默认最多 5 步。先列入能单独换档的技能点，再列入成对才能换档的，其余缺口与半档补齐。每步：`skill_id`、职责段摘录、一条 URL、`why`（换档 / 半档 / 缺口）。资源现查 DeepSeek，缓存 Redis 7 天，key `resource:{skill_id}`。赛题那一对可把课表 URL 预置进同一缓存，禁止 `CREATE` `Resource` 节点。抽检换档条件上的技能点是否都有一条可打开的链接。不定准确率。
+
+对照链接：打开 `/diagnose?session_id=&job_id=` 且 `session:{id}` 未过期时，前端直接 `POST /diagnose`。过期回 idle。不另做历史表。
 
 ## API
 
@@ -192,22 +195,23 @@ JSON，UTF-8。错误体 `{ "error": str, "detail": str | null }`。管理路由
 
 | 方法 | 路径 | 用途 |
 |---|---|---|
-| GET | `/meta` | 四领域、直通开关（求职者只读 false/true）、演示统计 |
-| GET | `/jobs` | 列表。query：`domain`，`status`，`q` |
-| GET | `/jobs/{id}` | 定义、独立源数、技能点表、证据摘要 |
-| GET | `/graph/jobs/{id}` | 当前岗切片：类目、技能点、`REQUIRES`（按 `levels` 过滤） |
+| GET | `/meta` | 四领域、演示统计。直通开关只在管理路由返回 |
+| GET | `/jobs` | 列表。query：`domain`，`status`，`q`。无口令丢掉 `candidate`；`status=candidate` 无口令返回空列表 |
+| GET | `/jobs/{id}` | 定义、独立源数、技能点表、证据摘要。candidate 无口令 404 |
+| GET | `/graph/jobs/{id}` | 当前岗切片：类目、技能点、`REQUIRES`（按 `levels` 过滤）、`period_delta`（`added` / `promoted` / `expired` + `event_id`）。expired 是本周期已写 `valid_to` 的边，给切片差分挂「本周期失效」。candidate 404 |
 | POST | `/sessions` | multipart 简历 → `{session_id, skills, preview_text}` |
-| POST | `/diagnose` | `{session_id, job_id, levels?}` → 对照报告 |
-| GET | `/discover` | 候选 / 萌芽 / 成型看板 |
-| GET | `/discover/{id}` | 卷宗：簇、独立源、证据、事件 |
-| GET | `/feed` | 总览用：萌芽故事、更新故事、本周采集计数、热度、流水 |
+| POST | `/diagnose` | `{session_id, job_id, levels?}` → 对照报告。含换档条件与按此排序的学习路径、邻近岗档位。`job_id` 为 candidate 时 400。前端可用 query `session_id` + `job_id` 自动再 POST |
+| GET | `/discover` | 候选 / 萌芽 / 成型看板。有 `ALIAS_OF` 出边的岗不进候选列 |
+| GET | `/discover/{id}` | 卷宗：簇、独立源、证据、事件。候选也可以 |
+| GET | `/feed` | 故事、萌芽/谱内计数、管线、热度、流水。候选簇不计别名。总览第一屏只用故事和计数；管线/热度/流水给发现页和总览 `<details>` |
 | GET | `/admin/queue` | 待审 `EvolutionEvent` |
 | POST | `/admin/queue/{id}/approve` | body 可带改写后的 payload |
 | POST | `/admin/queue/{id}/reject` | |
+| GET | `/admin/passthrough` | `{enabled: bool}`。管理页画 `aria-pressed` |
 | PUT | `/admin/passthrough` | `{enabled: bool}` |
 | GET | `/events/stream` | SSE，管理可选。`Last-Event-ID` 从 Redis Stream 续 |
 
-`/diagnose` 同步返回完整报告，前端 run 态自己播等待动画。报告字段与产品篇四组一一对应：判断、定位、行动、解释。匹配分可放在 payload 里给档位函数用，UI 不直接渲染该数字。
+`/diagnose` 同步返回完整报告，前端 run 态自己播等待动画。报告字段与产品篇四组一一对应：判断、定位、行动、解释。学习路径按换档条件排序。匹配分可放在 payload 里给档位函数用，UI 不直接渲染该数字。
 
 图谱前端用 AntV G6 画这一岗的切片，默认 Canvas。切 WebGL 仅当单岗节点明显卡顿。不用 Timebar，不在边上发采集粒子。
 

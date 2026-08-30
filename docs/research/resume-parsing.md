@@ -1,5 +1,6 @@
 # 调研:简历解析开源实现与准确率基准
 
+> **档案。** 定案以 `docs/tech.md`、`docs/verification.md` 为准。一期只收 PDF / docx，不上 LibreOffice。三项准确率是技能点 set-based F1，不是字段级 F1。
 > 对应工单:[#4 调研:简历解析开源实现与准确率基准](https://github.com/kangvcar/JobEvolution/issues/4)(Part of #1)
 > 调研日期:2026-08-28
 > 场景约束:中文简历为主(PDF/Word),提取技能要素,准确率目标 ≥90%,LLM 使用 DeepSeek 官方 API。

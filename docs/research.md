@@ -1,6 +1,6 @@
 # 开源借鉴指南
 
-实现时先看这张表，再决定 pip/npm 还是自己写。理由和出处在 `docs/research/` 五篇调研里，本文不复述。产品、存储、页面以 [`product.md`](product.md)、[`tech.md`](tech.md)、[`frontend.md`](frontend.md) 为准。术语以 [`CONTEXT.md`](../CONTEXT.md) 为准。
+实现时先看这张表，再决定 pip/npm 还是自己写。理由和出处在 `docs/research/` 调研里，本文不复述。那些篇是档案：文首仍可能写暗色大屏、Timebar、Graphiti 次优解，定案以 [`product.md`](product.md)、[`tech.md`](tech.md)、[`frontend.md`](frontend.md) 为准。术语以 [`CONTEXT.md`](../CONTEXT.md) 为准。
 
 **方式**四档：
 
@@ -9,25 +9,28 @@
 - **抄思路**：读机制，自己用 DeepSeek / Pydantic / Cypher 重写。
 - **抄部分实现**：只搬分层、拦截或评测框架，不把整仓当依赖。
 
-调研日期 2026-08-28。star 和推送会变，装依赖前打开仓库页看一眼。
+调研日期 2026-08-28；智联/51job/猎聘可用性复核 2026-08-30。star 和推送会变，装依赖前打开仓库页看一眼。
 
 ## 采集
 
 | 用途 | 项目 | 方式 | 我们做什么 | 风险 |
 |---|---|---|---|---|
-| 冷启动 JD | [天池智联人岗匹配](https://tianchi.aliyun.com/dataset/31623) | 数据导入 | 导入 `data/jd/`，先跑通抽取到图 | 字段偏匹配赛，正文不如现场 JD 厚 |
+| 冷启动 JD | 仓库 `data/` 下本地 JD 表 | 数据导入 | 字段映射后粗滤四领域，写入 `data/jd/`，再跑抽取 | 各表列名不同，要先对齐到公司/岗位/正文/日期 |
+| 条数补洞 | [天池智联人岗匹配](https://tianchi.aliyun.com/dataset/31623) | 数据导入 | 只补字段或条数缺口 | 偏匹配赛，正文不如现场 JD 厚 |
 | 稳定公开源 | Greenhouse / Lever / Ashby JSON；[NCSS](https://www.ncss.cn/student/jobs/index.html) | 抄思路 | 自写 source，打公开列表/JSON | NCSS 无官方 API，页面改了要修 |
 | ATS 采集器参考 | [jobhive 一类 ATS 刮刀横评](https://scrapfly.io/blog/posts/best-open-source-job-scrapers) | 抄思路 | 只抄端点形状，不 vendor | 覆盖偏用海外 ATS 的公司 |
 | BOSS 增量 | [BossHunter](https://github.com/shengjidaguai-china/BossHunter) | 抄思路 | Playwright 已登录会话 + 拦 `joblist.json` | 账号会封；headless 易撞验证码 |
 | 多站分层 | [RAYNLIU2005/-Multi-threadedCrawler](https://github.com/RAYNLIU2005/-Multi-threadedCrawler) | 抄部分实现 | `source / controller / sink` + fingerprint 幂等 | star 少，选择器会过期，当骨架不当时钟 |
-| 猎聘/智联拦截 | 同上仓的数据包监听 | 抄思路 | `wait_for_response` 拦 JSON，不解析 DOM | 接口路径会变 |
+| 猎聘/智联/51job 现网会话 | [AgentMesh-JobAgent](https://github.com/jiyangnan/AgentMesh-JobAgent) v0.5.40（2026-08-28） | 抄思路 | 受管 Chrome + 每站独立 source；失败即停 | 求职 Agent，云端收费；不要 vendor |
+| 三站页面增强/本地快照 | [职位猎人 job-hunting](https://github.com/lastsunday/job-hunting) 扩展 5.0.0 | 排除（一期） | 不接进 worker | 插件不是采集库；README 禁商用 |
+| 猎聘/智联拦截 | RAYNLIU 仓的数据包监听 | 抄思路 | `wait_for_response` 拦 JSON，不解析 DOM | 接口路径会变 |
 | 事件总线 | Redis Stream | 直接依赖 | `XADD jobs:events`；SSE 仅管理可选 | 求职者页不订流，见前端篇 |
 | SSE 出口 | [sse-starlette](https://github.com/sysid/sse-starlette) | 直接依赖 | `GET /events/stream` + `Last-Event-ID` | 只给管理/worker，不上 Kafka |
 | 英文对照 | [JobSpy](https://github.com/speedyapply/jobspy) | 排除（一期） | 算法验证需要时再加 | LinkedIn 易限流 |
 
-**排除。** 2019–2021 的 Scrapy 站群（JobWitcher、scrapy-51job、spider2）：选择器失效。纯 `requests` 打 BOSS：账户级 `code: 36`。Kafka：单机过重。
+**排除。** 2019–2021 的 Scrapy 站群（JobWitcher、scrapy-51job、spider2、chenjiandongx/51job-spider）：选择器失效。纯 `requests` / cookie 重放（silie666/job-crawler）：过期。mcp-jobs：默认 headless 打首页，会撞墙。纯 `requests` 打 BOSS：账户级 `code: 36`。Kafka：单机过重。
 
-细节：[research/jd-collection.md](research/jd-collection.md)
+细节：[research/jd-collection.md](research/jd-collection.md) · 三站可用性：[research/job-site-crawlers.md](research/job-site-crawlers.md)
 
 ## 图谱管线与存储
 
@@ -53,13 +56,13 @@
 | 用途 | 项目 | 方式 | 我们做什么 | 风险 |
 |---|---|---|---|---|
 | PDF 文本 | [pdfplumber](https://github.com/jsvine/pdfplumber) MIT | 直接依赖 | 读文本层 | 扫描件一期拒收 |
-| Word | [python-docx](https://github.com/python-openxml/python-docx) MIT | 直接依赖 | `.docx` 段落；`.doc` 先 LibreOffice 转 | |
+| Word | [python-docx](https://github.com/python-openxml/python-docx) MIT | 直接依赖 | `.docx` 段落；`.doc` 一期拒收 | |
 | 结构化抽取 | DeepSeek JSON 分任务 | 自研 | 基本信息 / 技能点两路并行，过 `align_skill` | 双栏版式会掉点 |
 | 版面与评测 | [SmartResume](https://github.com/alibaba/SmartResume) Apache-2.0 · [论文](https://arxiv.org/abs/2510.09722) | 抄思路；二期可抄部分实现 | 一期不引入版面模型；评测可搬匈牙利对齐 | 开源版 OCR 已换掉，能力打折 |
 | 中文匹配二开 | [resume-matcher-agent-cn](https://github.com/liangdabiao/resume-matcher-agent-cn) | 抄思路 | 模块切分参考 | 英文上游，不是准确率基准 |
 | NER 老路 | pyresparser、PaddleNLP 简历 NER | 排除 | 字段级 F1 过不了 90% | 停更或不含技能项级口径 |
 
-金标自建 100–200 份中文简历，放 `data/eval/`。没有公开的中文技能项级基准。
+金标自建 100 份中文简历（可加到 200），放 `data/eval/`。没有公开的中文技能项级基准。
 
 细节：[research/resume-parsing.md](research/resume-parsing.md)
 
@@ -67,9 +70,9 @@
 
 | 用途 | 项目 | 方式 | 我们做什么 | 风险 |
 |---|---|---|---|---|
-| schema 骨架 | [ESCO v1.2.1](https://esco.ec.europa.eu/en/use-esco/download) | 数据导入 | 职业—技能关系；Digital 标签裁四领域 | 无中文，要自己译并对齐招聘用语 |
-| 技能点种子 | [O\*NET Technology Skills](https://www.onetcenter.org/database.html) CC BY 4.0 | 数据导入 | 工具/框架级技能点 + Hot Technology | 只署名；职业层用美国 SOC，不要搬岗位名 |
-| 中文岗位名 | 大典 2022 | 数据导入 | 岗位节点挂编码与规范名 | 无官方结构化技能层，需手录或买书 |
+| schema 对照 | [ESCO v1.2.1](https://esco.ec.europa.eu/en/use-esco/download) | 对照（不挡冷启动） | 不导入、不手录；17 岗名见产品篇 | 无中文 |
+| 技能点对照 | [O\*NET Software Skills](https://www.onetcenter.org/database.html)（原 Technology Skills）CC BY 4.0 | 对照（不挡冷启动） | 不导入、不手录；技能点从 JD 抽取聚类 | 职业层是美国 SOC |
+| 中文岗位名 | 大典 2022 | 对照 | 编码可空；不挡步骤 1 | 无官方结构化技能层 |
 | 数据模型模板 | [SkillsFuture SFw](https://jobsandskills.skillsfuture.gov.sg/frameworks/skills-frameworks) | 抄思路 | 岗位→技能点→熟练级；不用它的 6 级，用了解/熟练/精通 | 英文、体量小 |
 | 本体管理工具 | [Tabiya taxonomy-model](https://github.com/tabiya-tech/taxonomy-model-application) MIT | 排除（一期） | ESCO 本地化可参考，不自建管理台 | 多一个前端 |
 | 技能树交互 | [roadmap.sh](https://github.com/kamranahmedse/developer-roadmap) | 抄思路 | 工作台切片的疏密与点选，不嵌他们的路线图 | 进度打卡属账户体系，本期不做 |
@@ -84,7 +87,7 @@
 | 用途 | 项目 | 方式 | 我们做什么 | 风险 |
 |---|---|---|---|---|
 | 图谱主体 | [AntV G6 v5](https://g6.antv.antgroup.com) MIT | 直接依赖 | 总览四领域图、工作台切片、诊断小图；Canvas；dagre LR | 大图 CPU，见 issue [#7402](https://github.com/antvis/G6/issues/7402)，关多余 behavior |
-| React 壳 | [Graphin 3.x](https://github.com/antvis/graphin) 或官方 React 集成 | 直接依赖（可选） | 只当容器，节点样式走 G6 v5 API | Graphin 示例仍偏 v2 |
+| React 壳 | 官方「在 React 中使用」 | 直接依赖 | 只要官方容器，不装 Graphin | Graphin 示例偏 v2 |
 | Timebar / 蚂蚁线 / emitParticle | G6 插件与 react-force-graph | 排除（产品） | 地图已撤回采集流墙和演化回放 | 调研里仍有可行性，实现禁止装 Timebar |
 | 周边统计 | ECharts | 排除（一期） | 热度条用 CSS，不上第二套图库 | graph 千级会卡，本来也不当主体 |
 | sigma / cytoscape | | 排除 | | 无中文文档或动效不够 |
@@ -99,7 +102,7 @@
 |---|---|---|---|
 | HTTP | FastAPI | 直接依赖 | |
 | 前端 | Next.js App Router + React | 直接依赖 | 样式拷 `prototypes/tokens.css`，不必为 tokens 再加 Tailwind |
-| 浏览器采集 | Playwright | 直接依赖 | 增量源；`headless=False` 或持久化 user data dir |
+| 浏览器采集 | Playwright | 可选 | 增量源；步骤 2 不挡。`headless=False` 或持久化 user data dir |
 | 缓存 / 会话 / Stream | Redis 7 | 直接依赖 | |
 | LLM SDK | OpenAI 兼容客户端，`base_url` 指 DeepSeek | 直接依赖 | 只允许 `app/llm/client.py` 调用 |
 | 校验 | Pydantic | 直接依赖 | LLM JSON 与 Cypher 入参 |
@@ -109,9 +112,9 @@
 别人不替我们做、也不该做成「再包一层开源仓」的部分：
 
 1. JD 切段、入池阈值、置信层、待审/直通、岗位状态机
-2. `align_skill`、匹配分、档位、缺口集、学习资源现查缓存
-3. 五个产品路由与原型交互（切片画布、诊断四拍、口令、⌘K）
-4. 同义词表与四领域中文岗位名对齐
+2. `align_skill`、匹配分、档位、缺口集、换档条件、学习资源现查缓存
+3. 五个产品路由与原型交互（切片画布含切片差分、诊断四拍、邻近岗并排、对照链接、口令、⌘K）
+4. 技能聚类生成 `Skill` 与同义词；17 个规范岗位名对齐
 5. `data/eval/` 金标与三项 set-based F1
 
 新开源库想进仓库：先对这张表。能归到「排除」或「已有直接依赖」的，不装。

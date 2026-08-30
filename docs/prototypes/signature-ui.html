@@ -129,6 +129,13 @@ html[data-entered] #view-home .inspector .story { animation: none; }
 #view-home .inspector .ev,
 #view-home .inspector .pipe-row { font-size: var(--text-sm); }
 #view-home .inspector .heat-track { height: 8px; }
+.how { border-top: 1px solid var(--color-rule); padding-top: var(--space-md); }
+.how > summary {
+  cursor: pointer; font-size: var(--text-sm); color: var(--color-muted);
+  list-style: disclosure-closed;
+}
+.how[open] > summary { color: var(--color-ink); margin-bottom: var(--space-sm); }
+.how .how-body { display: grid; gap: var(--space-xl); }
 .facts {
   display: grid;
   gap: 0;
@@ -482,11 +489,12 @@ html[data-entered] .heat-track i { animation: none; }
 .diag-report h3 { font-size: var(--text-sm); color: var(--color-muted); font-weight: 400; }
 .diag-shift { display: grid; gap: var(--space-2xs); }
 .diag-shift p { margin: 0; font-size: var(--text-sm); }
-.diag-near { display: grid; }
-.diag-near button {
+.diag-near { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--color-rule); }
+.diag-near > * {
   display: grid; gap: 2px; width: 100%; text-align: start;
-  padding: var(--space-xs) 0; border-bottom: 1px solid var(--color-rule);
+  padding: var(--space-sm); background: var(--color-paper);
 }
+.diag-near .now { box-shadow: inset 0 0 0 2px var(--color-ink); }
 .diag-near button:hover, .diag-near button:focus-visible { background: var(--color-paper-2); }
 .diag-near small { display: block; color: var(--color-muted); font-size: var(--text-xs); }
 .diag-cats { display: grid; gap: var(--space-xs); }
@@ -572,6 +580,7 @@ html[data-entered] .heat-track i { animation: none; }
   }
   .diag-report { overflow: visible; }
   .diag-facts { grid-template-columns: 1fr 1fr; }
+  .diag-near { grid-template-columns: 1fr; }
 }
 /* Home: 420 map min + 280 inspector min. Collapse only when both no longer fit. */
 @media (max-width: 700px) {
@@ -632,33 +641,37 @@ html[data-entered] .heat-track i { animation: none; }
     </div>
     <aside class="inspector">
       <ul class="facts" id="homeFacts">
-        <li>萌芽 <b data-tick="6">0</b> 岗，谱内 <b data-tick="17">0</b>，待审 <b data-tick="5">0</b></li>
+        <li>萌芽 <b data-tick="6">0</b> 岗，谱内 <b data-tick="17">0</b></li>
         <li>本周 <b data-tick="842">0</b> 份 JD，来自 <b data-tick="217">0</b> 个独立源</li>
-        <li>技能点 <b data-tick="60">0</b>，候选簇 <b data-tick="4">0</b>，拦下 <b data-tick="19">0</b></li>
       </ul>
       <article class="story">
         <span class="pill hot">新岗位发现</span>
         <h2>Agent 工程师刚跨过萌芽线</h2>
         <p class="hint">5 个独立源。判别是新岗位，不是大模型应用工程师的别名。</p>
         <div class="delta"><b class="add">+ LangGraph</b><b class="add">+ 工具调用</b><b class="add">+ 评测集构建</b></div>
-        <p class="src">智谱 · 月之暗面 · Greenhouse · NCSS · 演示第五源</p>
+        <p class="src">智谱 · 月之暗面 · 百川智能 · 零一万物 · 阶跃星辰</p>
         <div class="row">
           <button class="primary" type="button" data-go="graph" data-job="job-agent">打开工作台</button>
+          <button class="ghost" type="button" data-go="diagnose" data-job="job-agent">对照这份岗</button>
         </div>
       </article>
       <article class="story">
         <span class="pill mid">既有岗位更新</span>
         <h2>大模型应用工程师 +评测集构建</h2>
-        <p class="hint">覆盖率 12%→33%，跨过 30% 入池线。jQuery 边已写 valid_to。</p>
+        <p class="hint">覆盖率 12%→33%，过入池线，现为加分。待审升必备。jQuery 边已写 valid_to。</p>
         <div class="delta"><b class="add">+ 评测集构建</b><b class="del">jQuery</b></div>
         <p class="src">3 份职责段 · 置信中 · 待审</p>
         <div class="row">
-          <button class="ghost" type="button" data-go="graph" data-job="job-llm">打开工作台</button>
+          <button class="primary" type="button" data-go="graph" data-job="job-llm">打开工作台</button>
+          <button class="ghost" type="button" data-go="diagnose" data-job="job-llm">对照这份岗</button>
         </div>
       </article>
+      <details class="how">
+        <summary>本周期怎么算出来的</summary>
+        <div class="how-body">
       <section>
         <h2>发现管线</h2>
-        <p class="hint">本周 JD 从哪来。待审里新岗位 2、能力更新 2、低置信 1（不可直通）。</p>
+        <p class="hint">本周 JD 从哪来。待审里新岗位 2、能力更新 2、低置信 1（不可直通，要人批）。</p>
         <div class="pipe" id="homePipe"></div>
       </section>
       <section>
@@ -671,7 +684,9 @@ html[data-entered] .heat-track i { animation: none; }
         <p class="hint">边级事件，不是时间轴控件。</p>
         <div id="homeFeed"></div>
       </section>
-      <p class="colophon">本周期 2026-06-01 至 08-28 · 演示数据 · 直通关 · JD 金标 100/100 · 简历金标 120 份</p>
+        </div>
+      </details>
+      <p class="colophon">本周期 2026-06-01 至 08-28 · 演示数据 · 直通关 · JD 金标 100/100 · 简历金标 100 份</p>
     </aside>
   </section>
 
@@ -685,13 +700,13 @@ html[data-entered] .heat-track i { animation: none; }
         <select id="fStack" aria-label="技术栈"><option>全部技术栈</option><option>服务端</option><option>检索</option><option>编排</option><option>评测</option><option>训练</option><option>数据开发</option><option>分析</option><option>嵌入式</option><option>物联网</option></select>
       </label>
       <label class="field">级别
-        <select id="fLevel" aria-label="级别"><option>级别: 不限</option><option>了解</option><option>熟练</option><option>精通</option></select>
+        <select id="fLevel" aria-label="适用级别"><option>级别: 不限</option><option>初</option><option>中</option><option>高</option></select>
       </label>
       <input type="search" id="q" placeholder="搜索岗位" aria-label="搜索岗位">
       <div id="jobList"></div>
     </aside>
     <section class="graph-stage">
-      <p class="graph-hint">岗位 → 类目 → 技能点 · 深色必备 · 浅色加分 · 方向键平移，加减号缩放，Home 适配，Esc 取消选中</p>
+      <p class="graph-hint">岗位 → 类目 → 技能点 · 深色必备 · 浅色加分 · 本周期 +新增 / 失效会标在节点上 · 方向键平移，加减号缩放，Home 适配，Esc 取消选中</p>
       <div id="g6" tabindex="0" role="application" aria-label="岗位切片画布。方向键平移，加减号缩放，Home 适配窗口，Esc 取消选中。"></div>
     </section>
     <aside class="graph-detail">
@@ -717,7 +732,7 @@ html[data-entered] .heat-track i { animation: none; }
           <select id="diagJobSel" aria-label="目标岗位"></select>
         </label>
         <label class="drop" id="diagA">
-          <input type="file" id="cv" accept=".pdf,.doc,.docx" class="sr-only">
+          <input type="file" id="cv" accept=".pdf,.docx" class="sr-only">
           <p class="drop-title">把简历拖到这里</p>
           <p class="hint">演示：任意文件当作一份简历。</p>
         </label>
@@ -725,10 +740,10 @@ html[data-entered] .heat-track i { animation: none; }
       </div>
       <div class="diag-ticker" id="diagTicker">
         <div class="diag-ticker-track" id="diagTickerTrack">
-          <p>技能对齐：同义词优先，未命中再嵌入</p>
-          <p>读要求边：必备深、加分浅</p>
-          <p>对账缺口集：缺口与半档 0.5</p>
-          <p>定档位：必备加 0.3 加分</p>
+          <p>在对你的技能</p>
+          <p>在读这个岗现在要什么</p>
+          <p>在标缺口和半档</p>
+          <p>在定档位</p>
         </div>
       </div>
     </div>
@@ -738,7 +753,7 @@ html[data-entered] .heat-track i { animation: none; }
   <!-- DISCOVER -->
   <section class="view wrap" id="view-discover">
     <h2>发现</h2>
-    <p class="hint">候选只在待审可见。萌芽入谱。成型要 10 源或 6 个月。点一张卡看卷宗。</p>
+    <p class="hint">三列是漏斗。候选未入谱，只开卷宗，不能对照简历。别名不占候选列。管线、热度、流水在本页。</p>
     <dl class="readout" id="discReadout" style="margin-top:1.25rem"></dl>
     <div class="disc-board">
       <div class="kanban" id="discKanban"></div>
@@ -781,7 +796,7 @@ html[data-entered] .heat-track i { animation: none; }
   <!-- ADMIN -->
   <section class="view wrap" id="view-admin">
     <h1>待确认</h1>
-    <p class="lede">只有要人点头的动作排在这里。低置信无证据仍不入谱，直通开了也拦。</p>
+    <p class="lede">只有要人点头的动作排在这里。低置信不可直通，管理员仍可批。</p>
     <p class="row" style="margin-top:1rem">
       <span class="hint" id="bypassHint">直通关。中高置信要人批。</span>
       <button class="ghost" type="button" id="bypass" aria-pressed="false">直通关闭</button>
@@ -811,9 +826,10 @@ html[data-entered] .heat-track i { animation: none; }
       <li>
         <p class="meta">低置信抽取 · 08-22</p>
         <h2>技能「元宇宙运营」</h2>
-        <p class="hint">单源且不在职责段。这条没有自动审核结论，不可直通。</p>
+        <p class="hint">单源且不在职责段。不可直通，要人批。</p>
         <div class="row" style="margin-top:12px">
-          <button class="ghost" type="button" disabled>不可直通</button>
+          <button class="ink" type="button">确认发布</button>
+          <button class="ghost" type="button">驳回</button>
           <button class="textlink" type="button" data-ev="ev-drop">打开证据</button>
         </div>
       </li>
@@ -880,26 +896,24 @@ const JOBS = [
     src: "ESCO 骨架对齐 · 大典数字职业映射 · 12 独立源",
     cats: [
       { name: "服务端", items: [
-        { n: "Python", must: true, lv: "熟练", conf: "高", cov: "82%" },
-        { n: "FastAPI", must: true, lv: "熟练", conf: "高", cov: "64%" },
-        { n: "Docker", must: false, lv: "了解", conf: "中", cov: "31%" },
-        { n: "Redis", must: false, lv: "了解", conf: "中", cov: "28%" }
+        { n: "Python", must: true, lv: "熟练", conf: "高", cov: "82%", levels: ["初", "中", "高"] },
+        { n: "FastAPI", must: true, lv: "熟练", conf: "高", cov: "64%", levels: ["初", "中", "高"] },
+        { n: "Docker", must: false, lv: "了解", conf: "中", cov: "31%", levels: ["中", "高"] }
       ]},
       { name: "检索", items: [
-        { n: "RAG", must: true, lv: "熟练", conf: "高", cov: "58%" },
-        { n: "向量库", must: true, lv: "了解", conf: "中", cov: "41%" },
-        { n: "重排序", must: false, lv: "了解", conf: "中", cov: "27%" }
+        { n: "RAG", must: true, lv: "熟练", conf: "高", cov: "58%", levels: ["初", "中", "高"] },
+        { n: "向量库", must: true, lv: "了解", conf: "中", cov: "41%", levels: ["中", "高"] }
       ]},
       { name: "编排", items: [
-        { n: "LangChain", must: false, lv: "了解", conf: "中", cov: "35%" }
+        { n: "LangChain", must: false, lv: "了解", conf: "中", cov: "35%", levels: ["高"] }
       ]},
       { name: "评测", items: [
-        { n: "评测集构建", must: true, lv: "了解", conf: "中", cov: "33%" }
+        { n: "评测集构建", must: false, lv: "了解", conf: "中", cov: "33%", levels: ["中", "高"] }
       ]}
     ]},
   { id: "job-agent", name: "Agent 工程师", status: "萌芽", domain: "人工智能",
     def: "设计并维护工具调用与多步编排。评测与值班是岗位定义的一部分。",
-    src: "5 独立源 · 萌芽 · 非别名(已与大模型应用工程师拆开)",
+    src: "5 独立源 · 萌芽 · 非别名(已与大模型应用工程师拆开) · 智谱 · 月之暗面 · 百川智能 · 零一万物 · 阶跃星辰",
     cats: [
       { name: "编排", items: [
         { n: "LangGraph", must: true, lv: "熟练", conf: "高", cov: "71%" },
@@ -935,8 +949,7 @@ const JOBS = [
     cats: [
       { name: "训练", items: [
         { n: "算法设计", must: true, lv: "熟练", conf: "高", cov: "72%" },
-        { n: "PyTorch", must: true, lv: "熟练", conf: "高", cov: "61%" },
-        { n: "C++", must: false, lv: "了解", conf: "中", cov: "29%" }
+        { n: "PyTorch", must: true, lv: "熟练", conf: "高", cov: "61%" }
       ]}
     ]},
   { id: "job-mm", name: "多模态算法工程师", status: "成型", domain: "人工智能",
@@ -1046,8 +1059,7 @@ const JOBS = [
     cats: [
       { name: "物联网", items: [
         { n: "设备管理", must: true, lv: "熟练", conf: "高", cov: "51%" },
-        { n: "时序库", must: true, lv: "了解", conf: "中", cov: "37%" },
-        { n: "规则引擎", must: false, lv: "了解", conf: "中", cov: "29%" }
+        { n: "时序库", must: true, lv: "了解", conf: "中", cov: "37%" }
       ]}
     ]},
   { id: "job-edge", name: "边缘计算工程师", status: "萌芽", domain: "物联网",
@@ -1056,8 +1068,7 @@ const JOBS = [
     cats: [
       { name: "物联网", items: [
         { n: "边缘推理", must: true, lv: "熟练", conf: "高", cov: "36%" },
-        { n: "TensorRT", must: true, lv: "了解", conf: "中", cov: "31%" },
-        { n: "K8s", must: false, lv: "了解", conf: "中", cov: "28%" }
+        { n: "TensorRT", must: true, lv: "了解", conf: "中", cov: "31%" }
       ]}
     ]}
 ];
@@ -1068,22 +1079,22 @@ let selected = JOBS[0], gHome, gJob, gDiag, authed = false, stackFilter = "全�
 let pickedId = null, collapsed = new Set(), dossierEntered = false;
 
 const EVIDENCE = {
-  RAG: { grade: "multi", gradeLabel: "多源确认", title: "RAG", body: "职责段写检索增强与评测，三家独立源。", src: "Greenhouse · 智谱 · NCSS", quote: "负责 RAG 链路评测与迭代，能定位召回/重排问题。" },
-  "评测集构建": { grade: "single", gradeLabel: "单源", title: "评测集构建", body: "覆盖率 12%→33%，刚跨过入池线。三份职责段，置信中，在待审。", src: "3 份 JD 职责段", quote: "搭建主观题评测集，先做人工金标再扩自动。" },
+  RAG: { grade: "multi", gradeLabel: "多源确认", title: "RAG", body: "职责段写检索增强与评测，三家独立源。", src: "智谱 · 百川智能 · 阶跃星辰", quote: "负责 RAG 链路评测与迭代，能定位召回/重排问题。" },
+  "评测集构建": { grade: "single", gradeLabel: "单源", title: "评测集构建", body: "覆盖率 12%→33%，刚过入池线，现为加分。待审升必备。", src: "智谱 · 百川智能 · 零一万物", quote: "搭建主观题评测集，先做人工金标再扩自动。" },
   Python: { grade: "multi", gradeLabel: "多源确认", title: "Python", body: "必备熟练。服务端口径下覆盖率 82%。", src: "多份 ATS 职责段", quote: "Python 服务开发，能独立上线接口。" },
   FastAPI: { grade: "multi", gradeLabel: "多源确认", title: "FastAPI", body: "必备熟练。与 Python 同簇出现。", src: "ATS / 招聘站", quote: "用 FastAPI 对外提供模型服务。" },
   "向量库": { grade: "single", gradeLabel: "单源", title: "向量库", body: "必备了解。覆盖率 41%。演示画像里没有这一项。", src: "2 份职责段", quote: "维护向量索引，支持检索实验。" },
   Docker: { grade: "weak", gradeLabel: "弱证据", title: "Docker", body: "加分项。覆盖率未过强线。", src: "1 份 JD", quote: "容器化部署加分。" },
-  "LangGraph": { grade: "multi", gradeLabel: "多源确认", title: "LangGraph", body: "Agent 工程师必备。编排簇内覆盖 71%。", src: "智谱 · 月之暗面 · Greenhouse", quote: "用 LangGraph 做多步工具调用编排。" },
-  "工具调用": { grade: "multi", gradeLabel: "多源确认", title: "工具调用", body: "萌芽岗定义的一部分。覆盖率 80%。", src: "5 独立源职责段", quote: "设计并维护工具调用与值班评测。" },
-  "重排序": { grade: "weak", gradeLabel: "弱证据", title: "重排序", body: "加分。簇内覆盖偏低。", src: "1 份职责段", quote: "熟悉精排 / 重排序。" },
-  "ev-agent": { grade: "multi", gradeLabel: "多源确认", title: "Agent 工程师 · 萌芽", body: "5 独立源 / 90 天。判别为新岗位，不是大模型应用工程师别名。", src: "智谱 · 月之暗面 · Greenhouse · NCSS · 演示第五源", quote: "工具调用、多步编排、评测与值班写入职责。" },
-  "ev-drop": { grade: "weak", gradeLabel: "弱证据", title: "元宇宙运营", body: "单源且不在职责段。低置信，不可直通。", src: "某 JD #8841", quote: "（原文不在职责段，抽取丢弃）" },
+  "LangGraph": { grade: "multi", gradeLabel: "多源确认", title: "LangGraph", body: "Agent 工程师必备。编排簇内覆盖 71%。", src: "智谱 · 月之暗面 · 百川智能", quote: "用 LangGraph 做多步工具调用编排。" },
+  "工具调用": { grade: "multi", gradeLabel: "多源确认", title: "工具调用", body: "萌芽岗定义的一部分。覆盖率 80%。", src: "智谱 · 月之暗面 · 百川智能 · 零一万物 · 阶跃星辰", quote: "设计并维护工具调用与值班评测。" },
+  "ev-agent": { grade: "multi", gradeLabel: "多源确认", title: "Agent 工程师 · 萌芽", body: "5 独立源。判别为新岗位，不是大模型应用工程师别名。由管线从 JD 快照入萌芽。", src: "智谱 · 月之暗面 · 百川智能 · 零一万物 · 阶跃星辰", quote: "工具调用、多步编排、评测与值班写入职责。" },
+  jQuery: { grade: "weak", gradeLabel: "已失效", title: "jQuery", body: "本周期覆盖率掉到入池线以下。旧要求边已写 valid_to，不进缺口。", src: "旧快照 · 3 份职责段", quote: "熟悉 jQuery 与前端组件。（本期职责段不再写）" },
+  "ev-drop": { grade: "weak", gradeLabel: "弱证据", title: "元宇宙运营", body: "单源且不在职责段。低置信，不可直通，要人批。", src: "某 JD #8841", quote: "（原文不在职责段，抽取丢弃）" },
   "ev-flink": { grade: "multi", gradeLabel: "多源确认", title: "Flink CDC", body: "数据工程师本周期新增。7 份职责段，高置信。", src: "7 JD 职责段", quote: "用 Flink CDC 入湖，保证近实时。" }
 };
 
 const DISC_READOUT = [
-  ["候选", "4"], ["萌芽", "6"], ["成型", "11"], ["待审", "5"],
+  ["候选", "3"], ["萌芽", "6"], ["成型", "11"], ["待审", "5"],
   ["本周簇", "4"], ["拦下", "19"], ["直通", "关"], ["金标", "100"]
 ];
 const PIPE = [["ATS", 41], ["NCSS", 22], ["招聘站", 28], ["冷启动", 9]];
@@ -1167,10 +1178,17 @@ const ALIGN = {
   ]
 };
 const OBSERVED = {
-  "job-llm": [{ n: "系统提示评测", cov: "22%", note: "职责段开始出现，未过 30%。不是缺口。" }],
-  "job-agent": [{ n: "值班评测", cov: "24%", note: "写入岗位定义但覆盖率未过线。不是缺口。" }],
-  "job-eval": [{ n: "能力边界文档", cov: "19%", note: "单源职责段，未入要求边。不是缺口。" }],
-  "job-prompt": [{ n: "产品话术库", cov: "21%", note: "未过 30%。不是缺口。" }]
+  "job-llm": [
+    { n: "系统提示评测", cov: "22%", note: "市场开始提，还没进要求，不算缺口。" },
+    { n: "Redis", cov: "28%", note: "市场开始提，还没进要求，不算缺口。" },
+    { n: "重排序", cov: "27%", note: "市场开始提，还没进要求，不算缺口。" }
+  ],
+  "job-agent": [{ n: "值班评测", cov: "24%", note: "市场开始提，还没进要求，不算缺口。" }],
+  "job-eval": [{ n: "能力边界文档", cov: "19%", note: "市场开始提，还没进要求，不算缺口。" }],
+  "job-prompt": [{ n: "产品话术库", cov: "21%", note: "市场开始提，还没进要求，不算缺口。" }],
+  "job-algo": [{ n: "C++", cov: "29%", note: "市场开始提，还没进要求，不算缺口。" }],
+  "job-iotp": [{ n: "规则引擎", cov: "29%", note: "市场开始提，还没进要求，不算缺口。" }],
+  "job-edge": [{ n: "K8s", cov: "28%", note: "市场开始提，还没进要求，不算缺口。" }]
 };
 const RESOURCES = {
   "向量库": { line: "职责段：维护向量索引，支持检索实验。", ev: "向量库" },
@@ -1184,10 +1202,10 @@ const RESOURCES = {
 
 const CLUSTERS = [
   { id: "cand-mm", stage: "候选", name: "多模态标注质检员", domain: "人工智能", srcN: 1, srcD: 3, cov: "12%", gate: "3 独立源 / 90 天", def: "标注质检尚未成岗。未过 3 源，未入谱。", src: "1 独立源", alias: "与多模态算法工程师拆开，不是同一岗。", job: null, note: "未过萌芽闸" },
-  { id: "cand-alias", stage: "候选", name: "LLM 业务工程师", domain: "人工智能", srcN: 2, srcD: 3, cov: "22%", gate: "别名判别", def: "并入大模型应用工程师（已判）。", src: "2 独立源 · 已合并", alias: "判为别名，不单列。", job: "job-llm", note: "别名?" },
+  { id: "cand-alias", stage: "候选", name: "LLM 业务工程师", domain: "人工智能", srcN: 2, srcD: 3, cov: "22%", gate: "别名判别", def: "并入大模型应用工程师（已判）。不占候选列。", src: "2 独立源 · 已合并", alias: "判为别名，注记在大模型应用工程师卷宗。", job: "job-llm", note: "已并入" },
   { id: "cand-kb", stage: "候选", name: "知识库运维工程师", domain: "人工智能", srcN: 2, srcD: 3, cov: "24%", gate: "30% 覆盖率", def: "覆盖率未过 30%，留观察。", src: "2 独立源", alias: "不是大模型应用工程师的别名，源仍不足。", job: null, note: "2 源" },
-  { id: "cand-emb", stage: "候选", name: "具身智能训练师", domain: "智能系统", srcN: 1, srcD: 3, cov: "9%", gate: "3 独立源 / 90 天", def: "单校 NCSS，独立源不足。", src: "1 校 NCSS", alias: "与机器人软件工程师观察拆分。", job: null, note: "1 源" },
-  { id: "job-agent", stage: "萌芽", name: "Agent 工程师", domain: "人工智能", srcN: 5, srcD: 10, cov: "71%", gate: "10 源或 6 个月成型", def: "设计并维护工具调用与多步编排。评测与值班是岗位定义的一部分。", src: "智谱 · 月之暗面 · Greenhouse · NCSS · 演示第五源", alias: "已入谱 · 非别名（已与大模型应用工程师拆开）。", job: "job-agent", note: "5 独立源" },
+  { id: "cand-emb", stage: "候选", name: "具身智能训练师", domain: "智能系统", srcN: 1, srcD: 3, cov: "9%", gate: "3 独立源 / 90 天", def: "单校用人单位，独立源不足。", src: "1 家高校用人单位", alias: "与机器人软件工程师观察拆分。", job: null, note: "1 源" },
+  { id: "job-agent", stage: "萌芽", name: "Agent 工程师", domain: "人工智能", srcN: 5, srcD: 10, cov: "71%", gate: "10 源或 6 个月成型", def: "设计并维护工具调用与多步编排。评测与值班是岗位定义的一部分。", src: "智谱 · 月之暗面 · 百川智能 · 零一万物 · 阶跃星辰", alias: "已入谱 · 非别名（已与大模型应用工程师拆开）。", job: "job-agent", note: "5 独立源" },
   { id: "job-eval", stage: "萌芽", name: "模型评测工程师", domain: "人工智能", srcN: 3, srcD: 10, cov: "67%", gate: "10 源或 6 个月成型", def: "建评测集、跑回归、写能力边界。刚跨过 3 源萌芽线。", src: "3 独立源", alias: "与大模型应用工程师在评测职责上拆开。", job: "job-eval", note: "3 独立源" },
   { id: "job-prompt", stage: "萌芽", name: "提示词工程师", domain: "人工智能", srcN: 4, srcD: 10, cov: "44%", gate: "10 源或 6 个月成型", def: "系统提示、评测集与产品话术。4 源后与大模型应用工程师拆开。", src: "4 独立源 · 萌芽", alias: "不是大模型应用工程师的别名。", job: "job-prompt", note: "4 独立源" },
   { id: "job-rt", stage: "萌芽", name: "实时计算工程师", domain: "大数据", srcN: 3, srcD: 10, cov: "81%", gate: "10 源或 6 个月成型", def: "从数据工程师簇里拆出的实时方向。", src: "3 独立源 · 萌芽", alias: "不是数据工程师别名。", job: "job-rt", note: "3 独立源" },
@@ -1307,27 +1325,34 @@ function clusterCard(c) {
     </span>
   </button>`;
 }
+function boardItems(st) {
+  return CLUSTERS.filter((c) => c.stage === st && c.gate !== "别名判别");
+}
 function renderDiscover() {
   const stages = ["候选", "萌芽", "成型"];
   document.getElementById("discKanban").innerHTML = stages.map((st) => {
-    const items = CLUSTERS.filter((c) => c.stage === st);
+    const items = boardItems(st);
     const title = st === "成型" ? `成型（切片） · ${items.length}` : `${st} · ${items.length}`;
     return `<div class="col"><h2>${title}</h2>${items.map(clusterCard).join("")}</div>`;
   }).join("");
-  const c = CLUSTERS.find((x) => x.id === discPick) || CLUSTERS[4];
-  const go = c.job
+  const visible = CLUSTERS.filter((c) => c.gate !== "别名判别");
+  const c = visible.find((x) => x.id === discPick) || visible.find((x) => x.stage === "萌芽") || visible[0];
+  const inGraph = c.stage !== "候选" && c.job;
+  const go = inGraph
     ? `<button class="primary" type="button" data-go="graph" data-job="${c.job}">进工作台</button>`
-    : `<button class="ghost" type="button" data-go="admin">去审核</button>`;
-  const extra = c.job
-    ? `<button class="ghost" type="button" data-go="admin">去审核</button>`
+    : "";
+  const extra = `<button class="ghost" type="button" data-go="admin">去审核</button>`;
+  const lock = c.stage === "候选"
+    ? `<p class="hint">未入谱。不能对照简历，不能进工作台。</p>`
     : "";
   document.getElementById("discDetail").innerHTML = `
-    <span class="pill ${c.stage === "萌芽" ? "hot" : c.stage === "成型" ? "ok" : "mid"}">${c.stage}</span>
+    <span class="pill ${c.stage === "萌芽" ? "hot" : c.stage === "成型" ? "ok" : "mid"}">${c.stage === "候选" ? "未入谱" : c.stage}</span>
     <h2>${c.name}</h2>
     <p class="hint">${c.def}</p>
     <p class="src">${c.src}</p>
     <p class="hint">别名判别：${c.alias}</p>
     <p class="mono">独立源 ${c.srcN}/${c.srcD} · 覆盖率 ${c.cov} · 下一闸 ${c.gate}</p>
+    ${lock}
     <div class="row" style="margin-top:8px">${go}${extra}</div>`;
 }
 
@@ -1378,10 +1403,43 @@ function tierShifts(job, profile) {
   return [];
 }
 function nearJobs(job, profile) {
+  const pairId = job.id === "job-llm" ? "job-agent" : job.id === "job-agent" ? "job-llm" : null;
   return JOBS.filter((j) => j.domain === job.domain && j.id !== job.id)
     .map((j) => ({ job: j, r: scanJob(j, profile) }))
-    .sort((a, b) => b.r.score - a.r.score)
-    .slice(0, 3);
+    .sort((a, b) => {
+      if (pairId && a.job.id === pairId) return -1;
+      if (pairId && b.job.id === pairId) return 1;
+      return b.r.score - a.r.score;
+    })
+    .slice(0, 2);
+}
+function periodDelta(jobId, name) {
+  const d = (JOB_DELTA[jobId] || []).find((x) => x.n === name);
+  if (!d) return null;
+  return d.add ? "add" : "drop";
+}
+function expiredSkills(job) {
+  const have = new Set();
+  job.cats.forEach((c) => c.items.forEach((it) => have.add(it.n)));
+  return (JOB_DELTA[job.id] || []).filter((d) => !d.add && !have.has(d.n)).map((d) => d.n);
+}
+function pathFromShifts(job, profile, r) {
+  const shifts = tierShifts(job, profile);
+  const names = [];
+  shifts.forEach((s) => {
+    String(s.label).split("、").forEach((n) => {
+      if (n && !names.includes(n)) names.push(n);
+    });
+  });
+  const rest = [...r.gaps, ...r.half].map((it) => it.n).filter((n) => !names.includes(n));
+  return [...names, ...rest].slice(0, 5).map((n) => {
+    const gap = r.gaps.find((x) => x.n === n);
+    const half = r.half.find((x) => x.n === n);
+    const shift = shifts.find((s) => String(s.label).includes(n));
+    let why = gap ? "简历里没有这个必备技能点" : half ? `当前：${half.have}，岗位要${half.lv}` : "补这项";
+    if (shift) why = `先补这项，档位能从${shift.from}到${shift.to}`;
+    return { n, why };
+  });
 }
 function catHeat(job, r) {
   return job.cats.map((c) => {
@@ -1505,8 +1563,8 @@ function diagSummary(r, profile) {
   else bits.push("必备技能点都已覆盖。");
   if (r.half.length) bits.push(r.half.slice(0, 2).map((h) => `${h.n} 简历是${h.have}，岗位要${h.lv}`).join("；") + "。");
   if (r.uncovered.length) bits.push(`加分未写 ${diagNames(r.uncovered, 3)}。`);
-  const next = r.gaps[0] || r.half[0];
-  bits.push(next ? `下一步先补 ${next.n}。` : "没有必修路径。");
+  const shift = tierShifts(selected, profile)[0];
+  bits.push(shift ? `先补 ${shift.label}，档位能从${shift.from}到${shift.to}。` : "补单项还不够换档。");
   return bits.join("");
 }
 
@@ -1594,9 +1652,7 @@ function renderDiagDone() {
   setDiagPhase("done");
   const profile = PROFILES[diagProfile];
   const r = scanJob(selected, profile);
-  const pathItems = [...r.gaps.map((it) => ({ n: it.n, why: "简历里没有这个必备技能点" })),
-    ...r.half.map((it) => ({ n: it.n, why: `当前：${it.have}，岗位要${it.lv}` }))
-  ].slice(0, 3);
+  const pathItems = pathFromShifts(selected, profile, r);
   const skillLis = Object.keys(profile.skills).map((n) => `<li>${n} ${profile.skills[n]}</li>`).join("")
     || "<li>这份简历没有技能点</li>";
   const cv = profile.resume;
@@ -1631,9 +1687,10 @@ function renderDiagDone() {
     ? heats.map((c) => `<div class="pipe-row"><span>${c.name}</span><div class="heat-track"><i style="width:${c.pct}%"></i></div><span>${c.pct}%</span></div>`).join("")
     : `<p class="hint">该类目没有必备技能点。</p>`;
   const nears = nearJobs(selected, profile);
-  const nearHtml = nears.length
-    ? nears.map(({ job: j, r: nr }) => `<button type="button" data-near-job="${j.id}"><span class="path-name">${j.name}</span><small>${nr.tier} 必备 ${nr.mustGot}/${nr.mustNeed}</small></button>`).join("")
-    : `<p class="hint">同领域没有其他岗位。</p>`;
+  const nearHtml = `<div class="now"><span class="path-name">当前 · ${selected.name}</span><small>${r.tier} 必备 ${r.mustGot}/${r.mustNeed}</small></div>` +
+    (nears.length
+      ? nears.map(({ job: j, r: nr }) => `<button type="button" data-near-job="${j.id}"><span class="path-name">${j.name}</span><small>${nr.tier} 必备 ${nr.mustGot}/${nr.mustNeed}</small></button>`).join("")
+      : `<p class="hint">同领域没有其他岗位。</p>`);
   const aligns = ALIGN[diagProfile] || [];
   const alignHtml = aligns.length
     ? `<div class="diag-scroll"><table class="table"><thead><tr><th>演示句</th><th>技能点</th><th>对齐</th></tr></thead><tbody>${
@@ -1668,6 +1725,7 @@ function renderDiagDone() {
     <div class="diag-done">
     <header class="diag-done-bar">
       <p class="hint">${selected.name} ${selected.domain}</p>
+      <button class="ghost" type="button" id="diagCopy">复制对照链接</button>
       <button class="ghost" type="button" id="diagAgain">再分析一次</button>
     </header>
     <div class="diag-done-split">
@@ -1689,7 +1747,7 @@ function renderDiagDone() {
         <p class="tier">${r.tier}</p>
         <dl class="diag-facts">
           <div><dt>必备覆盖</dt><dd>${r.mustGot} / ${r.mustNeed}</dd></div>
-          <div><dt>半档</dt><dd>${r.half.length}<small>每项计 0.5</small></dd></div>
+          <div><dt>半档</dt><dd>${r.half.length}</dd></div>
           <div><dt>经验</dt><dd>${expHave}${expCommon ? `<small>${expCommon.replace(/[–—]/g, "-")}，旁注</small>` : ""}</dd></div>
           <div><dt>学历</dt><dd>${profile.edu}<small>旁注，不进档</small></dd></div>
         </dl>
@@ -1708,13 +1766,13 @@ function renderDiagDone() {
       <h3>类目覆盖</h3>
       <div class="diag-cats">${catsHtml}</div>
       <h3>邻近岗</h3>
-      <p class="hint">同领域、同一份简历。对照后停在本页。</p>
+      <p class="hint">同一份简历并排两岗。默认故事是大模型应用与 Agent。换岗停在本页。</p>
       <div class="diag-near">${nearHtml}</div>
     </section>
     <section>
       <h2>行动</h2>
       <h3>学习路径</h3>
-      <p class="hint">取缺口与半档前 3。点技能点进工作台。</p>
+      <p class="hint">按换档条件排序。每步一条能打开的资源。点技能点进工作台。</p>
       ${pathHtml}
       <h3>对账</h3>
       ${ledgerHtml}
@@ -1723,6 +1781,7 @@ function renderDiagDone() {
       <h2>解释</h2>
       <h3>对齐痕迹</h3>
       ${alignHtml}
+      <p class="hint">半档每项计 0.5。加分按 0.3 计入内部匹配分，不做成大数字。</p>
       <h3>观测中</h3>
       <div class="diag-obs">${obsHtml}</div>
       <h3>简历多出来的技能点</h3>
@@ -1839,7 +1898,11 @@ function filteredCats(job) {
     .filter((c) => stackFilter === "全部技术栈" || c.name === stackFilter)
     .map((c) => ({
       ...c,
-      items: c.items.filter((it) => levelFilter === "级别: 不限" || it.lv === levelFilter)
+      items: c.items.filter((it) => {
+        if (levelFilter === "级别: 不限") return true;
+        const bands = it.levels || ["初", "中", "高"];
+        return bands.includes(levelFilter);
+      })
     }))
     .filter((c) => c.items.length);
 }
@@ -1858,10 +1921,23 @@ function paintJob() {
     c.items.forEach((it, j) => {
       const sid = cid+"s"+j;
       if (collapsed.has(cid)) return;
-      nodes.push({ id: sid, data: { label: it.n, k: it.must ? "s" : "n", skill: it } });
+      nodes.push({ id: sid, data: { label: it.n, k: it.must ? "s" : "n", skill: it, delta: periodDelta(selected.id, it.n) } });
       edges.push({ id: "es"+i+j, source: cid, target: sid });
     });
   });
+  const dead = expiredSkills(selected);
+  if (dead.length) {
+    const cid = "cx";
+    nodes.push({ id: cid, data: { label: "本周期失效", k: "c" } });
+    edges.push({ id: "ecx", source: selected.id, target: cid });
+    dead.forEach((n, j) => {
+      const sid = cid + "s" + j;
+      if (!collapsed.has(cid)) {
+        nodes.push({ id: sid, data: { label: n, k: "n", skill: { n }, delta: "drop" } });
+        edges.push({ id: "esx" + j, source: cid, target: sid });
+      }
+    });
+  }
   const { Graph } = G6;
   const cInk = token("--color-ink");
   const cPaper = token("--color-paper");
@@ -1869,6 +1945,8 @@ function paintJob() {
   const cAccent = token("--color-accent");
   const cRule = token("--color-rule");
   const cFaint = token("--color-faint");
+  const cFall = token("--color-fall");
+  const cRise = token("--color-rise");
   gJob = new Graph({
     container: el, autoFit: "view", padding: 16, data: { nodes, edges },
     node: {
@@ -1877,9 +1955,14 @@ function paintJob() {
         size: (d) => d.data.k === "j" ? [96, 32] : [80, 26],
         radius: 0,
         fill: (d) => ({ j: cInk, c: cPaper, s: cPaper2, n: cPaper }[d.data.k]),
-        lineWidth: (d) => d.id === pickedId ? 3 : 1,
-        stroke: (d) => d.id === pickedId ? cAccent : ({ j: cInk, c: cFaint, s: cInk, n: cRule }[d.data.k]),
-        labelText: (d) => d.data.label,
+        lineWidth: (d) => d.id === pickedId ? 3 : (d.data.delta ? 2 : 1),
+        stroke: (d) => {
+          if (d.id === pickedId) return cAccent;
+          if (d.data.delta === "add") return cFall;
+          if (d.data.delta === "drop") return cRise;
+          return ({ j: cInk, c: cFaint, s: cInk, n: cRule }[d.data.k]);
+        },
+        labelText: (d) => d.data.delta === "add" ? "+ " + d.data.label : d.data.label,
         labelFill: (d) => d.data.k === "j" ? cPaper : cInk,
         labelFontFamily: "IBM Plex Sans, sans-serif",
         labelFontSize: 11,
@@ -1917,16 +2000,31 @@ function listJobs() {
 
 function renderCats() {
   const cats = filteredCats(selected);
+  const dead = expiredSkills(selected);
+  const deadHtml = dead.length ? `
+    <div class="cat">
+      <button type="button" class="cat-t"><span class="cat-mark" aria-hidden="true"><span class="plus">+</span><span class="minus">−</span></span><span>本周期失效</span><span class="hint">${dead.length} 个技能点</span></button>
+      <div class="skills">${dead.map((n) => `
+        <div class="sk">
+          <span class="mark" title="失效"></span>
+          <span>${n} <span class="pill">失效</span></span>
+          <button type="button" data-ev="${n}">证据</button>
+        </div>`).join("")}</div>
+    </div>` : "";
   document.getElementById("cats").innerHTML = cats.map((c, i) => `
     <div class="cat ${i === 0 ? "open" : ""}">
       <button type="button" class="cat-t"><span class="cat-mark" aria-hidden="true"><span class="plus">+</span><span class="minus">−</span></span><span>${c.name}</span><span class="hint">${c.items.length} 个技能点</span></button>
-      <div class="skills">${c.items.map(it => `
+      <div class="skills">${c.items.map(it => {
+        const d = periodDelta(selected.id, it.n);
+        const mark = d === "add" ? '<span class="pill">本周期</span>' : "";
+        return `
         <div class="sk">
           <span class="mark ${gradeMark(it.conf)}" title="${it.conf}"></span>
-          <span>${it.n} ${it.must ? "" : '<span class="pill">加分</span>'} <span class="hint">${it.lv}</span></span>
+          <span>${d === "add" ? "+ " : ""}${it.n} ${it.must ? "" : '<span class="pill">加分</span>'} ${mark} <span class="hint">${it.lv}</span></span>
           <button type="button" data-ev="${it.n}">证据</button>
-        </div>`).join("")}</div>
-    </div>`).join("") || `<p class="hint">当前技术栈/级别下没有技能点，换筛选。</p>`;
+        </div>`;
+      }).join("")}</div>
+    </div>`).join("") + deadHtml || `<p class="hint">当前技术栈/级别下没有技能点，换筛选。</p>`;
 }
 
 function selectJob(id) {
@@ -2015,6 +2113,15 @@ document.getElementById("diagB").addEventListener("click", (e) => {
   if (e.target.closest("#diagAgain")) {
     abortDiag();
     renderDiagIdle();
+    return;
+  }
+  if (e.target.closest("#diagCopy")) {
+    const url = new URL(location.href);
+    url.hash = "diagnose";
+    navigator.clipboard.writeText(url.toString()).then(
+      () => live("已复制对照链接。演示里重新打开仍要再分析一次。"),
+      () => live("复制失败，请手动复制地址栏。")
+    );
     return;
   }
   const near = e.target.closest("[data-near-job]");

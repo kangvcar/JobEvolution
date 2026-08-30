@@ -1,9 +1,10 @@
 # 调研:招聘数据采集开源方案与公开 JD 数据集
 
+> **档案。** 定案以 `docs/product.md`、`docs/tech.md`、`docs/frontend.md` 为准。冷启动已改为仓库 `data/` 下全部本地 JD，不限智联、不限文件名；不再手录图谱、也不以天池为人手。求职者页不做实时采集动效；SSE 只给管理可选。
 > 关联工单:GitHub issue #2(Part of #1) · 赛题 XH-202621「多源异构数据驱动岗位和能力图谱构建与动态演化分析」
-> 技术栈约束:Python + FastAPI 优先;需要多源采集中文招聘 JD,并以事件流驱动前端"实时采集动效"。
+> 技术栈约束:Python + FastAPI 优先;需要多源采集中文招聘 JD。
 > 合规:用户明示忽略 robots 等限制,本文只做技术可行性判断,不做法律/合规背书。
-> 核查时间:2026-08-28。仓库 star / 最近推送时间会漂移,依赖前请以仓库页面为准。
+> 核查时间:2026-08-28。智联 / 51job / 猎聘仓库可用性复核见 `docs/research/job-site-crawlers.md`(2026-08-30)。仓库 star / 最近推送时间会漂移,依赖前请以仓库页面为准。
 
 ## 0. 一句话结论
 
@@ -35,7 +36,7 @@
 
 - **不要指望现成 requests 型爬虫**:5 个多站合集里 3 个已 2019–2021 停更,选择器和反爬对抗全部过期。
 - **BOSS 直聘**:唯一可行路线是 BossHunter 代表的"真实登录浏览器 + 接口拦截"。用 Playwright(`headless=False` 或持久化用户目录)+ `wait_for_response` 抓 `joblist.json`,配拟人行为与低频。**主账号有被封风险**,建议小号 + 本地/住宅 IP。
-- **猎聘/智联/拉勾**:同样走 Playwright 数据包监听(猎聘 `searchfront4c.pc-search-job`),`RAYNLIU2005/-Multi-threadedCrawler` 已给出可抄的分层实现。
+- **猎聘/智联/51job**:同样走真实浏览器会话。2026-08-30 复核:还在跟现网改版的是 AgentMesh-JobAgent(三站独立模块,智联 8 月 22–23 日仍在修)和职位猎人插件;RAYNLIU 只当分层骨架。清单和可用性判断见 `docs/research/job-site-crawlers.md`。
 
 ---
 

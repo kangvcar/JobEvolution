@@ -1,5 +1,6 @@
 # 调研:技能本体标准与同类产品借鉴
 
+> **档案。** 定案以 `CONTEXT.md`、`docs/product.md`、`docs/tech.md` 为准。技能点从 JD 抽取聚类，不手录、不导入 ESCO/O\*NET 作底座。本文若写 1–6 级熟练、Tabiya 管理台、对话补技能，实现不要跟。
 > 对应工单:[#6 调研:技能本体标准与同类产品借鉴](https://github.com/kangvcar/JobEvolution/issues/6)(Part of #1)
 > 调研日期:2026-08-28。所有事实均核对官方一手来源(官网、官方下载页、GitHub 仓库),链接见各节与文末。
 
