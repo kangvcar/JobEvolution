@@ -275,7 +275,9 @@ def list_requires(job_id: str) -> list[dict]:
             """
             MATCH (j:Job {id: $id})-[r:REQUIRES]->(s:Skill)
             WHERE r.valid_to IS NULL
+            OPTIONAL MATCH (s)-[:IN_CATEGORY]->(c:SkillCategory)
             RETURN s.id AS skill_id, s.name AS name, r.kind AS kind,
+                   c.id AS category_id, c.name AS category,
                    r.proficiency AS proficiency, r.layer AS layer,
                    r.confidence AS confidence, r.sources AS sources,
                    r.levels AS levels, r.weight AS weight,
@@ -841,6 +843,5 @@ def build_feed() -> dict:
         "pending": pending,
         "barred": barred,
     }
-
 
 

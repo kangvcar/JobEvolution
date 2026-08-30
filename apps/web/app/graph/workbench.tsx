@@ -16,7 +16,20 @@ const LEVELS = [
 ] as const;
 
 type Domain = { id: string; name: string };
-type Job = { id: string; name: string };
+type Job = { id: string; name: string; status?: "emerging" | "formed" };
+type Requirement = {
+  skill_id: string;
+  name: string;
+  category?: string | null;
+  kind?: string;
+  proficiency?: string;
+};
+type JobDetail = Job & { sources?: string[] };
+type Slice = {
+  categories?: { id: string; name: string }[];
+  requires?: Requirement[];
+  period_delta?: { added?: Requirement[]; promoted?: Requirement[]; expired?: Requirement[] };
+};
 
 export function Workbench() {
   const canvas = useRef<HTMLDivElement>(null);
@@ -27,6 +40,8 @@ export function Workbench() {
   const [domain, setDomain] = useState("");
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState(wanted);
+  const [detail, setDetail] = useState<JobDetail | null>(null);
+  const [slice, setSlice] = useState<Slice | null>(null);
 
   useEffect(() => {
     fetch(`${API}/meta`)
@@ -57,6 +72,26 @@ export function Workbench() {
   }, [jobs, selected]);
 
   const current = jobs.find((job) => job.id === selected);
+
+  useEffect(() => {
+    if (!selected) {
+      setDetail(null);
+      setSlice(null);
+      return;
+    }
+    setDetail(null);
+    setSlice(null);
+    Promise.all([
+      fetch(`${API}/jobs/${encodeURIComponent(selected)}`).then((r) => (r.ok ? r.json() : null)),
+      fetch(`${API}/graph/jobs/${encodeURIComponent(selected)}`).then((r) => (r.ok ? r.json() : null)),
+    ]).then(([job, graph]) => {
+      setDetail(job);
+      setSlice(graph);
+    }).catch(() => {
+      setDetail(null);
+      setSlice(null);
+    });
+  }, [selected]);
 
   useEffect(() => {
     const el = canvas.current;
@@ -151,11 +186,27 @@ export function Workbench() {
         />
       </section>
       <aside className="graph-detail">
-        <h1>{current?.name || "图谱"}</h1>
-        {current ? (
-          <Link className="primary" href={`/diagnose?job=${encodeURIComponent(current.id)}`}>
+        <h1>{detail?.name || current?.name || "图谱"}</h1>
+        {detail ? (
+          <>
+            <p>状态：{detail.status === "formed" ? "成型" : "萌芽"}</p>
+            <p>独立源：{detail.sources?.join("、") || "暂无"}</p>
+            <h2>技能点</h2>
+            {slice?.categories?.map((category) => (
+              <section key={category.id}>
+                <h3>{category.name}</h3>
+                <ul>
+                  {(slice.requires || []).filter((skill) => skill.category === category.name).map((skill) => (
+                    <li key={skill.skill_id}>{skill.name}</li>
+                  ))}
+                </ul>
+              </section>
+            ))}
+            {!(slice?.categories?.length) && <ul>{(slice?.requires || []).map((skill) => <li key={skill.skill_id}>{skill.name}</li>)}</ul>}
+            <Link className="primary" href={`/diagnose?job_id=${encodeURIComponent(detail.id)}`}>
             对照简历
-          </Link>
+            </Link>
+          </>
         ) : (
           <p>未接数据</p>
         )}
