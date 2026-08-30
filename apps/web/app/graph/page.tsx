@@ -1,5 +1,5 @@
-import { EmptyPage } from "../empty-page";
+import { Workbench } from "./workbench";
 
 export default function GraphPage() {
-  return <EmptyPage title="图谱" />;
+  return <Workbench />;
 }

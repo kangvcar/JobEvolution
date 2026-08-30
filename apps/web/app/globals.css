@@ -139,3 +139,78 @@ a {
   color: var(--color-muted);
   max-width: 62ch;
 }
+
+.graph-page {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr) 280px;
+  height: calc(100dvh - 64px);
+}
+
+.graph-rail,
+.graph-detail {
+  padding: var(--space-md);
+  overflow: auto;
+  min-width: 0;
+}
+
+.graph-rail {
+  border-inline-end: 1px solid var(--color-rule);
+}
+
+.graph-detail {
+  border-inline-start: 1px solid var(--color-rule);
+}
+
+.graph-rail label,
+.graph-detail p,
+.empty,
+.graph-hint {
+  display: block;
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  margin: 0 0 var(--space-sm);
+}
+
+.graph-rail select,
+.graph-rail input[type="search"] {
+  display: block;
+  width: 100%;
+  margin-top: var(--space-2xs);
+  padding: var(--space-xs);
+  border: 1px solid var(--color-rule);
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
+.graph-stage {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.graph-hint {
+  padding: var(--space-xs) var(--space-sm);
+}
+
+#g6 {
+  min-height: 520px;
+  height: 100%;
+  background: var(--color-paper);
+}
+
+.graph-detail button:disabled {
+  opacity: 0.45;
+}
+
+@media (max-width: 1100px) {
+  .graph-page {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  #g6 {
+    height: 420px;
+    min-height: 420px;
+  }
+}

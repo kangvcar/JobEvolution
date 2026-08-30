@@ -1,11 +1,4 @@
-from fastapi.testclient import TestClient
-
-from app.main import app
-
-client = TestClient(app)
-
-
-def test_meta_returns_four_domains():
+def test_meta_returns_four_domains(client):
     response = client.get("/meta")
     assert response.status_code == 200
     assert response.json()["domains"] == [
