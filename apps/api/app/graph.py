@@ -482,7 +482,9 @@ def list_requires_history(job_id: str) -> list[dict]:
         rows = session.run(
             """
             MATCH (j:Job {id: $id})-[r:REQUIRES]->(s:Skill)
+            OPTIONAL MATCH (s)-[:IN_CATEGORY]->(c:SkillCategory)
             RETURN s.id AS skill_id, s.name AS name,
+                   c.id AS category_id, c.name AS category,
                    toString(r.valid_from) AS valid_from,
                    toString(r.valid_to) AS valid_to,
                    r.layer AS layer
@@ -507,7 +509,12 @@ def period_delta(job_id: str, period_start: str | None = None) -> dict:
     for row in rows:
         valid_from = row.get("valid_from") or ""
         valid_to = row.get("valid_to") or ""
-        item = {"skill_id": row["skill_id"], "name": row["name"]}
+        item = {
+            "skill_id": row["skill_id"],
+            "name": row["name"],
+            "category_id": row.get("category_id"),
+            "category": row.get("category"),
+        }
         if valid_to and valid_to[:10] >= start:
             expired.append(item)
         elif (not valid_to) and valid_from[:10] >= start:
@@ -843,5 +850,4 @@ def build_feed() -> dict:
         "pending": pending,
         "barred": barred,
     }
-
 

@@ -20,6 +20,7 @@ type Job = { id: string; name: string; status?: "emerging" | "formed" };
 type Requirement = {
   skill_id: string;
   name: string;
+  category_id?: string | null;
   category?: string | null;
   kind?: string;
   proficiency?: string;
@@ -96,10 +97,69 @@ export function Workbench() {
   useEffect(() => {
     const el = canvas.current;
     if (!el) return;
+    const cInk = getComputedStyle(document.documentElement).getPropertyValue("--color-ink").trim();
+    const cPaper = getComputedStyle(document.documentElement).getPropertyValue("--color-paper").trim();
+    const cPaper2 = getComputedStyle(document.documentElement).getPropertyValue("--color-paper-2").trim();
+    const cRule = getComputedStyle(document.documentElement).getPropertyValue("--color-rule").trim();
+    const cFall = getComputedStyle(document.documentElement).getPropertyValue("--color-fall").trim();
+    const cRise = getComputedStyle(document.documentElement).getPropertyValue("--color-rise").trim();
+    const delta = slice?.period_delta || {};
+    const added = new Set((delta.added || []).map((skill) => skill.skill_id));
+    const promoted = new Set((delta.promoted || []).map((skill) => skill.skill_id));
+    const expired = new Map((delta.expired || []).map((skill) => [skill.skill_id, skill]));
+    const requires = [...(slice?.requires || [])];
+    for (const skill of expired.values()) {
+      if (!requires.some((item) => item.skill_id === skill.skill_id)) requires.push(skill);
+    }
+    const categories = [...(slice?.categories || [])];
+    for (const skill of requires) {
+      const id = skill.category_id || skill.category;
+      if (id && !categories.some((category) => category.id === id)) {
+        categories.push({ id, name: skill.category || id });
+      }
+    }
+    if (expired.size) categories.push({ id: "expired", name: "本周期失效" });
+    const categoryFor = (skill: Requirement) =>
+      expired.has(skill.skill_id) ? "expired" : skill.category_id || skill.category || "uncategorized";
+    const nodes = [
+      { id: "job", data: { label: current?.name || detail?.name || "岗位", k: "job" } },
+      ...categories.map((category) => ({ id: `category-${category.id}`, data: { label: category.name, k: "category" } })),
+      ...requires.map((skill) => {
+        const isDelta = added.has(skill.skill_id) || promoted.has(skill.skill_id);
+        const isExpired = expired.has(skill.skill_id);
+        return {
+          id: `skill-${skill.skill_id}`,
+          data: { label: `${isDelta ? "+" : ""}${skill.name}`, k: "skill", delta: isDelta ? "added" : isExpired ? "expired" : "" },
+        };
+      }),
+    ];
+    const edges = [
+      ...categories.map((category) => ({ id: `job-${category.id}`, source: "job", target: `category-${category.id}` })),
+      ...requires.map((skill) => ({ id: `category-${skill.skill_id}`, source: `category-${categoryFor(skill)}`, target: `skill-${skill.skill_id}` })),
+    ];
     const graph = new Graph({
       container: el,
       autoFit: "view",
-      data: { nodes: [], edges: [] },
+      padding: 28,
+      data: { nodes, edges },
+      node: {
+        type: "rect",
+        style: {
+          size: (d: { data?: { k?: string } }) => (d.data?.k === "job" ? [104, 34] : d.data?.k === "category" ? [108, 30] : [120, 28]),
+          radius: 0,
+          fill: (d: { data?: { k?: string } }) => (d.data?.k === "job" ? cInk : d.data?.k === "category" ? cPaper2 : cPaper),
+          stroke: (d: { data?: { k?: string; delta?: string } }) => d.data?.delta === "added" ? cFall : d.data?.delta === "expired" ? cRise : d.data?.k === "job" ? cInk : cRule,
+          lineWidth: (d: { data?: { k?: string; delta?: string } }) => d.data?.delta ? 2 : 1,
+          labelText: (d: { data?: { label?: string } }) => d.data?.label || "",
+          labelFill: (d: { data?: { k?: string } }) => d.data?.k === "job" ? cPaper : cInk,
+          labelFontSize: 11,
+          labelPlacement: "center",
+          labelMaxWidth: 116,
+          labelWordWrap: true,
+        },
+      },
+      edge: { style: { stroke: cRule } },
+      layout: { type: "dagre", rankdir: "LR", nodesep: 10, ranksep: 72 },
       behaviors: ["drag-canvas", "zoom-canvas"],
     });
     graph.render();
@@ -113,7 +173,7 @@ export function Workbench() {
       window.removeEventListener("resize", onResize);
       graph.destroy();
     };
-  }, []);
+  }, [current?.name, detail?.name, slice]);
 
   return (
     <main id="main" className="graph-page">
@@ -175,7 +235,7 @@ export function Workbench() {
       </aside>
       <section className="graph-stage">
         <p className="graph-hint">
-          岗位 → 类目 → 技能点。本周期新增或升值、已写失效时间会标在切片差分上。无技能点时画布为空。
+          岗位 → 类目 → 技能点。标签前带 + 的绿描边是本周期新增或升值，红描边归入「本周期失效」；无技能点时画布为空。
         </p>
         <div
           id="g6"
