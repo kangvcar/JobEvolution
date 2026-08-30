@@ -345,16 +345,17 @@ export function Workbench() {
         <aside className="evidence-drawer" role="dialog" aria-modal="true" aria-labelledby="evidence-title">
           <header><div><p className="mono">要求边证据</p><h2 id="evidence-title">{evidenceTarget.name}</h2></div><button type="button" onClick={closeEvidence} aria-label="关闭证据抽屉">关闭</button></header>
           {evidenceTarget.expired && <p className="evidence-status">本周期失效</p>}
-          <ul className="evidence-list">
-            {(slice?.evidence || []).filter((item) => {
-              const ids = evidenceTarget.sources || [];
-              return !ids.length || ids.includes(item.id);
-            }).map((item) => <li key={item.id}><strong>{item.company || item.id}</strong><span>{item.id} · {item.source || "未知来源"} · {(item.observed_at || "").slice(0, 10)}</span></li>)}
-          </ul>
-          {!(slice?.evidence || []).filter((item) => {
+          {(() => {
+            const all = slice?.evidence || [];
             const ids = evidenceTarget.sources || [];
-            return !ids.length || ids.includes(item.id);
-          }).length && <p className="empty">暂无证据记录</p>}
+            const matched = ids.length ? all.filter((item) => ids.includes(item.id)) : all;
+            const rows = matched.length ? matched : all;
+            return rows.length ? (
+              <ul className="evidence-list">
+                {rows.map((item) => <li key={item.id}><strong>{item.company || item.id}</strong><span>{item.id} · {item.source || "未知来源"} · {(item.observed_at || "").slice(0, 10)}</span></li>)}
+              </ul>
+            ) : <p className="empty">暂无证据记录</p>;
+          })()}
         </aside>
       </>
     )}
