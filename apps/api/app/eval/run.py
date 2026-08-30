@@ -7,6 +7,7 @@ from app.eval.freeze import align_threshold, freeze_hash, load_freeze
 from app.eval.io import read_jsonl, write_json
 from app.eval.paths import eval_dir, out_dir
 from app.eval.scan import mention_skill_ids, skill_ids
+from app.matching.resume import parse_resume
 from app.matching.score import compare_job
 
 PASS = 0.90
@@ -46,14 +47,14 @@ def eval_jd(*, mock: bool = False) -> dict:
 def eval_resume(*, mock: bool = False) -> dict:
     load_freeze()
     index = _index()
-    cut = align_threshold()
     rows = []
     for item in read_jsonl(eval_dir() / "resume.jsonl"):
         gold = skill_ids(item.get("skills") or [])
         if mock:
             pred = set(gold)
         else:
-            pred = skill_ids(mention_skill_ids(item.get("text") or "", index, threshold=cut))
+            parsed = parse_resume(item.get("text") or "", index)
+            pred = {row["skill_id"] for row in parsed.get("skills") or [] if row.get("skill_id")}
         rows.append(set_f1(pred, gold))
     summary = {"task": "resume", "mock": mock, **mean_f1(rows)}
     _fail_if_low("resume", summary)

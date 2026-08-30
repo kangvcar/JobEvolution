@@ -50,9 +50,9 @@ def _name_in_text(name: str, blob: str) -> bool:
     needle = (name or "").casefold()
     if not needle:
         return False
-    if len(needle) <= 2:
-        return re.search(rf"(?<!\w){re.escape(needle)}(?!\w)", blob) is not None
-    return needle in blob
+    if re.search(r"[\u4e00-\u9fff]", needle):
+        return needle in blob
+    return re.search(rf"(?<![a-z0-9_]){re.escape(needle)}(?![a-z0-9_])", blob) is not None
 
 
 INFO_PROMPT = (
@@ -99,19 +99,18 @@ def parse_resume(text: str, index: list[dict], complete_json=None) -> dict:
     skills = _align_skills(raw_skills.get("skills") or [], index)
     if not skills:
         skills = skills_from_text(text, index)
-    if not _marks_level(text):
-        for row in skills:
+    for row in skills:
+        if not _marks_level_for_skill(text, row.get("name") or ""):
             row["proficiency"] = None
     experience = str(info.get("experience") or "").strip() or "简历未标"
     education = str(info.get("education") or "").strip() or "简历未标"
     return {"experience": experience, "education": education, "skills": skills}
 
 
-def _marks_level(text: str) -> bool:
+def _marks_level_for_skill(text: str, name: str) -> bool:
     blob = text or ""
-    if any(token in blob for token in ("了解", "熟练", "精通")):
-        return True
-    return re.search(r"\b(aware|able|expert|proficient)\b", blob, re.I) is not None
+    needle = re.escape(name)
+    return re.search(rf"(?:了解|熟练|精通|aware|able|expert|proficient)\s*(?:掌握|使用|过)?\W{{0,12}}{needle}", blob, re.I) is not None
 
 
 def _align_skills(rows: list, index: list[dict]) -> list[dict]:
