@@ -121,7 +121,7 @@ def test_agent_engineer_emerging_with_three_sources(tmp_path):
     job_id = job_id_for("Agent 工程师")
     row = client.get(f"/jobs/{job_id}").json()
     assert row["name"] == "Agent 工程师"
-    assert row["status"] in ("emerging", "formed")
+    assert row["status"] == "emerging"
     _cleanup(graph, suffix, "Agent 工程师")
 
 
