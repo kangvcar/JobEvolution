@@ -1,5 +1,5 @@
-import { EmptyPage } from "./empty-page";
+import { Home } from "./home";
 
 export default function HomePage() {
-  return <EmptyPage title="总览" />;
+  return <Home />;
 }

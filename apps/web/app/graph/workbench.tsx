@@ -1,6 +1,8 @@
 "use client";
 
 import { Graph } from "@antv/g6";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -18,10 +20,13 @@ type Job = { id: string; name: string };
 
 export function Workbench() {
   const canvas = useRef<HTMLDivElement>(null);
+  const params = useSearchParams();
+  const wanted = params.get("job") || params.get("job_id") || "";
   const [domains, setDomains] = useState<Domain[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [domain, setDomain] = useState("");
   const [q, setQ] = useState("");
+  const [selected, setSelected] = useState(wanted);
 
   useEffect(() => {
     fetch(`${API}/meta`)
@@ -42,6 +47,16 @@ export function Workbench() {
       .then((rows: Job[]) => setJobs(Array.isArray(rows) ? rows : []))
       .catch(() => setJobs([]));
   }, [domain, q]);
+
+  useEffect(() => {
+    if (wanted) setSelected(wanted);
+  }, [wanted]);
+
+  useEffect(() => {
+    if (!selected && jobs[0]) setSelected(jobs[0].id);
+  }, [jobs, selected]);
+
+  const current = jobs.find((job) => job.id === selected);
 
   useEffect(() => {
     const el = canvas.current;
@@ -110,7 +125,12 @@ export function Workbench() {
           <ul className="job-list">
             {jobs.map((job) => (
               <li key={job.id}>
-                <button type="button" className="job-item">
+                <button
+                  type="button"
+                  className="job-item"
+                  data-current={job.id === selected ? "1" : undefined}
+                  onClick={() => setSelected(job.id)}
+                >
                   {job.name}
                 </button>
               </li>
@@ -131,11 +151,14 @@ export function Workbench() {
         />
       </section>
       <aside className="graph-detail">
-        <h1>图谱</h1>
-        <p>未接数据</p>
-        <button type="button" disabled>
-          对照简历
-        </button>
+        <h1>{current?.name || "图谱"}</h1>
+        {current ? (
+          <Link className="primary" href={`/diagnose?job=${encodeURIComponent(current.id)}`}>
+            对照简历
+          </Link>
+        ) : (
+          <p>未接数据</p>
+        )}
       </aside>
     </main>
   );

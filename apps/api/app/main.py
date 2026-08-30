@@ -151,6 +151,19 @@ def discover():
     return graph.discover_boards()
 
 
+@app.get("/discover/{job_id}")
+def discover_one(job_id: str):
+    row = graph.discover_dossier(job_id)
+    if row is None:
+        raise HTTPException(404, "not found")
+    return row
+
+
+@app.get("/feed")
+def feed():
+    return graph.build_feed()
+
+
 class ApproveBody(BaseModel):
     payload: dict | None = None
 

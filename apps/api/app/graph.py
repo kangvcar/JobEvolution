@@ -399,7 +399,8 @@ def list_job_evidence(job_id: str) -> list[dict]:
         rows = session.run(
             """
             MATCH (e:Evidence)-[:FOR]->(j:Job {id: $id})
-            RETURN e.company AS company, e.observed_at AS observed_at, e.id AS id
+            RETURN e.company AS company, e.observed_at AS observed_at,
+                   e.id AS id, e.source AS source
             """,
             id=job_id,
         )
@@ -535,28 +536,311 @@ def list_job_events(job_id: str) -> list[dict]:
         return out
 
 
-def discover_boards() -> dict:
+FORMED_SLICE = 3
+_STORY_DISCOVER = "Agent 工程师"
+_STORY_UPDATE = "大模型应用工程师"
+
+
+def _source_stats(rows: list[dict]) -> tuple[int, int, int]:
+    from app.pipeline.status import source_stats
+
+    return source_stats(rows)
+
+
+def list_aliases_in(job_id: str) -> list[dict]:
     if _driver is None:
-        return {"candidate": [], "emerging": [], "formed": []}
+        return []
+    with _driver.session() as session:
+        rows = session.run(
+            """
+            MATCH (src:Job)-[:ALIAS_OF]->(dst:Job {id: $id})
+            RETURN src.id AS id, src.name AS name
+            """,
+            id=job_id,
+        )
+        return [dict(row) for row in rows]
+
+
+def alias_of(job_id: str) -> dict | None:
+    if _driver is None:
+        return None
+    with _driver.session() as session:
+        row = session.run(
+            """
+            MATCH (j:Job {id: $id})-[:ALIAS_OF]->(dst:Job)
+            RETURN dst.id AS id, dst.name AS name
+            """,
+            id=job_id,
+        ).single()
+    return dict(row) if row else None
+
+
+def _board_item(row: dict) -> dict:
+    evidence = [
+        ev
+        for ev in (row.get("evidence") or [])
+        if ev and ev.get("company")
+    ]
+    _, n_total, _ = _source_stats(evidence)
+    return {
+        "id": row["id"],
+        "name": row["name"],
+        "status": row["status"] or "candidate",
+        "domain": row["domain"],
+        "n_sources": n_total,
+    }
+
+
+def list_board_jobs() -> dict:
+    empty = {"candidate": [], "emerging": [], "formed": []}
+    if _driver is None:
+        return empty
     with _driver.session() as session:
         rows = list(
             session.run(
                 """
                 MATCH (j:Job)-[:IN_DOMAIN]->(d:Domain)
                 OPTIONAL MATCH (j)-[a:ALIAS_OF]->()
+                WITH j, d, count(a) AS aliases
+                OPTIONAL MATCH (e:Evidence)-[:FOR]->(j)
                 RETURN j.id AS id, j.name AS name, j.status AS status, d.id AS domain,
-                       count(a) AS aliases
+                       aliases,
+                       collect({company: e.company, observed_at: e.observed_at}) AS evidence
                 """
             )
         )
     boards = {"candidate": [], "emerging": [], "formed": []}
     for row in rows:
-        item = {"id": row["id"], "name": row["name"], "status": row["status"], "domain": row["domain"]}
         status = row["status"] or "candidate"
         if status == "candidate" and row["aliases"]:
             continue
         if status in boards:
-            boards[status].append(item)
+            boards[status].append(_board_item(row))
     return boards
+
+
+def _rank_formed(items: list[dict]) -> list[dict]:
+    scored = []
+    for item in items:
+        delta = period_delta(item["id"])
+        n = len(delta["added"]) + len(delta["promoted"]) + len(delta["expired"])
+        prefer = 1 if item["name"] == _STORY_UPDATE else 0
+        scored.append((prefer, n, item))
+    scored.sort(key=lambda row: (row[0], row[1]), reverse=True)
+    return [row[2] for row in scored]
+
+
+def discover_boards() -> dict:
+    boards = list_board_jobs()
+    formed = _rank_formed(boards["formed"])
+    return {
+        "candidate": boards["candidate"],
+        "emerging": boards["emerging"],
+        "formed": formed[:FORMED_SLICE],
+        "formed_total": len(formed),
+    }
+
+
+def discover_dossier(job_id: str) -> dict | None:
+    job = get_any_job(job_id)
+    if job is None:
+        return None
+    evidence = list_job_evidence(job_id)
+    n_window, n_total, _ = _source_stats(evidence)
+    companies = []
+    seen = set()
+    for row in evidence:
+        name = (row.get("company") or "").strip()
+        if name and name not in seen:
+            seen.add(name)
+            companies.append(name)
+    return {
+        **job,
+        "n_sources": n_total,
+        "n_window": n_window,
+        "cluster": {"n": len(evidence), "n_sources": n_total},
+        "sources": companies,
+        "evidence": evidence,
+        "events": list_job_events(job_id),
+        "aliases_in": list_aliases_in(job_id),
+        "alias_of": alias_of(job_id),
+    }
+
+
+def _pick_named(items: list[dict], name: str) -> dict | None:
+    for item in items:
+        if item["name"] == name:
+            return item
+    return items[0] if items else None
+
+
+def _story(kind: str, job: dict) -> dict:
+    evidence = list_job_evidence(job["id"])
+    _, n_total, _ = _source_stats(evidence)
+    delta = period_delta(job["id"])
+    added = [row["name"] for row in delta["added"]]
+    expired = [row["name"] for row in delta["expired"]]
+    companies = []
+    seen = set()
+    for row in evidence:
+        name = (row.get("company") or "").strip()
+        if name and name not in seen:
+            seen.add(name)
+            companies.append(name)
+    if kind == "discover":
+        title = f"{job['name']}刚跨过萌芽线"
+        hint = f"{n_total} 个独立源。判别是新岗位，不是别名。"
+    else:
+        extra = f" +{added[0]}" if added else ""
+        title = f"{job['name']}{extra}"
+        bits = []
+        if added:
+            bits.append("本周期有新增要求边")
+        if expired:
+            bits.append("已写 valid_to")
+        hint = "，".join(bits) or "本周期切片差分"
+    return {
+        "kind": kind,
+        "job_id": job["id"],
+        "name": job["name"],
+        "status": job["status"],
+        "title": title,
+        "hint": hint,
+        "delta": [{"add": True, "name": name} for name in added]
+        + [{"add": False, "name": name} for name in expired],
+        "sources": " · ".join(companies[:8]),
+        "n_sources": n_total,
+    }
+
+
+def _pipeline_counts() -> list[dict]:
+    if _driver is None:
+        return []
+    with _driver.session() as session:
+        rows = session.run(
+            "MATCH (e:Evidence) RETURN e.source AS source, count(*) AS n ORDER BY n DESC"
+        )
+        return [{"source": row["source"] or "local", "n": int(row["n"])} for row in rows]
+
+
+def _heat(n_public: int) -> list[dict]:
+    # ponytail: 谱内岗位占比, not 簇内覆盖率; persist coverage on REQUIRES if pt 12→33 is needed
+    if _driver is None or n_public <= 0:
+        return []
+    with _driver.session() as session:
+        rows = session.run(
+            """
+            MATCH (j:Job)-[r:REQUIRES]->(s:Skill)
+            WHERE j.status IN ['emerging', 'formed'] AND r.valid_to IS NULL
+            RETURN s.id AS id, s.name AS name, count(DISTINCT j) AS n
+            ORDER BY n DESC
+            """
+        )
+        out = []
+        for row in rows:
+            v = round(100 * int(row["n"]) / n_public)
+            out.append({"id": row["id"], "name": row["name"], "v": v})
+        return out
+
+
+def _move_lists(jobs: list[dict]) -> tuple[list[dict], list[dict]]:
+    # ponytail: names from period_delta only; coverage-pt needs stored cluster rates
+    rise, fall = [], []
+    seen_r, seen_f = set(), set()
+    for job in jobs:
+        delta = period_delta(job["id"])
+        for row in delta["added"]:
+            if row["name"] not in seen_r:
+                seen_r.add(row["name"])
+                rise.append({"name": row["name"]})
+        for row in delta["expired"]:
+            if row["name"] not in seen_f:
+                seen_f.add(row["name"])
+                fall.append({"name": row["name"]})
+    return rise, fall
+
+
+def _feed_events() -> list[dict]:
+    if _driver is None:
+        return []
+    with _driver.session() as session:
+        rows = session.run(
+            """
+            MATCH (e:EvolutionEvent)
+            OPTIONAL MATCH (e)-[:AFFECTS]->(j:Job)
+            RETURN e.kind AS kind, e.at AS at, e.review AS review,
+                   e.payload AS payload, j.name AS job_name
+            ORDER BY e.at DESC
+            LIMIT 24
+            """
+        )
+        out = []
+        for row in rows:
+            payload = row["payload"] or "{}"
+            if isinstance(payload, str):
+                payload = json.loads(payload)
+            job_name = row["job_name"] or payload.get("job_name") or ""
+            skill = payload.get("skill_name") or ""
+            kind = row["kind"] or ""
+            if kind == "requires_add" and skill:
+                text = f"{job_name} +{skill}".strip()
+            elif kind == "extract_failed":
+                text = "抽取失败，拦下"
+            elif kind == "job_status":
+                text = f"{job_name} 状态流转".strip()
+            else:
+                text = f"{job_name} {kind}".strip()
+            review = row["review"] or ""
+            review_zh = {
+                "pending": "待审",
+                "approved": "已入谱",
+                "auto_passed": "自动通过",
+                "rejected": "驳回",
+            }.get(review, review)
+            out.append(
+                {
+                    "at": row["at"] or "",
+                    "text": text,
+                    "review": review_zh,
+                    "kind": kind,
+                }
+            )
+        return out
+
+
+def build_feed() -> dict:
+    boards = list_board_jobs()
+    public = boards["emerging"] + boards["formed"]
+    stories = []
+    discover = _pick_named(boards["emerging"], _STORY_DISCOVER)
+    if discover:
+        stories.append(_story("discover", discover))
+    update = _pick_named(boards["formed"], _STORY_UPDATE)
+    if update:
+        stories.append(_story("update", update))
+    pending = len(list_pending_events())
+    barred = 0
+    if _driver is not None:
+        with _driver.session() as session:
+            row = session.run(
+                "MATCH (e:EvolutionEvent {kind: 'extract_failed'}) RETURN count(*) AS n"
+            ).single()
+            barred = int(row["n"]) if row else 0
+    rise, fall = _move_lists(public)
+    return {
+        "emerging": len(boards["emerging"]),
+        "in_graph": len(public),
+        "candidate": len(boards["candidate"]),
+        "formed": len(boards["formed"]),
+        "stories": stories,
+        "pipeline": _pipeline_counts(),
+        "heat": _heat(len(public)),
+        "events": _feed_events(),
+        "rise": rise,
+        "fall": fall,
+        "pending": pending,
+        "barred": barred,
+    }
+
 
 

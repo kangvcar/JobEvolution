@@ -1,5 +1,5 @@
-import { EmptyPage } from "../empty-page";
+import { DiscoverBoard } from "./board";
 
 export default function DiscoverPage() {
-  return <EmptyPage title="发现" />;
+  return <DiscoverBoard />;
 }
