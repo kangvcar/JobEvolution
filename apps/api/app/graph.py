@@ -66,16 +66,35 @@ WHERE j.status IN ['emerging', 'formed']
   AND ($domain IS NULL OR d.id = $domain)
   AND ($status IS NULL OR j.status = $status)
   AND ($q IS NULL OR toLower(j.name) CONTAINS toLower($q))
+  AND ($category IS NULL OR EXISTS {
+    MATCH (j)-[r:REQUIRES]->(s:Skill)-[:IN_CATEGORY]->(c:SkillCategory)
+    WHERE r.valid_to IS NULL AND c.name = $category
+  })
+  AND ($level IS NULL OR EXISTS {
+    MATCH (j)-[r:REQUIRES]->(s:Skill)
+    WHERE r.valid_to IS NULL AND $level IN coalesce(r.levels, [])
+  })
 RETURN j.id AS id, j.name AS name, j.status AS status, d.id AS domain,
        j.code AS code, j.esco_id AS esco_id, j.onet_id AS onet_id
 """
 
 
-def list_jobs(*, domain: str | None, status: str | None, q: str | None) -> list[dict]:
+def list_jobs(*, domain: str | None, status: str | None, q: str | None,
+              category: str | None = None, level: str | None = None) -> list[dict]:
     if status == "candidate":
         return []
     with _driver.session() as session:
-        return [dict(row) for row in session.run(_PUBLIC_JOB, domain=domain, status=status, q=q)]
+        return [
+            dict(row)
+            for row in session.run(
+                _PUBLIC_JOB,
+                domain=domain,
+                status=status,
+                q=q,
+                category=category,
+                level=level,
+            )
+        ]
 
 
 def upsert_evidence(

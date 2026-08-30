@@ -51,8 +51,10 @@ def jobs(
     domain: str | None = None,
     status: str | None = None,
     q: str | None = Query(None),
+    category: str | None = Query(None),
+    level: str | None = Query(None, pattern="^(junior|mid|senior)$"),
 ):
-    return graph.list_jobs(domain=domain, status=status, q=q)
+    return graph.list_jobs(domain=domain, status=status, q=q, category=category, level=level)
 
 
 @app.get("/jobs/{job_id}")
