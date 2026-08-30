@@ -77,6 +77,47 @@ def list_jobs(*, domain: str | None, status: str | None, q: str | None) -> list[
         return [dict(row) for row in session.run(_PUBLIC_JOB, domain=domain, status=status, q=q)]
 
 
+def upsert_evidence(
+    *,
+    id: str,
+    path: str,
+    source: str,
+    company: str,
+    observed_at: str,
+    simhash: str,
+) -> None:
+    upsert_evidence_many(
+        [
+            {
+                "id": id,
+                "path": path,
+                "source": source,
+                "company": company,
+                "observed_at": observed_at,
+                "simhash": simhash,
+            }
+        ]
+    )
+
+
+def upsert_evidence_many(rows: list[dict]) -> None:
+    if _driver is None or not rows:
+        return
+    with _driver.session() as session:
+        session.run(
+            """
+            UNWIND $rows AS row
+            MERGE (e:Evidence {id: row.id})
+            SET e.path = row.path,
+                e.source = row.source,
+                e.company = row.company,
+                e.observed_at = row.observed_at,
+                e.simhash = row.simhash
+            """,
+            rows=rows,
+        )
+
+
 def get_public_job(job_id: str) -> dict | None:
     cypher = """
     MATCH (j:Job {id: $id})-[:IN_DOMAIN]->(d:Domain)

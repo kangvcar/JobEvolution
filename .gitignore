@@ -9,3 +9,5 @@ apps/web/.next/
 apps/web/tsconfig.tsbuildinfo
 .DS_Store
 .firecrawl
+data/jd/*.json
+data/jd/*.tmp
