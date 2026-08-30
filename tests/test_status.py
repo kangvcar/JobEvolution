@@ -146,7 +146,18 @@ def test_llm_app_requires_and_period_delta(tmp_path):
     assert slice_["requires"]
     delta = slice_["period_delta"]
     assert delta["added"] or delta["expired"]
+    assert any(edge["name"] == "FastAPI" for edge in delta["expired"])
+    with graph._driver.session() as session:
+        expired = session.run(
+            """
+            MATCH (j:Job {id: $id})-[r:REQUIRES]->(s:Skill {name: 'FastAPI'})
+            RETURN r.valid_to AS valid_to
+            """,
+            id=job_id,
+        ).single()
+    assert expired is not None and expired["valid_to"] is not None
     detail = client.get(f"/jobs/{job_id}").json()
+    assert detail["status"] == "formed"
     kinds = {e.get("kind") for e in detail.get("events") or []}
     assert "requires_add" in kinds
     _cleanup(graph, suffix, name)
