@@ -5,7 +5,7 @@ from pathlib import Path
 
 from app.eval.io import write_json, write_jsonl
 from app.eval.paths import eval_dir, repo_root
-from app.eval.scan import duty_text, mention_skill_ids
+from app.eval.scan import duty_text
 from app.matching.score import compare_job
 from app.pipeline.__main__ import match_target
 from app.pipeline.status import job_id_for
@@ -88,7 +88,19 @@ def build_gold(*, index: list[dict], jobs: list[dict]) -> None:
     jd_rows = []
     for i, doc in enumerate(_pick_jd(), start=1):
         text = duty_text(doc.get("body") or "")[:2500]
-        skills = mention_skill_ids(text, index)
+        skills = doc.get("gold_skills") or doc.get("skills")
+        if not isinstance(skills, list):
+            raise ValueError(f"JD snapshot {doc.get('id') or doc.get('path')} lacks frozen gold_skills")
+        skills = [
+            {
+                "id": row.get("id") or row.get("skill_id"),
+                "name": row.get("name") or "",
+                "kind": row.get("kind") or "required",
+                "proficiency": row.get("proficiency"),
+            }
+            for row in skills
+            if isinstance(row, dict) and (row.get("id") or row.get("skill_id"))
+        ]
         name = match_target(doc.get("title") or "")
         jd_rows.append(
             {

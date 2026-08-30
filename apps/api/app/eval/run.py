@@ -7,6 +7,8 @@ from app.eval.freeze import align_threshold, freeze_hash, load_freeze
 from app.eval.io import read_jsonl, write_json
 from app.eval.paths import eval_dir, out_dir
 from app.eval.scan import mention_skill_ids, skill_ids
+from app.pipeline.align import align_skill
+from app.pipeline.extract import parse_extracted
 from app.matching.score import compare_job
 
 PASS = 0.90
@@ -26,17 +28,29 @@ def _fail_if_low(name: str, summary: dict) -> None:
 
 
 def eval_jd(*, mock: bool = False) -> dict:
-    # ponytail: pred is freeze-threshold vocab scan of stored text, not a second DeepSeek pass
     load_freeze()
     index = _index()
     cut = align_threshold()
+    from app.llm.client import complete_json
+
     rows = []
     for item in read_jsonl(eval_dir() / "jd.jsonl"):
         gold = skill_ids(item.get("skills") or [])
         if mock:
             pred = set(gold)
         else:
-            pred = skill_ids(mention_skill_ids(item.get("text") or "", index, threshold=cut))
+            snapshot = {
+                "title": item.get("title") or item.get("job_name") or "",
+                "domain": item.get("domain") or "",
+                "body": item.get("text") or "",
+            }
+            parsed = parse_extracted(complete_json, retry=True, snapshot=snapshot)
+            pred = {
+                hit["id"]
+                for skill in parsed.skills
+                if skill.section in ("duty", "requirement")
+                if (hit := align_skill(skill.name, index, threshold=cut)) is not None
+            }
         rows.append(set_f1(pred, gold))
     summary = {"task": "jd", "mock": mock, **mean_f1(rows)}
     _fail_if_low("jd", summary)
