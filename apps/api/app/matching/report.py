@@ -101,6 +101,7 @@ def wrap_report(
     resume: dict,
     neighbor: dict | None,
     watching: list[dict],
+    slice_data: dict | None = None,
 ) -> dict:
     core = compare_job(requires, resume.get("skills") or [])
     core["path"] = attach_urls(core["path"])
@@ -152,6 +153,7 @@ def wrap_report(
                     {"skill_id": row["skill_id"], "name": row["name"], "cover": row.get("cover")}
                     for row in core["covered"]
                 ],
+                "slice": slice_data or {"categories": [], "requires": [], "period_delta": {}},
             },
             "act": {"path": core["path"], "ledger": core["ledger"]},
             "explain": {

@@ -159,6 +159,7 @@ def diagnose(body: DiagnoseBody):
         resume=resume,
         neighbor=neighbor,
         watching=watching,
+        slice_data={"categories": graph.job_slice(body.job_id)["categories"], "requires": requires, "period_delta": graph.period_delta(body.job_id)},
     )
 
 

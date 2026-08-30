@@ -37,6 +37,7 @@ export function Workbench() {
   const canvas = useRef<HTMLDivElement>(null);
   const params = useSearchParams();
   const wanted = params.get("job") || params.get("job_id") || "";
+  const wantedSkill = params.get("skill_id") || "";
   const [domains, setDomains] = useState<Domain[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [domain, setDomain] = useState("");
@@ -44,6 +45,7 @@ export function Workbench() {
   const [level, setLevel] = useState("");
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState(wanted);
+  const [selectedSkill, setSelectedSkill] = useState(wantedSkill);
   const [detail, setDetail] = useState<JobDetail | null>(null);
   const [slice, setSlice] = useState<Slice | null>(null);
 
@@ -71,7 +73,8 @@ export function Workbench() {
 
   useEffect(() => {
     if (wanted) setSelected(wanted);
-  }, [wanted]);
+    if (wantedSkill) setSelectedSkill(wantedSkill);
+  }, [wanted, wantedSkill]);
 
   useEffect(() => {
     if (jobs[0] && !jobs.some((job) => job.id === selected)) setSelected(jobs[0].id);
@@ -140,7 +143,7 @@ export function Workbench() {
         const isExpired = expired.has(skill.skill_id);
         return {
           id: `skill-${skill.skill_id}`,
-          data: { label: `${isDelta ? "+" : ""}${skill.name}`, k: "skill", delta: isDelta ? "added" : isExpired ? "expired" : "" },
+          data: { label: `${isDelta ? "+" : ""}${skill.name}`, k: "skill", selected: skill.skill_id === selectedSkill, delta: isDelta ? "added" : isExpired ? "expired" : "" },
         };
       }),
     ];
@@ -159,7 +162,7 @@ export function Workbench() {
           size: (d: { data?: { k?: string } }) => (d.data?.k === "job" ? [104, 34] : d.data?.k === "category" ? [108, 30] : [120, 28]),
           radius: 0,
           fill: (d: { data?: { k?: string } }) => (d.data?.k === "job" ? cInk : d.data?.k === "category" ? cPaper2 : cPaper),
-          stroke: (d: { data?: { k?: string; delta?: string } }) => d.data?.delta === "added" ? cFall : d.data?.delta === "expired" ? cRise : d.data?.k === "job" ? cInk : cRule,
+          stroke: (d: { data?: { k?: string; delta?: string; selected?: boolean } }) => d.data?.selected ? cInk : d.data?.delta === "added" ? cFall : d.data?.delta === "expired" ? cRise : d.data?.k === "job" ? cInk : cRule,
           lineWidth: (d: { data?: { k?: string; delta?: string } }) => d.data?.delta ? 2 : 1,
           labelText: (d: { data?: { label?: string } }) => d.data?.label || "",
           labelFill: (d: { data?: { k?: string } }) => d.data?.k === "job" ? cPaper : cInk,
@@ -184,7 +187,7 @@ export function Workbench() {
       window.removeEventListener("resize", onResize);
       graph.destroy();
     };
-  }, [current?.name, detail?.name, slice]);
+  }, [current?.name, detail?.name, slice, selectedSkill]);
 
   return (
     <main id="main" className="graph-page">
@@ -268,7 +271,7 @@ export function Workbench() {
                 <h3>{sliceCategory.name}</h3>
                 <ul>
                   {visibleRequires.filter((skill) => skill.category === sliceCategory.name).map((skill) => (
-                    <li key={skill.skill_id}>{skill.name}</li>
+                    <li key={skill.skill_id} data-selected={skill.skill_id === selectedSkill ? "1" : undefined}>{skill.name}</li>
                   ))}
                 </ul>
               </section>

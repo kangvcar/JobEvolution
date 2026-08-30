@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const TICKER = [
@@ -14,6 +15,7 @@ const DEFAULT_JOB = "大模型应用工程师";
 
 type Job = { id: string; name: string; status?: string };
 type Named = { skill_id?: string; name: string };
+type Requirement = Named & { category?: string | null; category_id?: string | null };
 type Report = {
   job_id: string;
   session_id?: string;
@@ -30,6 +32,11 @@ type Report = {
     locate: {
       neighbors: { job_id: string; name: string; band: string }[];
       hits: Named[];
+      slice: {
+        categories?: { id: string; name: string }[];
+        requires?: Requirement[];
+        period_delta?: { added?: Requirement[]; promoted?: Requirement[]; expired?: Requirement[] };
+      };
     };
     act: {
       path: { skill_id: string; name: string; excerpt: string; why: string; url: string }[];
@@ -162,6 +169,39 @@ export function DiagnoseForm() {
     return (rows || []).map((row) => row.name).filter(Boolean).join("、") || "无";
   }
 
+  function MiniGraph() {
+    const slice = report?.groups.locate.slice;
+    const delta = slice?.period_delta || {};
+    const requires = [...(slice?.requires || [])];
+    for (const skill of delta.expired || []) {
+      if (!requires.some((item) => item.skill_id === skill.skill_id)) requires.push(skill);
+    }
+    const changed = new Set([...(delta.added || []), ...(delta.promoted || [])].map((row) => row.skill_id));
+    const categories = slice?.categories?.length
+      ? slice.categories
+      : [...new Set(requires.map((row) => row.category).filter(Boolean))].map((name) => ({ id: name as string, name: name as string }));
+    return (
+      <div className="mini-graph" aria-label="岗位切片对照小图谱">
+        <span className="mini-node mini-job">{jobs.find((j) => j.id === jobId)?.name || "岗位"}</span>
+        {categories.map((category) => {
+          const skills = requires.filter((skill) => (skill.category_id || skill.category) === category.id || skill.category === category.name);
+          return (
+            <section key={category.id} className="mini-category">
+              <span className="mini-node">{category.name}</span>
+              <div className="mini-skills">
+                {skills.map((skill) => (
+                  <Link key={skill.skill_id} className="mini-skill" data-delta={changed.has(skill.skill_id) ? "1" : undefined} href={`/graph?job_id=${encodeURIComponent(jobId)}&skill_id=${encodeURIComponent(skill.skill_id || "")}`}>
+                    {changed.has(skill.skill_id) ? "+" : ""}{skill.name}
+                  </Link>
+                ))}
+              </div>
+            </section>
+          );
+        })}
+      </div>
+    );
+  }
+
   return (
     <main id="main" className="page diagnose" data-phase={phase}>
       {phase !== "done" && (
@@ -263,6 +303,7 @@ export function DiagnoseForm() {
                   </button>
                 ))}
               </div>
+              <MiniGraph />
               <p>已对齐 {names(report.groups.locate.hits)}</p>
 
               <h2>行动</h2>
