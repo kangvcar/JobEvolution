@@ -3,13 +3,14 @@ from __future__ import annotations
 import hashlib
 import json
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 
 from app.collectors.normalize import is_channel_name, normalize_company
 from app.collectors.sink import STREAM_KEY, connect_redis
 from app.llm.embed import embed
 from app.pipeline.align import align_job, align_skill, cluster_texts
-from app.pipeline.constants import COVERAGE_THRESHOLD, PASSTHROUGH_KEY
+from app.pipeline.constants import COVERAGE_THRESHOLD, EXTRACT_WORKERS, PASSTHROUGH_KEY
 from app.pipeline.extract import parse_extracted
 from app.pipeline.sections import section_of
 
@@ -107,22 +108,39 @@ def apply_event(event_id: str, *, review: str, payload: dict | None = None) -> d
     return event
 
 
-def run_extract_and_gate(snapshots: list[dict], complete_json=None) -> list[dict]:
+def run_extract_and_gate(
+    snapshots: list[dict],
+    complete_json=None,
+    workers: int | None = None,
+) -> list[dict]:
     from app import graph
     from app.llm.client import complete_json as default_complete
 
     if graph._driver is None:
         graph.init_graph()
     complete = complete_json or default_complete
+    n_workers = workers if workers is not None else (1 if complete_json else EXTRACT_WORKERS)
+    n_workers = max(1, min(n_workers, max(1, len(snapshots))))
+
+    def _extract_one(snap: dict):
+        try:
+            return ("ok", snap, parse_extracted(complete, retry=True, snapshot=snap))
+        except ValueError as exc:
+            return ("fail", snap, str(exc))
+
+    if n_workers == 1:
+        extracted = [_extract_one(snap) for snap in snapshots]
+    else:
+        with ThreadPoolExecutor(max_workers=n_workers) as pool:
+            extracted = list(pool.map(_extract_one, snapshots))
+
     extracted_rows = []
     events: list[dict] = []
-    for snap in snapshots:
-        try:
-            parsed = parse_extracted(complete, retry=True, snapshot=snap)
-        except ValueError as exc:
-            events.append(enqueue_extract_failure(snap, str(exc)))
+    for status, snap, payload in extracted:
+        if status == "fail":
+            events.append(enqueue_extract_failure(snap, payload))
             continue
-        extracted_rows.append((snap, parsed))
+        extracted_rows.append((snap, payload))
 
     by_job: dict[str, list] = defaultdict(list)
     for snap, parsed in extracted_rows:

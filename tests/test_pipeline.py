@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 from app.llm.embed import embed
 from app.pipeline.align import align_skill
 from app.pipeline.constants import COVERAGE_THRESHOLD
-from app.pipeline.extract import ExtractedJd, parse_extracted
+from app.pipeline.extract import ExtractedJd, coerce_extracted, parse_extracted
 from app.pipeline.gate import (
     confidence_layer,
     coverage,
@@ -69,6 +69,64 @@ def test_extract_retries_then_fails():
     with pytest.raises(ValueError):
         parse_extracted(bad, retry=True)
     assert calls["n"] == 2
+
+
+def test_coerce_maps_model_aliases():
+    coerced = coerce_extracted(
+        {
+            "job_name": "大语言模型算法工程师",
+            "domain": "人工智能",
+            "skills": [
+                {
+                    "name": "Python",
+                    "kind": "technical",
+                    "proficiency": "advanced",
+                    "confidence": 95,
+                    "excerpt": "优秀的Python编程能力",
+                    "section": "responsibilities",
+                },
+                {
+                    "name": "SQL",
+                    "kind": "加分",
+                    "proficiency": "熟练",
+                    "confidence": 0.7,
+                    "excerpt": "熟悉 SQL",
+                    "section": "requirements",
+                },
+            ],
+        }
+    )
+    parsed = ExtractedJd.model_validate(coerced)
+    assert parsed.domain == "ai"
+    assert parsed.skills[0].kind == "required"
+    assert parsed.skills[0].proficiency == "expert"
+    assert parsed.skills[0].section == "duty"
+    assert parsed.skills[0].confidence == 0.95
+    assert parsed.skills[1].kind == "bonus"
+    assert parsed.skills[1].proficiency == "able"
+    assert parsed.skills[1].section == "requirement"
+
+
+def test_parse_extracted_accepts_flash_aliases():
+    def flash(_schema, _messages):
+        return {
+            "job_name": "语音算法工程师",
+            "domain": "ai",
+            "skills": [
+                {
+                    "name": "语音识别",
+                    "kind": "technical",
+                    "proficiency": "advanced",
+                    "confidence": 0.9,
+                    "excerpt": "语音识别",
+                    "section": "requirements",
+                }
+            ],
+        }
+
+    parsed = parse_extracted(flash, retry=False)
+    assert parsed.skills[0].kind == "required"
+    assert parsed.skills[0].section == "requirement"
 
 
 def test_extract_requires_excerpt():

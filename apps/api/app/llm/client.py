@@ -6,14 +6,20 @@ import json
 import os
 
 
-def _client():
-    from openai import OpenAI
+_cached = None
 
-    return OpenAI(
-        api_key=os.environ.get("DEEPSEEK_API_KEY") or "",
-        base_url=os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com"),
-        timeout=60.0,
-    )
+
+def _client():
+    global _cached
+    if _cached is None:
+        from openai import OpenAI
+
+        _cached = OpenAI(
+            api_key=os.environ.get("DEEPSEEK_API_KEY") or "",
+            base_url=os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com"),
+            timeout=60.0,
+        )
+    return _cached
 
 
 def complete_json(_schema, messages) -> dict:
