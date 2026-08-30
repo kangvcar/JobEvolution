@@ -1,5 +1,6 @@
 import json
 import os
+from datetime import datetime
 
 from neo4j import GraphDatabase
 
@@ -61,7 +62,7 @@ def list_domains():
 
 _PUBLIC_JOB = """
 MATCH (j:Job)-[:IN_DOMAIN]->(d:Domain)
-WHERE (j.status IS NULL OR j.status <> 'candidate')
+WHERE j.status IN ['emerging', 'formed']
   AND ($domain IS NULL OR d.id = $domain)
   AND ($status IS NULL OR j.status = $status)
   AND ($q IS NULL OR toLower(j.name) CONTAINS toLower($q))
@@ -128,17 +129,28 @@ def delete_evidence_many(ids: list[str]) -> None:
         )
 
 
-def get_public_job(job_id: str) -> dict | None:
-    cypher = """
-    MATCH (j:Job {id: $id})-[:IN_DOMAIN]->(d:Domain)
-    WHERE (j.status IS NULL OR j.status <> 'candidate')
+def _job_row(job_id: str, *, public_only: bool) -> dict | None:
+    extra = "AND j.status IN ['emerging', 'formed']" if public_only else ""
+    cypher = f"""
+    MATCH (j:Job {{id: $id}})-[:IN_DOMAIN]->(d:Domain)
+    WHERE true {extra}
     RETURN j.id AS id, j.name AS name, j.status AS status, d.id AS domain,
            j.code AS code, j.esco_id AS esco_id, j.onet_id AS onet_id,
-           coalesce(j.watching, []) AS watching
+           coalesce(j.watching, []) AS watching, coalesce(j.judged, '') AS judged
     """
+    if _driver is None:
+        return None
     with _driver.session() as session:
         row = session.run(cypher, id=job_id).single()
     return dict(row) if row else None
+
+
+def get_public_job(job_id: str) -> dict | None:
+    return _job_row(job_id, public_only=True)
+
+
+def get_any_job(job_id: str) -> dict | None:
+    return _job_row(job_id, public_only=False)
 
 
 def upsert_job(*, id: str, name: str, domain: str, status: str | None = None) -> None:
@@ -209,15 +221,14 @@ def apply_requires(payload: dict) -> None:
         session.run(
             """
             MERGE (j:Job {id: $job_id})
-            SET j.name = coalesce($job_name, j.name),
-                j.status = CASE WHEN j.status = 'candidate' THEN null ELSE j.status END
+            SET j.name = coalesce($job_name, j.name)
             WITH j
             MATCH (d:Domain {id: $domain})
             MERGE (j)-[:IN_DOMAIN]->(d)
             MERGE (s:Skill {id: $skill_id})
             SET s.name = coalesce($skill_name, s.name)
             MERGE (j)-[r:REQUIRES]->(s)
-            ON CREATE SET r.valid_from = datetime(), r.valid_to = null
+            ON CREATE SET r.valid_from = datetime($valid_from), r.valid_to = null
             SET r.kind = $kind,
                 r.proficiency = $proficiency,
                 r.weight = $weight,
@@ -238,6 +249,7 @@ def apply_requires(payload: dict) -> None:
             layer=payload.get("layer") or "low",
             confidence=float(payload.get("confidence") or 0),
             sources=list(payload.get("sources") or []),
+            valid_from=payload.get("valid_from") or datetime.now().isoformat(),
         )
         watching = payload.get("watching")
         if watching:
@@ -259,7 +271,8 @@ def list_requires(job_id: str) -> list[dict]:
             RETURN s.id AS skill_id, s.name AS name, r.kind AS kind,
                    r.proficiency AS proficiency, r.layer AS layer,
                    r.confidence AS confidence, r.sources AS sources,
-                   r.levels AS levels, r.weight AS weight
+                   r.levels AS levels, r.weight AS weight,
+                   toString(r.valid_from) AS valid_from, toString(r.valid_to) AS valid_to
             """,
             id=job_id,
         )
@@ -341,5 +354,187 @@ def list_pending_events() -> list[dict]:
             out.append(data)
         return out
 
+
+def link_evidence(evidence_id: str, job_id: str) -> None:
+    if _driver is None or not evidence_id or not job_id:
+        return
+    with _driver.session() as session:
+        session.run(
+            """
+            MATCH (e:Evidence {id: $eid})
+            MATCH (j:Job {id: $jid})
+            MERGE (e)-[:FOR]->(j)
+            """,
+            eid=evidence_id,
+            jid=job_id,
+        )
+
+
+def list_job_evidence(job_id: str) -> list[dict]:
+    if _driver is None:
+        return []
+    with _driver.session() as session:
+        rows = session.run(
+            """
+            MATCH (e:Evidence)-[:FOR]->(j:Job {id: $id})
+            RETURN e.company AS company, e.observed_at AS observed_at, e.id AS id
+            """,
+            id=job_id,
+        )
+        return [dict(row) for row in rows]
+
+
+def set_alias(source_id: str, target_id: str) -> None:
+    if _driver is None:
+        return
+    with _driver.session() as session:
+        session.run(
+            """
+            MATCH (src:Job {id: $src})
+            MATCH (dst:Job {id: $dst})
+            MERGE (src)-[:ALIAS_OF]->(dst)
+            """,
+            src=source_id,
+            dst=target_id,
+        )
+
+
+def has_alias_out(job_id: str) -> bool:
+    if _driver is None:
+        return False
+    with _driver.session() as session:
+        row = session.run(
+            "MATCH (j:Job {id: $id})-[:ALIAS_OF]->() RETURN count(*) AS n",
+            id=job_id,
+        ).single()
+    return bool(row and row["n"])
+
+
+def definition_passed(job_id: str) -> bool:
+    if _driver is None:
+        return False
+    with _driver.session() as session:
+        row = session.run(
+            """
+            MATCH (e:EvolutionEvent)-[:AFFECTS]->(j:Job {id: $id})
+            WHERE e.review IN ['approved', 'auto_passed']
+            RETURN count(*) AS n
+            """,
+            id=job_id,
+        ).single()
+    return bool(row and row["n"])
+
+
+def set_job_fields(job_id: str, **fields) -> None:
+    if _driver is None or not fields:
+        return
+    sets = ", ".join(f"j.{key} = ${key}" for key in fields)
+    params = {"id": job_id, **fields}
+    with _driver.session() as session:
+        session.run(f"MATCH (j:Job {{id: $id}}) SET {sets}", **params)
+
+
+def expire_absent_requires(job_id: str, keep_ids: list[str], at_iso: str) -> None:
+    if _driver is None:
+        return
+    with _driver.session() as session:
+        session.run(
+            """
+            MATCH (j:Job {id: $id})-[r:REQUIRES]->(s:Skill)
+            WHERE r.valid_to IS NULL AND NOT s.id IN $keep
+            SET r.valid_to = datetime($at)
+            """,
+            id=job_id,
+            keep=keep_ids,
+            at=at_iso or datetime.now().isoformat(),
+        )
+
+
+def list_requires_history(job_id: str) -> list[dict]:
+    if _driver is None:
+        return []
+    with _driver.session() as session:
+        rows = session.run(
+            """
+            MATCH (j:Job {id: $id})-[r:REQUIRES]->(s:Skill)
+            RETURN s.id AS skill_id, s.name AS name,
+                   toString(r.valid_from) AS valid_from,
+                   toString(r.valid_to) AS valid_to,
+                   r.layer AS layer
+            """,
+            id=job_id,
+        )
+        return [dict(row) for row in rows]
+
+
+def period_delta(job_id: str, period_start: str | None = None) -> dict:
+    rows = list_requires_history(job_id)
+    if period_start is None:
+        stamps = [
+            (row.get("valid_from") or "")[:10]
+            for row in rows
+            if row.get("valid_from") or row.get("valid_to")
+        ] + [(row.get("valid_to") or "")[:10] for row in rows if row.get("valid_to")]
+        latest = max(stamps) if stamps else datetime.now().strftime("%Y-%m-%d")
+        period_start = f"{latest[:4]}-01-01"
+    start = period_start
+    added, promoted, expired = [], [], []
+    for row in rows:
+        valid_from = row.get("valid_from") or ""
+        valid_to = row.get("valid_to") or ""
+        item = {"skill_id": row["skill_id"], "name": row["name"]}
+        if valid_to and valid_to[:10] >= start:
+            expired.append(item)
+        elif (not valid_to) and valid_from[:10] >= start:
+            added.append(item)
+    return {"added": added, "promoted": promoted, "expired": expired}
+
+
+def list_job_events(job_id: str) -> list[dict]:
+    if _driver is None:
+        return []
+    with _driver.session() as session:
+        rows = session.run(
+            """
+            MATCH (e:EvolutionEvent)-[:AFFECTS]->(j:Job {id: $id})
+            RETURN e.id AS id, e.kind AS kind, e.at AS at, e.review AS review,
+                   e.payload AS payload
+            ORDER BY e.at
+            """,
+            id=job_id,
+        )
+        out = []
+        for row in rows:
+            data = dict(row)
+            payload = data.get("payload") or "{}"
+            if isinstance(payload, str):
+                data["payload"] = json.loads(payload)
+            out.append(data)
+        return out
+
+
+def discover_boards() -> dict:
+    if _driver is None:
+        return {"candidate": [], "emerging": [], "formed": []}
+    with _driver.session() as session:
+        rows = list(
+            session.run(
+                """
+                MATCH (j:Job)-[:IN_DOMAIN]->(d:Domain)
+                OPTIONAL MATCH (j)-[a:ALIAS_OF]->()
+                RETURN j.id AS id, j.name AS name, j.status AS status, d.id AS domain,
+                       count(a) AS aliases
+                """
+            )
+        )
+    boards = {"candidate": [], "emerging": [], "formed": []}
+    for row in rows:
+        item = {"id": row["id"], "name": row["name"], "status": row["status"], "domain": row["domain"]}
+        status = row["status"] or "candidate"
+        if status == "candidate" and row["aliases"]:
+            continue
+        if status in boards:
+            boards[status].append(item)
+    return boards
 
 

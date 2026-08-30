@@ -55,6 +55,7 @@ def job_detail(job_id: str):
     row = graph.get_public_job(job_id)
     if row is None:
         raise HTTPException(404, "not found")
+    row["events"] = graph.list_job_events(job_id)
     return row
 
 
@@ -72,8 +73,28 @@ def job_slice(job_id: str):
         "categories": [],
         "skills": skills,
         "requires": requires,
-        "period_delta": {"added": [], "promoted": [], "expired": []},
+        "period_delta": graph.period_delta(job_id),
     }
+
+
+class DiagnoseBody(BaseModel):
+    job_id: str
+    session_id: str | None = None
+
+
+@app.post("/diagnose")
+def diagnose(body: DiagnoseBody):
+    job = graph.get_any_job(body.job_id)
+    if job is None:
+        raise HTTPException(404, "not found")
+    if job.get("status") == "candidate":
+        raise HTTPException(400, "candidate")
+    return {"job_id": body.job_id, "status": job.get("status")}
+
+
+@app.get("/discover")
+def discover():
+    return graph.discover_boards()
 
 
 class ApproveBody(BaseModel):

@@ -11,8 +11,10 @@ from app.collectors.sink import STREAM_KEY, connect_redis
 from app.llm.embed import embed
 from app.pipeline.align import align_job, align_skill, cluster_texts
 from app.pipeline.constants import COVERAGE_THRESHOLD, EXTRACT_WORKERS, PASSTHROUGH_KEY
+from app.pipeline.discover import classify_cluster, cluster_large_enough
 from app.pipeline.extract import parse_extracted
 from app.pipeline.sections import section_of
+from app.pipeline.status import is_target_job, job_id_for, refresh_job_status
 
 _passthrough = False
 
@@ -105,6 +107,8 @@ def apply_event(event_id: str, *, review: str, payload: dict | None = None) -> d
     if data.get("kind") != "extract_failed" and review in ("approved", "auto_passed"):
         graph.apply_requires(data)
     graph.upsert_event(event, job_id=data.get("job_id"))
+    if data.get("job_id"):
+        refresh_job_status(data["job_id"])
     return event
 
 
@@ -142,23 +146,61 @@ def run_extract_and_gate(
             continue
         extracted_rows.append((snap, payload))
 
-    by_job: dict[str, list] = defaultdict(list)
+    aligned: dict[str, list] = defaultdict(list)
+    unmatched: dict[str, list] = defaultdict(list)
     for snap, parsed in extracted_rows:
-        job_name = align_job(parsed.job_name) or parsed.job_name
-        by_job[job_name].append((snap, parsed, job_name))
+        hit = align_job(parsed.job_name)
+        if hit:
+            aligned[hit].append((snap, parsed, hit))
+        else:
+            unmatched[parsed.job_name].append((snap, parsed, parsed.job_name))
 
     index: list[dict] = graph.list_skills()
-    for job_name, rows in by_job.items():
-        events.extend(_gate_job(job_name, rows, index))
+    for job_name, rows in aligned.items():
+        events.extend(_gate_job(job_name, rows, index, judged="target"))
+    events.extend(_discover_unmatched(unmatched, index, complete))
     return events
 
 
-def _gate_job(job_name: str, rows: list, index: list[dict]) -> list[dict]:
+def _discover_unmatched(unmatched: dict[str, list], index: list[dict], complete) -> list[dict]:
     from app import graph
 
-    job_id = _stable_id("job-", job_name)
+    events = []
+    for title, rows in unmatched.items():
+        if not cluster_large_enough(len(rows)):
+            continue
+        skills = []
+        for _, parsed, _ in rows:
+            skills.extend(s.name for s in parsed.skills)
+        kind, alias_of = classify_cluster(title, skills, complete)
+        if kind == "noise":
+            continue
+        if kind == "alias" and alias_of:
+            source_id = job_id_for(title)
+            target_id = job_id_for(alias_of)
+            domain = rows[0][1].domain or rows[0][0].get("domain") or "ai"
+            graph.upsert_job(id=source_id, name=title, domain=domain, status="candidate")
+            graph.upsert_job(id=target_id, name=alias_of, domain=domain, status="candidate")
+            graph.set_alias(source_id, target_id)
+            graph.set_job_fields(source_id, judged="alias")
+            events.extend(_gate_job(alias_of, rows, index, judged="target"))
+            continue
+        events.extend(_gate_job(title, rows, index, judged="new"))
+    return events
+
+
+def _gate_job(job_name: str, rows: list, index: list[dict], judged: str = "target") -> list[dict]:
+    from app import graph
+
+    job_id = job_id_for(job_name)
     domain = rows[0][1].domain or rows[0][0].get("domain") or "ai"
     graph.upsert_job(id=job_id, name=job_name, domain=domain, status="candidate")
+    if judged == "new":
+        graph.set_job_fields(job_id, judged="new")
+    elif is_target_job(job_name):
+        graph.set_job_fields(job_id, judged="target")
+    for snap, _, _ in rows:
+        graph.link_evidence(snap["id"], job_id)
 
     company_by_evidence = {
         snap["id"]: snap.get("company") or "" for snap, _, _ in rows
@@ -253,6 +295,14 @@ def _gate_job(job_name: str, rows: list, index: list[dict]) -> list[dict]:
             "watching": watching,
             "weight": 1.0,
             "levels": ["junior", "mid", "senior"],
+            "valid_from": max(
+                (
+                    snap.get("observed_at") or ""
+                    for snap, _, _ in rows
+                    if snap["id"] in rec["evidence"]
+                ),
+                default="",
+            ),
         }
         review = "pending"
         if passthrough_enabled() and layer in ("high", "mid"):
@@ -271,6 +321,10 @@ def _gate_job(job_name: str, rows: list, index: list[dict]) -> list[dict]:
             graph.apply_requires(payload)
         events.append(event)
     graph.set_watching(job_id, watching)
+    keep = [skill_id for skill_id, _ in pooled]
+    latest = max((snap.get("observed_at") or "" for snap, _, _ in rows), default="")
+    graph.expire_absent_requires(job_id, keep, latest)
+    refresh_job_status(job_id)
     return events
 
 
