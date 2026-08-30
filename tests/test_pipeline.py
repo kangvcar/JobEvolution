@@ -379,5 +379,3 @@ def _cleanup(graph, suffix):
             "MATCH (ev:EvolutionEvent) WHERE ev.payload CONTAINS $s DETACH DELETE ev",
             s=suffix,
         )
-        session.run("MATCH (j:Job {name: '大模型应用工程师'}) DETACH DELETE j")
-        session.run("MATCH (s:Skill {name: 'FastAPI'}) DETACH DELETE s")

@@ -4,12 +4,17 @@ from contextlib import asynccontextmanager
 
 from pydantic import BaseModel
 
-from fastapi import FastAPI, Header, HTTPException, Query, Request
+from fastapi import FastAPI, File, Header, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app import graph
+from app.matching.report import neighbor_name, wrap_report
+from app.matching.resume import ResumeError, extract_text, skills_from_text
+from app.matching.session import load as load_session
+from app.matching.session import save as save_session
 from app.pipeline.gate import apply_event, passthrough_enabled, set_passthrough
+from app.pipeline.status import job_id_for
 
 
 @asynccontextmanager
@@ -82,6 +87,28 @@ class DiagnoseBody(BaseModel):
     session_id: str | None = None
 
 
+@app.post("/sessions")
+async def create_session(file: UploadFile = File(...)):
+    data = await file.read()
+    try:
+        text = extract_text(data, file.filename or "")
+    except ResumeError as exc:
+        raise HTTPException(400, exc.detail) from exc
+    skills = skills_from_text(text, graph.list_skills(with_embed=False))
+    session_id = save_session(
+        {
+            "preview_text": text[:4000],
+            "skills": skills,
+            "filename": file.filename,
+        }
+    )
+    return {
+        "session_id": session_id,
+        "skills": skills,
+        "preview_text": text[:2000],
+    }
+
+
 @app.post("/diagnose")
 def diagnose(body: DiagnoseBody):
     job = graph.get_any_job(body.job_id)
@@ -89,7 +116,30 @@ def diagnose(body: DiagnoseBody):
         raise HTTPException(404, "not found")
     if job.get("status") == "candidate":
         raise HTTPException(400, "candidate")
-    return {"job_id": body.job_id, "status": job.get("status")}
+    resume = load_session(body.session_id or "")
+    if resume is None:
+        raise HTTPException(404, "session expired")
+    resume["session_id"] = body.session_id
+    requires = graph.list_requires(body.job_id)
+    neighbor = None
+    other = neighbor_name(job.get("name") or "")
+    if other:
+        oid = job_id_for(other)
+        row = graph.get_public_job(oid)
+        if row:
+            neighbor = {"job": row, "requires": graph.list_requires(oid)}
+    index = {row["id"]: row for row in graph.list_skills(with_embed=False)}
+    watching = []
+    for sid in job.get("watching") or []:
+        skill = index.get(sid) or {}
+        watching.append({"skill_id": sid, "name": skill.get("name") or sid})
+    return wrap_report(
+        job=job,
+        requires=requires,
+        resume=resume,
+        neighbor=neighbor,
+        watching=watching,
+    )
 
 
 @app.get("/discover")

@@ -1,5 +1,11 @@
-import { EmptyPage } from "../empty-page";
+import { Suspense } from "react";
+
+import { DiagnoseForm } from "./diagnose-form";
 
 export default function DiagnosePage() {
-  return <EmptyPage title="诊断" />;
+  return (
+    <Suspense fallback={<main className="page">诊断</main>}>
+      <DiagnoseForm />
+    </Suspense>
+  );
 }

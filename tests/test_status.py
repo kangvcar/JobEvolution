@@ -257,7 +257,7 @@ def _job_events(graph, job_id):
         return [dict(row) for row in rows]
 
 
-def _cleanup(graph, suffix, name):
+def _cleanup(graph, suffix, name=None):
     if graph._driver is None:
         return
     with graph._driver.session() as session:
@@ -269,7 +269,3 @@ def _cleanup(graph, suffix, name):
             "MATCH (ev:EvolutionEvent) WHERE ev.payload CONTAINS $s DETACH DELETE ev",
             s=suffix,
         )
-        session.run("MATCH (j:Job {name: $n}) DETACH DELETE j", n=name)
-        session.run("MATCH (s:Skill {name: 'FastAPI'}) DETACH DELETE s")
-        session.run("MATCH (s:Skill {name: 'Neo4j'}) DETACH DELETE s")
-        session.run("MATCH (s:Skill {name: 'Cypher'}) DETACH DELETE s")

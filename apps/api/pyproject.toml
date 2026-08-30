@@ -6,6 +6,9 @@ dependencies = [
   "fastapi",
   "neo4j",
   "openai",
+  "pdfplumber",
+  "python-docx",
+  "python-multipart",
   "redis",
   "uvicorn[standard]",
 ]

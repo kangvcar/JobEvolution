@@ -187,18 +187,22 @@ def upsert_skill(skill: dict) -> None:
         )
 
 
-def list_skills() -> list[dict]:
+def list_skills(*, with_embed: bool = True) -> list[dict]:
     if _driver is None:
         return []
-    from app.llm.embed import embed
-
     with _driver.session() as session:
         rows = list(session.run("MATCH (s:Skill) RETURN s.id AS id, s.name AS name, s.synonyms AS synonyms"))
     out = []
+    embed_fn = None
+    if with_embed:
+        from app.llm.embed import embed
+
+        embed_fn = embed
     for row in rows:
         item = dict(row)
         item["synonyms"] = list(item.get("synonyms") or [])
-        item["embedding"] = embed([item["name"]])[0]
+        if embed_fn is not None:
+            item["embedding"] = embed_fn([item["name"]])[0]
         out.append(item)
     return out
 
@@ -235,7 +239,9 @@ def apply_requires(payload: dict) -> None:
                 r.levels = $levels,
                 r.layer = $layer,
                 r.confidence = $confidence,
-                r.sources = $sources
+                r.sources = $sources,
+                r.excerpt = $excerpt,
+                r.valid_to = null
             """,
             job_id=payload["job_id"],
             job_name=payload.get("job_name") or "",
@@ -249,6 +255,7 @@ def apply_requires(payload: dict) -> None:
             layer=payload.get("layer") or "low",
             confidence=float(payload.get("confidence") or 0),
             sources=list(payload.get("sources") or []),
+            excerpt=payload.get("excerpt") or "",
             valid_from=payload.get("valid_from") or datetime.now().isoformat(),
         )
         watching = payload.get("watching")
@@ -272,11 +279,26 @@ def list_requires(job_id: str) -> list[dict]:
                    r.proficiency AS proficiency, r.layer AS layer,
                    r.confidence AS confidence, r.sources AS sources,
                    r.levels AS levels, r.weight AS weight,
+                   coalesce(r.excerpt, '') AS excerpt,
                    toString(r.valid_from) AS valid_from, toString(r.valid_to) AS valid_to
             """,
             id=job_id,
         )
-        return [dict(row) for row in rows]
+        out = [dict(row) for row in rows]
+    if any(not (row.get("excerpt") or "").strip() for row in out):
+        by_skill: dict[str, str] = {}
+        for event in list_job_events(job_id):
+            payload = event.get("payload") or {}
+            if not isinstance(payload, dict):
+                continue
+            sid = payload.get("skill_id")
+            excerpt = (payload.get("excerpt") or "").strip()
+            if sid and excerpt:
+                by_skill[sid] = excerpt
+        for row in out:
+            if not (row.get("excerpt") or "").strip():
+                row["excerpt"] = by_skill.get(row["skill_id"]) or ""
+    return out
 
 
 def upsert_event(event: dict, job_id: str | None) -> None:
