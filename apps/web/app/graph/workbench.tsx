@@ -30,8 +30,11 @@ type JobDetail = Job & { sources?: string[] };
 type Slice = {
   categories?: { id: string; name: string }[];
   requires?: Requirement[];
+  evidence?: { id: string; company?: string; observed_at?: string; source?: string }[];
   period_delta?: { added?: Requirement[]; promoted?: Requirement[]; expired?: Requirement[] };
 };
+
+type EvidenceTarget = Requirement & { expired?: boolean };
 
 export function Workbench() {
   const canvas = useRef<HTMLDivElement>(null);
@@ -46,6 +49,32 @@ export function Workbench() {
   const [selected, setSelected] = useState(wanted);
   const [detail, setDetail] = useState<JobDetail | null>(null);
   const [slice, setSlice] = useState<Slice | null>(null);
+  const [evidenceTarget, setEvidenceTarget] = useState<EvidenceTarget | null>(null);
+  const opener = useRef<HTMLElement | null>(null);
+  const background = useRef<HTMLElement>(null);
+
+  const closeEvidence = () => {
+    setEvidenceTarget(null);
+  };
+
+  useEffect(() => {
+    if (!evidenceTarget) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeEvidence();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [evidenceTarget]);
+
+  useEffect(() => {
+    if (background.current) background.current.inert = Boolean(evidenceTarget);
+  }, [evidenceTarget]);
+
+  useEffect(() => {
+    if (!evidenceTarget) {
+      opener.current?.focus();
+    }
+  }, [evidenceTarget]);
 
   useEffect(() => {
     fetch(`${API}/meta`)
@@ -90,6 +119,7 @@ export function Workbench() {
     }
     setDetail(null);
     setSlice(null);
+    setEvidenceTarget(null);
     Promise.all([
       fetch(`${API}/jobs/${encodeURIComponent(selected)}`).then((r) => (r.ok ? r.json() : null)),
       fetch(`${API}/graph/jobs/${encodeURIComponent(selected)}`).then((r) => (r.ok ? r.json() : null)),
@@ -174,6 +204,17 @@ export function Workbench() {
       behaviors: ["drag-canvas", "zoom-canvas"],
     });
     graph.render();
+    graph.on("node:click", (ev) => {
+      const id = (ev as { target?: { id?: string } }).target?.id || "";
+      if (!id.startsWith("skill-")) return;
+      const skillId = id.slice("skill-".length);
+      const expired = (slice?.period_delta?.expired || []).find((skill) => skill.skill_id === skillId);
+      const skill = (slice?.requires || []).find((item) => item.skill_id === skillId) || expired;
+      if (skill) {
+        opener.current = el;
+        setEvidenceTarget({ ...skill, expired: Boolean(expired) });
+      }
+    });
     el.focus();
     const onResize = () => {
       graph.resize();
@@ -187,7 +228,8 @@ export function Workbench() {
   }, [current?.name, detail?.name, slice]);
 
   return (
-    <main id="main" className="graph-page">
+    <>
+    <main id="main" ref={background} className="graph-page">
       <aside className="graph-rail">
         <label>
           领域
@@ -268,13 +310,13 @@ export function Workbench() {
                 <h3>{sliceCategory.name}</h3>
                 <ul>
                   {visibleRequires.filter((skill) => skill.category === sliceCategory.name).map((skill) => (
-                    <li key={skill.skill_id}>{skill.name}</li>
+                    <li key={skill.skill_id}><button type="button" className="skill-link" onClick={(event) => { opener.current = event.currentTarget; setEvidenceTarget(skill); }}>{skill.name}</button></li>
                   ))}
                 </ul>
               </section>
             ))}
             {!(slice?.categories?.length) && (
-              <ul>{visibleRequires.map((skill) => <li key={skill.skill_id}>{skill.name}</li>)}</ul>
+              <ul>{visibleRequires.map((skill) => <li key={skill.skill_id}><button type="button" className="skill-link" onClick={(event) => { opener.current = event.currentTarget; setEvidenceTarget(skill); }}>{skill.name}</button></li>)}</ul>
             )}
             {slice && visibleRequires.length === 0 && <p className="empty">当前筛选没有技能点，请换个筛选</p>}
             <Link className="primary" href={`/diagnose?job_id=${encodeURIComponent(detail.id)}`}>
@@ -286,5 +328,19 @@ export function Workbench() {
         )}
       </aside>
     </main>
+    {evidenceTarget && (
+      <>
+        <button type="button" className="evidence-backdrop" aria-label="关闭证据抽屉" onClick={closeEvidence} />
+        <aside className="evidence-drawer" role="dialog" aria-modal="true" aria-labelledby="evidence-title">
+          <header><div><p className="mono">要求边证据</p><h2 id="evidence-title">{evidenceTarget.name}</h2></div><button type="button" onClick={closeEvidence} aria-label="关闭证据抽屉">关闭</button></header>
+          {evidenceTarget.expired && <p className="evidence-status">本周期失效</p>}
+          <ul className="evidence-list">
+            {(slice?.evidence || []).map((item) => <li key={item.id}><strong>{item.company || item.id}</strong><span>{item.id} · {item.source || "未知来源"} · {(item.observed_at || "").slice(0, 10)}</span></li>)}
+          </ul>
+          {!(slice?.evidence?.length) && <p className="empty">暂无证据记录</p>}
+        </aside>
+      </>
+    )}
+    </>
   );
 }

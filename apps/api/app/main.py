@@ -94,6 +94,7 @@ def job_slice(job_id: str):
         "categories": list(categories.values()),
         "skills": skills,
         "requires": requires,
+        "evidence": graph.list_job_evidence(job_id),
         "period_delta": graph.period_delta(job_id),
     }
 
