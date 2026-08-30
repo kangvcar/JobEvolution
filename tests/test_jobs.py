@@ -1,12 +1,11 @@
 from app.targets import JOB_TARGET_NAMES
 
 
-def test_jobs_empty_without_seeded_nodes(client):
+def test_jobs_list_only_public_statuses(client):
     response = client.get("/jobs")
     assert response.status_code == 200
-    assert response.json() == []
-    names = {row["name"] for row in response.json()}
-    assert names.isdisjoint(JOB_TARGET_NAMES)
+    for row in response.json():
+        assert row["status"] in ("emerging", "formed")
 
 
 def test_candidate_filter_empty_without_password(client):

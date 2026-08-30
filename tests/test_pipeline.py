@@ -1,3 +1,4 @@
+import json
 import os
 import uuid
 
@@ -8,6 +9,7 @@ from app.llm.embed import embed
 from app.pipeline.align import align_skill
 from app.pipeline.constants import COVERAGE_THRESHOLD
 from app.pipeline.extract import ExtractedJd, coerce_extracted, parse_extracted
+from app.pipeline.__main__ import match_target, select_snapshots
 from app.pipeline.gate import (
     confidence_layer,
     coverage,
@@ -69,6 +71,32 @@ def test_extract_retries_then_fails():
     with pytest.raises(ValueError):
         parse_extracted(bad, retry=True)
     assert calls["n"] == 2
+
+
+def test_match_target_prefers_longer_names():
+    assert match_target("大模型应用工程师") == "大模型应用工程师"
+    assert match_target("Agent工程师") == "Agent 工程师"
+    assert match_target("高级算法工程师（图像）") == "算法工程师"
+
+
+def test_select_snapshots_caps_per_job_and_company(tmp_path):
+    jd = tmp_path / "jd"
+    jd.mkdir()
+    rows = [
+        ("jd-1.json", "Agent 工程师", "甲"),
+        ("jd-2.json", "Agent工程师", "乙"),
+        ("jd-3.json", "Agent 工程师", "甲"),
+        ("jd-4.json", "大模型应用工程师", "丙"),
+    ]
+    for name, title, company in rows:
+        (jd / name).write_text(
+            json.dumps({"title": title, "company": company, "body": "x", "id": name}),
+            encoding="utf-8",
+        )
+    picked = select_snapshots(jd, per_job=8)
+    agent = [d for d in picked if "Agent" in (d.get("title") or "")]
+    assert len(agent) == 2
+    assert {d["company"] for d in agent} == {"甲", "乙"}
 
 
 def test_coerce_maps_model_aliases():
