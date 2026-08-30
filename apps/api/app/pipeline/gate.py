@@ -323,7 +323,9 @@ def _gate_job(job_name: str, rows: list, index: list[dict], judged: str = "targe
     graph.set_watching(job_id, watching)
     keep = [skill_id for skill_id, _ in pooled]
     latest = max((snap.get("observed_at") or "" for snap, _, _ in rows), default="")
-    graph.expire_absent_requires(job_id, keep, latest)
+    # 不让一次没有达到覆盖率门槛的快照掏空当前岗的要求边。
+    if keep:
+        graph.expire_absent_requires(job_id, keep, latest)
     refresh_job_status(job_id)
     return events
 
