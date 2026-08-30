@@ -5,10 +5,16 @@ from app.pipeline.constants import ALIGN_THRESHOLD, JOB_ALIGN_THRESHOLD
 from app.targets import JOB_TARGET_NAMES
 
 
-def align_skill(text: str, index: list[dict], embed_fn=embed) -> dict | None:
+def align_skill(
+    text: str,
+    index: list[dict],
+    embed_fn=embed,
+    threshold: float | None = None,
+) -> dict | None:
     needle = (text or "").strip().casefold()
     if not needle:
         return None
+    cut = ALIGN_THRESHOLD if threshold is None else float(threshold)
     for skill in index:
         names = [skill.get("name") or "", *(skill.get("synonyms") or [])]
         if needle in {n.strip().casefold() for n in names if n}:
@@ -23,7 +29,7 @@ def align_skill(text: str, index: list[dict], embed_fn=embed) -> dict | None:
         score = cosine(query, vec)
         if score > best_score:
             best, best_score = skill, score
-    if best is not None and best_score >= ALIGN_THRESHOLD:
+    if best is not None and best_score >= cut:
         return best
     return None
 

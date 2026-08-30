@@ -1,0 +1,31 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: install
+        run: pip install -e "apps/api[dev]"
+      - name: schema and pure functions
+        env:
+          PYTHONPATH: apps/api
+        run: |
+          pytest tests/test_eval_f1.py tests/test_eval_schema.py tests/test_eval_run.py tests/test_matching.py \
+            tests/test_pipeline.py::test_confidence_layer_priority \
+            tests/test_pipeline.py::test_align_skill_synonym_beats_embed \
+            tests/test_pipeline.py::test_align_skill_cosine_when_no_synonym \
+            tests/test_status.py::test_compute_status_thresholds \
+            tests/test_status.py::test_source_stats_window_and_channels -q
+      - name: mock three-item eval
+        env:
+          ALIGN_THRESHOLD: "0.11"
+          PYTHONPATH: apps/api
+        run: python -m app.eval report --mock --coverage 0

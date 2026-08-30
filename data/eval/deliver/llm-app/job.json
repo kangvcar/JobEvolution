@@ -1,0 +1,65 @@
+{
+  "id": "job-e1662d9b8cfd059f",
+  "name": "大模型应用工程师",
+  "status": "formed",
+  "domain": "ai",
+  "watching": [],
+  "n_sources": 6,
+  "requires": [
+    {
+      "skill_id": "skill-2dd9eb7d9f0c1186",
+      "name": "FastAPI",
+      "kind": "required",
+      "proficiency": "able",
+      "layer": "high",
+      "confidence": 0.9,
+      "sources": [
+        "jd-st-c9aec288t-0",
+        "jd-st-c9aec288t-1",
+        "jd-st-c9aec288t-2"
+      ],
+      "levels": [
+        "junior",
+        "mid",
+        "senior"
+      ],
+      "weight": 1.0,
+      "excerpt": "熟悉 FastAPI",
+      "valid_from": "2023-03-01T00:00:00Z",
+      "valid_to": null
+    }
+  ],
+  "requires_history": [
+    {
+      "skill_id": "skill-981d202c653a291b",
+      "name": "Neo4j",
+      "valid_from": "2024-06-01T00:00:00Z",
+      "valid_to": "2024-06-01T00:00:00Z",
+      "layer": "high"
+    },
+    {
+      "skill_id": "skill-2dd9eb7d9f0c1186",
+      "name": "FastAPI",
+      "valid_from": "2023-03-01T00:00:00Z",
+      "valid_to": null,
+      "layer": "high"
+    }
+  ],
+  "period_delta": {
+    "added": [],
+    "promoted": [],
+    "expired": [
+      {
+        "skill_id": "skill-981d202c653a291b",
+        "name": "Neo4j"
+      }
+    ]
+  },
+  "aliases_in": [
+    {
+      "id": "job-c823109647aaec6e",
+      "name": "LLM 业务工程师"
+    }
+  ],
+  "alias_of": null
+}

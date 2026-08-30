@@ -1,0 +1,244 @@
+{
+  "id": "job-2e05993e43fccbe5",
+  "name": "Agent 工程师",
+  "status": "formed",
+  "domain": "ai",
+  "watching": [],
+  "n_sources": 7,
+  "requires": [
+    {
+      "skill_id": "skill-2dd9eb7d9f0c1186",
+      "name": "FastAPI",
+      "kind": "required",
+      "proficiency": "able",
+      "layer": "high",
+      "confidence": 0.9,
+      "sources": [
+        "jd-st-73e70c9a-0",
+        "jd-st-73e70c9a-1",
+        "jd-st-73e70c9a-2"
+      ],
+      "levels": [
+        "junior",
+        "mid",
+        "senior"
+      ],
+      "weight": 1.0,
+      "excerpt": "熟悉 FastAPI",
+      "valid_from": "2024-06-01T00:00:00Z",
+      "valid_to": null
+    }
+  ],
+  "requires_history": [
+    {
+      "skill_id": "skill-2dd9eb7d9f0c1186",
+      "name": "FastAPI",
+      "valid_from": "2024-06-01T00:00:00Z",
+      "valid_to": null,
+      "layer": "high"
+    },
+    {
+      "skill_id": "skill-e0ab0981aba5c06d",
+      "name": "机器学习",
+      "valid_from": "2024-08-19T00:00:00Z",
+      "valid_to": "2024-06-01T00:00:00Z",
+      "layer": "mid"
+    },
+    {
+      "skill_id": "skill-bba764133ac15759",
+      "name": "强化学习",
+      "valid_from": "2024-08-19T00:00:00Z",
+      "valid_to": "2024-06-01T00:00:00Z",
+      "layer": "mid"
+    },
+    {
+      "skill_id": "skill-d25a85f112658069",
+      "name": "计算机视觉",
+      "valid_from": "2024-08-19T00:00:00Z",
+      "valid_to": "2024-06-01T00:00:00Z",
+      "layer": "mid"
+    },
+    {
+      "skill_id": "skill-654a661d749296d9",
+      "name": "语音识别",
+      "valid_from": "2024-08-19T00:00:00Z",
+      "valid_to": "2024-06-01T00:00:00Z",
+      "layer": "mid"
+    },
+    {
+      "skill_id": "skill-eb8849f239ce6dcb",
+      "name": "自然语言处理",
+      "valid_from": "2024-08-19T00:00:00Z",
+      "valid_to": "2024-06-01T00:00:00Z",
+      "layer": "mid"
+    },
+    {
+      "skill_id": "skill-864d948087599e63",
+      "name": "AGENT框架设计",
+      "valid_from": "2025-07-25T10:07:08Z",
+      "valid_to": "2024-06-01T00:00:00Z",
+      "layer": "mid"
+    },
+    {
+      "skill_id": "skill-244f6ff0a827a51d",
+      "name": "AGENT开发",
+      "valid_from": "2025-07-25T10:07:08Z",
+      "valid_to": "2024-06-01T00:00:00Z",
+      "layer": "mid"
+    },
+    {
+      "skill_id": "skill-497fbed858f69aec",
+      "name": "LLM研究",
+      "valid_from": "2025-07-25T10:07:08Z",
+      "valid_to": "2024-06-01T00:00:00Z",
+      "layer": "mid"
+    },
+    {
+      "skill_id": "skill-19bf536853e2e78a",
+      "name": "协作",
+      "valid_from": "2025-07-25T10:07:08Z",
+      "valid_to": "2024-06-01T00:00:00Z",
+      "layer": "mid"
+    },
+    {
+      "skill_id": "skill-0c222bfdfc0a55a6",
+      "name": "技术文档编写",
+      "valid_from": "2025-07-25T10:07:08Z",
+      "valid_to": "2024-06-01T00:00:00Z",
+      "layer": "mid"
+    },
+    {
+      "skill_id": "skill-51912170810f29e3",
+      "name": "计算机专业知识",
+      "valid_from": "2025-07-25T10:07:08Z",
+      "valid_to": "2024-06-01T00:00:00Z",
+      "layer": "mid"
+    },
+    {
+      "skill_id": "skill-3fd2bbbb243b1e72",
+      "name": "LLM原理与应用",
+      "valid_from": "2025-07-25T10:07:08Z",
+      "valid_to": "2024-06-01T00:00:00Z",
+      "layer": "mid"
+    },
+    {
+      "skill_id": "skill-84f70b3e4fa67053",
+      "name": "Agent框架",
+      "valid_from": "2025-07-25T10:07:08Z",
+      "valid_to": "2024-06-01T00:00:00Z",
+      "layer": "mid"
+    },
+    {
+      "skill_id": "skill-ed93caa49383fa6a",
+      "name": "低代码平台",
+      "valid_from": "2025-07-25T10:07:08Z",
+      "valid_to": "2024-06-01T00:00:00Z",
+      "layer": "mid"
+    },
+    {
+      "skill_id": "skill-a835f7356d944adb",
+      "name": "Python编程",
+      "valid_from": "2025-07-25T10:07:08Z",
+      "valid_to": "2024-06-01T00:00:00Z",
+      "layer": "mid"
+    },
+    {
+      "skill_id": "skill-5730881c9413ef3d",
+      "name": "技术敏感度",
+      "valid_from": "2025-07-25T10:07:08Z",
+      "valid_to": "2024-06-01T00:00:00Z",
+      "layer": "mid"
+    },
+    {
+      "skill_id": "skill-94f7b5557779503d",
+      "name": "沟通协作",
+      "valid_from": "2025-07-25T10:07:08Z",
+      "valid_to": "2024-06-01T00:00:00Z",
+      "layer": "mid"
+    },
+    {
+      "skill_id": "skill-6ea52dcfa2402e71",
+      "name": "低代码/零代码平台",
+      "valid_from": "2024-08-19T00:00:00Z",
+      "valid_to": "2024-06-01T00:00:00Z",
+      "layer": "mid"
+    },
+    {
+      "skill_id": "skill-674900a77b798af1",
+      "name": "LLM",
+      "valid_from": "2024-08-19T00:00:00Z",
+      "valid_to": "2024-06-01T00:00:00Z",
+      "layer": "mid"
+    },
+    {
+      "skill_id": "skill-18885f27b5af9012",
+      "name": "Python",
+      "valid_from": "2024-08-19T00:00:00Z",
+      "valid_to": "2024-06-01T00:00:00Z",
+      "layer": "mid"
+    },
+    {
+      "skill_id": "skill-7151470ffb9910df",
+      "name": "Transformer",
+      "valid_from": "2024-08-19T00:00:00Z",
+      "valid_to": "2024-06-01T00:00:00Z",
+      "layer": "mid"
+    },
+    {
+      "skill_id": "skill-2e3023678e5977e8",
+      "name": "Bert",
+      "valid_from": "2024-08-19T00:00:00Z",
+      "valid_to": "2024-06-01T00:00:00Z",
+      "layer": "mid"
+    },
+    {
+      "skill_id": "skill-2c4e6f6c46954cd6",
+      "name": "GPT",
+      "valid_from": "2024-08-19T00:00:00Z",
+      "valid_to": "2024-06-01T00:00:00Z",
+      "layer": "mid"
+    },
+    {
+      "skill_id": "skill-d5a28193165221ac",
+      "name": "对话系统",
+      "valid_from": "2024-08-19T00:00:00Z",
+      "valid_to": "2024-06-01T00:00:00Z",
+      "layer": "mid"
+    },
+    {
+      "skill_id": "skill-c88d4539c64d9bdb",
+      "name": "任务导向型Agent",
+      "valid_from": "2024-08-19T00:00:00Z",
+      "valid_to": "2024-06-01T00:00:00Z",
+      "layer": "mid"
+    },
+    {
+      "skill_id": "skill-01fad993ff61aca9",
+      "name": "React",
+      "valid_from": "2024-08-19T00:00:00Z",
+      "valid_to": "2024-06-01T00:00:00Z",
+      "layer": "mid"
+    },
+    {
+      "skill_id": "skill-b111a2a2185caed7",
+      "name": "Vue",
+      "valid_from": "2024-08-19T00:00:00Z",
+      "valid_to": "2024-06-01T00:00:00Z",
+      "layer": "mid"
+    },
+    {
+      "skill_id": "skill-61a62a841f54d08e",
+      "name": "Electron",
+      "valid_from": "2024-08-19T00:00:00Z",
+      "valid_to": "2024-06-01T00:00:00Z",
+      "layer": "mid"
+    }
+  ],
+  "period_delta": {
+    "added": [],
+    "promoted": [],
+    "expired": []
+  },
+  "aliases_in": [],
+  "alias_of": null
+}

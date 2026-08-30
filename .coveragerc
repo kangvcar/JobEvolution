@@ -1,0 +1,10 @@
+[run]
+source_pkgs = app
+omit =
+    */collectors/*
+    */llm/client.py
+    */eval/gold.py
+    */eval/__main__.py
+
+[report]
+fail_under = 60
