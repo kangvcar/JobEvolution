@@ -96,12 +96,6 @@ DOMAIN_KEYWORDS: dict[str, tuple[str, ...]] = {
 }
 
 DOMAIN_PRIORITY = ("ai", "data", "system", "iot")
-DOMAIN_NAMES = {
-    "ai": "人工智能",
-    "data": "大数据",
-    "system": "智能系统",
-    "iot": "物联网",
-}
 
 _BOUNDARY = {}
 for _kw in {k for kws in DOMAIN_KEYWORDS.values() for k in kws}:

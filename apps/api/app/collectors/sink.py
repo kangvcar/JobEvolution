@@ -12,7 +12,12 @@ EVENT_JD_INGESTED = "jd_ingested"
 
 
 class MemoryRedis:
-    """In-process stand-in so pytest does not need docker Redis."""
+    """Ingest-only fake: sismember/sadd/srem/xadd/xrange.
+
+    sismember is a bool (redis-py may return 0/1). xrange ignores min/max.
+    Stream IDs are sequential placeholders, not Redis millisecond IDs — lock
+    event field names (`id`/`type`/`payload`) via emit_jd_ingested, not entry IDs.
+    """
 
     def __init__(self):
         self._sets: dict[str, set[str]] = defaultdict(set)
@@ -30,6 +35,17 @@ class MemoryRedis:
                 bucket.add(value)
                 added += 1
         return added
+
+    def srem(self, key: str, *values: str) -> int:
+        bucket = self._sets.get(key)
+        if not bucket:
+            return 0
+        removed = 0
+        for value in values:
+            if value in bucket:
+                bucket.remove(value)
+                removed += 1
+        return removed
 
     def xadd(self, name: str, fields: dict, id: str = "*") -> str:
         self._seq += 1

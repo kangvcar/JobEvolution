@@ -9,7 +9,7 @@ from pathlib import Path
 
 csv.field_size_limit(min(sys.maxsize, 8 * 1024 * 1024))
 
-# Aliases are column names, not filenames. First hit in the header wins.
+# `岗位名` before `岗位` so IT headers do not bind title to the shorter column.
 COLUMN_ALIASES = {
     "company": ("企业名称", "company", "公司名称", "company_name", "公司"),
     "title": ("招聘岗位", "name", "岗位名", "job_name", "岗位"),

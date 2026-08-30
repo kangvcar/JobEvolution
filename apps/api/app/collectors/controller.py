@@ -29,17 +29,22 @@ _DATE_IN_TEXT = re.compile(r"(\d{4}[-/.]\d{2}[-/.]\d{2})")
 
 def parse_observed_at(value: str) -> str:
     text = (value or "").strip()
-    if not text:
-        return ""
-    for fmt in _DATE_FORMATS:
-        width = 19 if "H" in fmt else 10
-        try:
-            return datetime.strptime(text[:width], fmt).isoformat()
-        except ValueError:
-            continue
-    match = _DATE_IN_TEXT.search(text)
-    if match:
-        return parse_observed_at(match.group(1))
+    seen: set[str] = set()
+    while text and text not in seen:
+        seen.add(text)
+        for fmt in _DATE_FORMATS:
+            width = 19 if "H" in fmt else 10
+            try:
+                return datetime.strptime(text[:width], fmt).isoformat()
+            except ValueError:
+                continue
+        match = _DATE_IN_TEXT.search(text)
+        if match is None:
+            return ""
+        nxt = match.group(1)
+        if nxt == text:
+            return ""
+        text = nxt
     return ""
 
 
@@ -73,12 +78,62 @@ def _load_existing(out_dir: Path, redis, index: SimhashIndex) -> None:
             doc = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             continue
-        fp = doc.get("fingerprint")
-        if fp:
-            redis.sadd(FP_KEY, fp)
         raw_hash = doc.get("simhash")
-        if raw_hash:
-            index.add(int(str(raw_hash), 16), doc.get("id") or path.stem)
+        if not raw_hash:
+            continue
+        try:
+            value = int(str(raw_hash), 16)
+        except (ValueError, TypeError):
+            continue
+        index.add(
+            value,
+            {
+                "id": doc.get("id") or path.stem,
+                "observed_at": doc.get("observed_at") or "",
+                "fingerprint": doc.get("fingerprint") or "",
+            },
+        )
+
+
+def _snapshot_dest(out_dir: Path, fingerprint: str) -> Path:
+    return Path(out_dir) / f"{snapshot_id(fingerprint)}.json"
+
+
+def _index_meta(snapshot: dict) -> dict:
+    return {
+        "id": snapshot["id"],
+        "observed_at": snapshot.get("observed_at") or "",
+        "fingerprint": snapshot.get("fingerprint") or "",
+    }
+
+
+def _commit_snapshot(out_dir: Path, record: RawRecord, body_hash: int, redis, on_evidence) -> dict:
+    snapshot = _write_snapshot(out_dir, record, body_hash)
+    emit_jd_ingested(redis, snapshot)
+    redis.sadd(FP_KEY, record.fingerprint)
+    if on_evidence is not None:
+        on_evidence(snapshot)
+    return snapshot
+
+
+def _replace_snapshot(
+    out_dir: Path,
+    record: RawRecord,
+    body_hash: int,
+    redis,
+    hit: dict,
+    on_evidence,
+) -> dict:
+    old_id = hit.get("id") or ""
+    old_fp = hit.get("fingerprint") or ""
+    snapshot = _commit_snapshot(out_dir, record, body_hash, redis, on_evidence)
+    old_path = Path(out_dir) / f"{old_id}.json"
+    if old_id and old_path.exists() and old_path.name != f"{snapshot['id']}.json":
+        old_path.unlink()
+    if old_fp and old_fp != record.fingerprint and hasattr(redis, "srem"):
+        redis.srem(FP_KEY, old_fp)
+    hit.update(_index_meta(snapshot))
+    return snapshot
 
 
 def _write_snapshot(out_dir: Path, record: RawRecord, body_hash: int) -> dict:
@@ -158,20 +213,39 @@ def run_ingest(*, data_dir: Path, out_dir: Path, redis, on_evidence=None) -> dic
     skipped_near = 0
     ingested = 0
     for record in prepared:
-        if redis.sismember(FP_KEY, record.fingerprint):
+        dest = _snapshot_dest(out_dir, record.fingerprint)
+        fp_known = bool(redis.sismember(FP_KEY, record.fingerprint))
+        # Skip only when the file and the Redis fingerprint both exist; leftover
+        # SET members without a snapshot (or a crash before SADD) must rebuild.
+        if dest.exists() and fp_known:
             skipped_fp += 1
             continue
+        if dest.exists() and not fp_known:
+            try:
+                existing = json.loads(dest.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                existing = None
+            if existing:
+                emit_jd_ingested(redis, existing)
+                redis.sadd(FP_KEY, record.fingerprint)
+                if on_evidence is not None:
+                    on_evidence(existing)
+                skipped_fp += 1
+                continue
         body_hash = simhash64(record.body)
-        if index.find(body_hash) is not None:
+        hit = index.find(body_hash)
+        if hit is not None:
+            if observed_sort_key(record.observed_at) < observed_sort_key(
+                hit.get("observed_at") or ""
+            ):
+                _replace_snapshot(out_dir, record, body_hash, redis, hit, on_evidence)
+                ingested += 1
+                continue
             skipped_near += 1
             redis.sadd(FP_KEY, record.fingerprint)
             continue
-        snapshot = _write_snapshot(out_dir, record, body_hash)
-        emit_jd_ingested(redis, snapshot)
-        redis.sadd(FP_KEY, record.fingerprint)
-        index.add(body_hash, snapshot["id"])
-        if on_evidence is not None:
-            on_evidence(snapshot)
+        snapshot = _commit_snapshot(out_dir, record, body_hash, redis, on_evidence)
+        index.add(body_hash, _index_meta(snapshot))
         ingested += 1
 
     paths = list_snapshot_paths(out_dir)
