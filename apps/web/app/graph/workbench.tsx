@@ -23,6 +23,7 @@ type Requirement = {
   category?: string | null;
   kind?: string;
   proficiency?: string;
+  levels?: string[];
 };
 type JobDetail = Job & { sources?: string[] };
 type Slice = {
@@ -38,6 +39,8 @@ export function Workbench() {
   const [domains, setDomains] = useState<Domain[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [domain, setDomain] = useState("");
+  const [category, setCategory] = useState("");
+  const [level, setLevel] = useState("");
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState(wanted);
   const [detail, setDetail] = useState<JobDetail | null>(null);
@@ -56,22 +59,27 @@ export function Workbench() {
     const params = new URLSearchParams();
     if (domain) params.set("domain", domain);
     if (q) params.set("q", q);
+    if (category) params.set("category", category);
+    if (level) params.set("level", level);
     const suffix = params.toString();
     fetch(`${API}/jobs${suffix ? `?${suffix}` : ""}`)
       .then((r) => r.json())
       .then((rows: Job[]) => setJobs(Array.isArray(rows) ? rows : []))
       .catch(() => setJobs([]));
-  }, [domain, q]);
+  }, [domain, q, category, level]);
 
   useEffect(() => {
     if (wanted) setSelected(wanted);
   }, [wanted]);
 
   useEffect(() => {
-    if (!selected && jobs[0]) setSelected(jobs[0].id);
+    if (jobs[0] && !jobs.some((job) => job.id === selected)) setSelected(jobs[0].id);
   }, [jobs, selected]);
 
   const current = jobs.find((job) => job.id === selected);
+  const visibleRequires = (slice?.requires || []).filter(
+    (skill) => (!category || skill.category === category) && (!level || skill.levels?.includes(level)),
+  );
 
   useEffect(() => {
     if (!selected) {
@@ -131,7 +139,7 @@ export function Workbench() {
         </label>
         <label>
           技能类目
-          <select aria-label="技能类目" defaultValue="">
+          <select aria-label="技能类目" value={category} onChange={(e) => setCategory(e.target.value)}>
             <option value="">全部</option>
             {CATEGORIES.map((name) => (
               <option key={name} value={name}>
@@ -142,7 +150,7 @@ export function Workbench() {
         </label>
         <label>
           适用级别
-          <select aria-label="适用级别" defaultValue="">
+          <select aria-label="适用级别" value={level} onChange={(e) => setLevel(e.target.value)}>
             {LEVELS.map((level) => (
               <option key={level.value} value={level.value}>
                 {level.label}
@@ -155,7 +163,7 @@ export function Workbench() {
           <input type="search" aria-label="搜索岗位" value={q} onChange={(e) => setQ(e.target.value)} />
         </label>
         {jobs.length === 0 ? (
-          <p className="empty">未接数据</p>
+          <p className="empty">当前筛选没有仍有要求边的技能点，请换个筛选</p>
         ) : (
           <ul className="job-list">
             {jobs.map((job) => (
@@ -192,17 +200,20 @@ export function Workbench() {
             <p>状态：{detail.status === "formed" ? "成型" : "萌芽"}</p>
             <p>独立源：{detail.sources?.join("、") || "暂无"}</p>
             <h2>技能点</h2>
-            {slice?.categories?.map((category) => (
-              <section key={category.id}>
-                <h3>{category.name}</h3>
+            {slice?.categories?.filter((sliceCategory) => visibleRequires.some((skill) => skill.category === sliceCategory.name)).map((sliceCategory) => (
+              <section key={sliceCategory.id}>
+                <h3>{sliceCategory.name}</h3>
                 <ul>
-                  {(slice.requires || []).filter((skill) => skill.category === category.name).map((skill) => (
+                  {visibleRequires.filter((skill) => skill.category === sliceCategory.name).map((skill) => (
                     <li key={skill.skill_id}>{skill.name}</li>
                   ))}
                 </ul>
               </section>
             ))}
-            {!(slice?.categories?.length) && <ul>{(slice?.requires || []).map((skill) => <li key={skill.skill_id}>{skill.name}</li>)}</ul>}
+            {!(slice?.categories?.length) && (
+              <ul>{visibleRequires.map((skill) => <li key={skill.skill_id}>{skill.name}</li>)}</ul>
+            )}
+            {slice && visibleRequires.length === 0 && <p className="empty">当前筛选没有技能点，请换个筛选</p>}
             <Link className="primary" href={`/diagnose?job_id=${encodeURIComponent(detail.id)}`}>
             对照简历
             </Link>
