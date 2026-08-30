@@ -1,5 +1,6 @@
 import json
 import sys
+from datetime import datetime
 from pathlib import Path
 
 from app.collectors import (
@@ -10,7 +11,8 @@ from app.collectors import (
     normalize_company,
     run_ingest,
 )
-from app.collectors.controller import parse_observed_at
+from app.collectors.controller import observed_sort_key, parse_observed_at
+from app.collectors.simhash import format_simhash, simhash64
 from app.collectors.sink import EVENT_JD_INGESTED, STREAM_KEY, emit_jd_ingested
 from app.collectors.source import field_map, map_row
 
@@ -203,29 +205,44 @@ def test_existing_snapshot_without_fp_emits_jd_ingested(tmp_path):
     assert types == {EVENT_JD_INGESTED}
 
 
+class _EvidenceStore:
+    def __init__(self):
+        self.nodes: dict[str, str] = {}
+
+    def __call__(self, snapshot: dict) -> None:
+        self.nodes[snapshot["id"]] = snapshot["company"]
+
+    def drop(self, evidence_id: str) -> None:
+        self.nodes.pop(evidence_id, None)
+
+
 def test_earlier_near_dup_replaces_existing_snapshot(tmp_path):
     data_dir = tmp_path / "src"
     data_dir.mkdir()
     out_dir = tmp_path / "jd"
     redis = MemoryRedis()
+    evidence = _EvidenceStore()
     body = "负责机器学习模型的训练评估与部署并与业务协作落地生产环境熟悉Python与PyTorch"
     (data_dir / "later.csv").write_text(
         "企业名称,招聘岗位,职位描述,招聘发布日期,工作城市,来源\n"
         f"后到科技,机器学习专家,{body},2024-08-01,杭州,\n",
         encoding="utf-8",
     )
-    run_ingest(data_dir=data_dir, out_dir=out_dir, redis=redis)
+    run_ingest(data_dir=data_dir, out_dir=out_dir, redis=redis, on_evidence=evidence)
     titles = {
         json.loads(path.read_text(encoding="utf-8"))["title"]
         for path in list_snapshot_paths(out_dir)
     }
     assert titles == {"机器学习专家"}
+    assert set(evidence.nodes.values()) == {"后到科技"}
     (data_dir / "earlier.csv").write_text(
         "企业名称,招聘岗位,职位描述,招聘发布日期,工作城市,来源\n"
         f"先到科技有限公司,机器学习工程师,{body},2024-01-01,北京,\n",
         encoding="utf-8",
     )
-    run_ingest(data_dir=data_dir, out_dir=out_dir, redis=redis)
+    run_ingest(
+        data_dir=data_dir, out_dir=out_dir, redis=redis, on_evidence=evidence
+    )
     snapshots = [
         json.loads(path.read_text(encoding="utf-8"))
         for path in list_snapshot_paths(out_dir)
@@ -238,6 +255,47 @@ def test_earlier_near_dup_replaces_existing_snapshot(tmp_path):
     companies = independent_companies(snapshots)
     assert "先到科技" in companies
     assert "后到科技" not in companies
+    assert set(evidence.nodes.values()) == {"先到科技"}
+    assert kept["id"] in evidence.nodes
+    assert len(evidence.nodes) == 1
+
+
+def test_invalid_observed_at_on_disk_does_not_abort(tmp_path):
+    assert observed_sort_key("not-a-date") == datetime.max
+    assert observed_sort_key("") == datetime.max
+    out_dir = tmp_path / "jd"
+    out_dir.mkdir()
+    body = "负责机器学习模型的训练评估与部署并与业务协作落地生产环境熟悉Python与PyTorch"
+    (out_dir / "jd-badsnapshot0000.json").write_text(
+        json.dumps(
+            {
+                "id": "jd-badsnapshot0000",
+                "fingerprint": "cd" * 32,
+                "simhash": format_simhash(simhash64(body)),
+                "observed_at": "not-a-date",
+                "domain": "ai",
+                "company": "后到科技",
+                "title": "机器学习专家",
+                "body": body,
+            }
+        ),
+        encoding="utf-8",
+    )
+    data_dir = tmp_path / "src"
+    data_dir.mkdir()
+    (data_dir / "earlier.csv").write_text(
+        "企业名称,招聘岗位,职位描述,招聘发布日期,工作城市,来源\n"
+        f"先到科技有限公司,机器学习工程师,{body},2024-01-01,北京,\n",
+        encoding="utf-8",
+    )
+    stats = run_ingest(data_dir=data_dir, out_dir=out_dir, redis=MemoryRedis())
+    assert stats["ingested"] >= 1
+    titles = {
+        json.loads(path.read_text(encoding="utf-8"))["title"]
+        for path in list_snapshot_paths(out_dir)
+    }
+    assert "机器学习工程师" in titles
+    assert "机器学习专家" not in titles
 
 
 def test_corrupt_simhash_does_not_abort_ingest(tmp_path):

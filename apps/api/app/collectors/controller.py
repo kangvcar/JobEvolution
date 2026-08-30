@@ -51,7 +51,10 @@ def parse_observed_at(value: str) -> str:
 def observed_sort_key(iso: str) -> datetime:
     if not iso:
         return datetime.max
-    return datetime.fromisoformat(iso)
+    try:
+        return datetime.fromisoformat(iso)
+    except ValueError:
+        return datetime.max
 
 
 def snapshot_id(fingerprint: str) -> str:
@@ -132,6 +135,9 @@ def _replace_snapshot(
         old_path.unlink()
     if old_fp and old_fp != record.fingerprint and hasattr(redis, "srem"):
         redis.srem(FP_KEY, old_fp)
+    drop = getattr(on_evidence, "drop", None)
+    if callable(drop) and old_id and old_id != snapshot["id"]:
+        drop(old_id)
     hit.update(_index_meta(snapshot))
     return snapshot
 
@@ -215,8 +221,6 @@ def run_ingest(*, data_dir: Path, out_dir: Path, redis, on_evidence=None) -> dic
     for record in prepared:
         dest = _snapshot_dest(out_dir, record.fingerprint)
         fp_known = bool(redis.sismember(FP_KEY, record.fingerprint))
-        # Skip only when the file and the Redis fingerprint both exist; leftover
-        # SET members without a snapshot (or a crash before SADD) must rebuild.
         if dest.exists() and fp_known:
             skipped_fp += 1
             continue

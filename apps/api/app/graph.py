@@ -118,6 +118,16 @@ def upsert_evidence_many(rows: list[dict]) -> None:
         )
 
 
+def delete_evidence_many(ids: list[str]) -> None:
+    if _driver is None or not ids:
+        return
+    with _driver.session() as session:
+        session.run(
+            "UNWIND $ids AS id MATCH (e:Evidence {id: id}) DETACH DELETE e",
+            ids=ids,
+        )
+
+
 def get_public_job(job_id: str) -> dict | None:
     cypher = """
     MATCH (j:Job {id: $id})-[:IN_DOMAIN]->(d:Domain)

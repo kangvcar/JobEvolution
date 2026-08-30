@@ -47,6 +47,10 @@ class _EvidenceBatch:
         if len(self._buf) >= self._size:
             self.flush()
 
+    def drop(self, evidence_id: str) -> None:
+        self._buf = [row for row in self._buf if row["id"] != evidence_id]
+        self._graph.delete_evidence_many([evidence_id])
+
     def flush(self) -> None:
         if not self._buf:
             return
