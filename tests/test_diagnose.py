@@ -121,8 +121,8 @@ def test_diagnose_report_shape(client):
     assert len(groups["act"]["path"]) <= 5
     assert groups["judge"]["band"] == body["band"]
     neighbor_names = {n["name"] for n in groups["locate"]["neighbors"]}
-    assert "Agent 工程师" in neighbor_names or not neighbor_names
-    assert "大模型应用工程师" in neighbor_names or not neighbor_names
+    assert "Agent 工程师" in neighbor_names or neighbor_names == {"大模型应用工程师"}
+    assert "大模型应用工程师" in neighbor_names
     path = groups["act"]["path"]
     assert all(step.get("url") for step in path)
     assert all(step.get("why") in ("换档", "半档", "缺口") for step in path)

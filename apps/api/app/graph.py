@@ -520,7 +520,9 @@ def expire_absent_requires(job_id: str, keep_ids: list[str], at_iso: str) -> Non
         session.run(
             """
             MATCH (j:Job {id: $id})-[r:REQUIRES]->(s:Skill)
-            WHERE r.valid_to IS NULL AND NOT s.id IN $keep
+            WHERE r.valid_to IS NULL
+              AND NOT s.id IN $keep
+              AND (r.valid_from IS NULL OR r.valid_from <= datetime($at))
             SET r.valid_to = datetime($at)
             """,
             id=job_id,

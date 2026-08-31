@@ -19,6 +19,7 @@ from app.pipeline.gate import (
     run_extract_and_gate,
 )
 from app.pipeline.sections import section_of, split_sections
+from app.pipeline.status import job_id_for
 
 
 ADMIN = os.environ.get("ADMIN_PASSWORD", "change-me")
@@ -552,6 +553,146 @@ def test_gate_iron_name_vetoes_category(tmp_path):
     _cleanup(graph, suffix)
 
 
+def _approve_pending(events):
+    for event in events:
+        if event.get("review") == "pending":
+            apply_event(event["id"], review="approved")
+
+
+def test_expire_never_writes_valid_to_before_valid_from(tmp_path):
+    suffix = uuid.uuid4().hex[:8]
+    old = _jd_snaps(
+        tmp_path,
+        suffix + "o",
+        excerpt="熟悉 OldSkill",
+        confidence=0.9,
+        body="任职要求：熟悉 OldSkill。",
+        at="2023-01-01",
+    )
+    _approve_pending(
+        run_extract_and_gate(
+            old,
+            complete_json=_extract_fn("熟悉 OldSkill", 0.9, "requirement", name="OldSkill"),
+            workers=1,
+        )
+    )
+    new = _jd_snaps(
+        tmp_path,
+        suffix + "n",
+        excerpt="熟悉 NewSkill",
+        confidence=0.9,
+        body="任职要求：熟悉 NewSkill。",
+        companies=("丁", "戊", "己"),
+        at="2024-06-01",
+    )
+    _approve_pending(
+        run_extract_and_gate(
+            new,
+            complete_json=_extract_fn("熟悉 NewSkill", 0.9, "requirement", name="NewSkill"),
+            workers=1,
+        )
+    )
+    third = _jd_snaps(
+        tmp_path,
+        suffix + "t",
+        excerpt="熟悉 ThirdSkill",
+        confidence=0.9,
+        body="任职要求：熟悉 ThirdSkill。",
+        companies=("庚", "辛", "壬"),
+        at="2024-01-01",
+    )
+    run_extract_and_gate(
+        third,
+        complete_json=_extract_fn("熟悉 ThirdSkill", 0.9, "requirement", name="ThirdSkill"),
+        workers=1,
+    )
+    job_id = job_id_for("大模型应用工程师")
+    with graph._driver.session() as session:
+        rows = session.run(
+            """
+            MATCH (:Job {id: $jid})-[r:REQUIRES]->(s:Skill)
+            WHERE s.name IN ['OldSkill', 'NewSkill']
+            RETURN s.name AS name, r.valid_from AS vf, r.valid_to AS vt
+            """,
+            jid=job_id,
+        ).data()
+    by_name = {row["name"]: row for row in rows}
+    assert by_name["OldSkill"]["vt"] is not None
+    assert by_name["OldSkill"]["vt"] >= by_name["OldSkill"]["vf"]
+    assert by_name["NewSkill"]["vt"] is None
+    _cleanup(graph, suffix)
+
+
+def test_empty_keep_leaves_active_requires_untouched(tmp_path):
+    suffix = uuid.uuid4().hex[:8]
+    seeded = _jd_snaps(
+        tmp_path,
+        suffix + "a",
+        excerpt="熟悉 StableSkill",
+        confidence=0.9,
+        body="任职要求：熟悉 StableSkill。",
+        at="2023-06-01",
+    )
+    _approve_pending(
+        run_extract_and_gate(
+            seeded,
+            complete_json=_extract_fn("熟悉 StableSkill", 0.9, "requirement", name="StableSkill"),
+            workers=1,
+        )
+    )
+
+    def sparse(_schema, messages):
+        text = str(messages)
+        if "StableSkill" not in text:
+            return {"job_name": "大模型应用工程师", "domain": "ai", "skills": []}
+        return {
+            "job_name": "大模型应用工程师",
+            "domain": "ai",
+            "skills": [
+                {
+                    "name": "StableSkill",
+                    "kind": "required",
+                    "proficiency": "able",
+                    "confidence": 0.9,
+                    "excerpt": "熟悉 StableSkill",
+                    "section": "requirement",
+                }
+            ],
+        }
+
+    mentioned = _jd_snaps(
+        tmp_path,
+        suffix + "b",
+        excerpt="熟悉 StableSkill",
+        confidence=0.9,
+        body="任职要求：熟悉 StableSkill。",
+        companies=("子",),
+        at="2024-02-01",
+    )
+    silent = _jd_snaps(
+        tmp_path,
+        suffix + "c",
+        excerpt="熟悉 StableSkill",
+        confidence=0.9,
+        body="任职要求：踏实肯干。",
+        companies=("丑", "寅", "卯"),
+        at="2024-02-01",
+    )
+    run_extract_and_gate(mentioned + silent, complete_json=sparse, workers=1)
+    job_id = job_id_for("大模型应用工程师")
+    with graph._driver.session() as session:
+        row = session.run(
+            """
+            MATCH (:Job {id: $jid})-[r:REQUIRES]->(:Skill {name: 'StableSkill'})
+            WHERE r.valid_to IS NULL
+            RETURN count(r) AS n
+            """,
+            jid=job_id,
+        ).single()
+    assert row["n"] == 1
+    _cleanup(graph, suffix)
+
+
 def test_init_graph_writes_five_skill_categories():
     if graph._driver is None:
         graph.init_graph()
@@ -592,6 +733,7 @@ def _jd_snaps(
     confidence,
     body="任职要求：熟悉 FastAPI 与模型服务。",
     companies=("甲", "乙", "丙"),
+    at=None,
 ):
     del excerpt, confidence
     from app import graph
@@ -610,7 +752,7 @@ def _jd_snaps(
             "title": "大模型应用工程师",
             "body": body,
             "city": "北京",
-            "observed_at": f"2024-0{i+1}-01",
+            "observed_at": at or f"2024-0{i+1}-01",
             "domain": "ai",
             "fingerprint": sid,
             "simhash": "0" * 16,
