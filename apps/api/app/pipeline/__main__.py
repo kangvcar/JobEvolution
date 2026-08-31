@@ -88,7 +88,7 @@ def select_snapshots(jd_dir: Path) -> list[dict]:
             out.extend(deduped)
         else:
             out.extend(_two_slices(docs))
-    out.extend(_dedup_companies(alias)[:ALIAS_CAP])
+    out.extend({**doc, "alias_candidate": True} for doc in _dedup_companies(alias)[:ALIAS_CAP])
     return out
 
 

@@ -221,7 +221,7 @@ def run_extract_and_gate(
     aligned: dict[str, list] = defaultdict(list)
     unmatched: dict[str, list] = defaultdict(list)
     for snap, parsed in extracted_rows:
-        hit = parsed.target or align_job(parsed.job_name)
+        hit = None if snap.get("alias_candidate") else (parsed.target or align_job(parsed.job_name))
         if hit:
             aligned[hit].append((snap, parsed, hit))
         else:

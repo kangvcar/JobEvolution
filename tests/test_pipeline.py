@@ -155,6 +155,7 @@ def test_select_alias_near_names_pass_pre_filter(tmp_path):
     picked = select_snapshots(jd)
     got = {d.get("title") for d in picked}
     assert got == set(titles)
+    assert all(d.get("alias_candidate") for d in picked)
 
 
 def test_extract_cache_hits_on_second_run(tmp_path):
@@ -550,6 +551,42 @@ def test_gate_invalid_target_falls_back_to_align(tmp_path):
     adds = [e for e in events if e.get("kind") == "requires_add"]
     assert adds
     assert all(e["payload"]["job_name"] == "Agent 工程师" for e in adds)
+    _cleanup(graph, suffix)
+
+
+def test_gate_sends_alias_batch_to_cluster_before_target_alignment(tmp_path):
+    suffix = uuid.uuid4().hex[:8]
+    snapshots = _jd_snaps(
+        tmp_path,
+        suffix,
+        excerpt="熟悉 LangFrame",
+        confidence=0.9,
+        body="任职要求：熟悉 LangFrame。",
+        companies=("近名甲", "近名乙"),
+    )
+    for snapshot in snapshots:
+        snapshot["alias_candidate"] = True
+
+    def complete(_schema, _messages):
+        return {
+            "job_name": "AI 智能体开发",
+            "target": "Agent 工程师",
+            "domain": "ai",
+            "skills": [
+                {
+                    "name": "LangFrame",
+                    "kind": "required",
+                    "proficiency": "able",
+                    "confidence": 0.9,
+                    "excerpt": "熟悉 LangFrame",
+                    "section": "requirement",
+                }
+            ],
+        }
+
+    run_extract_and_gate(snapshots, complete_json=complete, workers=1)
+    evidence = graph.list_job_evidence(job_id_for("Agent 工程师"))
+    assert not {row["id"] for row in evidence} & {snapshot["id"] for snapshot in snapshots}
     _cleanup(graph, suffix)
 
 
