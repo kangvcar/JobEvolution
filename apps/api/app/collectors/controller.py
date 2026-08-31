@@ -71,11 +71,50 @@ def stable_observed_at(fingerprint: str, year: int) -> str:
     return (start + timedelta(days=offset)).isoformat()
 
 
-def observed_at_for(published_at: str, fingerprint: str, year: int | None) -> str:
-    parsed = parse_observed_at(published_at, year)
-    if parsed or year is None:
-        return parsed
+def observed_at_for(
+    published_at: str,
+    fingerprint: str,
+    year: int | None,
+    *,
+    ignore_parsed: bool = False,
+) -> str:
+    if not ignore_parsed:
+        parsed = parse_observed_at(published_at, year)
+        if parsed or year is None:
+            return parsed
+    if year is None:
+        return ""
     return stable_observed_at(fingerprint, year)
+
+
+def uniform_parsed_day(published_at_values: list[str], year: int | None) -> bool:
+    if year is None:
+        return False
+    days = [
+        parse_observed_at(value, year)[:10]
+        for value in published_at_values
+        if parse_observed_at(value, year)
+    ]
+    return len(days) >= 2 and len(set(days)) == 1
+
+
+def is_scrape_calendar(values: list[str]) -> bool:
+    """True when dates look like a crawl stamp: MM-DD发布 clustered in a short window, no ISO year."""
+    days: list[datetime] = []
+    for value in values:
+        text = value or ""
+        if _DATE_IN_TEXT.search(text):
+            return False
+        match = _MONTH_DAY_IN_TEXT.search(text)
+        if match is None:
+            continue
+        try:
+            days.append(datetime(2020, int(match.group(1)), int(match.group(2))))
+        except ValueError:
+            continue
+    if len(days) < 50:
+        return False
+    return (max(days) - min(days)).days <= 31
 
 
 def observed_sort_key(iso: str) -> datetime:
@@ -200,7 +239,7 @@ def _write_snapshot(out_dir: Path, record: RawRecord, body_hash: int) -> dict:
     return doc
 
 
-def _prepare(record: RawRecord) -> RawRecord | None:
+def _prepare(record: RawRecord, *, ignore_parsed: bool = False) -> RawRecord | None:
     if not record.body:
         return None
     domain = classify_domain(record.title)
@@ -215,7 +254,10 @@ def _prepare(record: RawRecord) -> RawRecord | None:
         record.city,
     )
     record.observed_at = observed_at_for(
-        record.published_at, record.fingerprint, table_year(record.table)
+        record.published_at,
+        record.fingerprint,
+        table_year(record.table),
+        ignore_parsed=ignore_parsed,
     )
     return record
 
@@ -234,12 +276,16 @@ def run_ingest(*, data_dir: Path, out_dir: Path, redis, on_evidence=None) -> dic
     tables = discover_tables(data_dir)
     prepared: list[RawRecord] = []
     for table in tables:
-        for record in iter_records(table):
+        batch = list(iter_records(table))
+        ignore_parsed = uniform_parsed_day(
+            [record.published_at for record in batch], table_year(table.name)
+        )
+        for record in batch:
             read += 1
             if not record.body:
                 dropped_body += 1
                 continue
-            ready = _prepare(record)
+            ready = _prepare(record, ignore_parsed=ignore_parsed)
             if ready is None:
                 dropped_domain += 1
                 continue

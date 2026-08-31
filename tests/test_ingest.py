@@ -13,10 +13,12 @@ from app.collectors import (
     run_ingest,
 )
 from app.collectors.controller import (
+    is_scrape_calendar,
     observed_sort_key,
     parse_observed_at,
     stable_observed_at,
     table_year,
+    uniform_parsed_day,
 )
 from app.collectors.backfill_dates import DATE_COLUMN, backfill, backfill_tables
 from app.collectors.simhash import format_simhash, simhash64
@@ -237,17 +239,35 @@ def test_backfill_tables_adds_publish_date_and_keeps_blob(tmp_path):
     table = data_dir / "综合招聘数据库2026.csv"
     table.write_text(
         "job_name,company_name,job_city,publish_detail,job_duty\n"
-        "机器学习工程师,甲,广州,广州 5-7年经验 本科 招若干人 03-14发布,负责机器学习模型\n",
+        "机器学习工程师,甲,广州,广州 5-7年经验 本科 招若干人 03-14发布,负责机器学习模型\n"
+        "数据工程师,乙,深圳,深圳 3-4年经验 本科 招1人 03-14发布,负责数据管道\n",
         encoding="utf-8-sig",
         newline="\r\n",
     )
     assert backfill_tables(data_dir) == {"tables": 1, "skipped": 0}
     with table.open(encoding="utf-8-sig", newline="") as handle:
         rows = list(csv.DictReader(handle))
-    assert rows[0][DATE_COLUMN] == "2026-03-14"
+    dates = {row[DATE_COLUMN] for row in rows}
+    assert len(dates) == 2
+    assert all(date.startswith("2026-") for date in dates)
     assert "5-7年经验" in rows[0]["publish_detail"]
     assert "03-14发布" in rows[0]["publish_detail"]
     assert backfill_tables(data_dir) == {"tables": 0, "skipped": 1}
+
+
+def test_uniform_parsed_day():
+    assert uniform_parsed_day(
+        ["合肥 硕士 招10人 03-14发布", "广州 5-7年经验 本科 招1人 03-14发布"], 2026
+    )
+    assert not uniform_parsed_day(["2024-01-01", "2024-06-02"], 2024)
+    assert not uniform_parsed_day(["合肥 硕士 招10人 03-14发布"], 2026)
+
+
+def test_is_scrape_calendar_short_crawl_window():
+    cluster = [f"广州 招1人 03-{14 if i < 40 else 15}发布" for i in range(60)]
+    assert is_scrape_calendar(cluster)
+    assert not is_scrape_calendar(["03-14发布"] * 10)
+    assert not is_scrape_calendar(["2026-03-14"] * 60)
 
 
 def test_backfill_tables_hashes_when_table_has_no_date_column(tmp_path):
