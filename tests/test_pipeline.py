@@ -5,12 +5,14 @@ import uuid
 import pytest
 from fastapi.testclient import TestClient
 
+from app import graph
 from app.llm.embed import embed
 from app.pipeline.align import align_skill
 from app.pipeline.constants import COVERAGE_THRESHOLD
 from app.pipeline.extract import ExtractedJd, coerce_extracted, parse_extracted
 from app.pipeline.__main__ import match_target, select_snapshots
 from app.pipeline.gate import (
+    apply_event,
     confidence_layer,
     coverage,
     pool_skill,
@@ -224,7 +226,7 @@ def test_coverage_is_mentions_over_cluster_size():
 
 def test_extract_failure_enqueues_pending(tmp_path):
     suffix = uuid.uuid4().hex[:8]
-    snaps = _three_source_snaps(tmp_path, suffix, excerpt="x", confidence=0.9)
+    snaps = _jd_snaps(tmp_path, suffix, excerpt="x", confidence=0.9)
 
     def bad(_schema, _messages):
         return {"nope": True}
@@ -250,7 +252,7 @@ def test_passthrough_default_off_and_low_never_auto(tmp_path):
     from app import graph
 
     suffix = uuid.uuid4().hex[:8]
-    snapshots = _three_source_snaps(tmp_path, suffix, excerpt="熟悉 FastAPI", confidence=0.9)
+    snapshots = _jd_snaps(tmp_path, suffix, excerpt="熟悉 FastAPI", confidence=0.9)
     client = _client()
     client.put(
         "/admin/passthrough",
@@ -263,7 +265,7 @@ def test_passthrough_default_off_and_low_never_auto(tmp_path):
     )
     pending = [e for e in events if e.get("review") == "pending"]
     assert pending
-    low_snaps = _three_source_snaps(tmp_path, suffix + "l", excerpt="", confidence=0.9)
+    low_snaps = _jd_snaps(tmp_path, suffix + "l", excerpt="", confidence=0.9)
     client.put(
         "/admin/passthrough",
         headers={"X-Admin-Password": ADMIN},
@@ -286,7 +288,7 @@ def test_approve_writes_evidence_id_on_requires(tmp_path):
     from app import graph
 
     suffix = uuid.uuid4().hex[:8]
-    snapshots = _three_source_snaps(tmp_path, suffix, excerpt="熟悉 FastAPI", confidence=0.9)
+    snapshots = _jd_snaps(tmp_path, suffix, excerpt="熟悉 FastAPI", confidence=0.9)
     events = run_extract_and_gate(
         snapshots,
         complete_json=_extract_fn("熟悉 FastAPI", 0.9, "requirement"),
@@ -320,7 +322,7 @@ def test_low_confirm_is_approved_not_auto_passed(tmp_path):
     from app import graph
 
     suffix = uuid.uuid4().hex[:8]
-    snapshots = _three_source_snaps(tmp_path, suffix, excerpt="熟悉 FastAPI", confidence=0.2)
+    snapshots = _jd_snaps(tmp_path, suffix, excerpt="熟悉 FastAPI", confidence=0.2)
     events = run_extract_and_gate(
         snapshots,
         complete_json=_extract_fn("熟悉 FastAPI", 0.2, "requirement"),
@@ -338,37 +340,268 @@ def test_low_confirm_is_approved_not_auto_passed(tmp_path):
     _cleanup(graph, suffix)
 
 
-def _extract_fn(excerpt, confidence, section):
-    def complete(_schema, _messages):
+def test_extract_target_and_category_coerce():
+    def flash(_schema, _messages):
         return {
-            "job_name": "大模型应用工程师",
+            "job_name": "大模型平台研发",
+            "target": "大模型应用工程师",
+            "domain": "ai",
+            "skills": [
+                {
+                    "name": "LangChain 编排",
+                    "kind": "required",
+                    "proficiency": "able",
+                    "confidence": 0.9,
+                    "excerpt": "熟悉 LangChain",
+                    "section": "requirement",
+                    "category": "framework",
+                },
+                {
+                    "name": "SQL",
+                    "kind": "required",
+                    "proficiency": "able",
+                    "confidence": 0.8,
+                    "excerpt": "会写 SQL",
+                    "section": "requirement",
+                    "category": "语言",
+                },
+                {
+                    "name": "摆摊",
+                    "kind": "required",
+                    "proficiency": "able",
+                    "confidence": 0.5,
+                    "excerpt": "摆摊",
+                    "section": "requirement",
+                    "category": "烹饪",
+                },
+            ],
+        }
+
+    parsed = parse_extracted(flash, retry=False)
+    assert parsed.target == "大模型应用工程师"
+    assert parsed.skills[0].category == "framework"
+    assert parsed.skills[1].category == "language"
+    assert parsed.skills[2].category == ""
+
+
+def test_extract_invalid_target_becomes_empty():
+    def flash(_schema, _messages):
+        return {
+            "job_name": "Agent 工程师",
+            "target": "即时配送优化师",
+            "domain": "ai",
+            "skills": [],
+        }
+
+    parsed = parse_extracted(flash, retry=False)
+    assert parsed.target == ""
+
+
+def test_extract_default_target_and_category_when_missing():
+    def flash(_schema, _messages):
+        return {
+            "job_name": "Agent 工程师",
             "domain": "ai",
             "skills": [
                 {
                     "name": "FastAPI",
                     "kind": "required",
                     "proficiency": "able",
-                    "confidence": confidence,
-                    "excerpt": excerpt,
-                    "section": section,
+                    "confidence": 0.9,
+                    "excerpt": "熟悉 FastAPI",
+                    "section": "requirement",
                 }
             ],
+        }
+
+    parsed = parse_extracted(flash, retry=False)
+    assert parsed.target == ""
+    assert parsed.skills[0].category == ""
+
+
+def test_gate_prefers_target_over_embed_align(tmp_path):
+    suffix = uuid.uuid4().hex[:8]
+    snaps = _jd_snaps(tmp_path, suffix, excerpt="熟悉 LangFrame", confidence=0.9, body="任职要求：熟悉 LangFrame。", companies=("甲", "乙"))
+
+    def complete(_schema, _messages):
+        return {
+            "job_name": "即时配送调度研发",
+            "target": "大模型应用工程师",
+            "domain": "ai",
+            "skills": [
+                {
+                    "name": "LangFrame",
+                    "kind": "required",
+                    "proficiency": "able",
+                    "confidence": 0.9,
+                    "excerpt": "熟悉 LangFrame",
+                    "section": "requirement",
+                }
+            ],
+        }
+
+    events = run_extract_and_gate(snaps, complete_json=complete, workers=1)
+    adds = [e for e in events if e.get("kind") == "requires_add"]
+    assert adds
+    assert all(e["payload"]["job_name"] == "大模型应用工程师" for e in adds)
+    _cleanup(graph, suffix)
+
+
+def test_gate_invalid_target_falls_back_to_align(tmp_path):
+    suffix = uuid.uuid4().hex[:8]
+    snaps = _jd_snaps(tmp_path, suffix, excerpt="熟悉 LangFrame", confidence=0.9, body="任职要求：熟悉 LangFrame。", companies=("甲", "乙"))
+
+    def complete(_schema, _messages):
+        return {
+            "job_name": "Agent 工程师",
+            "target": "即时配送优化师",
+            "domain": "ai",
+            "skills": [
+                {
+                    "name": "LangFrame",
+                    "kind": "required",
+                    "proficiency": "able",
+                    "confidence": 0.9,
+                    "excerpt": "熟悉 LangFrame",
+                    "section": "requirement",
+                }
+            ],
+        }
+
+    events = run_extract_and_gate(snaps, complete_json=complete, workers=1)
+    adds = [e for e in events if e.get("kind") == "requires_add"]
+    assert adds
+    assert all(e["payload"]["job_name"] == "Agent 工程师" for e in adds)
+    _cleanup(graph, suffix)
+
+
+def test_merge_category_majority_and_iron_veto():
+    from app.pipeline.gate import _merge_category
+
+    assert _merge_category([("Python", "domain"), ("numpy", "domain"), ("py", "domain")]) == "language"
+    assert _merge_category([("a", "framework"), ("b", "framework"), ("c", "domain")]) == "framework"
+    assert _merge_category([("a", ""), ("b", "framework")]) == "framework"
+    assert _merge_category([("a", ""), ("b", "")]) == ""
+
+
+def test_skill_ingest_writes_category_edge(tmp_path):
+    suffix = uuid.uuid4().hex[:8]
+    snaps = _jd_snaps(
+        tmp_path,
+        suffix,
+        excerpt="熟悉 LangFrame",
+        confidence=0.9,
+        body="任职要求：熟悉 LangFrame。",
+    )
+    events = run_extract_and_gate(
+        snaps,
+        complete_json=_extract_fn(
+            "熟悉 LangFrame", 0.9, "requirement", category="framework", name="LangFrame"
+        ),
+    )
+    pending = [e for e in events if e.get("review") == "pending"]
+    assert pending
+    assert pending[0]["payload"]["category"] == "framework"
+    apply_event(pending[0]["id"], review="approved")
+    job_id = pending[0]["payload"]["job_id"]
+    with graph._driver.session() as session:
+        row = session.run(
+            """
+            MATCH (:Job {id: $jid})-[r:REQUIRES]->(:Skill)-[:IN_CATEGORY]->(c:SkillCategory)
+            WHERE r.valid_to IS NULL
+            RETURN c.id AS cid, c.name AS cname
+            """,
+            jid=job_id,
+        ).single()
+    assert row is not None
+    assert row["cid"] == "framework"
+    assert row["cname"] == "框架"
+    _cleanup(graph, suffix)
+
+
+def test_gate_iron_name_vetoes_category(tmp_path):
+    suffix = uuid.uuid4().hex[:8]
+    snaps = _jd_snaps(
+        tmp_path,
+        suffix,
+        excerpt="熟悉 Python",
+        confidence=0.9,
+        body="任职要求：熟悉 Python 与模型服务。",
+    )
+    events = run_extract_and_gate(
+        snaps,
+        complete_json=_extract_fn(
+            "熟悉 Python", 0.9, "requirement", category="domain", name="Python"
+        ),
+    )
+    pending = [e for e in events if e.get("review") == "pending"]
+    assert pending
+    assert pending[0]["payload"]["category"] == "language"
+    apply_event(pending[0]["id"], review="approved")
+    job_id = pending[0]["payload"]["job_id"]
+    with graph._driver.session() as session:
+        row = session.run(
+            """
+            MATCH (:Job {id: $jid})-[r:REQUIRES]->(:Skill)-[:IN_CATEGORY]->(c:SkillCategory)
+            WHERE r.valid_to IS NULL
+            RETURN c.id AS cid
+            """,
+            jid=job_id,
+        ).single()
+    assert row is not None and row["cid"] == "language"
+    _cleanup(graph, suffix)
+
+
+def test_init_graph_writes_five_skill_categories():
+    if graph._driver is None:
+        graph.init_graph()
+    with graph._driver.session() as session:
+        rows = session.run(
+            "MATCH (c:SkillCategory) RETURN c.id AS id, c.name AS name ORDER BY c.id"
+        ).data()
+    assert {row["id"] for row in rows} == {"language", "framework", "platform", "engineering", "domain"}
+    assert {row["name"] for row in rows} == {"语言", "框架", "平台", "工程", "领域知识"}
+
+
+def _extract_fn(excerpt, confidence, section, category=None, name="FastAPI"):
+    def complete(_schema, _messages):
+        skill = {
+            "name": name,
+            "kind": "required",
+            "proficiency": "able",
+            "confidence": confidence,
+            "excerpt": excerpt,
+            "section": section,
+        }
+        if category is not None:
+            skill["category"] = category
+        return {
+            "job_name": "大模型应用工程师",
+            "domain": "ai",
+            "skills": [skill],
         }
 
     return complete
 
 
-def _three_source_snaps(tmp_path, suffix, *, excerpt, confidence):
+def _jd_snaps(
+    tmp_path,
+    suffix,
+    *,
+    excerpt,
+    confidence,
+    body="任职要求：熟悉 FastAPI 与模型服务。",
+    companies=("甲", "乙", "丙"),
+):
     del excerpt, confidence
     from app import graph
 
     if graph._driver is None:
         graph.init_graph()
     snaps = []
-    for i, company in enumerate(("甲", "乙", "丙")):
+    for i, company in enumerate(companies):
         sid = f"jd-test-{suffix}-{i}"
         path = tmp_path / f"{sid}.json"
-        body = "任职要求：熟悉 FastAPI 与模型服务。"
         doc = {
             "id": sid,
             "path": str(path),

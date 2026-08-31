@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from collections import defaultdict
+from collections import Counter, defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 
@@ -10,11 +10,17 @@ from app.collectors.normalize import is_channel_name, normalize_company
 from app.collectors.sink import STREAM_KEY, connect_redis
 from app.llm.embed import embed
 from app.pipeline.align import align_job, align_skill, cluster_texts
-from app.pipeline.constants import COVERAGE_THRESHOLD, EXTRACT_WORKERS, PASSTHROUGH_KEY
+from app.pipeline.constants import (
+    COVERAGE_THRESHOLD,
+    EXTRACT_WORKERS,
+    PASSTHROUGH_KEY,
+    SKILL_IRON_CATEGORY,
+)
 from app.pipeline.discover import classify_cluster, cluster_large_enough
 from app.pipeline.extract import parse_extracted
 from app.pipeline.sections import section_of
 from app.pipeline.status import is_target_job, job_id_for, refresh_job_status
+from app.targets import JOB_TARGET_NAMES
 
 _passthrough = False
 
@@ -58,6 +64,17 @@ def pool_skill(*, section: str, coverage_rate: float) -> bool:
     if section in ("benefit", "intro"):
         return False
     return coverage_rate >= COVERAGE_THRESHOLD
+
+
+def _merge_category(members: list[tuple[str, str]]) -> str:
+    for name, _ in members:
+        iron = SKILL_IRON_CATEGORY.get((name or "").strip().casefold())
+        if iron:
+            return iron
+    votes = [category for _, category in members if category]
+    if not votes:
+        return ""
+    return Counter(votes).most_common(1)[0][0]
 
 
 def _stable_id(prefix: str, name: str) -> str:
@@ -151,7 +168,7 @@ def run_extract_and_gate(
     aligned: dict[str, list] = defaultdict(list)
     unmatched: dict[str, list] = defaultdict(list)
     for snap, parsed in extracted_rows:
-        hit = align_job(parsed.job_name)
+        hit = parsed.target or align_job(parsed.job_name)
         if hit:
             aligned[hit].append((snap, parsed, hit))
         else:
@@ -228,6 +245,14 @@ def _gate_job(job_name: str, rows: list, index: list[dict], judged: str = "targe
         for name in group:
             centroid_for[name] = (centroid, group)
 
+    members_by_centroid: dict[str, list[tuple[str, str]]] = defaultdict(list)
+    for snap, skill, _ in pending_names:
+        centroid, _ = centroid_for.get(skill.name, (skill.name, [skill.name]))
+        members_by_centroid[centroid].append((skill.name, skill.category or ""))
+    category_for = {
+        centroid: _merge_category(members) for centroid, members in members_by_centroid.items()
+    }
+
     for snap, skill, section in pending_names:
         centroid, group = centroid_for.get(skill.name, (skill.name, [skill.name]))
         hit = align_skill(centroid, index) or align_skill(skill.name, index)
@@ -238,6 +263,7 @@ def _gate_job(job_name: str, rows: list, index: list[dict], judged: str = "targe
                 "name": centroid,
                 "synonyms": list(dict.fromkeys(group)),
                 "embedding": embed([centroid])[0],
+                "category": category_for.get(centroid, ""),
             }
             graph.upsert_skill(hit)
             index.append(hit)
@@ -254,6 +280,7 @@ def _gate_job(job_name: str, rows: list, index: list[dict], judged: str = "targe
                 "confidence": skill.confidence,
                 "excerpt": skill.excerpt,
                 "section": section,
+                "category": category_for.get(centroid, ""),
             },
         )
         rec["evidence"].add(snap["id"])
@@ -288,6 +315,7 @@ def _gate_job(job_name: str, rows: list, index: list[dict], judged: str = "targe
             "domain": domain,
             "skill_id": skill_id,
             "skill_name": rec["skill"]["name"],
+            "category": rec["category"],
             "kind_edge": rec["kind"],
             "proficiency": rec["proficiency"],
             "layer": layer,

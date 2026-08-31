@@ -4,6 +4,8 @@ from datetime import datetime
 
 from neo4j import GraphDatabase
 
+from app.pipeline.constants import SKILL_CATEGORIES
+
 DOMAINS = [
     {"id": "ai", "name": "人工智能"},
     {"id": "data", "name": "大数据"},
@@ -49,6 +51,12 @@ def init_graph():
                 "MERGE (n:Domain {id: $id}) SET n.name = $name",
                 id=domain["id"],
                 name=domain["name"],
+            )
+        for cid, cname in SKILL_CATEGORIES.items():
+            session.run(
+                "MERGE (n:SkillCategory {id: $id}) SET n.name = $name",
+                id=cid,
+                name=cname,
             )
 
 
@@ -199,6 +207,22 @@ def upsert_job(*, id: str, name: str, domain: str, status: str | None = None) ->
         )
 
 
+def _link_skill_category(session, skill_id: str, category: str) -> None:
+    if category not in SKILL_CATEGORIES:
+        return
+    session.run(
+        """
+        MATCH (s:Skill {id: $id})
+        MERGE (c:SkillCategory {id: $category})
+        SET c.name = $category_name
+        MERGE (s)-[:IN_CATEGORY]->(c)
+        """,
+        id=skill_id,
+        category=category,
+        category_name=SKILL_CATEGORIES[category],
+    )
+
+
 def upsert_skill(skill: dict) -> None:
     if _driver is None:
         return
@@ -212,6 +236,7 @@ def upsert_skill(skill: dict) -> None:
             name=skill["name"],
             synonyms=list(skill.get("synonyms") or []),
         )
+        _link_skill_category(session, skill["id"], skill.get("category") or "")
 
 
 def list_skills(*, with_embed: bool = True) -> list[dict]:
@@ -292,6 +317,7 @@ def apply_requires(payload: dict) -> None:
                 id=payload["job_id"],
                 ids=watching,
             )
+        _link_skill_category(session, payload["skill_id"], payload.get("category") or "")
 
 
 def list_requires(job_id: str) -> list[dict]:
