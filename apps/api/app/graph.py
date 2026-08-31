@@ -26,13 +26,21 @@ _driver = None
 
 def init_graph():
     global _driver
-    _driver = GraphDatabase.driver(
-        os.environ.get("NEO4J_URI", "bolt://localhost:7687"),
+    uri = os.environ.get("NEO4J_URI", "bolt://localhost:7687")
+    driver = GraphDatabase.driver(
+        uri,
         auth=(
             os.environ.get("NEO4J_USER", "neo4j"),
             os.environ.get("NEO4J_PASSWORD", "jobevolution"),
         ),
     )
+    try:
+        driver.verify_connectivity()
+    except Exception as exc:
+        driver.close()
+        hint = "（测试库先起：docker compose --profile test up -d neo4j-test）" if os.environ.get("NEO4J_TEST") == "1" else ""
+        raise RuntimeError(f"Neo4j {uri} 连不上{hint}") from exc
+    _driver = driver
     with _driver.session() as session:
         for statement in _CONSTRAINTS:
             session.run(statement)

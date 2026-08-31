@@ -19,6 +19,7 @@ jobs:
           PYTHONPATH: apps/api
         run: |
           pytest tests/test_eval_f1.py tests/test_eval_schema.py tests/test_eval_run.py tests/test_matching.py \
+            tests/test_isolation.py::test_neo4j_uri_injected_and_never_product_default \
             tests/test_pipeline.py::test_confidence_layer_priority \
             tests/test_pipeline.py::test_align_skill_synonym_beats_embed \
             tests/test_pipeline.py::test_align_skill_cosine_when_no_synonym \

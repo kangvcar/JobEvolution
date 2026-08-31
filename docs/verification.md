@@ -72,6 +72,8 @@ JSONL 一行为一条。技能点一律写图谱 `Skill.id`（归一化后），
 
 ### 自动化
 
+本地跑全套前先起测试库：`docker compose --profile test up -d neo4j-test`（独立卷，默认 `docker compose up` 不启动）。pytest 固定连 `TEST_NEO4J_URI`（默认 `bolt://localhost:17687`），永不写产品图；连不上就报错并提示这条命令。
+
 ```
 python -m apps.api.eval.jd        # 读 jd.jsonl，打印 P/R/F1，写 data/eval/out/jd.json
 python -m apps.api.eval.resume
