@@ -183,6 +183,7 @@ def test_parse_observed_at_invalid_calendar_returns_empty():
         assert parse_observed_at("2024-01-02") == "2024-01-02T00:00:00"
         assert parse_observed_at("2025-05-12 14:20:34") == "2025-05-12T14:20:34"
         assert parse_observed_at("合肥 硕士 招10人 03-14发布", 2026) == "2026-03-14T00:00:00"
+        assert parse_observed_at("广州 5-7年经验 本科 招若干人 03-14发布", 2026) == "2026-03-14T00:00:00"
         assert parse_observed_at("03-14发布") == ""
     finally:
         sys.setrecursionlimit(old)

@@ -25,7 +25,7 @@ _DATE_FORMATS = (
     "%Y.%m.%d",
 )
 _DATE_IN_TEXT = re.compile(r"(\d{4}[-/.]\d{2}[-/.]\d{2})")
-_MONTH_DAY_IN_TEXT = re.compile(r"(?<!\d)(\d{1,2})-(\d{1,2})(?:发布)?")
+_MONTH_DAY_IN_TEXT = re.compile(r"(?<!\d)(\d{1,2})-(\d{1,2})发布")
 _YEAR_IN_TABLE = re.compile(r"(\d{4})\.csv$", re.IGNORECASE)
 
 
