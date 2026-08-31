@@ -5,15 +5,19 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import sys
 from collections import defaultdict
 from pathlib import Path
 
-from app.pipeline.constants import EMERGING_SOURCES, EMERGING_WINDOW_DAYS
-from app.pipeline.status import _parse_at
+from app.pipeline.constants import (
+    ALIAS_CAP,
+    ALIAS_PRE_FILTER,
+    FAT_JOB_SOURCES,
+    FAT_SLICE_CAP,
+)
 from app.targets import JOB_TARGET_NAMES
 
-AGENT_JOB = "Agent 工程师"
+CONTEST_PAIR = ("大模型应用工程师", "Agent 工程师")
+FAT_JOBS = ("算法工程师", "数据分析师", "数据工程师")
 
 
 def default_jd_dir() -> Path:
@@ -40,54 +44,64 @@ def match_target(title: str) -> str | None:
     return None
 
 
-def select_snapshots(jd_dir: Path, per_job: int) -> list[dict]:
-    buckets: dict[str, list[dict]] = defaultdict(list)
+def match_alias(title: str) -> bool:
+    compact = (title or "").replace(" ", "")
+    return any(token and token in compact for token in ALIAS_PRE_FILTER)
+
+
+def _dedup_companies(docs: list[dict]) -> list[dict]:
+    seen: set[str] = set()
+    picked: list[dict] = []
+    for doc in docs:
+        company = doc.get("company") or ""
+        if not company or company in seen:
+            continue
+        seen.add(company)
+        picked.append(doc)
+    return picked
+
+
+def _two_slices(docs: list[dict]) -> list[dict]:
+    half = len(docs) // 2
+    old_pick = _dedup_companies(docs[:half])[:FAT_SLICE_CAP]
+    new_pick = _dedup_companies(list(reversed(docs[half:])))[:FAT_SLICE_CAP]
+    return old_pick + new_pick
+
+
+def select_snapshots(jd_dir: Path) -> list[dict]:
+    targets: dict[str, list[dict]] = defaultdict(list)
+    alias: list[dict] = []
     for path in sorted(jd_dir.glob("jd-*.json")):
         doc = json.loads(path.read_text(encoding="utf-8"))
         name = match_target(doc.get("title") or "")
-        if not name:
-            continue
-        buckets[name].append(doc)
+        if name:
+            targets[name].append(doc)
+        elif match_alias(doc.get("title") or ""):
+            alias.append(doc)
     out: list[dict] = []
     for name in JOB_TARGET_NAMES:
-        docs = sorted(
-            buckets.get(name) or [],
-            key=lambda row: row.get("observed_at") or "",
-            reverse=True,
-        )
-        cap = EMERGING_SOURCES if name == AGENT_JOB else per_job
-        latest = None
-        picked: list[dict] = []
-        companies: set[str] = set()
-        for doc in docs:
-            company = doc.get("company")
-            if not company or company in companies:
-                continue
-            at = _parse_at(doc.get("observed_at") or "")
-            if name == AGENT_JOB:
-                if latest is None and at is not None:
-                    latest = at
-                if latest is not None and at is not None:
-                    if (latest - at).days > EMERGING_WINDOW_DAYS:
-                        continue
-            companies.add(company)
-            picked.append(doc)
-            if len(picked) >= cap:
-                break
-        out.extend(picked)
+        docs = sorted(targets.get(name) or [], key=lambda row: row.get("observed_at") or "")
+        if not docs:
+            continue
+        deduped = _dedup_companies(docs)
+        if name in CONTEST_PAIR or name not in FAT_JOBS or len(deduped) <= FAT_JOB_SOURCES:
+            out.extend(deduped)
+        else:
+            out.extend(_two_slices(docs))
+    out.extend(_dedup_companies(alias)[:ALIAS_CAP])
     return out
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Extract JD snapshots into the graph")
     parser.add_argument("--jd-dir", type=Path, default=None)
-    parser.add_argument("--per-job", type=int, default=8)
     parser.add_argument("--workers", type=int, default=None)
     parser.add_argument("--passthrough", action="store_true")
+    parser.add_argument("--no-cache", action="store_true", help="ignore the per-snapshot extract cache")
     args = parser.parse_args(argv)
 
     jd_dir = args.jd_dir or default_jd_dir()
-    snaps = select_snapshots(jd_dir, max(1, args.per_job))
+    snaps = select_snapshots(jd_dir)
     print(json.dumps({"jd_dir": str(jd_dir), "selected": len(snaps)}, ensure_ascii=False))
     if not snaps:
         return 1
@@ -99,7 +113,7 @@ def main(argv: list[str] | None = None) -> int:
         graph.init_graph()
     if args.passthrough:
         set_passthrough(True)
-    events = run_extract_and_gate(snaps, workers=args.workers)
+    events = run_extract_and_gate(snaps, workers=args.workers, cache=not args.no_cache)
     pending = sum(1 for e in events if e.get("review") == "pending")
     auto = sum(1 for e in events if e.get("review") == "auto_passed")
     failed = sum(1 for e in events if e.get("kind") == "extract_failed")

@@ -12,6 +12,23 @@ FORMED_SOURCES = 10
 FORMED_MONTHS = 6
 DISCOVER_MIN_CLUSTER = 3
 
+# 选样口径（工单 #73 / ADR-0009）：标题子串只当进闸预筛。
+ALIAS_PRE_FILTER = (
+    "大模型应用开发",
+    "大模型应用研发",
+    "大模型开发",
+    "Agent",
+    "智能体",
+    "Prompt",
+    "实时计算",
+    "Flink",
+    "嵌入式AI",
+)
+FAT_JOB_SOURCES = 30
+FAT_SLICE_CAP = 8
+ALIAS_CAP = 20
+EXTRACT_CACHE_VERSION = 1
+
 SKILL_CATEGORIES = {
     "language": "语言",
     "framework": "框架",

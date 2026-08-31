@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 from app import graph
 from app.llm.embed import embed
 from app.pipeline.align import align_skill
-from app.pipeline.constants import COVERAGE_THRESHOLD
+from app.pipeline.constants import COVERAGE_THRESHOLD, FAT_SLICE_CAP
 from app.pipeline.extract import ExtractedJd, coerce_extracted, parse_extracted
 from app.pipeline.__main__ import match_target, select_snapshots
 from app.pipeline.gate import (
@@ -82,52 +82,113 @@ def test_match_target_prefers_longer_names():
     assert match_target("高级算法工程师（图像）") == "算法工程师"
 
 
-def test_select_snapshots_caps_per_job_and_company(tmp_path):
+def _write_jd(jd, name, title, company, observed_at="2024-06-01"):
+    (jd / name).write_text(
+        json.dumps(
+            {
+                "title": title,
+                "company": company,
+                "body": "x",
+                "id": name,
+                "observed_at": observed_at,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
+def test_select_contest_pair_takes_all_dedup_companies(tmp_path):
     jd = tmp_path / "jd"
     jd.mkdir()
-    rows = [
-        ("jd-1.json", "Agent 工程师", "甲"),
-        ("jd-2.json", "Agent工程师", "乙"),
-        ("jd-3.json", "Agent 工程师", "甲"),
-        ("jd-4.json", "大模型应用工程师", "丙"),
-    ]
-    for name, title, company in rows:
-        (jd / name).write_text(
-            json.dumps({"title": title, "company": company, "body": "x", "id": name}),
-            encoding="utf-8",
-        )
-    picked = select_snapshots(jd, per_job=8)
+    for i in range(5):
+        _write_jd(jd, f"jd-a{i}.json", "Agent 工程师", f"公司{i}")
+    _write_jd(jd, "jd-a-dup.json", "Agent工程师", "公司0")
+    _write_jd(jd, "jd-llm.json", "大模型应用工程师", "公司甲")
+    _write_jd(jd, "jd-llm-dup.json", "大模型应用工程师", "公司甲")
+    picked = select_snapshots(jd)
     agent = [d for d in picked if "Agent" in (d.get("title") or "")]
-    assert len(agent) == 2
-    assert {d["company"] for d in agent} == {"甲", "乙"}
+    assert len(agent) == 5
+    llm = [d for d in picked if d.get("title") == "大模型应用工程师"]
+    assert len(llm) == 1
 
 
-def test_select_snapshots_agent_stays_in_recent_window(tmp_path):
+def test_select_fat_job_uses_two_time_slices(tmp_path):
     jd = tmp_path / "jd"
     jd.mkdir()
-    rows = [
-        ("jd-old.json", "Agent 工程师", "甲", "2024-08-19"),
-        ("jd-a.json", "Agent 工程师", "乙", "2025-08-01"),
-        ("jd-b.json", "Agent 工程师", "丙", "2025-08-10"),
-        ("jd-c.json", "Agent 工程师", "丁", "2025-08-19"),
-        ("jd-d.json", "Agent 工程师", "戊", "2025-08-18"),
-    ]
-    for name, title, company, observed_at in rows:
-        (jd / name).write_text(
-            json.dumps(
-                {
-                    "title": title,
-                    "company": company,
-                    "body": "x",
-                    "id": name,
-                    "observed_at": observed_at,
-                }
-            ),
-            encoding="utf-8",
+    for i in range(40):
+        _write_jd(
+            jd,
+            f"jd-f{i:02d}.json",
+            "算法工程师",
+            f"公司{i}",
+            observed_at=f"2024-{(i // 20) + 1:02d}-01",
         )
-    picked = select_snapshots(jd, per_job=8)
-    agent = [d for d in picked if d.get("title") == "Agent 工程师"]
-    assert [d["company"] for d in agent] == ["丁", "戊", "丙"]
+    picked = select_snapshots(jd)
+    fat = [d for d in picked if d.get("title") == "算法工程师"]
+    assert len(fat) == 2 * FAT_SLICE_CAP
+    assert {d["observed_at"][:7] for d in fat} == {"2024-01", "2024-02"}
+
+
+def test_select_other_targets_take_deduped_all(tmp_path):
+    jd = tmp_path / "jd"
+    jd.mkdir()
+    for i in range(3):
+        _write_jd(jd, f"jd-e{i}.json", "数据工程师", f"公司{i}")
+    _write_jd(jd, "jd-e-dup.json", "数据工程师", "公司0")
+    picked = select_snapshots(jd)
+    assert len(picked) == 3
+
+
+def test_select_alias_near_names_pass_pre_filter(tmp_path):
+    jd = tmp_path / "jd"
+    jd.mkdir()
+    titles = [
+        "大模型应用开发工程师",
+        "大模型开发专家",
+        "Agent平台研发",
+        "智能体训练师",
+        "Prompt工程师",
+    ]
+    for i, title in enumerate(titles):
+        _write_jd(jd, f"jd-n{i}.json", title, f"公司{i}")
+    _write_jd(jd, "jd-x.json", "会计", "公司x")
+    picked = select_snapshots(jd)
+    got = {d.get("title") for d in picked}
+    assert got == set(titles)
+
+
+def test_extract_cache_hits_on_second_run(tmp_path):
+    suffix = uuid.uuid4().hex[:8]
+    snaps = _jd_snaps(tmp_path, suffix, excerpt="熟悉 FastAPI", confidence=0.9)
+    calls = {"n": 0}
+
+    def counting(_schema, _messages):
+        calls["n"] += 1
+        return {
+            "job_name": "大模型应用工程师",
+            "domain": "ai",
+            "skills": [
+                {
+                    "name": "FastAPI",
+                    "kind": "required",
+                    "proficiency": "able",
+                    "confidence": 0.9,
+                    "excerpt": "熟悉 FastAPI",
+                    "section": "requirement",
+                }
+            ],
+        }
+
+    events1 = run_extract_and_gate(snaps, complete_json=counting, workers=1, cache=True)
+    first_calls = calls["n"]
+    assert first_calls == len(snaps)
+    events2 = run_extract_and_gate(snaps, complete_json=counting, workers=1, cache=True)
+    assert calls["n"] == first_calls
+    adds1 = [e for e in events1 if e.get("kind") == "requires_add"]
+    adds2 = [e for e in events2 if e.get("kind") == "requires_add"]
+    assert adds1 and adds2
+    assert [e["id"] for e in adds1] == [e["id"] for e in adds2]
+    _cleanup(graph, suffix)
 
 
 def test_coerce_maps_model_aliases():

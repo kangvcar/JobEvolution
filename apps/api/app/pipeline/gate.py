@@ -5,6 +5,9 @@ import json
 from collections import Counter, defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
+from pathlib import Path
+
+from pydantic import ValidationError
 
 from app.collectors.normalize import is_channel_name, normalize_company
 from app.collectors.sink import STREAM_KEY, connect_redis
@@ -12,12 +15,13 @@ from app.llm.embed import embed
 from app.pipeline.align import align_job, align_skill, cluster_texts
 from app.pipeline.constants import (
     COVERAGE_THRESHOLD,
+    EXTRACT_CACHE_VERSION,
     EXTRACT_WORKERS,
     PASSTHROUGH_KEY,
     SKILL_IRON_CATEGORY,
 )
 from app.pipeline.discover import classify_cluster, cluster_large_enough
-from app.pipeline.extract import parse_extracted
+from app.pipeline.extract import ExtractedJd, parse_extracted
 from app.pipeline.sections import section_of
 from app.pipeline.status import is_target_job, job_id_for, refresh_job_status
 from app.targets import JOB_TARGET_NAMES
@@ -131,10 +135,51 @@ def apply_event(event_id: str, *, review: str, payload: dict | None = None) -> d
     return event
 
 
+def _cache_file(snap: dict) -> Path | None:
+    # 后缀用 .cache 而非 .json：避免被 select_snapshots 的 jd-*.json glob 当成 JD 表
+    path = snap.get("path")
+    if not path:
+        return None
+    return Path(f"{path}.extract-v{EXTRACT_CACHE_VERSION}.cache")
+
+
+def _load_cached_extract(snap: dict) -> ExtractedJd | None:
+    cache_file = _cache_file(snap)
+    if cache_file is None:
+        return None
+    try:
+        data = json.loads(cache_file.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    if data.get("v") != EXTRACT_CACHE_VERSION:
+        return None
+    try:
+        return ExtractedJd.model_validate(data.get("extracted"))
+    except ValidationError:
+        return None
+
+
+def _store_cached_extract(snap: dict, parsed: ExtractedJd) -> None:
+    cache_file = _cache_file(snap)
+    if cache_file is None:
+        return
+    try:
+        cache_file.write_text(
+            json.dumps(
+                {"v": EXTRACT_CACHE_VERSION, "extracted": parsed.model_dump()},
+                ensure_ascii=False,
+            ),
+            encoding="utf-8",
+        )
+    except OSError:
+        pass  # ponytail: 缓存尽力而为，写失败只损失一次加速，重跑即自愈
+
+
 def run_extract_and_gate(
     snapshots: list[dict],
     complete_json=None,
     workers: int | None = None,
+    cache: bool = False,
 ) -> list[dict]:
     from app import graph
     from app.llm.client import complete_json as default_complete
@@ -146,10 +191,17 @@ def run_extract_and_gate(
     n_workers = max(1, min(n_workers, max(1, len(snapshots))))
 
     def _extract_one(snap: dict):
+        if cache:
+            cached = _load_cached_extract(snap)
+            if cached is not None:
+                return ("ok", snap, cached)
         try:
-            return ("ok", snap, parse_extracted(complete, retry=True, snapshot=snap))
+            parsed = parse_extracted(complete, retry=True, snapshot=snap)
         except ValueError as exc:
             return ("fail", snap, str(exc))
+        if cache:
+            _store_cached_extract(snap, parsed)
+        return ("ok", snap, parsed)
 
     if n_workers == 1:
         extracted = [_extract_one(snap) for snap in snapshots]
