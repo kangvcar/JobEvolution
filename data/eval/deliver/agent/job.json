@@ -4,7 +4,7 @@
   "status": "formed",
   "domain": "ai",
   "watching": [],
-  "n_sources": 7,
+  "n_sources": 6,
   "requires": [
     {
       "skill_id": "skill-2dd9eb7d9f0c1186",

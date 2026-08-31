@@ -4,7 +4,7 @@ job_id `job-2e05993e43fccbe5`  status `formed`  domain `ai`
 
 ## 输入
 
-独立源 7。证据 8 条。
+独立源 6。证据 7 条。
 
 - `jd-003025c54a283f19` company `众创网科技` observed_at `2025-07-25T10:07:08`
 - `jd-da11a9e6c57eef2a` company `江苏为恒智能科技` observed_at `2025-07-29T14:57:49`
@@ -13,7 +13,6 @@ job_id `job-2e05993e43fccbe5`  status `formed`  domain `ai`
 - `jd-a88821019329fdf2` company `上海及未科技` observed_at `2025-07-22T17:17:22`
 - `jd-a199887680aef910` company `东舟科技` observed_at `2025-08-18T18:23:03`
 - `jd-8cee774c3708590e` company `北京昆仑联通科技发展` observed_at `2025-08-19T11:13:50`
-- `jd-e137be54c49f5f9d` company `光庭信息` observed_at `2024-08-19T00:00:00`
 
 ## 输出
 
