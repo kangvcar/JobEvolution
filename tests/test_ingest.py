@@ -1,3 +1,4 @@
+import csv
 import json
 import sys
 from datetime import datetime
@@ -17,7 +18,7 @@ from app.collectors.controller import (
     stable_observed_at,
     table_year,
 )
-from app.collectors.backfill_dates import backfill
+from app.collectors.backfill_dates import DATE_COLUMN, backfill, backfill_tables
 from app.collectors.simhash import format_simhash, simhash64
 from app.collectors.sink import EVENT_JD_INGESTED, STREAM_KEY, emit_jd_ingested
 from app.collectors.source import field_map, map_row
@@ -228,6 +229,43 @@ def test_backfill_skips_source_without_year(tmp_path):
         encoding="utf-8",
     )
     assert backfill(data_dir, out_dir)["skipped"] == 1
+
+
+def test_backfill_tables_adds_publish_date_and_keeps_blob(tmp_path):
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    table = data_dir / "综合招聘数据库2026.csv"
+    table.write_text(
+        "job_name,company_name,job_city,publish_detail,job_duty\n"
+        "机器学习工程师,甲,广州,广州 5-7年经验 本科 招若干人 03-14发布,负责机器学习模型\n",
+        encoding="utf-8-sig",
+        newline="\r\n",
+    )
+    assert backfill_tables(data_dir) == {"tables": 1, "skipped": 0}
+    with table.open(encoding="utf-8-sig", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    assert rows[0][DATE_COLUMN] == "2026-03-14"
+    assert "5-7年经验" in rows[0]["publish_detail"]
+    assert "03-14发布" in rows[0]["publish_detail"]
+    assert backfill_tables(data_dir) == {"tables": 0, "skipped": 1}
+
+
+def test_backfill_tables_hashes_when_table_has_no_date_column(tmp_path):
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    table = data_dir / "软件招聘数据库2026.csv"
+    table.write_text(
+        "岗位,公司,城市,岗位要求\n机器学习工程师,乙,杭州,负责机器学习模型\n",
+        encoding="utf-8-sig",
+        newline="\r\n",
+    )
+    assert backfill_tables(data_dir) == {"tables": 1, "skipped": 0}
+    with table.open(encoding="utf-8-sig", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    date = rows[0][DATE_COLUMN]
+    assert date.startswith("2026-")
+    assert backfill_tables(data_dir)["skipped"] == 1
+
 
 
 def test_missing_snapshot_with_fingerprint_is_rewritten(tmp_path):
