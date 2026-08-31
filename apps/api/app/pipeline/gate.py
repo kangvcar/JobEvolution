@@ -186,6 +186,7 @@ def run_extract_and_gate(
 
     if graph._driver is None:
         graph.init_graph()
+    graph.upsert_evidence_many(snapshots)
     complete = complete_json or default_complete
     n_workers = workers if workers is not None else (1 if complete_json else EXTRACT_WORKERS)
     n_workers = max(1, min(n_workers, max(1, len(snapshots))))

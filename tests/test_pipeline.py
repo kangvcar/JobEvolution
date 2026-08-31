@@ -191,6 +191,22 @@ def test_extract_cache_hits_on_second_run(tmp_path):
     _cleanup(graph, suffix)
 
 
+def test_gate_restores_evidence_for_fresh_graph(tmp_path):
+    suffix = uuid.uuid4().hex[:8]
+    snapshots = _jd_snaps(tmp_path, suffix, excerpt="熟悉 FastAPI", confidence=0.9)
+    graph.delete_evidence_many([snapshot["id"] for snapshot in snapshots])
+
+    run_extract_and_gate(
+        snapshots,
+        complete_json=_extract_fn("熟悉 FastAPI", 0.9, "requirement"),
+        workers=1,
+    )
+
+    evidence = graph.list_job_evidence(job_id_for("大模型应用工程师"))
+    assert {row["id"] for row in evidence} >= {snapshot["id"] for snapshot in snapshots}
+    _cleanup(graph, suffix)
+
+
 def test_coerce_maps_model_aliases():
     coerced = coerce_extracted(
         {
