@@ -11,7 +11,13 @@ from app.collectors import (
     normalize_company,
     run_ingest,
 )
-from app.collectors.controller import observed_sort_key, parse_observed_at
+from app.collectors.controller import (
+    observed_sort_key,
+    parse_observed_at,
+    stable_observed_at,
+    table_year,
+)
+from app.collectors.backfill_dates import backfill
 from app.collectors.simhash import format_simhash, simhash64
 from app.collectors.sink import EVENT_JD_INGESTED, STREAM_KEY, emit_jd_ingested
 from app.collectors.source import field_map, map_row
@@ -176,8 +182,51 @@ def test_parse_observed_at_invalid_calendar_returns_empty():
         assert parse_observed_at("发布于 2024-13-01 截止") == ""
         assert parse_observed_at("2024-01-02") == "2024-01-02T00:00:00"
         assert parse_observed_at("2025-05-12 14:20:34") == "2025-05-12T14:20:34"
+        assert parse_observed_at("合肥 硕士 招10人 03-14发布", 2026) == "2026-03-14T00:00:00"
+        assert parse_observed_at("03-14发布") == ""
     finally:
         sys.setrecursionlimit(old)
+
+
+def test_stable_observed_at_and_table_year():
+    assert stable_observed_at("0" * 64, 2026) == "2026-01-01T00:00:00"
+    assert stable_observed_at("f" * 64, 2026) == stable_observed_at("f" * 64, 2026)
+    assert table_year("综合招聘数据库2026.csv") == 2026
+    assert table_year("table.csv") is None
+
+
+def test_backfill_dates_matches_source_and_counts_unmatched(tmp_path):
+    data_dir = tmp_path / "data"
+    out_dir = data_dir / "jd"
+    out_dir.mkdir(parents=True)
+    source = data_dir / "综合招聘数据库2026.csv"
+    source.write_text(
+        "企业名称,招聘岗位,职位描述,招聘发布日期,工作城市,岗位id\n"
+        "甲,机器学习工程师,负责机器学习模型,合肥 硕士 招10人 03-14发布,合肥,42\n",
+        encoding="utf-8",
+    )
+    from app.collectors.normalize import fingerprint_for
+
+    fingerprint = fingerprint_for("local", "42", "甲", "机器学习工程师", "合肥")
+    (out_dir / "jd-match.json").write_text(
+        json.dumps({"fingerprint": fingerprint, "observed_at": ""}), encoding="utf-8"
+    )
+    (out_dir / "jd-miss.json").write_text(
+        json.dumps({"fingerprint": "f" * 64, "observed_at": ""}), encoding="utf-8"
+    )
+    assert backfill(data_dir, out_dir) == {"filled": 1, "unmatched": 1, "skipped": 0}
+    assert json.loads((out_dir / "jd-match.json").read_text())["observed_at"] == "2026-03-14T00:00:00"
+
+
+def test_backfill_skips_source_without_year(tmp_path):
+    data_dir = tmp_path / "data"
+    out_dir = data_dir / "jd"
+    out_dir.mkdir(parents=True)
+    (data_dir / "table.csv").write_text(
+        "企业名称,招聘岗位,职位描述\n甲,机器学习工程师,负责机器学习模型\n",
+        encoding="utf-8",
+    )
+    assert backfill(data_dir, out_dir)["skipped"] == 1
 
 
 def test_missing_snapshot_with_fingerprint_is_rewritten(tmp_path):

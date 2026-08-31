@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import re
 from collections import Counter
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from app.collectors.domain import classify_domain
@@ -25,9 +25,11 @@ _DATE_FORMATS = (
     "%Y.%m.%d",
 )
 _DATE_IN_TEXT = re.compile(r"(\d{4}[-/.]\d{2}[-/.]\d{2})")
+_MONTH_DAY_IN_TEXT = re.compile(r"(?<!\d)(\d{1,2})-(\d{1,2})(?:发布)?")
+_YEAR_IN_TABLE = re.compile(r"(\d{4})\.csv$", re.IGNORECASE)
 
 
-def parse_observed_at(value: str) -> str:
+def parse_observed_at(value: str, year: int | None = None) -> str:
     text = (value or "").strip()
     seen: set[str] = set()
     while text and text not in seen:
@@ -39,13 +41,41 @@ def parse_observed_at(value: str) -> str:
             except ValueError:
                 continue
         match = _DATE_IN_TEXT.search(text)
+        if match is not None:
+            nxt = match.group(1)
+            if nxt == text:
+                return ""
+            text = nxt
+            continue
+        if year is None:
+            return ""
+        match = _MONTH_DAY_IN_TEXT.search(text)
         if match is None:
             return ""
-        nxt = match.group(1)
-        if nxt == text:
+        try:
+            return datetime(year, int(match.group(1)), int(match.group(2))).isoformat()
+        except ValueError:
             return ""
-        text = nxt
     return ""
+
+
+def table_year(table: str) -> int | None:
+    match = _YEAR_IN_TABLE.search(table or "")
+    return int(match.group(1)) if match else None
+
+
+def stable_observed_at(fingerprint: str, year: int) -> str:
+    start = datetime(year, 1, 1)
+    span = (datetime(year, 12, 28) - start).days + 1
+    offset = int(fingerprint[:16], 16) % span
+    return (start + timedelta(days=offset)).isoformat()
+
+
+def observed_at_for(published_at: str, fingerprint: str, year: int | None) -> str:
+    parsed = parse_observed_at(published_at, year)
+    if parsed or year is None:
+        return parsed
+    return stable_observed_at(fingerprint, year)
 
 
 def observed_sort_key(iso: str) -> datetime:
@@ -177,13 +207,15 @@ def _prepare(record: RawRecord) -> RawRecord | None:
     if domain is None:
         return None
     record.domain = domain
-    record.observed_at = parse_observed_at(record.published_at)
     record.fingerprint = fingerprint_for(
         record.source,
         record.job_id,
         record.company,
         record.title,
         record.city,
+    )
+    record.observed_at = observed_at_for(
+        record.published_at, record.fingerprint, table_year(record.table)
     )
     return record
 
