@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import logging
 from typing import Literal
 
+from openai import APIError
 from pydantic import BaseModel
 
 from app.pipeline.constants import DISCOVER_MIN_CLUSTER
 from app.targets import JOB_TARGET_NAMES
+
+logger = logging.getLogger(__name__)
 
 
 class ClusterLabel(BaseModel):
@@ -20,19 +24,23 @@ CLASSIFY_PROMPT = (
 
 
 def classify_cluster(title: str, skill_names: list[str], complete_json) -> tuple[str, str | None]:
-    payload = complete_json(
-        {},
-        [
-            {"role": "system", "content": CLASSIFY_PROMPT},
-            {
-                "role": "user",
-                "content": (
-                    f"title: {title}\nskills: {', '.join(skill_names)}\n"
-                    f"targets: {', '.join(JOB_TARGET_NAMES)}"
-                ),
-            },
-        ],
-    )
+    try:
+        payload = complete_json(
+            {},
+            [
+                {"role": "system", "content": CLASSIFY_PROMPT},
+                {
+                    "role": "user",
+                    "content": (
+                        f"title: {title}\nskills: {', '.join(skill_names)}\n"
+                        f"targets: {', '.join(JOB_TARGET_NAMES)}"
+                    ),
+                },
+            ],
+        )
+    except APIError as exc:
+        logger.warning("近名岗位簇判别失败：%s", exc)
+        return "noise", None
     try:
         label = ClusterLabel.model_validate(payload if isinstance(payload, dict) else {})
     except Exception:

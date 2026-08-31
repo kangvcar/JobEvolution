@@ -4,6 +4,8 @@ import uuid
 
 import pytest
 from fastapi.testclient import TestClient
+from httpx2 import Request
+from openai import APIError
 
 from app import graph
 from app.llm.embed import embed
@@ -587,6 +589,86 @@ def test_gate_sends_alias_batch_to_cluster_before_target_alignment(tmp_path):
     run_extract_and_gate(snapshots, complete_json=complete, workers=1)
     evidence = graph.list_job_evidence(job_id_for("Agent 工程师"))
     assert not {row["id"] for row in evidence} & {snapshot["id"] for snapshot in snapshots}
+    _cleanup(graph, suffix)
+
+
+def test_gate_ignores_alias_cluster_when_classification_fails(tmp_path):
+    suffix = uuid.uuid4().hex[:8]
+    snapshots = _jd_snaps(
+        tmp_path,
+        suffix,
+        excerpt="熟悉 LangFrame",
+        confidence=0.9,
+        body="任职要求：熟悉 LangFrame。",
+    )
+    for snapshot in snapshots:
+        snapshot["alias_candidate"] = True
+    classifications = {"n": 0}
+
+    def complete(schema, _messages):
+        if schema == {}:
+            classifications["n"] += 1
+            raise APIError(
+                "classification unavailable",
+                Request("POST", "https://example.test"),
+                body=None,
+            )
+        return {
+            "job_name": "AI 智能体开发",
+            "target": "Agent 工程师",
+            "domain": "ai",
+            "skills": [],
+        }
+
+    assert run_extract_and_gate(snapshots, complete_json=complete, workers=1) == []
+    assert classifications["n"] == 1
+    _cleanup(graph, suffix)
+
+
+def test_gate_merges_large_alias_cluster_into_target(tmp_path):
+    suffix = uuid.uuid4().hex[:8]
+    alias_name = f"AI 智能体开发{suffix}"
+    snapshots = _jd_snaps(
+        tmp_path,
+        suffix,
+        excerpt="熟悉 LangFrame",
+        confidence=0.9,
+        body="任职要求：熟悉 LangFrame。",
+    )
+    for snapshot in snapshots:
+        snapshot["alias_candidate"] = True
+
+    def complete(schema, _messages):
+        if schema == {}:
+            return {"kind": "alias", "alias_of": "Agent 工程师"}
+        return {
+            "job_name": alias_name,
+            "target": "Agent 工程师",
+            "domain": "ai",
+            "skills": [
+                {
+                    "name": "LangFrame",
+                    "kind": "required",
+                    "proficiency": "able",
+                    "confidence": 0.9,
+                    "excerpt": "熟悉 LangFrame",
+                    "section": "requirement",
+                }
+            ],
+        }
+
+    events = run_extract_and_gate(snapshots, complete_json=complete, workers=1)
+    evidence = graph.list_job_evidence(job_id_for("Agent 工程师"))
+    assert events
+    assert {row["id"] for row in evidence} >= {snapshot["id"] for snapshot in snapshots}
+    with graph._driver.session() as session:
+        alias = session.run(
+            "MATCH (:Job {id: $src})-[:ALIAS_OF]->(:Job {id: $dst}) RETURN count(*) AS n",
+            src=job_id_for(alias_name),
+            dst=job_id_for("Agent 工程师"),
+        ).single()["n"]
+        session.run("MATCH (j:Job {id: $id}) DETACH DELETE j", id=job_id_for(alias_name))
+    assert alias == 1
     _cleanup(graph, suffix)
 
 
