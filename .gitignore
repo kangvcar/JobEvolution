@@ -14,3 +14,4 @@ apps/web/tsconfig.tsbuildinfo
 .firecrawl
 data/jd/*.json
 data/jd/*.tmp
+data/jd/*.cache
