@@ -102,8 +102,11 @@ def parse_resume(text: str, index: list[dict], complete_json=None) -> dict:
     for row in skills:
         if not _marks_level_for_skill(text, row.get("name") or ""):
             row["proficiency"] = None
-    experience = str(info.get("experience") or "").strip() or "简历未标"
-    education = str(info.get("education") or "").strip() or "简历未标"
+    fallback = _resume_info_from_text(text)
+    experience = str(info.get("experience") or "").strip()
+    education = str(info.get("education") or "").strip()
+    experience = ("" if experience == "简历未标" else experience) or fallback["experience"] or "简历未标"
+    education = ("" if education == "简历未标" else education) or fallback["education"] or "简历未标"
     return {"experience": experience, "education": education, "skills": skills}
 
 
@@ -111,6 +114,17 @@ def _marks_level_for_skill(text: str, name: str) -> bool:
     blob = text or ""
     needle = re.escape(name)
     return re.search(rf"(?:了解|熟练|精通|aware|able|expert|proficient)\s*(?:掌握|使用|过)?\W{{0,12}}{needle}", blob, re.I) is not None
+
+
+def _resume_info_from_text(text: str) -> dict:
+    # ponytail: explicit common formats only; use structured parsing for multilingual employment histories.
+    blob = text or ""
+    experience = re.search(r"\b(\d+)\s*(?:年|years?)\s*(?:工作|经验|experience)?", blob, re.I)
+    education = re.search(r"\b(Bachelor|Master|PhD)\b|(?:博士|硕士|本科|大专)(?:学历|学位)?", blob, re.I)
+    return {
+        "experience": f"{experience.group(1)}年" if experience else "",
+        "education": education.group(0) if education else "",
+    }
 
 
 def _align_skills(rows: list, index: list[dict]) -> list[dict]:

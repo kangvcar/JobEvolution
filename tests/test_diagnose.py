@@ -1,5 +1,6 @@
 import os
 import uuid
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -76,6 +77,32 @@ def test_parse_resume_aligns_and_keeps_unmarked_proficiency():
         complete_json=lambda *_: {"skills": [{"name": "FastAPI", "proficiency": "aware"}]},
     )
     assert guessed["skills"][0]["proficiency"] is None
+
+
+def test_parse_resume_reads_explicit_info_without_model():
+    index = [{"id": "s1", "name": "Python", "synonyms": [], "embedding": embed(["Python"])[0]}]
+    out = parse_resume(
+        "Python developer with 3 years experience and a Bachelor degree.",
+        index,
+        complete_json=lambda *_: (_ for _ in ()).throw(RuntimeError("offline")),
+    )
+    assert out["experience"] == "3年"
+    assert out["education"] == "Bachelor"
+
+
+def test_demo_cv_falls_back_when_model_marks_info_unknown():
+    text = extract_text(Path("data/eval/demo-cv.pdf").read_bytes(), "demo-cv.pdf")
+    index = [{"id": "s1", "name": "Python", "synonyms": [], "embedding": embed(["Python"])[0]}]
+
+    def unknown_info(_schema, messages):
+        if "experience" in messages[0]["content"]:
+            return {"experience": "简历未标", "education": "简历未标"}
+        return {"skills": []}
+
+    out = parse_resume(text, index, complete_json=unknown_info)
+    assert out["experience"] == "3年"
+    assert out["education"] == "Bachelor"
+    assert [skill["name"] for skill in out["skills"]] == ["Python"]
 
 
 def test_lookup_resource_uses_cache():
