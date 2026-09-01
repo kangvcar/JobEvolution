@@ -50,6 +50,8 @@ def _io_md(payload: dict, *, alias_note: str = "") -> str:
         lines.append(
             f"- `{row.get('id')}` company `{row.get('company')}` observed_at `{row.get('observed_at')}`"
         )
+    if len(payload["evidence"]) > 8:
+        lines.append(f"（仅列前 8 条，共 {len(payload['evidence'])} 条，全量见 sources.jsonl）")
     lines += ["", "## 输出", "", "### REQUIRES", ""]
     for row in payload["requires"]:
         lines.append(

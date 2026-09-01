@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from app.eval.f1 import mean_f1, set_f1
 from app.eval.freeze import align_threshold, freeze_hash, load_freeze
 from app.eval.io import read_jsonl, write_json
@@ -13,6 +14,8 @@ from app.pipeline.align import align_skill
 from app.pipeline.extract import parse_extracted
 
 PASS = 0.90
+JD_WORKERS = 8
+RESUME_WORKERS = 4
 
 
 def _index() -> list[dict]:
@@ -21,11 +24,22 @@ def _index() -> list[dict]:
     return rows
 
 
-def _fail_if_low(name: str, summary: dict) -> None:
+def _write_result(name: str, summary: dict) -> None:
     write_json(out_dir() / f"{name}.json", summary)
     print(json.dumps({name: summary, "freeze": freeze_hash()[:12]}, ensure_ascii=False))
-    if summary["f1"] < PASS:
-        raise SystemExit(1)
+
+
+def _evaluate(name: str, items: list[dict], predict, *, mock: bool, workers: int) -> dict:
+    rows = []
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        futures = [pool.submit(predict, item) for item in items]
+        for future in as_completed(futures):
+            rows.append(future.result())
+            # ponytail: 逐条落盘只为中断续跑看进度；全量完成后以最终 _write_result 为准
+            write_json(out_dir() / f"{name}.json", {"task": name, "mock": mock, **mean_f1(rows)})
+    summary = {"task": name, "mock": mock, **mean_f1(rows)}
+    _write_result(name, summary)
+    return summary
 
 
 def eval_jd(*, mock: bool = False) -> dict:
@@ -34,8 +48,7 @@ def eval_jd(*, mock: bool = False) -> dict:
     cut = align_threshold()
     from app.llm.client import complete_json
 
-    rows = []
-    for item in read_jsonl(eval_dir() / "jd.jsonl"):
+    def predict(item: dict) -> dict:
         gold = skill_ids(item.get("skills") or [])
         if mock:
             pred = set(gold)
@@ -52,43 +65,38 @@ def eval_jd(*, mock: bool = False) -> dict:
                 if skill.section in ("duty", "requirement")
                 if (hit := align_skill(skill.name, index, threshold=cut)) is not None
             }
-        rows.append(set_f1(pred, gold))
-    summary = {"task": "jd", "mock": mock, **mean_f1(rows)}
-    _fail_if_low("jd", summary)
-    return summary
+        return set_f1(pred, gold)
+
+    return _evaluate("jd", read_jsonl(eval_dir() / "jd.jsonl"), predict, mock=mock, workers=JD_WORKERS)
 
 
 def eval_resume(*, mock: bool = False) -> dict:
     load_freeze()
     index = _index()
-    rows = []
-    for item in read_jsonl(eval_dir() / "resume.jsonl"):
+    def predict(item: dict) -> dict:
         gold = skill_ids(item.get("skills") or [])
         if mock:
             pred = set(gold)
         else:
-            parsed = parse_resume(item.get("text") or "", index)
+            parsed = parse_resume(item.get("text") or "", index, threshold=align_threshold(), strict=True)
             pred = {row["skill_id"] for row in parsed.get("skills") or [] if row.get("skill_id")}
-        rows.append(set_f1(pred, gold))
-    summary = {"task": "resume", "mock": mock, **mean_f1(rows)}
-    _fail_if_low("resume", summary)
-    return summary
+        return set_f1(pred, gold)
+
+    return _evaluate("resume", read_jsonl(eval_dir() / "resume.jsonl"), predict, mock=mock, workers=RESUME_WORKERS)
 
 
 def eval_match(*, mock: bool = False) -> dict:
     load_freeze()
-    rows = []
-    for item in read_jsonl(eval_dir() / "match_pairs.jsonl"):
+    def predict(item: dict) -> dict:
         gold = set(item.get("gap_ids") or [])
         if mock:
             pred = set(gold)
         else:
             report = compare_job(item.get("requires") or [], item.get("resume_skills") or [])
             pred = {row["skill_id"] for row in report["gaps"]}
-        rows.append(set_f1(pred, gold))
-    summary = {"task": "match", "mock": mock, **mean_f1(rows)}
-    _fail_if_low("match", summary)
-    return summary
+        return set_f1(pred, gold)
+
+    return _evaluate("match", read_jsonl(eval_dir() / "match_pairs.jsonl"), predict, mock=mock, workers=JD_WORKERS)
 
 
 def path_spotcheck() -> dict:
@@ -113,22 +121,49 @@ def path_spotcheck() -> dict:
     return {"n": len(skills), "with_url": ok}
 
 
-def write_summary(*, coverage: float | None, mock: bool) -> Path:
+def write_summary(
+    *,
+    coverage: float | None,
+    mock: bool,
+    results: dict[str, dict] | None = None,
+    errors: dict[str, str] | None = None,
+    lows: dict[str, str] | None = None,
+) -> Path:
     from app.eval.freeze import freeze_hash as fh
 
     out = out_dir()
-    jd = json.loads((out / "jd.json").read_text(encoding="utf-8"))
-    resume = json.loads((out / "resume.json").read_text(encoding="utf-8"))
-    match = json.loads((out / "match.json").read_text(encoding="utf-8"))
+    if results is None:
+        results = {
+            name: json.loads((out / f"{name}.json").read_text(encoding="utf-8"))
+            for name in ("jd", "resume", "match")
+        }
+    errors = errors or {}
+    lows = lows or {}
+
+    def metric(name: str) -> str:
+        row = results.get(name)
+        if row and bool(row.get("mock")) != mock:
+            return "未得真数"
+        return f"{row['f1']:.3f}" if row else "未得真数"
+
+    def size(name: str) -> str:
+        row = results.get(name)
+        return str(row.get("n") or 0) if row else "0"
+
     path = path_spotcheck()
     cov = coverage if coverage is not None else None
     lines = [
-        f"三项 F1  JD {jd['f1']:.3f}  简历 {resume['f1']:.3f}  匹配 {match['f1']:.3f}  n={jd['n']}/{resume['n']}/{match['n']}  mock={mock}",
+        f"三项 F1  JD {metric('jd')}  简历 {metric('resume')}  匹配 {metric('match')}  n={size('jd')}/{size('resume')}/{size('match')}  mock={mock}",
         f"覆盖率  {cov:.1f}%" if cov is not None else "覆盖率  见 pytest --cov",
         f"学习路径抽检  {path['with_url']}/{path['n']} 条有可打开链接",
         f"freeze.json sha256  {fh()}",
-        "",
     ]
+    for name in ("jd", "resume", "match"):
+        if name in lows:
+            lines.append(f"{name.upper()} 低于线  {lows[name]}")
+        elif name in errors:
+            lines.append(f"{name.upper()} 未得真数  {errors[name]}")
+    lines.append("")
     dest = out / "summary.md"
     dest.write_text("\n".join(lines), encoding="utf-8")
     return dest

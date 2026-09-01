@@ -21,23 +21,28 @@ def main(argv: list[str] | None = None) -> int:
         from app.eval.deliver import main as dump
 
         return dump()
-    from app.eval.run import eval_jd, eval_match, eval_resume, write_summary
+    from app.eval.run import PASS, eval_jd, eval_match, eval_resume, out_dir, write_summary
 
     if args.cmd == "jd":
-        eval_jd(mock=args.mock)
-        return 0
+        return int(eval_jd(mock=args.mock)["f1"] < PASS)
     if args.cmd == "resume":
-        eval_resume(mock=args.mock)
-        return 0
+        return int(eval_resume(mock=args.mock)["f1"] < PASS)
     if args.cmd == "match":
-        eval_match(mock=args.mock)
-        return 0
-    eval_jd(mock=args.mock)
-    eval_resume(mock=args.mock)
-    eval_match(mock=args.mock)
-    dest = write_summary(coverage=args.coverage, mock=args.mock)
+        return int(eval_match(mock=args.mock)["f1"] < PASS)
+    results = {}
+    errors = {}
+    lows = {}
+    for name, fn in (("jd", eval_jd), ("resume", eval_resume), ("match", eval_match)):
+        try:
+            results[name] = fn(mock=args.mock)
+            if results[name]["f1"] < PASS:
+                lows[name] = f"F1 {results[name]['f1']:.3f} < {PASS:.2f}"
+        except Exception as exc:
+            errors[name] = f"{type(exc).__name__}: {exc}"
+            (out_dir() / f"{name}.json").unlink(missing_ok=True)
+    dest = write_summary(coverage=args.coverage, mock=args.mock, results=results, errors=errors, lows=lows)
     print(dest.read_text(encoding="utf-8"))
-    return 0
+    return 1 if errors or lows else 0
 
 
 if __name__ == "__main__":

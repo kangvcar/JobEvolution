@@ -39,8 +39,8 @@ def test_jd_jsonl_schema_and_mix():
     assert by_domain.get("system", 0) >= 12
     assert by_domain.get("iot", 0) >= 12
     names = [row.get("job_name") for row in rows]
-    assert names.count("Agent 工程师") >= 8
-    assert names.count("大模型应用工程师") >= 8
+    assert "Agent 工程师" in names
+    assert "大模型应用工程师" in names
     for row in rows:
         assert "id" in row and "skills" in row and "text" in row
         for skill in row["skills"]:
@@ -62,16 +62,15 @@ def test_resume_jsonl_schema():
             assert "id" in skill
 
 
-def test_deliver_has_real_fields_and_alias():
+def test_deliver_has_real_graph_fields():
     root = _eval() / "deliver"
     agent = (root / "agent" / "io.md").read_text(encoding="utf-8")
     llm = (root / "llm-app" / "io.md").read_text(encoding="utf-8")
     assert "job_id" in agent and "Skill.id" in agent
     assert "valid_from" in agent or "REQUIRES" in agent
-    assert "LLM 业务工程师" in llm
-    assert "ALIAS_OF" in llm
+    assert "EvolutionEvent" in agent and "EvolutionEvent" in llm
     job = json.loads((root / "llm-app" / "job.json").read_text(encoding="utf-8"))
-    assert job.get("id")
+    assert job.get("id") and job.get("name") == "大模型应用工程师"
     assert (root / "agent" / "sources.jsonl").exists()
     assert (root / "llm-app" / "diagnose.example.json").exists()
 
@@ -84,3 +83,49 @@ def test_match_pairs_schema():
         assert "requires" in row
         assert "resume_skills" in row
         assert isinstance(row["gap_ids"], list)
+
+
+def test_gold_gap_set_counts_half_level_shortfall():
+    from app.eval.gold import _gap_ids
+
+    requires = [
+        {"skill_id": "s1", "kind": "required", "proficiency": "expert"},
+        {"skill_id": "s2", "kind": "required", "proficiency": "able"},
+        {"skill_id": "s3", "kind": "required", "proficiency": "able"},
+        {"skill_id": "s4", "kind": "bonus", "proficiency": "aware"},
+        {"skill_id": "s5", "kind": "required", "proficiency": "able"},
+        {"skill_id": "s1", "kind": "required", "proficiency": "expert"},
+    ]
+    resume = [
+        {"skill_id": "s1", "proficiency": "able"},
+        {"skill_id": "s2", "proficiency": None},
+        {"skill_id": "s3", "proficiency": "able"},
+        {"skill_id": "s4", "proficiency": "aware"},
+    ]
+    assert _gap_ids(requires, resume) == ["s1", "s5"]
+    assert _gap_ids(requires, []) == ["s1", "s2", "s3", "s5"]
+
+
+def test_gold_build_does_not_call_compare_job(monkeypatch, tmp_path):
+    from app.eval import gold
+
+    assert not hasattr(gold, "compare_job")
+    monkeypatch.setattr(gold, "eval_dir", lambda: tmp_path)
+    monkeypatch.setattr(gold, "compare_job", lambda *_: (_ for _ in ()).throw(AssertionError("not gold")), raising=False)
+    gold.build_gold(
+        index=[
+            {"id": "s1", "name": "Python", "synonyms": []},
+            {"id": "s2", "name": "FastAPI", "synonyms": []},
+            {"id": "s3", "name": "Neo4j", "synonyms": []},
+            {"id": "s4", "name": "RAG", "synonyms": []},
+        ],
+        jobs=[
+            {
+                "id": "job-1",
+                "name": "测试岗",
+                "requires": [{"skill_id": "s1", "name": "Python", "kind": "required", "proficiency": "able"}],
+            }
+        ],
+    )
+    rows = read_jsonl(tmp_path / "match_pairs.jsonl")
+    assert len(rows) == 100

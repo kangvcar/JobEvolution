@@ -6,7 +6,6 @@ from pathlib import Path
 from app.eval.io import write_json, write_jsonl
 from app.eval.paths import eval_dir, repo_root
 from app.eval.scan import duty_text, mention_skill_ids
-from app.matching.score import compare_job
 from app.pipeline.__main__ import match_target
 from app.pipeline.status import job_id_for
 
@@ -15,6 +14,31 @@ PAIR_TARGET = 100
 RESUME_N = 100
 JD_N = 100
 CONTEST = ("Agent 工程师", "大模型应用工程师")
+
+# 半档口径独立实现（CONTEXT.md 缺口集）：必备未覆盖记缺口；简历标了熟练级且低于
+# 岗位要求记半档，进缺口集；简历没标熟练级只比有无。不 import compare_job。
+_LEVEL = {"aware": 1, "able": 2, "expert": 3}
+
+
+def _gap_ids(requires: list[dict], resume_skills: list[dict]) -> list[str]:
+    held = {s.get("skill_id"): s.get("proficiency") for s in resume_skills if s.get("skill_id")}
+    out: list[str] = []
+    for row in requires:
+        if row.get("kind") == "bonus":
+            continue
+        sid = row.get("skill_id")
+        if not sid or sid in out:
+            continue
+        level = held.get(sid)
+        if level is None and sid not in held:
+            out.append(sid)
+        elif (
+            level in _LEVEL
+            and row.get("proficiency") in _LEVEL
+            and _LEVEL[level] < _LEVEL[row["proficiency"]]
+        ):
+            out.append(sid)
+    return out
 
 
 def _load_doc(path: Path) -> dict | None:
@@ -156,7 +180,6 @@ def build_gold(*, index: list[dict], jobs: list[dict]) -> None:
             {"skill_id": s["id"], "name": s["id"], "proficiency": s.get("proficiency")}
             for s in cv["skills"]
         ]
-        report = compare_job(req, resume_skills)
         pairs.append(
             {
                 "id": f"pair-{n:04d}",
@@ -173,7 +196,7 @@ def build_gold(*, index: list[dict], jobs: list[dict]) -> None:
                     }
                     for r in req
                 ],
-                "gap_ids": [g["skill_id"] for g in report["gaps"]],
+                "gap_ids": _gap_ids(req, resume_skills),
             }
         )
         n += 1

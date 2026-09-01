@@ -213,6 +213,8 @@ def _link_skill_category(session, skill_id: str, category: str) -> None:
     session.run(
         """
         MATCH (s:Skill {id: $id})
+        OPTIONAL MATCH (s)-[old:IN_CATEGORY]->(:SkillCategory)
+        DELETE old
         MERGE (c:SkillCategory {id: $category})
         SET c.name = $category_name
         MERGE (s)-[:IN_CATEGORY]->(c)

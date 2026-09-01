@@ -10,6 +10,38 @@ from app.pipeline.status import compute_status, job_id_for, source_stats
 ADMIN = os.environ.get("ADMIN_PASSWORD", "change-me")
 
 
+def test_skill_relink_keeps_one_category_edge():
+    from app import graph
+
+    if graph._driver is None:
+        graph.init_graph()
+    suffix = uuid.uuid4().hex[:8]
+    sid = f"skill-cat-{suffix}"
+    job_id = f"job-cat-{suffix}"
+    try:
+        graph.upsert_skill({"id": sid, "name": f"重类目{suffix}", "synonyms": [], "category": "framework"})
+        graph.upsert_skill({"id": sid, "name": f"重类目{suffix}", "synonyms": [], "category": "platform"})
+        with graph._driver.session() as session:
+            cats = session.run(
+                "MATCH (s:Skill {id: $id})-[:IN_CATEGORY]->(c) RETURN collect(c.id) AS cats",
+                id=sid,
+            ).single()["cats"]
+        assert cats == ["platform"]
+        graph.upsert_job(id=job_id, name=f"类目扇出{suffix}", domain="ai", status="emerging")
+        with graph._driver.session() as session:
+            session.run(
+                "MATCH (j:Job {id: $id}), (s:Skill {id: $sid}) MERGE (j)-[:REQUIRES]->(s)",
+                id=job_id,
+                sid=sid,
+            )
+        assert graph.list_requires(job_id) != []
+        assert len(graph.list_requires(job_id)) == 1
+    finally:
+        with graph._driver.session() as session:
+            session.run("MATCH (s:Skill {id: $sid}) DETACH DELETE s", sid=sid)
+            session.run("MATCH (j:Job {id: $id}) DETACH DELETE j", id=job_id)
+
+
 def test_compute_status_thresholds():
     assert (
         compute_status(

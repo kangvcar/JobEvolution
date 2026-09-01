@@ -7,6 +7,18 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      neo4j:
+        image: neo4j:5-community
+        env:
+          NEO4J_AUTH: neo4j/jobevolution
+        ports:
+          - 17687:7687
+        options: >-
+          --health-cmd "wget -q --spider http://localhost:7474 || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 12
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -30,3 +42,8 @@ jobs:
           ALIGN_THRESHOLD: "0.11"
           PYTHONPATH: apps/api
         run: python -m app.eval report --mock --coverage 0
+      - name: coverage gate
+        env:
+          PYTHONPATH: apps/api
+          TEST_NEO4J_URI: bolt://localhost:17687
+        run: pytest --cov=apps/api/app --cov-fail-under=60 -q
