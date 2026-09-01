@@ -161,9 +161,9 @@ LLM 输出必须带摘录。写边时把摘录对应的 `Evidence.id` 放进 `RE
 
 ### 简历
 
-PDF：`pdfplumber` 取文本层。`.docx`：`python-docx`。`.doc` 和扫描件直接 400，提示不支持。不要上 LibreOffice，不要上 pyresparser。
+PDF：`pdfplumber` 取文本层。`.docx`：`python-docx`。支持中英文混排；`.doc`、图片和扫描件直接 400，提示不支持。不要上 OCR、LibreOffice 或 pyresparser。
 
-DeepSeek JSON 拆两个子任务并行：基本信息+教育+经历；技能点列表（引导词表用当前图谱技能名）。输出过 `align_skill`。会话结果进 Redis，TTL 1 小时，key `session:{id}`。字段级 F1 另报，不进三项准确率。
+DeepSeek JSON 拆两个子任务并行：基本信息+教育+经历；技能点列表（引导词表用当前图谱技能名）。输出过 `align_skill`。首次诊断前可修改技能点与明确的熟练级,修改只写当前会话。会话结果进不持久化的 Redis，TTL 1 小时，key `session:{id}`；Redis 重启后提示重新上传。字段级 F1 另报，不进三项准确率。
 
 双栏版式掉点时再引入 SmartResume 版面重建，见 [`research/resume-parsing.md`](research/resume-parsing.md)。一期不做。
 
@@ -191,7 +191,7 @@ score = 100 * (req_cover + 0.3 * bonus_cover) / (req_full + 0.3 * bonus_full)
 
 ## API
 
-JSON，UTF-8。错误体 `{ "error": str, "detail": str | null }`。管理路由校验 `X-Admin-Password` 或 cookie，与 `ADMIN_PASSWORD` 常量时间比较。
+JSON，UTF-8。错误体 `{ "error": str, "detail": str | null }`。管理口令只交给登录接口做常量时间比较；成功后签发 Redis 短期会话，浏览器只保存 `Secure`、`HttpOnly`、`SameSite=Strict` Cookie。管理写请求校验 CSRF，登录限速。
 
 | 方法 | 路径 | 用途 |
 |---|---|---|
@@ -200,10 +200,13 @@ JSON，UTF-8。错误体 `{ "error": str, "detail": str | null }`。管理路由
 | GET | `/jobs/{id}` | 定义、独立源数、技能点表、证据摘要。candidate 无口令 404 |
 | GET | `/graph/jobs/{id}` | 当前岗切片：类目、技能点、`REQUIRES`（按 `levels` 过滤）、`period_delta`（`added` / `expired`）。expired 是本周期已写 `valid_to` 的边，给切片差分挂「本周期失效」。candidate 404 |
 | POST | `/sessions` | multipart 简历 → `{session_id, skills, preview_text}` |
+| PUT | `/sessions/{id}/skills` | 会话内修正技能点与明确熟练级 |
 | POST | `/diagnose` | `{session_id, job_id, levels?}` → 对照报告。含换档条件与按此排序的学习路径、邻近岗档位。`job_id` 为 candidate 时 400。前端可用 query `session_id` + `job_id` 自动再 POST |
 | GET | `/discover` | 候选 / 萌芽 / 成型看板。有 `ALIAS_OF` 出边的岗不进候选列 |
 | GET | `/discover/{id}` | 卷宗：簇、独立源、证据、事件。候选也可以 |
 | GET | `/feed` | 故事、萌芽/谱内计数、管线、热度、流水。候选簇不计别名。总览第一屏只用故事和计数；管线/热度/流水给发现页和总览 `<details>` |
+| POST | `/admin/session` | 校验共享口令并签发短期管理会话 |
+| DELETE | `/admin/session` | 注销当前管理会话 |
 | GET | `/admin/queue` | 待审 `EvolutionEvent` |
 | POST | `/admin/queue/{id}/approve` | body 可带改写后的 payload |
 | POST | `/admin/queue/{id}/reject` | |
