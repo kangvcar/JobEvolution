@@ -176,8 +176,10 @@ def upsert_job(*, id: str, name: str, domain: str, status: str | None = None) ->
             """
             MERGE (j:Job {id: $id})
             SET j.name = $name, j.status = $status
-            WITH j
-            MATCH (d:Domain {id: $domain})
+            WITH DISTINCT j
+            OPTIONAL MATCH (j)-[:IN_DOMAIN]->(existing:Domain)
+            WITH j, coalesce(existing.id, $domain) AS dom_id
+            MATCH (d:Domain {id: dom_id})
             MERGE (j)-[:IN_DOMAIN]->(d)
             """,
             id=id,
@@ -258,8 +260,10 @@ def apply_requires(payload: dict) -> None:
             """
             MERGE (j:Job {id: $job_id})
             SET j.name = coalesce($job_name, j.name)
-            WITH j
-            MATCH (d:Domain {id: $domain})
+            WITH DISTINCT j
+            OPTIONAL MATCH (j)-[:IN_DOMAIN]->(existing:Domain)
+            WITH j, coalesce(existing.id, $domain) AS dom_id
+            MATCH (d:Domain {id: dom_id})
             MERGE (j)-[:IN_DOMAIN]->(d)
             MERGE (s:Skill {id: $skill_id})
             SET s.name = coalesce($skill_name, s.name)
