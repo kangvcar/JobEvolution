@@ -76,6 +76,7 @@ def job_detail(job_id: str):
     row["events"] = graph.list_job_events(job_id)
     evidence = graph.list_job_evidence(job_id)
     row["sources"] = sorted({item["company"] for item in evidence if item.get("company")})
+    row["definition"] = graph.current_definition(job_id)
     return row
 
 

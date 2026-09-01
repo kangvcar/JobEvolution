@@ -128,8 +128,10 @@ def apply_event(event_id: str, *, review: str, payload: dict | None = None) -> d
     if data.get("layer") == "low" and review == "auto_passed":
         review = "pending"
     event["review"] = review
-    if data.get("kind") != "extract_failed" and review in ("approved", "auto_passed"):
+    if data.get("kind") != "extract_failed" and data.get("skill_id") and review in ("approved", "auto_passed"):
         graph.apply_requires(data)
+    if data.get("definition_claims") and review in ("approved", "auto_passed"):
+        graph.apply_definition_claims(data.get("job_id") or "", data["definition_claims"], event_id=event_id)
     graph.record_review_decision(event_id, review=review, payload=data, reason=str(data.get("review_reason") or ""))
     graph.upsert_event(event, job_id=data.get("job_id"))
     if data.get("job_id"):

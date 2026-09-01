@@ -25,6 +25,8 @@ _CONSTRAINTS = (
     "CREATE CONSTRAINT requirement_version_id IF NOT EXISTS FOR (n:RequirementVersion) REQUIRE n.id IS UNIQUE",
     "CREATE CONSTRAINT review_proposal_id IF NOT EXISTS FOR (n:ReviewProposal) REQUIRE n.id IS UNIQUE",
     "CREATE CONSTRAINT review_decision_id IF NOT EXISTS FOR (n:ReviewDecision) REQUIRE n.id IS UNIQUE",
+    "CREATE CONSTRAINT job_definition_version_id IF NOT EXISTS FOR (n:JobDefinitionVersion) REQUIRE n.id IS UNIQUE",
+    "CREATE CONSTRAINT definition_claim_id IF NOT EXISTS FOR (n:DefinitionClaim) REQUIRE n.id IS UNIQUE",
     "CREATE INDEX evolution_event_at IF NOT EXISTS FOR (n:EvolutionEvent) ON (n.at)",
 )
 
@@ -515,6 +517,44 @@ def record_review_decision(event_id: str, *, review: str, payload: dict, reason:
     return decision_id
 
 
+def apply_definition_claims(job_id: str, claims: list[dict], *, event_id: str) -> None:
+    if _driver is None or not claims:
+        return
+    version_id = "defv-" + hashlib.sha256(f"{job_id}:{event_id}".encode()).hexdigest()[:24]
+    with _driver.session() as session:
+        session.run(
+            "MERGE (v:JobDefinitionVersion {id: $id}) ON CREATE SET v.job_id = $job_id, v.created_at = datetime(), v.status = 'approved' "
+            "WITH v MATCH (j:Job {id: $job_id}) MERGE (j)-[:HAS_DEFINITION]->(v)",
+            id=version_id, job_id=job_id,
+        )
+        for claim in claims:
+            if not isinstance(claim, dict) or not claim.get("text"):
+                continue
+            claim_id = "claim-" + hashlib.sha256(json.dumps(claim, ensure_ascii=False, sort_keys=True).encode()).hexdigest()[:24]
+            claim_type = claim.get("type") or "responsibility"
+            sources = sorted({str(source) for source in claim.get("sources") or [] if source})
+            session.run(
+                """
+                MERGE (c:DefinitionClaim {id: $id})
+                ON CREATE SET c.text = $text, c.type = $type, c.sources = $sources, c.review = 'approved'
+                WITH c MATCH (v:JobDefinitionVersion {id: $version_id}) MERGE (v)-[:HAS_CLAIM]->(c)
+                """,
+                id=claim_id, text=str(claim["text"]), type=claim_type, sources=sources, version_id=version_id,
+            )
+
+
+def current_definition(job_id: str) -> list[dict]:
+    if _driver is None:
+        return []
+    with _driver.session() as session:
+        rows = session.run(
+            "MATCH (j:Job {id: $id})-[:HAS_DEFINITION]->(v:JobDefinitionVersion {status: 'approved'})-[:HAS_CLAIM]->(c:DefinitionClaim) "
+            "RETURN c.id AS id, c.text AS text, c.type AS type, c.sources AS sources ORDER BY c.type, c.id",
+            id=job_id,
+        )
+        return [dict(row) for row in rows]
+
+
 def list_pending_events(*, include_auto_passed: bool = False) -> list[dict]:
     if _driver is None:
         return []
@@ -599,6 +639,16 @@ def definition_passed(job_id: str) -> bool:
     if _driver is None:
         return False
     with _driver.session() as session:
+        defined = session.run(
+            "MATCH (j:Job {id: $id})-[:HAS_DEFINITION]->(v:JobDefinitionVersion) RETURN count(v) AS n", id=job_id
+        ).single()
+        if defined and defined["n"]:
+            row = session.run(
+                "MATCH (j:Job {id: $id})-[:HAS_DEFINITION]->(v:JobDefinitionVersion {status: 'approved'})-[:HAS_CLAIM]->(c:DefinitionClaim) "
+                "WITH collect(c) AS claims RETURN all(c IN claims WHERE (c.type = 'responsibility' AND size(coalesce(c.sources, [])) >= 2) OR (c.type = 'scenario' AND size(coalesce(c.sources, [])) >= 1)) AND size(claims) > 0 AS ok",
+                id=job_id,
+            ).single()
+            return bool(row and row["ok"])
         row = session.run(
             """
             MATCH (e:EvolutionEvent)-[:AFFECTS]->(j:Job {id: $id})
