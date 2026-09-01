@@ -69,6 +69,12 @@ def init_graph():
                 id=cid,
                 name=cname,
             )
+        snapshot = os.environ.get("SNAPSHOT_PATH")
+        if snapshot and os.path.exists(snapshot):
+            count = session.run("MATCH (n:Job) RETURN count(n) AS n").single()["n"]
+            if count == 0:
+                from app.graph_snapshot import import_snapshot
+                import_snapshot(snapshot)
 
 
 def close_graph():
