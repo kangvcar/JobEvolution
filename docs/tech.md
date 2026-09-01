@@ -17,7 +17,7 @@
 | LLM | DeepSeek 官方 API | 所有生成与 JSON 抽取 |
 | 嵌入 | 硅基流动 `BAAI/bge-m3`（OpenAI 兼容） | 技能对齐、实体消解、岗位聚类。无 `EMBED_API_KEY` 时回落本地哈希向量，测试与 CI 不出网 |
 
-docker-compose 四个服务：`api`、`web`、`neo4j`、`redis`。评测金标和 JD 快照走仓库文件，不另起 Postgres。管理员一口令，写在环境变量 `ADMIN_PASSWORD`。
+首个生产环境在单台服务器运行 Docker Compose,由 HTTPS 反向代理统一入口；`web` 与 `api` 同源,默认关闭 CORS,只允许配置中明确列出的可信来源。容器包括 `api`、`web`、`neo4j`、`redis` 和独立每日任务,不拆微服务。评测金标和 JD 快照走仓库文件,不另起 Postgres。管理员一口令,写在环境变量 `ADMIN_PASSWORD`。
 
 ```
 apps/api/                 FastAPI
@@ -234,7 +234,10 @@ DEEPSEEK_MODEL       默认 deepseek-v4-flash
 - 抽取、簇判别、简历 JSON：`thinking: {"type": "disabled"}`，`response_format: {"type": "json_object"}`。思考模式会拖慢批量抽取。
 - 诊断总结、学习资源：同样非思考；需要稍长文案时仍用 flash，不上 pro，除非 flash 连续失败。
 - 超时 60s，失败重试一次。JSON 对不上 Pydantic 算失败。
+- 外部模型设置全局每日调用量与费用上限,并保留公开接口的每 IP 限速；额度耗尽时明确失败,不切换到其他模型。
 - 禁止在业务里直接 `openai.OpenAI(...)`。测抽取时 mock `complete_json`。
+
+结构化日志保留 14 天,记录请求 ID、路由、状态码、耗时、模型、Token、费用、管线版本和错误类型；不得记录简历正文、管理员口令、Cookie 或完整会话 ID。每日版本化 JSON 复制到服务器外并保留 30 天,恢复只走幂等导入器。管线失败、连续 48 小时数据陈旧、备份失败和图谱发布失败统一发到一个可配置 Webhook,管理页同时显示最近运行状态。
 
 嵌入在 `app/llm/embed.py`：`embed(texts: list[str]) -> list[list[float]]`。设了 `EMBED_API_KEY` 走硅基流动 `BAAI/bge-m3`（OpenAI 兼容端点，失败即抛，不悄悄降级）；没设走本地字符 3-gram 哈希向量，纯词面匹配，只给测试与 CI 用。这不是 LLM 调用，不走 DeepSeek。
 
