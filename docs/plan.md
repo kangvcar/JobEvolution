@@ -30,7 +30,7 @@ Neo4j 约束与标签按技术篇。写入四个 `Domain`。17 个规范岗位�
 
 DeepSeek JSON + Pydantic。技能字符串先聚类成 `Skill`，再 `align_skill`。入池 30%、置信三层、待审队列、直通开关。岗位名对上 17 个靶子或进发现簇。既有岗更新与新岗发现同一套闸。状态由独立源计票。
 
-完成：大模型应用工程师能查出 `REQUIRES` 与 `EvolutionEvent`；Agent 工程师在有 ≥3 独立源时为萌芽。低置信不可 auto_passed。管理页能批/驳。「LLM 业务工程师」由簇判别写 `ALIAS_OF`。不要手补节点或状态。
+完成：大模型应用工程师能查出 `REQUIRES` 与 `EvolutionEvent`；Agent 工程师在有 ≥3 独立源时为萌芽。低置信不可 auto_passed。管理页能批/驳。「大模型应用开发工程师」由簇判别写 `ALIAS_OF`。不要手补节点或状态。
 
 ### 4. 诊断
 

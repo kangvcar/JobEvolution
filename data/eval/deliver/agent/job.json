@@ -274,8 +274,8 @@
       "skill_id": "skill-c0955f7ef40c5d7a",
       "name": "Agent流程编排",
       "kind": "required",
-      "category_id": "domain",
-      "category": "领域知识",
+      "category_id": "framework",
+      "category": "框架",
       "proficiency": "expert",
       "layer": "high",
       "confidence": 0.9,
@@ -548,8 +548,8 @@
     {
       "skill_id": "skill-c0955f7ef40c5d7a",
       "name": "Agent流程编排",
-      "category_id": "domain",
-      "category": "领域知识",
+      "category_id": "framework",
+      "category": "框架",
       "valid_from": "2025-08-19T11:13:50Z",
       "valid_to": null,
       "layer": "high"
@@ -677,8 +677,8 @@
       {
         "skill_id": "skill-c0955f7ef40c5d7a",
         "name": "Agent流程编排",
-        "category_id": "domain",
-        "category": "领域知识"
+        "category_id": "framework",
+        "category": "框架"
       },
       {
         "skill_id": "skill-c1ba60ce13586503",
