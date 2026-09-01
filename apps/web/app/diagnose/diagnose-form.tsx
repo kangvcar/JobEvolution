@@ -66,6 +66,7 @@ export function DiagnoseForm() {
   const [report, setReport] = useState<Report | null>(null);
   const [over, setOver] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [consent, setConsent] = useState(false);
   const abort = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -144,6 +145,7 @@ export function DiagnoseForm() {
     if (file) {
       const data = new FormData();
       data.append("file", file);
+      data.append("consent", consent ? "true" : "false");
       const uploaded = await fetch(`${API}/sessions`, { method: "POST", body: data });
       const body = await uploaded.json();
       if (!uploaded.ok) {
@@ -252,6 +254,10 @@ export function DiagnoseForm() {
               onChange={(e) => pick(e.target.files?.[0] ?? null)}
             />
             <span>{file ? file.name : "选择文件或拖入此处"}</span>
+          </label>
+          <label className="consent-row">
+            <input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} required={Boolean(file)} />
+            我确认简历文本会发送给配置的模型服务商，仅保留一小时，不上传原文件或身份信息。
           </label>
           <div className="diagnose-actions">
             <button type="submit" disabled={phase === "run"}>

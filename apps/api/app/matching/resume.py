@@ -29,10 +29,14 @@ def _pdf_text(data: bytes) -> str:
     import pdfplumber
 
     with pdfplumber.open(io.BytesIO(data)) as pdf:
+        if len(pdf.pages) > 30:
+            raise ResumeError("PDF 不能超过 30 页")
         parts = [(page.extract_text() or "") for page in pdf.pages]
     text = "\n".join(parts).strip()
     if not text:
         raise ResumeError("扫描件没有文本层")
+    if len(text) > 50_000:
+        raise ResumeError("提取文本不能超过 50,000 字符")
     return text
 
 
@@ -43,6 +47,8 @@ def _docx_text(data: bytes) -> str:
     text = "\n".join(p.text for p in document.paragraphs).strip()
     if not text:
         raise ResumeError("文档没有可提取的文本")
+    if len(text) > 50_000:
+        raise ResumeError("提取文本不能超过 50,000 字符")
     return text
 
 

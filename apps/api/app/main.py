@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 
 from pydantic import BaseModel
 
-from fastapi import FastAPI, File, Header, HTTPException, Query, Request, UploadFile
+from fastapi import FastAPI, File, Form, Header, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.responses import Response
@@ -18,6 +18,8 @@ from app.matching.session import load as load_session
 from app.matching.session import save as save_session
 from app.pipeline.gate import apply_event, passthrough_enabled, set_passthrough
 from app.pipeline.status import job_id_for
+
+_parse_attempts: dict[str, list[float]] = {}
 
 
 @asynccontextmanager
@@ -47,7 +49,12 @@ async def http_error(_, exc: HTTPException):
 
 @app.get("/meta")
 def meta():
-    return {"domains": graph.list_domains()}
+    return {
+        "domains": graph.list_domains(),
+        "model_provider": os.environ.get("LLM_PROVIDER", "configured model service"),
+        "resume_retention_seconds": 3600,
+        "resume_payload": "extracted text only",
+    }
 
 
 @app.get("/jobs")
@@ -109,8 +116,23 @@ class DiagnoseBody(BaseModel):
 
 
 @app.post("/sessions")
-async def create_session(file: UploadFile = File(...)):
+async def create_session(request: Request, file: UploadFile = File(...), consent: bool = Form(False)):
+    ip = request.client.host if request.client else "unknown"
+    now = time.time()
+    recent = [stamp for stamp in _parse_attempts.get(ip, []) if stamp > now - 3600]
+    if len(recent) >= 10:
+        raise HTTPException(429, "解析次数已达每小时上限")
+    _parse_attempts[ip] = recent + [now]
+    if file.content_type not in {"application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"}:
+        raise HTTPException(400, "仅支持带文本层的 PDF 或 docx")
     data = await file.read()
+    if len(data) > 10 * 1024 * 1024:
+        raise HTTPException(413, "文件不能超过 10 MB")
+    name = (file.filename or "").lower()
+    if (name.endswith(".pdf") and data[:4] != b"%PDF") or (name.endswith(".docx") and data[:2] != b"PK"):
+        raise HTTPException(400, "文件扩展名、MIME 与签名不一致")
+    if not consent:
+        raise HTTPException(400, "请先确认外部模型处理说明")
     try:
         text = extract_text(data, file.filename or "")
     except ResumeError as exc:
