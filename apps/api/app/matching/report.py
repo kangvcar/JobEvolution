@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
+import ipaddress
+import re
+import socket
+from urllib.request import Request, build_opener, HTTPRedirectHandler
 from urllib.parse import quote, urlparse
 
 from app.matching.bands import PATH_MAX
@@ -18,7 +22,7 @@ PRESET_URL = {
     "neo4j": "https://neo4j.com/docs/",
     "rag": "https://python.langchain.com/docs/concepts/rag/",
 }
-RESOURCE_TTL = 7 * 24 * 3600
+RESOURCE_TTL = 24 * 3600
 RESOURCE_PROMPT = (
     "Return JSON {url: https://...} with one official docs or open tutorial URL "
     "for this skill. No markdown."
@@ -41,6 +45,36 @@ def _valid_url(value) -> str | None:
     return None
 
 
+def _verify_resource(url: str, skill: str) -> str | None:
+    parsed = urlparse(url)
+    try:
+        host = parsed.hostname or ""
+        for info in socket.getaddrinfo(host, parsed.port or 443, type=socket.SOCK_STREAM):
+            address = ipaddress.ip_address(info[4][0])
+            if address.is_private or address.is_loopback or address.is_link_local:
+                return None
+    except (ValueError, OSError):
+        return None
+    class LimitedRedirect(HTTPRedirectHandler):
+        count = 0
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            self.count += 1
+            if self.count > 3:
+                raise OSError("too many redirects")
+            return super().redirect_request(req, fp, code, msg, headers, newurl)
+    try:
+        response = build_opener(LimitedRedirect()).open(Request(url, headers={"User-Agent": "JobEvolution/1.0"}), timeout=5)
+        final = _valid_url(response.geturl())
+        body = response.read(1_000_001)
+        if not final or len(body) > 1_000_000:
+            return None
+        title = re.search(rb"<title[^>]*>(.*?)</title>", body, re.I | re.S)
+        text = re.sub(r"\s+", " ", title.group(1).decode("utf-8", "ignore")) if title else ""
+        return final if skill.casefold() in text.casefold() else None
+    except (OSError, ValueError):
+        return None
+
+
 def lookup_resource(skill_id: str, name: str, complete_json=None) -> str:
     key = f"resource:{skill_id}" if skill_id else ""
     if key:
@@ -48,6 +82,7 @@ def lookup_resource(skill_id: str, name: str, complete_json=None) -> str:
         if cached:
             return cached
     url = _preset_url(name)
+    preset = url is not None
     if url is None:
         if complete_json is None:
             from app.llm.client import complete_json as complete_json
@@ -62,10 +97,23 @@ def lookup_resource(skill_id: str, name: str, complete_json=None) -> str:
         except Exception:
             url = None
     if not url:
-        url = "https://www.bing.com/search?q=" + quote(name or skill_id or "skill")
+        return ""
+    if not preset:
+        url = _verify_resource(url, name or skill_id) or ""
     if key:
         cache_set(key, url, RESOURCE_TTL)
     return url
+
+
+def revalidate_resource(skill_id: str, name: str) -> bool:
+    key = f"resource:{skill_id}" if skill_id else ""
+    cached = cache_get(key) if key else None
+    if not cached or _preset_url(name):
+        return bool(cached)
+    if _verify_resource(cached, name):
+        cache_set(key, cached, RESOURCE_TTL)
+        return True
+    return False
 
 
 def neighbor_name(job_name: str) -> str | None:
