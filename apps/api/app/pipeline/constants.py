@@ -1,5 +1,13 @@
 import os
 
+# ADR-0012：技能点定义的唯一权威出处。金标起草（app/eval/draft.py）与管线抽取
+# （app/pipeline/extract.py）共用这一段——定义同步、提示词各自成文。
+# 改这里 = 改技能点规格 = 金标须按 ADR-0011 重新起草裁决。
+SKILL_DEFINITION = (
+    "技能点指原文中明确写出的：工具、语言、框架、平台、方法、领域知识。"
+    "只从原文提取，逐字或最小归一化；原文没写的不要推断，不要泛化成类目名。"
+)
+
 COVERAGE_THRESHOLD = 0.30
 # 0.70 为 bge-m3 余弦校准值（金标 mention 变体互近邻配对，F1 峰值），哈希兜底时代是 0.85
 ALIGN_THRESHOLD = float(os.environ.get("ALIGN_THRESHOLD", "0.70"))
@@ -29,7 +37,7 @@ ALIAS_PRE_FILTER = (
 FAT_JOB_SOURCES = 30
 FAT_SLICE_CAP = 8
 ALIAS_CAP = 20
-EXTRACT_CACHE_VERSION = 1
+EXTRACT_CACHE_VERSION = 3
 
 SKILL_CATEGORIES = {
     "language": "语言",

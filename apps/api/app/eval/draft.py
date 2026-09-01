@@ -8,13 +8,13 @@ from datetime import date
 
 from app.eval.io import read_jsonl
 from app.eval.paths import eval_dir
+from app.pipeline.constants import SKILL_DEFINITION
 
 PROMPT_VERSION = "gold-draft-v1"
 
 SYSTEM = (
-    "你是金标标注员。只从给出的原文里抽出明确写出的技能点：工具、语言、框架、平台、"
-    "方法、领域知识。逐字或最小归一化地保留原文措辞；原文没写的不要推断，不要泛化成"
-    "类目名。输出 JSON：{\"skills\": [\"原文措辞\", ...]}，没有则为空数组。"
+    f"你是金标标注员。{SKILL_DEFINITION}"
+    "保留原文措辞。输出 JSON：{\"skills\": [\"原文措辞\", ...]}，没有则为空数组。"
 )
 
 

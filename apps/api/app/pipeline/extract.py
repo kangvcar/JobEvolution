@@ -4,23 +4,28 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from app.pipeline.constants import SKILL_CATEGORIES
+from app.pipeline.constants import SKILL_CATEGORIES, SKILL_DEFINITION
 from app.targets import JOB_TARGET_NAMES
 
+# 单段抽取。曾试验两段式（先列表后补字段，ADR-0012 草案），实测 R 反降
+# （0.729 → 0.604，enrich 丢名单项），回退单段；列表行为已由金标起草侧验证。
 SYSTEM_PROMPT = (
-    "Extract JD JSON. Fields: job_name, domain, target, skills. "
-    "domain must be one of: ai, data, system, iot. "
-    "target is the canonical job name from this list that the JD title matches, "
-    f"or empty if none does: {'、'.join(JOB_TARGET_NAMES)}. "
-    "Each skill: name, kind, proficiency, confidence, excerpt, section, category. "
-    "kind must be required or bonus. "
-    "proficiency must be aware, able, or expert. "
-    "section must be duty, requirement, benefit, or intro. "
-    "category must be one of: "
+    "从 JD 抽取 JSON。字段：job_name、domain、target、skills。"
+    + SKILL_DEFINITION + " "
+    "逐句检查职责与要求段，句中出现的每一个技能点都要列出，宁全勿缺："
+    "工具与方法、领域知识都要收，不要因为已经列了很多而省略其余。"
+    "三点边界：基础学科与通用能力（数学、算法、计算机、沟通能力、团队合作等）"
+    "只要原文作为要求写出，同样算技能点；并列串写的技术要拆开，"
+    "「C/C++/Java」拆成 C、C++、Java 三条；技能点名用原文的完整词。"
+    "domain 必须是 ai、data、system、iot 之一。"
+    "target 是岗位标题能对上的规范岗位名，对不上则为空，候选："
+    f"{'、'.join(JOB_TARGET_NAMES)}。"
+    "每个技能点字段：name、kind、proficiency、confidence、excerpt、section、category。"
+    "kind 只能 required 或 bonus；proficiency 只能 aware、able、expert；"
+    "section 只能 duty 或 requirement；category 必须是："
     + ", ".join(SKILL_CATEGORIES)
-    + ". "
-    "confidence is 0-1. excerpt is a verbatim substring of the JD. "
-    "Skills only from duty/requirement. Do not invent other enum values."
+    + "。confidence 为 0-1。excerpt 是包含该技能点的最短原文片段。"
+    "不要发明枚举值。"
 )
 
 _KIND = {
@@ -172,6 +177,13 @@ def coerce_extracted(payload: dict) -> dict:
 
 def parse_extracted(complete_json, snapshot: dict | None = None) -> ExtractedJd:
     snap = snapshot or {}
+    body = snap.get("body") or ""
+    if body:
+        # 只喂职责/要求段：与金标 section 规则一致，福利/介绍不再进模型视野
+        from app.pipeline.sections import split_sections
+
+        parts = split_sections(body)
+        body = f"{parts['duty']}\n{parts['requirement']}".strip() or body
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {
@@ -179,7 +191,7 @@ def parse_extracted(complete_json, snapshot: dict | None = None) -> ExtractedJd:
             "content": (
                 f"title: {snap.get('title') or ''}\n"
                 f"domain: {snap.get('domain') or ''}\n"
-                f"body:\n{snap.get('body') or ''}"
+                f"body:\n{body}"
             ),
         },
     ]
