@@ -1,15 +1,17 @@
-"""Local embeddings. Not a DeepSeek call."""
+"""Embeddings. SiliconFlow bge-m3 when EMBED_API_KEY is set, hash fallback otherwise."""
 
 from __future__ import annotations
 
 import hashlib
 import math
+import os
 
 _DIM = 64
+_CHUNK = 32
 
 
 def _ngram_vec(text: str) -> list[float]:
-    # ponytail: char 3-gram hash embed, swap for BAAI/bge-m3 when eval F1 needs it
+    # ponytail: char 3-gram hash embed，只认词面；配 EMBED_API_KEY 走远端 bge-m3，断网/欠费直接抛不降级
     vec = [0.0] * _DIM
     s = (text or "").casefold()
     if not s:
@@ -22,7 +24,24 @@ def _ngram_vec(text: str) -> list[float]:
     return vec
 
 
+def _remote(texts: list[str]) -> list[list[float]]:
+    from openai import OpenAI
+
+    client = OpenAI(
+        base_url=os.environ.get("EMBED_BASE_URL", "https://api.siliconflow.cn/v1"),
+        api_key=os.environ["EMBED_API_KEY"],
+    )
+    model = os.environ.get("EMBED_MODEL", "BAAI/bge-m3")
+    out: list[list[float]] = []
+    for i in range(0, len(texts), _CHUNK):
+        resp = client.embeddings.create(model=model, input=texts[i : i + _CHUNK])
+        out.extend(item.embedding for item in resp.data)
+    return out
+
+
 def embed(texts: list[str]) -> list[list[float]]:
+    if os.environ.get("EMBED_API_KEY"):
+        return _remote(texts)
     return [_ngram_vec(t) for t in texts]
 
 
