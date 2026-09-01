@@ -19,8 +19,14 @@ RESUME_WORKERS = 4
 
 
 def _index() -> list[dict]:
-    path = eval_dir() / "skills.json"
-    rows = json.loads(path.read_text(encoding="utf-8"))
+    rows = json.loads((eval_dir() / "skills.json").read_text(encoding="utf-8"))
+    # 索引必须带嵌入：align_skill 的余弦分支对无 embedding 的词条直接跳过，
+    # 缺了它评测对齐退化成纯精确匹配，与生产口径（冻结阈值余弦）不符
+    from app.llm.embed import embed
+
+    vectors = embed([row["name"] for row in rows])
+    for row, vec in zip(rows, vectors, strict=True):
+        row["embedding"] = vec
     return rows
 
 

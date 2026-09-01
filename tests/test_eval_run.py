@@ -17,18 +17,27 @@ def test_unmocked_three_items_read_freeze_not_env(monkeypatch, tmp_path):
 
     def fake_complete_json(messages):
         content = (messages or [{}])[-1].get("content") or ""
+        from app.pipeline.sections import split_sections
+
+        from app.pipeline.sections import split_sections
+
         for item in items:
+            head = f"title: {item.get('title') or item.get('job_name') or ''}"
+            if head == "title: " or head not in content:
+                continue
             text = item.get("text") or ""
-            if text and text in content:
+            parts = split_sections(text)
+            sliced = f"{parts['duty']}\n{parts['requirement']}".strip()
+            if sliced and sliced in content:
                 title = item.get("title") or item.get("job_name") or "岗"
                 skills = [
                     {
-                        "name": row.get("name") or row.get("id"),
+                        "name": row.get("name") or names.get(row.get("id")) or row.get("id"),
                         "kind": "required",
                         "section": "requirement",
                         "proficiency": "able",
                         "confidence": 0.9,
-                        "excerpt": row.get("name") or "",
+                        "excerpt": row.get("name") or names.get(row.get("id")) or "",
                     }
                     for row in (item.get("skills") or [])
                     if isinstance(row, dict)
