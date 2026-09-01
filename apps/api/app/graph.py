@@ -1,5 +1,6 @@
 import json
 import os
+import hashlib
 from datetime import datetime
 
 from neo4j import GraphDatabase
@@ -21,6 +22,7 @@ _CONSTRAINTS = (
     "CREATE CONSTRAINT skill_category_id IF NOT EXISTS FOR (n:SkillCategory) REQUIRE n.id IS UNIQUE",
     "CREATE CONSTRAINT evidence_id IF NOT EXISTS FOR (n:Evidence) REQUIRE n.id IS UNIQUE",
     "CREATE CONSTRAINT evolution_event_id IF NOT EXISTS FOR (n:EvolutionEvent) REQUIRE n.id IS UNIQUE",
+    "CREATE CONSTRAINT requirement_version_id IF NOT EXISTS FOR (n:RequirementVersion) REQUIRE n.id IS UNIQUE",
     "CREATE INDEX evolution_event_at IF NOT EXISTS FOR (n:EvolutionEvent) ON (n.at)",
 )
 
@@ -256,6 +258,60 @@ def apply_requires(payload: dict) -> None:
     if _driver is None:
         return
     with _driver.session() as session:
+        valid_from = payload.get("valid_from") or datetime.now().isoformat()
+        # Business fields define identity; evidence can change without creating a new fact.
+        signature_payload = {
+            key: payload.get(key)
+            for key in ("job_id", "skill_id", "kind_edge", "proficiency", "weight", "levels", "layer")
+        }
+        signature = hashlib.sha256(
+            json.dumps(signature_payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()[:24]
+        session.run(
+            "MERGE (j:Job {id: $job_id}) SET j.name = coalesce($job_name, j.name) "
+            "MERGE (s:Skill {id: $skill_id}) SET s.name = coalesce($skill_name, s.name)",
+            job_id=payload["job_id"], job_name=payload.get("job_name") or "",
+            skill_id=payload["skill_id"], skill_name=payload.get("skill_name") or "",
+        )
+        version_id = f"reqv-{payload['job_id']}-{payload['skill_id']}-{signature}"
+        session.run(
+            """
+            MATCH (j:Job {id: $job_id})
+            OPTIONAL MATCH (j)-[old:REQUIRES_VERSION {active: true}]->(previous:RequirementVersion)
+            WHERE previous.skill_id = $skill_id AND previous.signature <> $signature
+            SET old.active = false, previous.valid_to = datetime($valid_from)
+            """,
+            job_id=payload["job_id"], skill_id=payload["skill_id"], signature=signature, valid_from=valid_from,
+        )
+        session.run(
+            """
+            MERGE (v:RequirementVersion {id: $id})
+            ON CREATE SET v.created_at = datetime($valid_from), v.valid_from = datetime($valid_from)
+            SET v.signature = $signature, v.job_id = $job_id, v.skill_id = $skill_id,
+                v.kind = $kind, v.proficiency = $proficiency, v.weight = $weight,
+                v.levels = $levels, v.layer = $layer, v.confidence = $confidence,
+                v.valid_to = null, v.sources = $sources, v.excerpt = $excerpt
+            WITH v
+            MATCH (j:Job {id: $job_id})
+            MATCH (s:Skill {id: $skill_id})
+            MERGE (j)-[rv:REQUIRES_VERSION {id: $id}]->(v)
+            SET rv.active = true
+            MERGE (v)-[:FOR_SKILL]->(s)
+            """,
+            id=version_id,
+            signature=signature,
+            job_id=payload["job_id"],
+            skill_id=payload["skill_id"],
+            kind=payload.get("kind_edge") or "required",
+            proficiency=payload.get("proficiency") or "able",
+            weight=float(payload.get("weight") or 1),
+            levels=payload.get("levels") or ["junior", "mid", "senior"],
+            layer=payload.get("layer") or "low",
+            confidence=float(payload.get("confidence") or 0),
+            sources=list(payload.get("sources") or []),
+            excerpt=payload.get("excerpt") or "",
+            valid_from=valid_from,
+        )
         session.run(
             """
             MERGE (j:Job {id: $job_id})
@@ -294,6 +350,18 @@ def apply_requires(payload: dict) -> None:
             excerpt=payload.get("excerpt") or "",
             valid_from=payload.get("valid_from") or datetime.now().isoformat(),
         )
+        evidence_ids = list(payload.get("sources") or [])
+        if evidence_ids:
+            session.run(
+                """
+                MATCH (v:RequirementVersion {id: $id})
+                UNWIND $evidence_ids AS evidence_id
+                MATCH (e:Evidence {id: evidence_id})
+                MERGE (v)-[:SUPPORTED_BY]->(e)
+                """,
+                id=version_id,
+                evidence_ids=evidence_ids,
+            )
         watching = payload.get("watching")
         if watching:
             session.run(
@@ -310,6 +378,24 @@ def list_requires(job_id: str) -> list[dict]:
     with _driver.session() as session:
         rows = session.run(
             """
+            MATCH (j:Job {id: $id})-[:REQUIRES_VERSION {active: true}]->(v:RequirementVersion)-[:FOR_SKILL]->(s:Skill)
+            OPTIONAL MATCH (s)-[:IN_CATEGORY]->(c:SkillCategory)
+            OPTIONAL MATCH (v)-[:SUPPORTED_BY]->(e:Evidence)
+            WITH s, v, c, collect(e.id) AS evidence_ids
+            RETURN s.id AS skill_id, s.name AS name, v.kind AS kind,
+                   c.id AS category_id, c.name AS category,
+                   v.proficiency AS proficiency, v.layer AS layer,
+                   v.confidence AS confidence, coalesce(v.sources, evidence_ids) AS sources,
+                   v.levels AS levels, v.weight AS weight,
+                   coalesce(v.excerpt, '') AS excerpt,
+                   toString(v.valid_from) AS valid_from, toString(v.valid_to) AS valid_to
+            """,
+            id=job_id,
+        )
+        out = [dict(row) for row in rows]
+        if not out:
+            rows = session.run(
+                """
             MATCH (j:Job {id: $id})-[r:REQUIRES]->(s:Skill)
             WHERE r.valid_to IS NULL
             OPTIONAL MATCH (s)-[:IN_CATEGORY]->(c:SkillCategory)
@@ -322,8 +408,8 @@ def list_requires(job_id: str) -> list[dict]:
                    toString(r.valid_from) AS valid_from, toString(r.valid_to) AS valid_to
             """,
             id=job_id,
-        )
-        out = [dict(row) for row in rows]
+            )
+            out = [dict(row) for row in rows]
     if any(not (row.get("excerpt") or "").strip() for row in out):
         by_skill: dict[str, str] = {}
         for event in list_job_events(job_id):
@@ -882,4 +968,3 @@ def build_feed() -> dict:
         "pending": pending,
         "barred": barred,
     }
-
