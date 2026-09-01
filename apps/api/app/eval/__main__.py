@@ -7,7 +7,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="三项评测与提交物")
     parser.add_argument(
         "cmd",
-        choices=("build", "jd", "resume", "match", "deliver", "report"),
+        choices=("build", "draft", "jd", "resume", "match", "deliver", "report"),
     )
     parser.add_argument("--mock", action="store_true")
     parser.add_argument("--coverage", type=float, default=None)
@@ -17,6 +17,10 @@ def main(argv: list[str] | None = None) -> int:
         from app.eval.gold import main as build
 
         return build()
+    if args.cmd == "draft":
+        from app.eval.draft import main as draft
+
+        return draft()
     if args.cmd == "deliver":
         from app.eval.deliver import main as dump
 

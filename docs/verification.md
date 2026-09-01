@@ -56,6 +56,8 @@ JSONL 一行为一条。技能点一律写图谱 `Skill.id`（归一化后），
 
 ## 金标修订
 
+金标草稿可由 LLM 只读 JD / 简历原文起草，留痕进 `notes`，见 [ADR-0011](adr/0011-llm-drafts-gold-human-adjudicates.md)。
+
 修订金标按两段走。第一段盲改：只看 JD 或简历原文与图谱技能词表，逐条校对 `job_id`、`skills`、`proficiency`，不看任何系统预测输出。第二段裁决：可以拿系统预测当找分歧的探测器，两边不一致的条目逐条回到原文裁决，结论必须能引原文或词表佐证，理由写进 `notes`。禁止只以「系统预测是 X」为由把金标改成 X。修订后必须重跑未 mock 的三项，并更新 `summary.md`。
 
 ## 三项准确率
@@ -123,7 +125,7 @@ data/eval/deliver/llm-app/
 
 `io.md` 用真字段名：`job_id`、`Skill.id`、`kind`、`proficiency`、`valid_from` / `valid_to`、`review`。不要截 UI 图当唯一提交物。诊断默认岗是大模型应用工程师，对照报告示例可附一份金标简历 → 档位与缺口集，放在 `llm-app/diagnose.example.json`。
 
-生成：`data/` 本地表跑完管线后，把这两岗的结构化结果 dump 进 `deliver/`，再人工改金标不一致处。不要手写萌芽状态或演化事件。`io.md` 必须对得上这次管线产出的 `EvolutionEvent`。别名「LLM 业务工程师」写进 `llm-app` 的 `ALIAS_OF` 示例，证明判别不是新岗。
+生成：`data/` 本地表跑完管线后，把这两岗的结构化结果 dump 进 `deliver/`，再人工改金标不一致处。不要手写萌芽状态或演化事件。`io.md` 必须对得上这次管线产出的 `EvolutionEvent`。别名「大模型应用开发工程师」写进 `llm-app` 的 `ALIAS_OF` 示例，证明判别不是新岗。
 
 ## 报告
 
