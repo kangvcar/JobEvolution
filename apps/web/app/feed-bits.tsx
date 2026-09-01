@@ -1,6 +1,13 @@
 type PipeRow = { source: string; n: number };
-type HeatRow = { name: string; v: number; hot?: boolean; dead?: boolean };
+type HeatRow = { name: string; v: number };
 type EventRow = { at: string; text: string; review?: string };
+
+export function kindLabel(kind: string) {
+  if (kind === "requires_add") return "要求边新增";
+  if (kind === "job_status") return "岗位状态流转";
+  if (kind === "extract_failed") return "抽取失败";
+  return kind;
+}
 
 export function Pipe({ rows }: { rows: PipeRow[] }) {
   const max = Math.max(1, ...rows.map((row) => row.n));
@@ -27,7 +34,7 @@ export function Heat({ rows }: { rows: HeatRow[] }) {
           <tr key={row.name}>
             <td>{row.name}</td>
             <td>
-              <span className={`heat-track${row.dead ? " dead" : row.hot ? " hot" : ""}`}>
+              <span className="heat-track">
                 <i style={{ width: `${Math.min(100, row.v)}%` }} />
               </span>
             </td>

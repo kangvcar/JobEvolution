@@ -14,3 +14,17 @@ from app.main import app
 def client():
     with TestClient(app) as c:
         yield c
+
+
+def graph_clean(suffix: str) -> None:
+    from app import graph
+
+    graph.init_graph()
+    with graph._driver.session() as session:
+        for label in ("Job", "Evidence", "EvolutionEvent"):
+            session.run(
+                f"MATCH (n:{label}) WHERE n.id CONTAINS $s "
+                "OR coalesce(n.name, '') CONTAINS $s "
+                "OR coalesce(n.payload, '') CONTAINS $s DETACH DELETE n",
+                s=suffix,
+            )

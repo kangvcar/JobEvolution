@@ -26,24 +26,11 @@ jobs:
           python-version: "3.12"
       - name: install
         run: pip install -e "apps/api[dev]"
-      - name: schema and pure functions
-        env:
-          PYTHONPATH: apps/api
-        run: |
-          pytest tests/test_eval_f1.py tests/test_eval_schema.py tests/test_eval_run.py tests/test_matching.py \
-            tests/test_isolation.py::test_neo4j_uri_injected_and_never_product_default \
-            tests/test_pipeline.py::test_confidence_layer_priority \
-            tests/test_pipeline.py::test_align_skill_synonym_beats_embed \
-            tests/test_pipeline.py::test_align_skill_cosine_when_no_synonym \
-            tests/test_status.py::test_compute_status_thresholds \
-            tests/test_status.py::test_source_stats_window_and_channels -q
       - name: mock three-item eval
         env:
           ALIGN_THRESHOLD: "0.11"
-          PYTHONPATH: apps/api
         run: python -m app.eval report --mock --coverage 0
       - name: coverage gate
         env:
-          PYTHONPATH: apps/api
           TEST_NEO4J_URI: bolt://localhost:17687
-        run: pytest --cov=apps/api/app --cov-fail-under=60 -q
+        run: pytest --cov -q

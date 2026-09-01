@@ -94,9 +94,8 @@ def main(argv: list[str] | None = None) -> int:
         redis=redis,
         on_evidence=on_evidence,
     )
-    flush = getattr(on_evidence, "flush", None)
-    if callable(flush):
-        flush()
+    if on_evidence is not None:
+        on_evidence.flush()
     print(json.dumps(stats, ensure_ascii=False, indent=2))
     return 0
 

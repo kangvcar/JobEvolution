@@ -1,8 +1,0 @@
-{
-  "task": "resume",
-  "mock": false,
-  "precision": 1.0,
-  "recall": 0.98625,
-  "f1": 0.9902424242424243,
-  "n": 100
-}

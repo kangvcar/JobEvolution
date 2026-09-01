@@ -5,6 +5,7 @@ from datetime import datetime
 from neo4j import GraphDatabase
 
 from app.pipeline.constants import SKILL_CATEGORIES
+from app.pipeline.status import source_stats
 
 DOMAINS = [
     {"id": "ai", "name": "人工智能"},
@@ -28,6 +29,8 @@ _driver = None
 
 def init_graph():
     global _driver
+    if _driver is not None:
+        return
     uri = os.environ.get("NEO4J_URI", "bolt://localhost:7687")
     driver = GraphDatabase.driver(
         uri,
@@ -111,29 +114,6 @@ def list_jobs(*, domain: str | None, status: str | None, q: str | None,
                 level=level,
             )
         ]
-
-
-def upsert_evidence(
-    *,
-    id: str,
-    path: str,
-    source: str,
-    company: str,
-    observed_at: str,
-    simhash: str,
-) -> None:
-    upsert_evidence_many(
-        [
-            {
-                "id": id,
-                "path": path,
-                "source": source,
-                "company": company,
-                "observed_at": observed_at,
-                "simhash": simhash,
-            }
-        ]
-    )
 
 
 def upsert_evidence_many(rows: list[dict]) -> None:
@@ -552,18 +532,16 @@ def list_requires_history(job_id: str) -> list[dict]:
         return [dict(row) for row in rows]
 
 
-def period_delta(job_id: str, period_start: str | None = None) -> dict:
+def period_delta(job_id: str) -> dict:
     rows = list_requires_history(job_id)
-    if period_start is None:
-        stamps = [
-            (row.get("valid_from") or "")[:10]
-            for row in rows
-            if row.get("valid_from") or row.get("valid_to")
-        ] + [(row.get("valid_to") or "")[:10] for row in rows if row.get("valid_to")]
-        latest = max(stamps) if stamps else datetime.now().strftime("%Y-%m-%d")
-        period_start = f"{latest[:4]}-01-01"
-    start = period_start
-    added, promoted, expired = [], [], []
+    stamps = [
+        (row.get("valid_from") or "")[:10]
+        for row in rows
+        if row.get("valid_from") or row.get("valid_to")
+    ] + [(row.get("valid_to") or "")[:10] for row in rows if row.get("valid_to")]
+    latest = max(stamps) if stamps else datetime.now().strftime("%Y-%m-%d")
+    start = f"{latest[:4]}-01-01"
+    added, expired = [], []
     for row in rows:
         valid_from = row.get("valid_from") or ""
         valid_to = row.get("valid_to") or ""
@@ -577,7 +555,7 @@ def period_delta(job_id: str, period_start: str | None = None) -> dict:
             expired.append(item)
         elif (not valid_to) and valid_from[:10] >= start:
             added.append(item)
-    return {"added": added, "promoted": promoted, "expired": expired}
+    return {"added": added, "expired": expired}
 
 
 def list_job_events(job_id: str) -> list[dict]:
@@ -606,12 +584,6 @@ def list_job_events(job_id: str) -> list[dict]:
 FORMED_SLICE = 3
 _STORY_DISCOVER = "Agent 工程师"
 _STORY_UPDATE = "大模型应用工程师"
-
-
-def _source_stats(rows: list[dict]) -> tuple[int, int, int]:
-    from app.pipeline.status import source_stats
-
-    return source_stats(rows)
 
 
 def list_aliases_in(job_id: str) -> list[dict]:
@@ -648,7 +620,7 @@ def _board_item(row: dict) -> dict:
         for ev in (row.get("evidence") or [])
         if ev and ev.get("company")
     ]
-    _, n_total, _ = _source_stats(evidence)
+    _, n_total, _ = source_stats(evidence)
     return {
         "id": row["id"],
         "name": row["name"],
@@ -690,7 +662,7 @@ def _rank_formed(items: list[dict]) -> list[dict]:
     scored = []
     for item in items:
         delta = period_delta(item["id"])
-        n = len(delta["added"]) + len(delta["promoted"]) + len(delta["expired"])
+        n = len(delta["added"]) + len(delta["expired"])
         prefer = 1 if item["name"] == _STORY_UPDATE else 0
         scored.append((prefer, n, item))
     scored.sort(key=lambda row: (row[0], row[1]), reverse=True)
@@ -713,7 +685,7 @@ def discover_dossier(job_id: str) -> dict | None:
     if job is None:
         return None
     evidence = list_job_evidence(job_id)
-    n_window, n_total, _ = _source_stats(evidence)
+    n_window, n_total, _ = source_stats(evidence)
     companies = []
     seen = set()
     for row in evidence:
@@ -743,7 +715,7 @@ def _pick_named(items: list[dict], name: str) -> dict | None:
 
 def _story(kind: str, job: dict) -> dict:
     evidence = list_job_evidence(job["id"])
-    _, n_total, _ = _source_stats(evidence)
+    _, n_total, _ = source_stats(evidence)
     delta = period_delta(job["id"])
     added = [row["name"] for row in delta["added"]]
     expired = [row["name"] for row in delta["expired"]]

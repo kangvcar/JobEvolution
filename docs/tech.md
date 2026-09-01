@@ -198,7 +198,7 @@ JSON，UTF-8。错误体 `{ "error": str, "detail": str | null }`。管理路由
 | GET | `/meta` | 四领域、演示统计。直通开关只在管理路由返回 |
 | GET | `/jobs` | 列表。query：`domain`，`status`，`q`。无口令丢掉 `candidate`；`status=candidate` 无口令返回空列表 |
 | GET | `/jobs/{id}` | 定义、独立源数、技能点表、证据摘要。candidate 无口令 404 |
-| GET | `/graph/jobs/{id}` | 当前岗切片：类目、技能点、`REQUIRES`（按 `levels` 过滤）、`period_delta`（`added` / `promoted` / `expired` + `event_id`）。expired 是本周期已写 `valid_to` 的边，给切片差分挂「本周期失效」。candidate 404 |
+| GET | `/graph/jobs/{id}` | 当前岗切片：类目、技能点、`REQUIRES`（按 `levels` 过滤）、`period_delta`（`added` / `expired`）。expired 是本周期已写 `valid_to` 的边，给切片差分挂「本周期失效」。candidate 404 |
 | POST | `/sessions` | multipart 简历 → `{session_id, skills, preview_text}` |
 | POST | `/diagnose` | `{session_id, job_id, levels?}` → 对照报告。含换档条件与按此排序的学习路径、邻近岗档位。`job_id` 为 candidate 时 400。前端可用 query `session_id` + `job_id` 自动再 POST |
 | GET | `/discover` | 候选 / 萌芽 / 成型看板。有 `ALIAS_OF` 出边的岗不进候选列 |
@@ -217,7 +217,7 @@ JSON，UTF-8。错误体 `{ "error": str, "detail": str | null }`。管理路由
 
 ## DeepSeek 集成
 
-`app/llm/client.py` 是唯一打 DeepSeek 的地方。其它模块只依赖 `complete_json(schema, messages) -> dict` 和 `complete_text(messages) -> str`。
+`app/llm/client.py` 是唯一打 DeepSeek 的地方。其它模块只依赖 `complete_json(messages) -> dict`（内部对传输错误重试一次）。
 
 ```
 DEEPSEEK_API_KEY     必填

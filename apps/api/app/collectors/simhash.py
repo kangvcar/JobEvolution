@@ -52,8 +52,8 @@ def format_simhash(value: int) -> str:
 class SimhashIndex:
     """Banded lookup so Hamming ≤3 is not a full scan. ponytail: 4×16-bit bands, rebuild if ingest >>100k."""
 
-    def __init__(self, distance: int = NEAR_DUP_DISTANCE):
-        self.distance = distance
+    def __init__(self):
+        self.distance = NEAR_DUP_DISTANCE
         self._items: list[tuple[int, object]] = []
         self._bands: list[dict[int, list[int]]] = [defaultdict(list) for _ in range(4)]
 

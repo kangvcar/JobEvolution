@@ -109,8 +109,7 @@ def main(argv: list[str] | None = None) -> int:
     from app import graph
     from app.pipeline.gate import run_extract_and_gate, set_passthrough
 
-    if graph._driver is None:
-        graph.init_graph()
+    graph.init_graph()
     if args.passthrough:
         set_passthrough(True)
     events = run_extract_and_gate(snaps, workers=args.workers, cache=not args.no_cache)

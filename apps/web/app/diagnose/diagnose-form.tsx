@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
@@ -35,7 +35,7 @@ type Report = {
       slice: {
         categories?: { id: string; name: string }[];
         requires?: Requirement[];
-        period_delta?: { added?: Requirement[]; promoted?: Requirement[]; expired?: Requirement[] };
+        period_delta?: { added?: Requirement[]; expired?: Requirement[] };
       };
     };
     act: {
@@ -80,7 +80,7 @@ export function DiagnoseForm() {
   }, [params]);
 
   useEffect(() => {
-    const sid = params.get("session_id") || params.get("session");
+    const sid = params.get("session_id");
     const jid = params.get("job_id") || params.get("job");
     if (sid && jid) {
       setSessionId(sid);
@@ -97,10 +97,10 @@ export function DiagnoseForm() {
     return () => window.clearInterval(id);
   }, [phase]);
 
-  const link = useMemo(() => {
-    if (!sessionId || !jobId || typeof window === "undefined") return "";
-    return `${window.location.origin}/diagnose?session_id=${sessionId}&job_id=${jobId}`;
-  }, [sessionId, jobId]);
+  const link =
+    sessionId && jobId && typeof window !== "undefined"
+      ? `${window.location.origin}/diagnose?session_id=${sessionId}&job_id=${jobId}`
+      : "";
 
   async function runDiagnose(sid: string, jid: string, stayDone = false) {
     abort.current?.abort();
@@ -176,7 +176,7 @@ export function DiagnoseForm() {
     for (const skill of delta.expired || []) {
       if (!requires.some((item) => item.skill_id === skill.skill_id)) requires.push(skill);
     }
-    const changed = new Set([...(delta.added || []), ...(delta.promoted || [])].map((row) => row.skill_id));
+    const changed = new Set((delta.added || []).map((row) => row.skill_id));
     const categories = slice?.categories?.length
       ? [...slice.categories]
       : [...new Set(requires.map((row) => row.category).filter(Boolean))].map((name) => ({ id: name as string, name: name as string }));

@@ -46,7 +46,7 @@ DeepSeek JSON + Pydantic。技能字符串先聚类成 `Skill`，再 `align_skil
 
 ### 6. 评测与提交物
 
-按 [`verification.md`](verification.md) 建 `data/eval/`，冻 `freeze.json`，三项 F1 脚本 + `pytest --cov-fail-under=60`。dump `deliver/agent` 与 `deliver/llm-app`。
+按 [`verification.md`](verification.md) 建 `data/eval/`，冻 `freeze.json`，三项 F1 脚本 + `pytest --cov`。dump `deliver/agent` 与 `deliver/llm-app`。
 
 完成：三项 ≥0.90（未 mock 的本地跑，写入 `summary.md`）、覆盖率 ≥60%、两岗 io.md 有真字段。ATS / NCSS 有则补，没有不挡提交。CI 的 mock F1 不是提交分。
 

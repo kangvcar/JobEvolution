@@ -92,10 +92,7 @@ def shift_set(
                 ordered.extend([left, right])
                 used.add(left["id"])
                 used.add(right["id"])
-                paired = True
                 break
-        if not paired and left["id"] not in used:
-            continue
     leftover = [row for row in rest if row["id"] not in used]
     ordered.extend(leftover)
     return [row["id"] for row in ordered]

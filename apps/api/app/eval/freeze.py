@@ -16,7 +16,6 @@ def load_freeze() -> dict:
     data = json.loads(path.read_text(encoding="utf-8"))
     _cache = {
         "align_threshold": float(data["align_threshold"]),
-        "job_align_threshold": float(data.get("job_align_threshold") or 0.80),
         "model": data.get("model") or "",
         "date": data.get("date") or "",
         "path": str(path),

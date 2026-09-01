@@ -22,15 +22,10 @@ from app.pipeline.gate import (
 )
 from app.pipeline.sections import section_of, split_sections
 from app.pipeline.status import job_id_for
+from conftest import graph_clean
 
 
 ADMIN = os.environ.get("ADMIN_PASSWORD", "change-me")
-
-
-def _client():
-    from app.main import app
-
-    return TestClient(app)
 
 
 def test_confidence_layer_priority():
@@ -66,16 +61,16 @@ def test_align_skill_cosine_when_no_synonym():
     assert miss is None
 
 
-def test_extract_retries_then_fails():
+def test_extract_bad_payload_fails():
     calls = {"n": 0}
 
-    def bad(_schema, _messages):
+    def bad(_messages):
         calls["n"] += 1
         return {"nope": True}
 
     with pytest.raises(ValueError):
-        parse_extracted(bad, retry=True)
-    assert calls["n"] == 2
+        parse_extracted(bad)
+    assert calls["n"] == 1
 
 
 def test_match_target_prefers_longer_names():
@@ -165,7 +160,7 @@ def test_extract_cache_hits_on_second_run(tmp_path):
     snaps = _jd_snaps(tmp_path, suffix, excerpt="熟悉 FastAPI", confidence=0.9)
     calls = {"n": 0}
 
-    def counting(_schema, _messages):
+    def counting(_messages):
         calls["n"] += 1
         return {
             "job_name": "大模型应用工程师",
@@ -191,7 +186,7 @@ def test_extract_cache_hits_on_second_run(tmp_path):
     adds2 = [e for e in events2 if e.get("kind") == "requires_add"]
     assert adds1 and adds2
     assert [e["id"] for e in adds1] == [e["id"] for e in adds2]
-    _cleanup(graph, suffix)
+    graph_clean(suffix)
 
 
 def test_gate_restores_evidence_for_fresh_graph(tmp_path):
@@ -207,7 +202,7 @@ def test_gate_restores_evidence_for_fresh_graph(tmp_path):
 
     evidence = graph.list_job_evidence(job_id_for("大模型应用工程师"))
     assert {row["id"] for row in evidence} >= {snapshot["id"] for snapshot in snapshots}
-    _cleanup(graph, suffix)
+    graph_clean(suffix)
 
 
 def test_coerce_maps_model_aliases():
@@ -247,7 +242,7 @@ def test_coerce_maps_model_aliases():
 
 
 def test_parse_extracted_accepts_flash_aliases():
-    def flash(_schema, _messages):
+    def flash(_messages):
         return {
             "job_name": "语音算法工程师",
             "domain": "ai",
@@ -263,13 +258,13 @@ def test_parse_extracted_accepts_flash_aliases():
             ],
         }
 
-    parsed = parse_extracted(flash, retry=False)
+    parsed = parse_extracted(flash)
     assert parsed.skills[0].kind == "required"
     assert parsed.skills[0].section == "requirement"
 
 
 def test_extract_requires_excerpt():
-    def ok(_schema, _messages):
+    def ok(_messages):
         return {
             "job_name": "大模型应用工程师",
             "domain": "ai",
@@ -285,7 +280,7 @@ def test_extract_requires_excerpt():
             ],
         }
 
-    parsed = parse_extracted(ok, retry=True)
+    parsed = parse_extracted(ok)
     assert isinstance(parsed, ExtractedJd)
     assert parsed.skills[0].excerpt
 
@@ -309,7 +304,7 @@ def test_extract_failure_enqueues_pending(tmp_path):
     suffix = uuid.uuid4().hex[:8]
     snaps = _jd_snaps(tmp_path, suffix, excerpt="x", confidence=0.9)
 
-    def bad(_schema, _messages):
+    def bad(_messages):
         return {"nope": True}
 
     events = run_extract_and_gate(snaps[:1], complete_json=bad)
@@ -318,23 +313,21 @@ def test_extract_failure_enqueues_pending(tmp_path):
     assert events[0]["review"] == "pending"
     from app import graph
 
-    _cleanup(graph, suffix)
+    graph_clean(suffix)
 
 
-def test_queue_requires_admin_password():
-    client = _client()
+def test_queue_requires_admin_password(client):
     assert client.get("/admin/queue").status_code == 401
     ok = client.get("/admin/queue", headers={"X-Admin-Password": ADMIN})
     assert ok.status_code == 200
     assert isinstance(ok.json(), list)
 
 
-def test_passthrough_default_off_and_low_never_auto(tmp_path):
+def test_passthrough_default_off_and_low_never_auto(tmp_path, client):
     from app import graph
 
     suffix = uuid.uuid4().hex[:8]
     snapshots = _jd_snaps(tmp_path, suffix, excerpt="熟悉 FastAPI", confidence=0.9)
-    client = _client()
     client.put(
         "/admin/passthrough",
         headers={"X-Admin-Password": ADMIN},
@@ -362,10 +355,10 @@ def test_passthrough_default_off_and_low_never_auto(tmp_path):
         headers={"X-Admin-Password": ADMIN},
         json={"enabled": False},
     )
-    _cleanup(graph, suffix)
+    graph_clean(suffix)
 
 
-def test_approve_writes_evidence_id_on_requires(tmp_path):
+def test_approve_writes_evidence_id_on_requires(tmp_path, client):
     from app import graph
 
     suffix = uuid.uuid4().hex[:8]
@@ -377,7 +370,6 @@ def test_approve_writes_evidence_id_on_requires(tmp_path):
     pending = [e for e in events if e.get("review") == "pending"]
     assert pending
     event_id = pending[0]["id"]
-    client = _client()
     denied = client.post(f"/admin/queue/{event_id}/approve")
     assert denied.status_code == 401
     approved = client.post(
@@ -396,10 +388,10 @@ def test_approve_writes_evidence_id_on_requires(tmp_path):
     assert any(s.startswith("ev-") or s.startswith("jd-") or suffix in s for s in sources) or sources
     evidence_ids = {row["id"] for row in snapshots}
     assert evidence_ids & set(sources)
-    _cleanup(graph, suffix)
+    graph_clean(suffix)
 
 
-def test_low_confirm_is_approved_not_auto_passed(tmp_path):
+def test_low_confirm_is_approved_not_auto_passed(tmp_path, client):
     from app import graph
 
     suffix = uuid.uuid4().hex[:8]
@@ -410,7 +402,6 @@ def test_low_confirm_is_approved_not_auto_passed(tmp_path):
     )
     pending = [e for e in events if e.get("review") == "pending" and e.get("payload", {}).get("layer") == "low"]
     assert pending
-    client = _client()
     body = client.post(
         f"/admin/queue/{pending[0]['id']}/approve",
         headers={"X-Admin-Password": ADMIN},
@@ -418,11 +409,11 @@ def test_low_confirm_is_approved_not_auto_passed(tmp_path):
     ).json()
     assert body["review"] == "approved"
     assert body["review"] != "auto_passed"
-    _cleanup(graph, suffix)
+    graph_clean(suffix)
 
 
 def test_extract_target_and_category_coerce():
-    def flash(_schema, _messages):
+    def flash(_messages):
         return {
             "job_name": "大模型平台研发",
             "target": "大模型应用工程师",
@@ -458,7 +449,7 @@ def test_extract_target_and_category_coerce():
             ],
         }
 
-    parsed = parse_extracted(flash, retry=False)
+    parsed = parse_extracted(flash)
     assert parsed.target == "大模型应用工程师"
     assert parsed.skills[0].category == "framework"
     assert parsed.skills[1].category == "language"
@@ -466,7 +457,7 @@ def test_extract_target_and_category_coerce():
 
 
 def test_extract_invalid_target_becomes_empty():
-    def flash(_schema, _messages):
+    def flash(_messages):
         return {
             "job_name": "Agent 工程师",
             "target": "即时配送优化师",
@@ -474,12 +465,12 @@ def test_extract_invalid_target_becomes_empty():
             "skills": [],
         }
 
-    parsed = parse_extracted(flash, retry=False)
+    parsed = parse_extracted(flash)
     assert parsed.target == ""
 
 
 def test_extract_default_target_and_category_when_missing():
-    def flash(_schema, _messages):
+    def flash(_messages):
         return {
             "job_name": "Agent 工程师",
             "domain": "ai",
@@ -495,7 +486,7 @@ def test_extract_default_target_and_category_when_missing():
             ],
         }
 
-    parsed = parse_extracted(flash, retry=False)
+    parsed = parse_extracted(flash)
     assert parsed.target == ""
     assert parsed.skills[0].category == ""
 
@@ -504,7 +495,7 @@ def test_gate_prefers_target_over_embed_align(tmp_path):
     suffix = uuid.uuid4().hex[:8]
     snaps = _jd_snaps(tmp_path, suffix, excerpt="熟悉 LangFrame", confidence=0.9, body="任职要求：熟悉 LangFrame。", companies=("甲", "乙"))
 
-    def complete(_schema, _messages):
+    def complete(_messages):
         return {
             "job_name": "即时配送调度研发",
             "target": "大模型应用工程师",
@@ -525,14 +516,14 @@ def test_gate_prefers_target_over_embed_align(tmp_path):
     adds = [e for e in events if e.get("kind") == "requires_add"]
     assert adds
     assert all(e["payload"]["job_name"] == "大模型应用工程师" for e in adds)
-    _cleanup(graph, suffix)
+    graph_clean(suffix)
 
 
 def test_gate_invalid_target_falls_back_to_align(tmp_path):
     suffix = uuid.uuid4().hex[:8]
     snaps = _jd_snaps(tmp_path, suffix, excerpt="熟悉 LangFrame", confidence=0.9, body="任职要求：熟悉 LangFrame。", companies=("甲", "乙"))
 
-    def complete(_schema, _messages):
+    def complete(_messages):
         return {
             "job_name": "Agent 工程师",
             "target": "即时配送优化师",
@@ -553,7 +544,7 @@ def test_gate_invalid_target_falls_back_to_align(tmp_path):
     adds = [e for e in events if e.get("kind") == "requires_add"]
     assert adds
     assert all(e["payload"]["job_name"] == "Agent 工程师" for e in adds)
-    _cleanup(graph, suffix)
+    graph_clean(suffix)
 
 
 def test_gate_sends_alias_batch_to_cluster_before_target_alignment(tmp_path):
@@ -569,7 +560,7 @@ def test_gate_sends_alias_batch_to_cluster_before_target_alignment(tmp_path):
     for snapshot in snapshots:
         snapshot["alias_candidate"] = True
 
-    def complete(_schema, _messages):
+    def complete(_messages):
         return {
             "job_name": "AI 智能体开发",
             "target": "Agent 工程师",
@@ -589,7 +580,7 @@ def test_gate_sends_alias_batch_to_cluster_before_target_alignment(tmp_path):
     run_extract_and_gate(snapshots, complete_json=complete, workers=1)
     evidence = graph.list_job_evidence(job_id_for("Agent 工程师"))
     assert not {row["id"] for row in evidence} & {snapshot["id"] for snapshot in snapshots}
-    _cleanup(graph, suffix)
+    graph_clean(suffix)
 
 
 def test_gate_ignores_alias_cluster_when_classification_fails(tmp_path):
@@ -605,8 +596,8 @@ def test_gate_ignores_alias_cluster_when_classification_fails(tmp_path):
         snapshot["alias_candidate"] = True
     classifications = {"n": 0}
 
-    def complete(schema, _messages):
-        if schema == {}:
+    def complete(_messages):
+        if "Classify" in _messages[0]["content"]:
             classifications["n"] += 1
             raise APIError(
                 "classification unavailable",
@@ -622,7 +613,7 @@ def test_gate_ignores_alias_cluster_when_classification_fails(tmp_path):
 
     assert run_extract_and_gate(snapshots, complete_json=complete, workers=1) == []
     assert classifications["n"] == 1
-    _cleanup(graph, suffix)
+    graph_clean(suffix)
 
 
 def test_gate_merges_large_alias_cluster_into_target(tmp_path):
@@ -638,8 +629,8 @@ def test_gate_merges_large_alias_cluster_into_target(tmp_path):
     for snapshot in snapshots:
         snapshot["alias_candidate"] = True
 
-    def complete(schema, _messages):
-        if schema == {}:
+    def complete(_messages):
+        if "Classify" in _messages[0]["content"]:
             return {"kind": "alias", "alias_of": "Agent 工程师"}
         return {
             "job_name": alias_name,
@@ -669,7 +660,7 @@ def test_gate_merges_large_alias_cluster_into_target(tmp_path):
         ).single()["n"]
         session.run("MATCH (j:Job {id: $id}) DETACH DELETE j", id=job_id_for(alias_name))
     assert alias == 1
-    _cleanup(graph, suffix)
+    graph_clean(suffix)
 
 
 def test_merge_category_majority_and_iron_veto():
@@ -713,7 +704,7 @@ def test_skill_ingest_writes_category_edge(tmp_path):
     assert row is not None
     assert row["cid"] == "framework"
     assert row["cname"] == "框架"
-    _cleanup(graph, suffix)
+    graph_clean(suffix)
 
 
 def test_gate_iron_name_vetoes_category(tmp_path):
@@ -746,7 +737,7 @@ def test_gate_iron_name_vetoes_category(tmp_path):
             jid=job_id,
         ).single()
     assert row is not None and row["cid"] == "language"
-    _cleanup(graph, suffix)
+    graph_clean(suffix)
 
 
 def _approve_pending(events):
@@ -816,7 +807,7 @@ def test_expire_never_writes_valid_to_before_valid_from(tmp_path):
     assert by_name["OldSkill"]["vt"] is not None
     assert by_name["OldSkill"]["vt"] >= by_name["OldSkill"]["vf"]
     assert by_name["NewSkill"]["vt"] is None
-    _cleanup(graph, suffix)
+    graph_clean(suffix)
 
 
 def test_empty_keep_leaves_active_requires_untouched(tmp_path):
@@ -837,7 +828,7 @@ def test_empty_keep_leaves_active_requires_untouched(tmp_path):
         )
     )
 
-    def sparse(_schema, messages):
+    def sparse(_messages):
         text = str(messages)
         if "StableSkill" not in text:
             return {"job_name": "大模型应用工程师", "domain": "ai", "skills": []}
@@ -886,12 +877,11 @@ def test_empty_keep_leaves_active_requires_untouched(tmp_path):
             jid=job_id,
         ).single()
     assert row["n"] == 1
-    _cleanup(graph, suffix)
+    graph_clean(suffix)
 
 
 def test_init_graph_writes_five_skill_categories():
-    if graph._driver is None:
-        graph.init_graph()
+    graph.init_graph()
     with graph._driver.session() as session:
         rows = session.run(
             "MATCH (c:SkillCategory) RETURN c.id AS id, c.name AS name ORDER BY c.id"
@@ -901,7 +891,7 @@ def test_init_graph_writes_five_skill_categories():
 
 
 def _extract_fn(excerpt, confidence, section, category=None, name="FastAPI"):
-    def complete(_schema, _messages):
+    def complete(_messages):
         skill = {
             "name": name,
             "kind": "required",
@@ -934,8 +924,7 @@ def _jd_snaps(
     del excerpt, confidence
     from app import graph
 
-    if graph._driver is None:
-        graph.init_graph()
+    graph.init_graph()
     snaps = []
     for i, company in enumerate(companies):
         sid = f"jd-test-{suffix}-{i}"
@@ -954,27 +943,17 @@ def _jd_snaps(
             "simhash": "0" * 16,
         }
         path.write_text("{}", encoding="utf-8")
-        graph.upsert_evidence(
-            id=sid,
-            path=doc["path"],
-            source="local",
-            company=company,
-            observed_at=doc["observed_at"],
-            simhash=doc["simhash"],
+        graph.upsert_evidence_many(
+            [
+                {
+                    "id": sid,
+                    "path": doc["path"],
+                    "source": "local",
+                    "company": company,
+                    "observed_at": doc["observed_at"],
+                    "simhash": doc["simhash"],
+                }
+            ]
         )
         snaps.append(doc)
     return snaps
-
-
-def _cleanup(graph, suffix):
-    if graph._driver is None:
-        return
-    with graph._driver.session() as session:
-        session.run(
-            "MATCH (e:Evidence) WHERE e.id CONTAINS $s DETACH DELETE e",
-            s=suffix,
-        )
-        session.run(
-            "MATCH (ev:EvolutionEvent) WHERE ev.payload CONTAINS $s DETACH DELETE ev",
-            s=suffix,
-        )

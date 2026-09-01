@@ -35,7 +35,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <AdminLink />
             </div>
           </header>
-          <div role="status" aria-live="polite" className="sr-only" />
           {children}
         </div>
       </body>

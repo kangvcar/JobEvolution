@@ -4,9 +4,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-from app.collectors import (
-    MemoryRedis,
-    classify_domain,
+from app.collectors.controller import (
     independent_companies,
     list_snapshot_paths,
     normalize_company,
@@ -20,12 +18,64 @@ from app.collectors.controller import (
     table_year,
     uniform_parsed_day,
 )
+from app.collectors.domain import classify_domain
 from app.collectors.backfill_dates import DATE_COLUMN, backfill, backfill_tables
 from app.collectors.simhash import format_simhash, simhash64
 from app.collectors.sink import EVENT_JD_INGESTED, STREAM_KEY, emit_jd_ingested
 from app.collectors.source import field_map, map_row
 
 FIXTURES = Path(__file__).parent / "fixtures" / "ingest"
+
+
+class MemoryRedis:
+    """Ingest-only fake: sismember/sadd/srem/xadd/xrange.
+
+    sismember is a bool (redis-py may return 0/1). xrange ignores min/max.
+    Stream IDs are sequential placeholders, not Redis millisecond IDs — lock
+    event field names (`id`/`type`/`payload`) via emit_jd_ingested, not entry IDs.
+    """
+
+    def __init__(self):
+        from collections import defaultdict
+
+        self._sets = defaultdict(set)
+        self._streams = defaultdict(list)
+        self._seq = 0
+
+    def sismember(self, key: str, value: str) -> bool:
+        return value in self._sets.get(key, set())
+
+    def sadd(self, key: str, *values: str) -> int:
+        bucket = self._sets[key]
+        added = 0
+        for value in values:
+            if value not in bucket:
+                bucket.add(value)
+                added += 1
+        return added
+
+    def srem(self, key: str, *values: str) -> int:
+        bucket = self._sets.get(key)
+        if not bucket:
+            return 0
+        removed = 0
+        for value in values:
+            if value in bucket:
+                bucket.remove(value)
+                removed += 1
+        return removed
+
+    def xadd(self, name: str, fields: dict, id: str = "*") -> str:
+        self._seq += 1
+        entry_id = f"0-{self._seq}" if id == "*" else id
+        self._streams[name].append((entry_id, {str(k): str(v) for k, v in fields.items()}))
+        return entry_id
+
+    def xrange(self, name: str, min: str = "-", max: str = "+", count: int | None = None):
+        items = list(self._streams.get(name, []))
+        if count is not None:
+            items = items[:count]
+        return items
 
 
 def _ingest(tmp_path, redis=None):

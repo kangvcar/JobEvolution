@@ -1,8 +1,0 @@
-{
-  "task": "match",
-  "mock": false,
-  "precision": 1.0,
-  "recall": 1.0,
-  "f1": 1.0,
-  "n": 100
-}

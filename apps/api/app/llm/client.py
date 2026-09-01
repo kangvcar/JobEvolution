@@ -22,7 +22,7 @@ def _client():
     return _cached
 
 
-def complete_json(_schema, messages) -> dict:
+def complete_json(messages) -> dict:
     model = os.environ.get("DEEPSEEK_MODEL", "deepseek-v4-flash")
     last: Exception | None = None
     for _ in range(2):
@@ -38,13 +38,3 @@ def complete_json(_schema, messages) -> dict:
         except Exception as exc:
             last = exc
     raise last if last else RuntimeError("complete_json failed")
-
-
-def complete_text(messages) -> str:
-    model = os.environ.get("DEEPSEEK_MODEL", "deepseek-v4-flash")
-    raw = _client().chat.completions.create(
-        model=model,
-        messages=messages,
-        extra_body={"thinking": {"type": "disabled"}},
-    )
-    return raw.choices[0].message.content or ""

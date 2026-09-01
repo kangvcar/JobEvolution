@@ -6,7 +6,6 @@ from typing import Literal
 from openai import APIError
 from pydantic import BaseModel
 
-from app.pipeline.constants import DISCOVER_MIN_CLUSTER
 from app.targets import JOB_TARGET_NAMES
 
 logger = logging.getLogger(__name__)
@@ -26,7 +25,6 @@ CLASSIFY_PROMPT = (
 def classify_cluster(title: str, skill_names: list[str], complete_json) -> tuple[str, str | None]:
     try:
         payload = complete_json(
-            {},
             [
                 {"role": "system", "content": CLASSIFY_PROMPT},
                 {
@@ -52,7 +50,3 @@ def classify_cluster(title: str, skill_names: list[str], complete_json) -> tuple
     if label.kind == "new":
         return "new", None
     return "noise", None
-
-
-def cluster_large_enough(n: int) -> bool:
-    return n >= DISCOVER_MIN_CLUSTER

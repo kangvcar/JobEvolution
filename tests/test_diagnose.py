@@ -7,11 +7,36 @@ import pytest
 
 from app.llm.embed import embed
 from app.matching.report import lookup_resource
-from app.matching.resume import ResumeError, extract_text, minimal_pdf, parse_resume, skills_from_text
+from app.matching.resume import ResumeError, extract_text, parse_resume, skills_from_text
 from app.pipeline.status import job_id_for
 
 
-def _fake_complete(_schema, messages):
+def minimal_pdf(text: str) -> bytes:
+    safe = text.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
+    stream = f"BT /F1 12 Tf 24 720 Td ({safe}) Tj ET".encode("latin-1", "replace")
+    objects = [
+        b"1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n",
+        b"2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n",
+        b"3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >> endobj\n",
+        b"4 0 obj << /Length " + str(len(stream)).encode() + b" >> stream\n" + stream + b"\nendstream endobj\n",
+        b"5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj\n",
+    ]
+    body = b"%PDF-1.1\n"
+    offsets = [0]
+    for obj in objects:
+        offsets.append(len(body))
+        body += obj
+    xref = len(body)
+    out = body + f"xref\n0 6\n0000000000 65535 f \n".encode()
+    for off in offsets[1:]:
+        out += f"{off:010d} 00000 n \n".encode()
+    out += (
+        f"trailer << /Size 6 /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n".encode()
+    )
+    return out
+
+
+def _fake_complete(messages):
     sys = messages[0]["content"]
     if "experience" in sys:
         return {"experience": "3年", "education": "本科"}
@@ -59,7 +84,7 @@ def test_parse_resume_aligns_and_keeps_unmarked_proficiency():
         {"id": "s2", "name": "Python", "synonyms": [], "embedding": embed(["Python"])[0]},
     ]
 
-    def fake(_schema, messages):
+    def fake(messages):
         sys = messages[0]["content"]
         if "experience" in sys:
             return {"experience": "5年", "education": "硕士"}
@@ -104,7 +129,7 @@ def test_demo_cv_falls_back_when_model_marks_info_unknown():
     text = extract_text(Path("data/eval/demo-cv.pdf").read_bytes(), "demo-cv.pdf")
     index = [{"id": "s1", "name": "Python", "synonyms": [], "embedding": embed(["Python"])[0]}]
 
-    def unknown_info(_schema, messages):
+    def unknown_info(messages):
         if "experience" in messages[0]["content"]:
             return {"experience": "简历未标", "education": "简历未标"}
         return {"skills": []}
@@ -119,7 +144,7 @@ def test_lookup_resource_uses_cache():
     sid = "skill-cache-" + uuid.uuid4().hex
     calls = {"n": 0}
 
-    def fake(_schema, messages):
+    def fake(messages):
         calls["n"] += 1
         return {"url": "https://neo4j.com/docs/cypher-manual/current/"}
 

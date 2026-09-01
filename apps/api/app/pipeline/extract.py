@@ -4,7 +4,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from app.pipeline.constants import EXTRACT_RETRY, SKILL_CATEGORIES
+from app.pipeline.constants import SKILL_CATEGORIES
 from app.targets import JOB_TARGET_NAMES
 
 SYSTEM_PROMPT = (
@@ -115,9 +115,6 @@ class ExtractedJd(BaseModel):
     skills: list[ExtractedSkill] = Field(default_factory=list)
 
 
-EXTRACT_SCHEMA = ExtractedJd.model_json_schema()
-
-
 def _alias(table: dict[str, str], value, default: str) -> str:
     text = str(value or "").strip()
     if not text:
@@ -173,9 +170,9 @@ def coerce_extracted(payload: dict) -> dict:
     }
 
 
-def extract_messages(snapshot: dict | None) -> list[dict]:
+def parse_extracted(complete_json, snapshot: dict | None = None) -> ExtractedJd:
     snap = snapshot or {}
-    return [
+    messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {
             "role": "user",
@@ -186,17 +183,8 @@ def extract_messages(snapshot: dict | None) -> list[dict]:
             ),
         },
     ]
-
-
-def parse_extracted(complete_json, retry: bool = True, messages=None, snapshot=None) -> ExtractedJd:
-    if messages is None:
-        messages = extract_messages(snapshot)
-    attempts = (EXTRACT_RETRY + 1) if retry else 1
-    last: Exception | None = None
-    for _ in range(attempts):
-        try:
-            payload = complete_json(EXTRACT_SCHEMA, messages)
-            return ExtractedJd.model_validate(coerce_extracted(payload))
-        except Exception as exc:
-            last = exc
-    raise ValueError("extract json failed") from last
+    try:
+        payload = complete_json(messages)
+    except Exception as exc:
+        raise ValueError("extract json failed") from exc
+    return ExtractedJd.model_validate(coerce_extracted(payload))

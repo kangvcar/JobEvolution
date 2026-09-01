@@ -93,7 +93,7 @@ def parse_resume(
 
     def _call(messages):
         try:
-            payload = complete_json(None, messages)
+            payload = complete_json(messages)
             return payload if isinstance(payload, dict) else {}
         except Exception:
             if strict:
@@ -186,28 +186,3 @@ def skills_from_text(text: str, index: list[dict], *, threshold: float | None = 
             }
         )
     return found
-
-
-def minimal_pdf(text: str) -> bytes:
-    safe = text.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
-    stream = f"BT /F1 12 Tf 24 720 Td ({safe}) Tj ET".encode("latin-1", "replace")
-    objects = [
-        b"1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n",
-        b"2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n",
-        b"3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >> endobj\n",
-        b"4 0 obj << /Length " + str(len(stream)).encode() + b" >> stream\n" + stream + b"\nendstream endobj\n",
-        b"5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj\n",
-    ]
-    body = b"%PDF-1.1\n"
-    offsets = [0]
-    for obj in objects:
-        offsets.append(len(body))
-        body += obj
-    xref = len(body)
-    out = body + f"xref\n0 6\n0000000000 65535 f \n".encode()
-    for off in offsets[1:]:
-        out += f"{off:010d} 00000 n \n".encode()
-    out += (
-        f"trailer << /Size 6 /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n".encode()
-    )
-    return out

@@ -15,12 +15,13 @@ from app.llm.embed import embed
 from app.pipeline.align import align_job, align_skill, cluster_texts
 from app.pipeline.constants import (
     COVERAGE_THRESHOLD,
+    DISCOVER_MIN_CLUSTER,
     EXTRACT_CACHE_VERSION,
     EXTRACT_WORKERS,
     PASSTHROUGH_KEY,
     SKILL_IRON_CATEGORY,
 )
-from app.pipeline.discover import classify_cluster, cluster_large_enough
+from app.pipeline.discover import classify_cluster
 from app.pipeline.extract import ExtractedJd, parse_extracted
 from app.pipeline.sections import section_of
 from app.pipeline.status import is_target_job, job_id_for, refresh_job_status
@@ -184,8 +185,7 @@ def run_extract_and_gate(
     from app import graph
     from app.llm.client import complete_json as default_complete
 
-    if graph._driver is None:
-        graph.init_graph()
+    graph.init_graph()
     graph.upsert_evidence_many(snapshots)
     complete = complete_json or default_complete
     n_workers = workers if workers is not None else (1 if complete_json else EXTRACT_WORKERS)
@@ -197,7 +197,7 @@ def run_extract_and_gate(
             if cached is not None:
                 return ("ok", snap, cached)
         try:
-            parsed = parse_extracted(complete, retry=True, snapshot=snap)
+            parsed = parse_extracted(complete, snapshot=snap)
         except ValueError as exc:
             return ("fail", snap, str(exc))
         if cache:
@@ -239,7 +239,7 @@ def _discover_unmatched(unmatched: dict[str, list], index: list[dict], complete)
 
     events = []
     for title, rows in unmatched.items():
-        if not cluster_large_enough(len(rows)):
+        if len(rows) < DISCOVER_MIN_CLUSTER:
             continue
         skills = []
         for _, parsed, _ in rows:

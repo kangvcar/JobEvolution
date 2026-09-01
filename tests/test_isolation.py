@@ -15,16 +15,19 @@ def test_neo4j_uri_injected_and_never_product_default():
 def test_graph_writes_land_on_test_db():
     from app import graph
 
-    if graph._driver is None:
-        graph.init_graph()
+    graph.init_graph()
     marker = f"jd-iso-{uuid.uuid4().hex[:8]}"
-    graph.upsert_evidence(
-        id=marker,
-        path=marker,
-        source="local",
-        company="隔离测试",
-        observed_at="2026-01-01",
-        simhash="0" * 16,
+    graph.upsert_evidence_many(
+        [
+            {
+                "id": marker,
+                "path": marker,
+                "source": "local",
+                "company": "隔离测试",
+                "observed_at": "2026-01-01",
+                "simhash": "0" * 16,
+            }
+        ]
     )
     with graph._driver.session() as session:
         found = session.run(

@@ -61,7 +61,7 @@ def _io_md(payload: dict, *, alias_note: str = "") -> str:
         )
     if payload.get("period_delta"):
         lines += ["", "### period_delta", ""]
-        for key in ("added", "promoted", "expired"):
+        for key in ("added", "expired"):
             names = [x.get("name") for x in payload["period_delta"].get(key) or []]
             lines.append(f"- {key}: {', '.join(n for n in names if n) or '（空）'}")
     lines += ["", "### EvolutionEvent", ""]
@@ -80,8 +80,7 @@ def _io_md(payload: dict, *, alias_note: str = "") -> str:
 def dump_deliver() -> dict:
     from app import graph
 
-    if graph._driver is None:
-        graph.init_graph()
+    graph.init_graph()
     root = eval_dir() / "deliver"
     agent = _job_payload(graph, AGENT)
     llm = _job_payload(graph, LLM)

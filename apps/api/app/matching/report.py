@@ -53,7 +53,6 @@ def lookup_resource(skill_id: str, name: str, complete_json=None) -> str:
             from app.llm.client import complete_json as complete_json
         try:
             payload = complete_json(
-                None,
                 [
                     {"role": "system", "content": RESOURCE_PROMPT},
                     {"role": "user", "content": name or skill_id},
@@ -69,15 +68,11 @@ def lookup_resource(skill_id: str, name: str, complete_json=None) -> str:
     return url
 
 
-def resource_url(name: str) -> str:
-    return lookup_resource("", name)
-
-
 def neighbor_name(job_name: str) -> str | None:
     return NEIGHBOR.get(job_name)
 
 
-def attach_urls(path: list[dict], complete_json=None) -> list[dict]:
+def attach_urls(path: list[dict]) -> list[dict]:
     if not path:
         return []
 
@@ -86,7 +81,6 @@ def attach_urls(path: list[dict], complete_json=None) -> list[dict]:
         item["url"] = step.get("url") or lookup_resource(
             step.get("skill_id") or "",
             step.get("name") or "",
-            complete_json=complete_json,
         )
         return item
 

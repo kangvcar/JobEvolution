@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { KeyboardEvent, useEffect, useState } from "react";
-import { EventList, Heat, Pipe } from "../feed-bits";
+import { EventList, Heat, Pipe, kindLabel } from "../feed-bits";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const DOMAIN: Record<string, string> = {
@@ -30,7 +30,6 @@ type Dossier = {
   status: string;
   domain: string;
   n_sources: number;
-  n_window: number;
   sources: string[];
   evidence: { id: string; company: string; observed_at: string; source?: string }[];
   events: { id: string; kind: string; at: string; review: string }[];
@@ -72,13 +71,6 @@ function reviewLabel(review: string) {
   return review;
 }
 
-function kindLabel(kind: string) {
-  if (kind === "requires_add") return "要求边新增";
-  if (kind === "job_status") return "状态流转";
-  if (kind === "extract_failed") return "抽取失败";
-  return kind;
-}
-
 export function DiscoverBoard() {
   const [board, setBoard] = useState<Board>({ candidate: [], emerging: [], formed: [] });
   const [feed, setFeed] = useState<Feed | null>(null);
@@ -108,11 +100,6 @@ export function DiscoverBoard() {
       .catch(() => setDossier(null));
   }, [pick]);
 
-  const columns: Record<(typeof STAGES)[number]["key"], Card[]> = {
-    candidate: board.candidate,
-    emerging: board.emerging,
-    formed: board.formed,
-  };
   const order = [...board.candidate, ...board.emerging, ...board.formed];
 
   function onCardKey(event: KeyboardEvent<HTMLButtonElement>, id: string) {
@@ -162,7 +149,7 @@ export function DiscoverBoard() {
       <div className="disc-board">
         <div className="kanban">
           {STAGES.map((stage) => {
-            const items = columns[stage.key];
+            const items = board[stage.key];
             const title =
               stage.key === "formed"
                 ? `成型（切片） · ${items.length}/${board.formed_total ?? items.length}`
@@ -181,7 +168,7 @@ export function DiscoverBoard() {
                     onKeyDown={(event) => onCardKey(event, card.id)}
                   >
                     <span className={`pill ${pill(card.status)}`}>
-                      {card.status === "candidate" ? "未入谱" : statusLabel(card.status)}
+                      {statusLabel(card.status)}
                     </span>
                     <b>{card.name}</b>
                     <span className="meta">

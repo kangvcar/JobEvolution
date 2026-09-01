@@ -90,11 +90,7 @@ def observed_at_for(
 def uniform_parsed_day(published_at_values: list[str], year: int | None) -> bool:
     if year is None:
         return False
-    days = [
-        parse_observed_at(value, year)[:10]
-        for value in published_at_values
-        if parse_observed_at(value, year)
-    ]
+    days = [day for v in published_at_values if (day := parse_observed_at(v, year)[:10])]
     return len(days) >= 2 and len(set(days)) == 1
 
 
@@ -202,11 +198,10 @@ def _replace_snapshot(
     old_path = Path(out_dir) / f"{old_id}.json"
     if old_id and old_path.exists() and old_path.name != f"{snapshot['id']}.json":
         old_path.unlink()
-    if old_fp and old_fp != record.fingerprint and hasattr(redis, "srem"):
+    if old_fp and old_fp != record.fingerprint:
         redis.srem(FP_KEY, old_fp)
-    drop = getattr(on_evidence, "drop", None)
-    if callable(drop) and old_id and old_id != snapshot["id"]:
-        drop(old_id)
+    if on_evidence is not None and old_id and old_id != snapshot["id"]:
+        on_evidence.drop(old_id)
     hit.update(_index_meta(snapshot))
     return snapshot
 

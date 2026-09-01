@@ -58,7 +58,7 @@ def eval_jd(*, mock: bool = False) -> dict:
                 "domain": item.get("domain") or "",
                 "body": item.get("text") or "",
             }
-            parsed = parse_extracted(complete_json, retry=True, snapshot=snapshot)
+            parsed = parse_extracted(complete_json, snapshot=snapshot)
             pred = {
                 hit["id"]
                 for skill in parsed.skills

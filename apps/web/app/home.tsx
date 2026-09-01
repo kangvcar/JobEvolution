@@ -1,9 +1,9 @@
 "use client";
 
-import { Graph } from "@antv/g6";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { cssVar, mountGraph } from "./graph-kit";
 import { EventList, Heat, Pipe } from "./feed-bits";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -27,19 +27,6 @@ type Feed = {
   heat: { name: string; v: number }[];
   events: { at: string; text: string; review?: string }[];
 };
-
-function token(name: string) {
-  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-  const canvas = document.createElement("canvas");
-  canvas.width = 1;
-  canvas.height = 1;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return value;
-  ctx.fillStyle = value;
-  ctx.fillRect(0, 0, 1, 1);
-  const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
-  return `rgb(${r},${g},${b})`;
-}
 
 export function Home() {
   const canvas = useRef<HTMLDivElement>(null);
@@ -66,12 +53,11 @@ export function Home() {
   useEffect(() => {
     const el = canvas.current;
     if (!el) return;
-    const cInk = token("--color-ink");
-    const cPaper = token("--color-paper");
-    const cPaper2 = token("--color-paper-2");
-    const cAccent = token("--color-accent");
-    const cRule = token("--color-rule");
-    const cFaint = token("--color-faint");
+    const cInk = cssVar("--color-ink");
+    const cPaper = cssVar("--color-paper");
+    const cPaper2 = cssVar("--color-paper-2");
+    const cAccent = cssVar("--color-accent");
+    const cFaint = cssVar("--color-faint");
     const nodes = domains.map((d) => ({ id: `d-${d.id}`, data: { label: d.name, k: "d" } }));
     const jobIds = new Set<string>();
     for (const job of jobs) {
@@ -86,46 +72,27 @@ export function Home() {
       source: `d-${job.domain}`,
       target: job.id,
     }));
-    const graph = new Graph({
-      container: el,
-      autoFit: "view",
-      padding: 28,
-      data: { nodes, edges },
-      node: {
-        type: "rect",
-        style: {
-          size: (d: { data?: { k?: string } }) => (d.data?.k === "d" ? [96, 32] : [88, 28]),
-          radius: 0,
-          fill: (d: { data?: { k?: string } }) => (d.data?.k === "j" ? cInk : cPaper2),
-          stroke: (d: { data?: { k?: string } }) =>
-            d.data?.k === "e" ? cAccent : d.data?.k === "d" ? cFaint : cInk,
-          lineWidth: (d: { data?: { k?: string } }) => (d.data?.k === "e" ? 2 : 1),
-          labelText: (d: { data?: { label?: string } }) => d.data?.label || "",
-          labelFill: (d: { data?: { k?: string } }) => (d.data?.k === "j" ? cPaper : cInk),
-          labelFontSize: 11,
-          labelPlacement: "center",
-          labelMaxWidth: 88,
-          labelWordWrap: true,
-        },
+    return mountGraph(
+      el,
+      { nodes, edges },
+      {
+        size: (d: { data?: { k?: string } }) => (d.data?.k === "d" ? [96, 32] : [88, 28]),
+        radius: 0,
+        fill: (d: { data?: { k?: string } }) => (d.data?.k === "j" ? cInk : cPaper2),
+        stroke: (d: { data?: { k?: string } }) =>
+          d.data?.k === "e" ? cAccent : d.data?.k === "d" ? cFaint : cInk,
+        lineWidth: (d: { data?: { k?: string } }) => (d.data?.k === "e" ? 2 : 1),
+        labelText: (d: { data?: { label?: string } }) => d.data?.label || "",
+        labelFill: (d: { data?: { k?: string } }) => (d.data?.k === "j" ? cPaper : cInk),
+        labelFontSize: 11,
+        labelPlacement: "center",
+        labelMaxWidth: 88,
+        labelWordWrap: true,
       },
-      edge: { style: { stroke: cRule } },
-      layout: { type: "dagre", rankdir: "LR", nodesep: 10, ranksep: 72 },
-      behaviors: ["drag-canvas", "zoom-canvas"],
-    });
-    graph.render();
-    graph.on("node:click", (ev) => {
-      const id = (ev as { target?: { id?: string } }).target?.id || "";
-      if (jobIds.has(id)) router.push(`/graph?job=${encodeURIComponent(id)}`);
-    });
-    const onResize = () => {
-      graph.resize();
-      graph.fitView();
-    };
-    window.addEventListener("resize", onResize);
-    return () => {
-      window.removeEventListener("resize", onResize);
-      graph.destroy();
-    };
+      (id) => {
+        if (jobIds.has(id)) router.push(`/graph?job=${encodeURIComponent(id)}`);
+      },
+    );
   }, [domains, jobs, router]);
 
   return (

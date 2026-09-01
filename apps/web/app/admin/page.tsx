@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { kindLabel } from "../feed-bits";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -19,13 +20,6 @@ type QueueEvent = {
     [key: string]: unknown;
   };
 };
-
-function kindLabel(kind: string) {
-  if (kind === "requires_add") return "要求边新增";
-  if (kind === "job_status") return "岗位状态流转";
-  if (kind === "extract_failed") return "抽取失败";
-  return kind;
-}
 
 function reviewLabel(review: QueueEvent["review"]) {
   return review === "auto_passed" ? "自动通过" : "待审";

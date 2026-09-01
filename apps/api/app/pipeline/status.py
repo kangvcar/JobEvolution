@@ -22,7 +22,7 @@ def _parse_at(value: str) -> datetime | None:
     if not text:
         return None
     try:
-        return datetime.fromisoformat(text.replace("Z", "+00:00")).replace(tzinfo=None)
+        return datetime.fromisoformat(text).replace(tzinfo=None)
     except ValueError:
         return None
 

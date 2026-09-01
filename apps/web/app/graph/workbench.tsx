@@ -1,9 +1,9 @@
 "use client";
 
-import { Graph } from "@antv/g6";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { cssVar, mountGraph } from "../graph-kit";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -22,7 +22,6 @@ type Requirement = {
   name: string;
   category_id?: string | null;
   category?: string | null;
-  kind?: string;
   proficiency?: string;
   levels?: string[];
   sources?: string[];
@@ -32,7 +31,7 @@ type Slice = {
   categories?: { id: string; name: string }[];
   requires?: Requirement[];
   evidence?: { id: string; company?: string; observed_at?: string; source?: string }[];
-  period_delta?: { added?: Requirement[]; promoted?: Requirement[]; expired?: Requirement[] };
+  period_delta?: { added?: Requirement[]; expired?: Requirement[] };
 };
 
 type EvidenceTarget = Requirement & { expired?: boolean };
@@ -139,15 +138,13 @@ export function Workbench() {
   useEffect(() => {
     const el = canvas.current;
     if (!el) return;
-    const cInk = getComputedStyle(document.documentElement).getPropertyValue("--color-ink").trim();
-    const cPaper = getComputedStyle(document.documentElement).getPropertyValue("--color-paper").trim();
-    const cPaper2 = getComputedStyle(document.documentElement).getPropertyValue("--color-paper-2").trim();
-    const cRule = getComputedStyle(document.documentElement).getPropertyValue("--color-rule").trim();
-    const cFall = getComputedStyle(document.documentElement).getPropertyValue("--color-fall").trim();
-    const cRise = getComputedStyle(document.documentElement).getPropertyValue("--color-rise").trim();
+    const cInk = cssVar("--color-ink");
+    const cPaper = cssVar("--color-paper");
+    const cPaper2 = cssVar("--color-paper-2");
+    const cFall = cssVar("--color-fall");
+    const cRise = cssVar("--color-rise");
     const delta = slice?.period_delta || {};
     const added = new Set((delta.added || []).map((skill) => skill.skill_id));
-    const promoted = new Set((delta.promoted || []).map((skill) => skill.skill_id));
     const expired = new Map((delta.expired || []).map((skill) => [skill.skill_id, skill]));
     const requires = [...(slice?.requires || [])];
     for (const skill of expired.values()) {
@@ -170,7 +167,7 @@ export function Workbench() {
       { id: "job", data: { label: current?.name || detail?.name || "岗位", k: "job" } },
       ...categories.map((category) => ({ id: `category-${category.id}`, data: { label: category.name, k: "category" } })),
       ...requires.map((skill) => {
-        const isDelta = added.has(skill.skill_id) || promoted.has(skill.skill_id);
+        const isDelta = added.has(skill.skill_id);
         const isExpired = expired.has(skill.skill_id);
         return {
           id: `skill-${skill.skill_id}`,
@@ -182,55 +179,42 @@ export function Workbench() {
       ...categories.map((category) => ({ id: `job-${category.id}`, source: "job", target: `category-${category.id}` })),
       ...requires.map((skill) => ({ id: `category-${skill.skill_id}`, source: `category-${categoryFor(skill)}`, target: `skill-${skill.skill_id}` })),
     ];
-    const graph = new Graph({
-      container: el,
-      autoFit: "view",
-      padding: 28,
-      data: { nodes, edges },
-      node: {
-        type: "rect",
-        style: {
-          size: (d: { data?: { k?: string } }) => (d.data?.k === "job" ? [104, 34] : d.data?.k === "category" ? [108, 30] : [120, 28]),
-          radius: 0,
-          fill: (d: { data?: { k?: string } }) => (d.data?.k === "job" ? cInk : d.data?.k === "category" ? cPaper2 : cPaper),
-          stroke: (d: { data?: { k?: string; delta?: string; selected?: boolean } }) => d.data?.selected ? cInk : d.data?.delta === "added" ? cFall : d.data?.delta === "expired" ? cRise : d.data?.k === "job" ? cInk : cRule,
-          lineWidth: (d: { data?: { k?: string; delta?: string } }) => d.data?.delta ? 2 : 1,
-          labelText: (d: { data?: { label?: string } }) => d.data?.label || "",
-          labelFill: (d: { data?: { k?: string } }) => d.data?.k === "job" ? cPaper : cInk,
-          labelFontSize: 11,
-          labelPlacement: "center",
-          labelMaxWidth: 116,
-          labelWordWrap: true,
-        },
-      },
-      edge: { style: { stroke: cRule } },
-      layout: { type: "dagre", rankdir: "LR", nodesep: 10, ranksep: 72 },
-      behaviors: ["drag-canvas", "zoom-canvas"],
-    });
-    graph.render();
-    graph.on("node:click", (ev) => {
-      const id = (ev as { target?: { id?: string } }).target?.id || "";
-      if (!id.startsWith("skill-")) return;
-      const skillId = id.slice("skill-".length);
-      const expired = (slice?.period_delta?.expired || []).find((skill) => skill.skill_id === skillId);
-      const skill = (slice?.requires || []).find((item) => item.skill_id === skillId) || expired;
-      if (skill) {
-        opener.current = el;
-        setSelectedSkill(skillId);
-        setEvidenceTarget({ ...skill, expired: Boolean(expired) });
-      }
-    });
     el.focus();
-    const onResize = () => {
-      graph.resize();
-      graph.fitView();
-    };
-    window.addEventListener("resize", onResize);
-    return () => {
-      window.removeEventListener("resize", onResize);
-      graph.destroy();
-    };
+    return mountGraph(
+      el,
+      { nodes, edges },
+      {
+        size: (d: { data?: { k?: string } }) => (d.data?.k === "job" ? [104, 34] : d.data?.k === "category" ? [108, 30] : [120, 28]),
+        radius: 0,
+        fill: (d: { data?: { k?: string } }) => (d.data?.k === "job" ? cInk : d.data?.k === "category" ? cPaper2 : cPaper),
+        stroke: (d: { data?: { k?: string; delta?: string; selected?: boolean } }) => d.data?.selected ? cInk : d.data?.delta === "added" ? cFall : d.data?.delta === "expired" ? cRise : d.data?.k === "job" ? cInk : cssVar("--color-rule"),
+        lineWidth: (d: { data?: { k?: string; delta?: string } }) => d.data?.delta ? 2 : 1,
+        labelText: (d: { data?: { label?: string } }) => d.data?.label || "",
+        labelFill: (d: { data?: { k?: string } }) => d.data?.k === "job" ? cPaper : cInk,
+        labelFontSize: 11,
+        labelPlacement: "center",
+        labelMaxWidth: 116,
+        labelWordWrap: true,
+      },
+      (id) => {
+        if (!id.startsWith("skill-")) return;
+        const skillId = id.slice("skill-".length);
+        const expired = (slice?.period_delta?.expired || []).find((skill) => skill.skill_id === skillId);
+        const skill = (slice?.requires || []).find((item) => item.skill_id === skillId) || expired;
+        if (skill) {
+          opener.current = el;
+          setSelectedSkill(skillId);
+          setEvidenceTarget({ ...skill, expired: Boolean(expired) });
+        }
+      },
+    );
   }, [current?.name, detail?.name, slice, selectedSkill]);
+
+  const skillButton = (skill: Requirement) => (
+    <li key={skill.skill_id} data-selected={skill.skill_id === selectedSkill ? "1" : undefined}>
+      <button type="button" className="skill-link" onClick={(event) => { opener.current = event.currentTarget; setSelectedSkill(skill.skill_id); setEvidenceTarget(skill); }}>{skill.name}</button>
+    </li>
+  );
 
   return (
     <>
@@ -314,21 +298,11 @@ export function Workbench() {
               <section key={sliceCategory.id}>
                 <h3>{sliceCategory.name}</h3>
                 <ul>
-                  {visibleRequires.filter((skill) => skill.category === sliceCategory.name).map((skill) => (
-                    <li key={skill.skill_id} data-selected={skill.skill_id === selectedSkill ? "1" : undefined}>
-                      <button type="button" className="skill-link" onClick={(event) => { opener.current = event.currentTarget; setSelectedSkill(skill.skill_id); setEvidenceTarget(skill); }}>{skill.name}</button>
-                    </li>
-                  ))}
+                  {visibleRequires.filter((skill) => skill.category === sliceCategory.name).map(skillButton)}
                 </ul>
               </section>
             ))}
-            {!(slice?.categories?.length) && (
-              <ul>{visibleRequires.map((skill) => (
-                <li key={skill.skill_id} data-selected={skill.skill_id === selectedSkill ? "1" : undefined}>
-                  <button type="button" className="skill-link" onClick={(event) => { opener.current = event.currentTarget; setSelectedSkill(skill.skill_id); setEvidenceTarget(skill); }}>{skill.name}</button>
-                </li>
-              ))}</ul>
-            )}
+            {!(slice?.categories?.length) && <ul>{visibleRequires.map(skillButton)}</ul>}
             {slice && visibleRequires.length === 0 && <p className="empty">当前筛选没有技能点，请换个筛选</p>}
             <Link className="primary" href={`/diagnose?job_id=${encodeURIComponent(detail.id)}`}>
             对照简历

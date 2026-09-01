@@ -5,30 +5,21 @@
   --color-rule:       oklch(0.88 0.012 248);
   --color-rule-2:     oklch(0.80 0.014 248);
   --color-ink:        oklch(0.236 0.028 250);
-  --color-ink-2:      oklch(0.46 0.022 250);
   --color-muted:      oklch(0.46 0.022 250);
   --color-faint:      oklch(0.62 0.016 250);
   --color-accent:     oklch(0.52 0.14 38);
   --color-accent-ink: oklch(0.985 0.008 90);
   --color-focus:      oklch(0.52 0.14 38);
-  --color-emerge:     oklch(0.52 0.14 38);
-  --color-emerge-bg:  oklch(0.968 0.007 248);
   --color-ok:         oklch(0.46 0.07 175);
-  --color-ok-bg:      oklch(0.968 0.007 248);
-  --color-mid-bg:     oklch(0.948 0.01 248);
   --color-danger:     oklch(0.5 0.155 28);
   --color-rise:       oklch(0.5 0.155 28);
   --color-fall:       oklch(0.46 0.07 175);
   --color-overlay:    oklch(0.236 0.028 250 / 0.4);
-  --color-cat:        oklch(0.948 0.01 248);
-  --color-must:       oklch(0.236 0.028 250);
-  --color-bonus:      oklch(0.62 0.016 250);
 
   --font-display: "IBM Plex Sans", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", sans-serif;
-  --font-body:    "IBM Plex Sans", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", sans-serif;
   --font-mono:    "IBM Plex Mono", ui-monospace, monospace;
+  --font-mono-stack: var(--font-plex-mono), var(--font-mono);
 
-  --space-3xs: 0.125rem;
   --space-2xs: 0.25rem;
   --space-xs:  0.5rem;
   --space-sm:  0.75rem;
@@ -45,18 +36,8 @@
   --text-display: 2rem;
 
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-in:  cubic-bezier(0.7, 0, 0.84, 0);
-  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
-  --dur-micro: 120ms;
   --dur-short: 220ms;
-  --dur-long: 420ms;
-  --dur-stagger: 100ms;
 
-  --radius-input: 0;
-  --radius-card: 0;
-  --radius-pill: 0;
-
-  --z-base: 1;
   --z-sticky: 200;
   --z-modal: 400;
 

@@ -36,12 +36,12 @@ def test_public_slice_includes_categories_and_period_delta(client, monkeypatch):
         "list_requires",
         lambda _: [{"skill_id": "skill-1", "name": "FastAPI", "category_id": "engineering", "category": "工程"}],
     )
-    monkeypatch.setattr(graph, "period_delta", lambda _: {"added": [], "promoted": [], "expired": []})
+    monkeypatch.setattr(graph, "period_delta", lambda _: {"added": [], "expired": []})
 
     body = client.get("/graph/jobs/job-1").json()
     assert body["categories"] == [{"id": "engineering", "name": "工程"}]
     assert body["skills"][0]["category"] == "工程"
-    assert set(body["period_delta"]) == {"added", "promoted", "expired"}
+    assert set(body["period_delta"]) == {"added", "expired"}
 
 
 def test_seventeen_align_targets_exist():

@@ -80,7 +80,7 @@ python -m apps.api.eval.resume
 python -m apps.api.eval.match
 ```
 
-任一 F1 < 0.90 退出码 1。CI 跑 schema 校验、纯函数和这三条的 mock 版 + `pytest --cov=apps/api --cov-fail-under=60`。LLM 全部 mock；嵌入用预计算向量夹具。CI 的三项数字不是赛题分。`summary.md` 必须来自未 mock 的本地跑。改 prompt 或改 `freeze.json` 必须重跑未 mock 的三项。
+任一 F1 < 0.90 退出码 1。CI 跑这三条的 mock 版 + `pytest --cov -q`（阈值在 `.coveragerc`，60）。LLM 全部 mock；嵌入用预计算向量夹具。CI 的三项数字不是赛题分。`summary.md` 必须来自未 mock 的本地跑。改 prompt 或改 `freeze.json` 必须重跑未 mock 的三项。
 
 字段级简历 F1（匈牙利对齐）脚本可附带，报告里单列，CI 不失败。
 

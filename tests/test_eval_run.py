@@ -14,7 +14,7 @@ def test_unmocked_three_items_read_freeze_not_env(monkeypatch, tmp_path):
     resumes = list(read_jsonl(eval_dir() / "resume.jsonl"))
     names = {row["id"]: row["name"] for row in run_mod._index()}
 
-    def fake_complete_json(_schema, messages):
+    def fake_complete_json(messages):
         content = (messages or [{}])[-1].get("content") or ""
         for item in items:
             text = item.get("text") or ""

@@ -206,8 +206,7 @@ def build_gold(*, index: list[dict], jobs: list[dict]) -> None:
 def main() -> int:
     from app import graph
 
-    if graph._driver is None:
-        graph.init_graph()
+    graph.init_graph()
     index = graph.list_skills(with_embed=False)
     jobs = []
     for row in graph.list_jobs(domain=None, status=None, q=None):
