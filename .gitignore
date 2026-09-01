@@ -6,7 +6,8 @@ __pycache__/
 .pytest_cache/
 .coverage
 htmlcov/
-data/eval/out/
+data/eval/out/*
+!data/eval/out/summary.md
 apps/web/node_modules/
 apps/web/.next/
 apps/web/tsconfig.tsbuildinfo
