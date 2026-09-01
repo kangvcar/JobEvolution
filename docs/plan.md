@@ -1,6 +1,6 @@
 # 开发计划与部署篇
 
-给实现用的顺序、验收和一键部署。今天起算，赛题提交截止 **2026-09-05**。代码实现不在地图里，本文是开工后的路线。
+给实现用的顺序、验收和一键部署。代码实现不在地图里，本文是开工后的路线。
 
 先读：[`CONTEXT.md`](../CONTEXT.md) → [`product.md`](product.md) → [`tech.md`](tech.md) → [`frontend.md`](frontend.md) → [`verification.md`](verification.md) → [`research.md`](research.md)。页面以 [`prototypes/signature-ui.html`](prototypes/signature-ui.html) 为准。开源怎么抄见借鉴指南，不要直接按 `docs/research/` 五篇调研正文开工。
 
@@ -65,7 +65,7 @@ DeepSeek JSON + Pydantic。技能字符串先聚类成 `Skill`，再 `align_skil
 
 `NEO4J_AUTH` 用环境文件，社区版单库。api 等 neo4j healthy 再起。web 的 `NEXT_PUBLIC_API_URL` 指到 `http://localhost:8000`（浏览器访问时）或 compose 内网名（SSR 时）。
 
-内存：Neo4j 堆+页缓存合计 1–2GB 够。整机建议 8GB。bge-m3 第一次拉取放进 api 镜像或启动时下载到卷，避免每次冷启动。
+内存：Neo4j 堆+页缓存合计 1–2GB 够。整机建议 8GB。嵌入走硅基流动远端，本机不落模型。
 
 一键：
 
@@ -83,6 +83,8 @@ docker compose up --build
 | `DEEPSEEK_API_KEY` | 是 | 只进 api |
 | `DEEPSEEK_BASE_URL` | 否 | 默认 `https://api.deepseek.com` |
 | `DEEPSEEK_MODEL` | 否 | 默认 `deepseek-v4-flash` |
+| `EMBED_BASE_URL` | 否 | 默认 `https://api.siliconflow.cn/v1` |
+| `EMBED_API_KEY` | 否 | 硅基流动 Key；缺省时嵌入回落本地哈希向量 |
 | `NEO4J_URI` | 是 | `bolt://neo4j:7687` |
 | `NEO4J_USER` / `NEO4J_PASSWORD` | 是 | 与 compose `NEO4J_AUTH` 一致 |
 | `REDIS_URL` | 是 | `redis://redis:6379/0` |
@@ -96,7 +98,7 @@ Playwright 用户目录若做增量采集，路径放 `PLAYWRIGHT_USER_DATA`，�
 
 ## 演示准备
 
-截止日前要能在一台机器上走完两条主路径，不注册。
+演示前要能在一台机器上走完两条主路径，不注册。
 
 1. compose 全绿；口令能进待审。
 2. 总览第一屏能点到故事：打开工作台、对照这份岗。工作台切片能开证据，大模型应用岗能看见本周期切片差分（新增或已写 `valid_to`）。

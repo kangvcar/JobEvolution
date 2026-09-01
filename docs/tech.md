@@ -15,7 +15,7 @@
 | 图 | Neo4j Community，单容器 | 图谱 + 证据引用 + 演化事件 |
 | 总线 / 会话 | Redis 7，单容器 | Stream、指纹集合、简历会话、直通开关、资源缓存 |
 | LLM | DeepSeek 官方 API | 所有生成与 JSON 抽取 |
-| 嵌入 | 本地 `BAAI/bge-m3` | 技能对齐、实体消解、岗位聚类。官方 chat 没有 embeddings 端点 |
+| 嵌入 | 硅基流动 `BAAI/bge-m3`（OpenAI 兼容） | 技能对齐、实体消解、岗位聚类。无 `EMBED_API_KEY` 时回落本地哈希向量，测试与 CI 不出网 |
 
 docker-compose 四个服务：`api`、`web`、`neo4j`、`redis`。评测金标和 JD 快照走仓库文件，不另起 Postgres。管理员一口令，写在环境变量 `ADMIN_PASSWORD`。
 
@@ -58,7 +58,7 @@ data/本地表 / ATS / NCSS / Playwright
 Next.js  ←──  FastAPI  ←──  简历会话（Redis TTL）
                 │
           DeepSeek（报告总结、学习资源）
-          bge-m3（对齐 / 聚类）
+          bge-m3（硅基流动，对齐 / 聚类）
 ```
 
 求职者路径不碰采集。总览和发现页读库里的聚合计数，不订 SSE 粒子流。
@@ -233,7 +233,7 @@ DEEPSEEK_MODEL       默认 deepseek-v4-flash
 - 超时 60s，失败重试一次。JSON 对不上 Pydantic 算失败。
 - 禁止在业务里直接 `openai.OpenAI(...)`。测抽取时 mock `complete_json`。
 
-嵌入在 `app/llm/embed.py`：`embed(texts: list[str]) -> ndarray`。模型 `BAAI/bge-m3`，进程内加载一次。这不是 LLM 调用，不走 DeepSeek。若官方以后出 embeddings 端点，只改这一个文件。
+嵌入在 `app/llm/embed.py`：`embed(texts: list[str]) -> list[list[float]]`。设了 `EMBED_API_KEY` 走硅基流动 `BAAI/bge-m3`（OpenAI 兼容端点，失败即抛，不悄悄降级）；没设走本地字符 3-gram 哈希向量，纯词面匹配，只给测试与 CI 用。这不是 LLM 调用，不走 DeepSeek。
 
 ## 代码规范
 
