@@ -829,7 +829,6 @@ def list_job_events(job_id: str) -> list[dict]:
         rows = session.run(
             """
             MATCH (e:EvolutionEvent)-[:AFFECTS]->(j:Job {id: $id})
-            WHERE e.review IN ['approved', 'auto_passed']
             RETURN e.id AS id, e.kind AS kind, e.at AS at, e.review AS review,
                    e.payload AS payload
             ORDER BY e.at
