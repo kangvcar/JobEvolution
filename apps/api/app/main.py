@@ -242,6 +242,10 @@ class ReleaseBody(BaseModel):
     metadata: dict = {}
 
 
+class RetractionBody(BaseModel):
+    reason: str = ""
+
+
 class LoginBody(BaseModel):
     password: str
 
@@ -416,3 +420,20 @@ def admin_rollback_release(release_id: str, request: Request, x_admin_password: 
     if result is None:
         raise HTTPException(404, "release not found")
     return result
+
+
+@app.post("/admin/events/{event_id}/retract")
+def admin_retract_event(event_id: str, body: RetractionBody, request: Request, x_admin_password: str | None = Header(default=None, alias="X-Admin-Password")):
+    _require_admin(request, x_admin_password)
+    result = graph.retract_event(event_id, body.reason)
+    if result is None:
+        raise HTTPException(404, "event not found")
+    return result
+
+
+@app.post("/admin/evidence/{evidence_id}/retract")
+def admin_retract_evidence(evidence_id: str, body: RetractionBody, request: Request, x_admin_password: str | None = Header(default=None, alias="X-Admin-Password")):
+    _require_admin(request, x_admin_password)
+    if not graph.retract_evidence(evidence_id, body.reason):
+        raise HTTPException(404, "evidence not found")
+    return {"id": evidence_id, "retracted": True}

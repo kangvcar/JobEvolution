@@ -390,6 +390,8 @@ def list_requires(job_id: str) -> list[dict]:
         rows = session.run(
             """
             MATCH (j:Job {id: $id})-[:REQUIRES_VERSION {active: true}]->(v:RequirementVersion)-[:FOR_SKILL]->(s:Skill)
+            WHERE coalesce(v.retracted, false) = false
+              AND NOT EXISTS { MATCH (v)-[:SUPPORTED_BY]->(retracted:Evidence) WHERE retracted.retracted = true }
             OPTIONAL MATCH (s)-[:IN_CATEGORY]->(c:SkillCategory)
             OPTIONAL MATCH (v)-[:IN_GROUP]->(g:RequirementGroup)
             OPTIONAL MATCH (v)-[:SUPPORTED_BY]->(e:Evidence)
@@ -410,7 +412,7 @@ def list_requires(job_id: str) -> list[dict]:
             rows = session.run(
                 """
             MATCH (j:Job {id: $id})-[r:REQUIRES]->(s:Skill)
-            WHERE r.valid_to IS NULL
+            WHERE r.valid_to IS NULL AND coalesce(r.retracted, false) = false
             OPTIONAL MATCH (s)-[:IN_CATEGORY]->(c:SkillCategory)
             RETURN s.id AS skill_id, s.name AS name, r.kind AS kind,
                    c.id AS category_id, c.name AS category,
@@ -652,12 +654,41 @@ def list_job_evidence(job_id: str) -> list[dict]:
         rows = session.run(
             """
             MATCH (e:Evidence)-[:FOR]->(j:Job {id: $id})
+            WHERE coalesce(e.retracted, false) = false
             RETURN e.company AS company, e.observed_at AS observed_at,
                    e.id AS id, e.source AS source
             """,
             id=job_id,
         )
         return [dict(row) for row in rows]
+
+
+def retract_event(event_id: str, reason: str) -> dict | None:
+    event = get_event(event_id)
+    if event is None or _driver is None:
+        return None
+    payload = event.get("payload") or {}
+    with _driver.session() as session:
+        session.run("MATCH (e:EvolutionEvent {id: $id}) SET e.review = 'retracted', e.retraction_reason = $reason, e.retracted_at = datetime()", id=event_id, reason=reason)
+        if payload.get("job_id") and payload.get("skill_id"):
+            session.run(
+                """
+                MATCH (j:Job {id: $job_id})-[r:REQUIRES]->(s:Skill {id: $skill_id})
+                SET r.retracted = true, r.valid_to = datetime()
+                WITH j, s
+                MATCH (j)-[:REQUIRES_VERSION]->(v:RequirementVersion)-[:FOR_SKILL]->(s)
+                SET v.retracted = true, v.valid_to = datetime()
+                """, job_id=payload["job_id"], skill_id=payload["skill_id"]
+            )
+    return {**event, "review": "retracted", "reason": reason}
+
+
+def retract_evidence(evidence_id: str, reason: str) -> bool:
+    if _driver is None:
+        return False
+    with _driver.session() as session:
+        row = session.run("MATCH (e:Evidence {id: $id}) SET e.retracted = true, e.retraction_reason = $reason, e.retracted_at = datetime() RETURN e.id AS id", id=evidence_id, reason=reason).single()
+    return bool(row)
 
 
 def set_alias(source_id: str, target_id: str) -> None:
@@ -750,7 +781,7 @@ def list_requires_history(job_id: str) -> list[dict]:
                    c.id AS category_id, c.name AS category,
                    toString(r.valid_from) AS valid_from,
                    toString(r.valid_to) AS valid_to,
-                   r.layer AS layer
+                   r.layer AS layer, coalesce(r.retracted, false) AS retracted
             """,
             id=job_id,
         )
@@ -768,6 +799,8 @@ def period_delta(job_id: str) -> dict:
     start = f"{latest[:4]}-01-01"
     added, expired = [], []
     for row in rows:
+        if row.get("retracted"):
+            continue
         valid_from = row.get("valid_from") or ""
         valid_to = row.get("valid_to") or ""
         item = {
@@ -790,6 +823,7 @@ def list_job_events(job_id: str) -> list[dict]:
         rows = session.run(
             """
             MATCH (e:EvolutionEvent)-[:AFFECTS]->(j:Job {id: $id})
+            WHERE e.review IN ['approved', 'auto_passed']
             RETURN e.id AS id, e.kind AS kind, e.at AS at, e.review AS review,
                    e.payload AS payload
             ORDER BY e.at
