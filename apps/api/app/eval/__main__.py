@@ -7,11 +7,11 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="三项评测与提交物")
     parser.add_argument(
         "cmd",
-        choices=("build", "draft", "jd", "resume", "match", "deliver", "report"),
+        choices=("build", "draft", "adjudicate", "jd", "resume", "match", "deliver", "report"),
     )
     parser.add_argument("--mock", action="store_true")
     parser.add_argument("--coverage", type=float, default=None)
-    args = parser.parse_args(argv)
+    args, extras = parser.parse_known_args(argv)
 
     if args.cmd == "build":
         from app.eval.gold import main as build
@@ -21,6 +21,10 @@ def main(argv: list[str] | None = None) -> int:
         from app.eval.draft import main as draft
 
         return draft()
+    if args.cmd == "adjudicate":
+        from app.eval.adjudicate import main as adjudicate
+
+        return adjudicate(extras)
     if args.cmd == "deliver":
         from app.eval.deliver import main as dump
 
