@@ -116,9 +116,12 @@ def main(argv: list[str] | None = None) -> int:
     pending = sum(1 for e in events if e.get("review") == "pending")
     auto = sum(1 for e in events if e.get("review") == "auto_passed")
     failed = sum(1 for e in events if e.get("kind") == "extract_failed")
+    from app.ops_status import record
+    record("pipeline", "failed" if failed else "success", events=len(events), failed=failed)
     release = None
     if failed == 0:
         release = graph.publish_graph_release(period=max((row.get("observed_at") or "" for row in snaps), default=""))
+        record("publish", "success", release=release.get("id"))
     with graph._driver.session() as session:
         jobs = session.run(
             "MATCH (j:Job) RETURN j.name AS name, j.status AS status ORDER BY j.name"

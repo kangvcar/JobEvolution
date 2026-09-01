@@ -63,12 +63,15 @@ async def http_error(_, exc: HTTPException):
 
 @app.get("/meta")
 def meta():
+    from app.ops_status import read as read_ops, stale as ops_stale
     return {
         "domains": graph.list_domains(),
         "graph_release": graph.public_release(),
         "model_provider": os.environ.get("LLM_PROVIDER", "configured model service"),
         "resume_retention_seconds": 3600,
         "resume_payload": "extracted text only",
+        "ops": read_ops(),
+        "stale": ops_stale(),
     }
 
 
@@ -485,3 +488,10 @@ def admin_retract_evidence(evidence_id: str, body: RetractionBody, request: Requ
     if not graph.retract_evidence(evidence_id, body.reason):
         raise HTTPException(404, "evidence not found")
     return {"id": evidence_id, "retracted": True}
+
+
+@app.get("/admin/ops/status")
+def admin_ops_status(request: Request, x_admin_password: str | None = Header(default=None, alias="X-Admin-Password")):
+    _require_admin(request, x_admin_password)
+    from app.ops_status import read as read_ops, stale as ops_stale
+    return {"status": read_ops(), "stale": ops_stale()}
