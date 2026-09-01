@@ -214,7 +214,7 @@ def diagnose(body: DiagnoseBody):
                 "id": edge["category_id"],
                 "name": edge["category"],
             }
-    return wrap_report(
+    report = wrap_report(
         job=job,
         requires=requires,
         resume=resume,
@@ -226,6 +226,9 @@ def diagnose(body: DiagnoseBody):
             "period_delta": graph.period_delta(body.job_id),
         },
     )
+    report["metadata"]["graph_release"] = resume.get("graph_release") or graph.public_release().get("id")
+    report["metadata"]["last_updated"] = graph.public_release().get("published_at")
+    return report
 
 
 @app.get("/discover")

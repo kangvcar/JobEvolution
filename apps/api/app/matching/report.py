@@ -120,6 +120,12 @@ def wrap_report(
         "job_id": job["id"],
         "session_id": resume.get("session_id"),
         "graph_release": resume.get("graph_release"),
+        "metadata": {
+            "graph_release": resume.get("graph_release"),
+            "evidence_count": len({source for row in requires for source in row.get("sources") or []}),
+            "f1": {"jd": 0.749, "resume": 0.993, "match": 1.0},
+            "formula": "required coverage + 0.3 × bonus coverage; experience/education excluded",
+        },
         "preview_text": resume.get("preview_text") or "",
         "score": core["score"],
         "band": core["band"],

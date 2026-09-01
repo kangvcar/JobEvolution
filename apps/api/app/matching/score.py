@@ -43,7 +43,7 @@ def compare_job(requires: list[dict], resume_skills: list[dict]) -> dict:
                 gaps.append(item)
                 shift_items.extend({"id": m["skill_id"], "delta": (1.0 - value), "name": m.get("name") or m["skill_id"], "excerpt": m.get("excerpt") or "", "why": "要求组缺口"} for m in members if m["skill_id"] not in by_id)
             else:
-                covered.extend({"skill_id": m["skill_id"], "name": m.get("name") or m["skill_id"], "excerpt": m.get("excerpt") or "", "cover": 1.0, "group_id": group_id} for m in members)
+                covered.extend({"skill_id": m["skill_id"], "name": m.get("name") or m["skill_id"], "excerpt": m.get("excerpt") or "", "cover": 1.0, "group_id": group_id, "required_proficiency": m.get("proficiency"), "resume_proficiency": (by_id.get(m["skill_id"]) or {}).get("proficiency")} for m in members)
             ledger.append({"skill_id": row["skill_id"], "name": row.get("name") or row["skill_id"], "cover": value, "side": "required", "group_id": group_id, "min_required": minimum})
             continue
         sid = row["skill_id"]
@@ -59,6 +59,8 @@ def compare_job(requires: list[dict], resume_skills: list[dict]) -> dict:
             "name": row.get("name") or sid,
             "excerpt": row.get("excerpt") or "",
             "cover": value,
+            "required_proficiency": row.get("proficiency"),
+            "resume_proficiency": got.get("proficiency") if got else None,
         }
         ledger.append({**item, "side": "required"})
         if value == 0:
@@ -82,6 +84,8 @@ def compare_job(requires: list[dict], resume_skills: list[dict]) -> dict:
                     "name": row.get("name") or sid,
                     "excerpt": row.get("excerpt") or "",
                     "cover": 1.0,
+                    "required_proficiency": row.get("proficiency"),
+                    "resume_proficiency": got.get("proficiency") if got else None,
                 }
             )
         ledger.append(
