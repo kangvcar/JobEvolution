@@ -75,6 +75,11 @@ def meta():
     }
 
 
+@app.get("/v1/meta")
+def v1_meta():
+    return meta()
+
+
 @app.get("/jobs")
 def jobs(
     domain: str | None = None,
@@ -84,6 +89,11 @@ def jobs(
     level: str | None = Query(None, pattern="^(junior|mid|senior)$"),
 ):
     return graph.list_jobs(domain=domain, status=status, q=q, category=category, level=level)
+
+
+@app.get("/v1/jobs")
+def v1_jobs(domain: str | None = None, status: str | None = None, q: str | None = Query(None), category: str | None = Query(None), level: str | None = Query(None, pattern="^(junior|mid|senior)$")):
+    return jobs(domain=domain, status=status, q=q, category=category, level=level)
 
 
 @app.get("/jobs/{job_id}")
@@ -96,6 +106,11 @@ def job_detail(job_id: str):
     row["sources"] = sorted({item["company"] for item in evidence if item.get("company")})
     row["definition"] = graph.current_definition(job_id)
     return row
+
+
+@app.get("/v1/jobs/{job_id}")
+def v1_job_detail(job_id: str):
+    return job_detail(job_id)
 
 
 @app.get("/graph/jobs/{job_id}")
@@ -127,6 +142,11 @@ def job_slice(job_id: str):
         "evidence": graph.list_job_evidence(job_id),
         "period_delta": graph.period_delta(job_id),
     }
+
+
+@app.get("/v1/graph/jobs/{job_id}")
+def v1_job_slice(job_id: str):
+    return job_slice(job_id)
 
 
 class DiagnoseBody(BaseModel):
@@ -175,6 +195,11 @@ async def create_session(request: Request, file: UploadFile = File(...), consent
         "education": parsed["education"],
         "graph_release": graph.public_release().get("id"),
     }
+
+
+@app.post("/v1/sessions")
+async def v1_create_session(request: Request, file: UploadFile = File(...), consent: bool = Form(False)):
+    return await create_session(request=request, file=file, consent=consent)
 
 
 class SessionUpdateBody(BaseModel):
@@ -252,6 +277,11 @@ def diagnose(body: DiagnoseBody, request: Request):
     report["metadata"]["graph_release"] = resume.get("graph_release") or graph.public_release().get("id")
     report["metadata"]["last_updated"] = graph.public_release().get("published_at")
     return report
+
+
+@app.post("/v1/diagnose")
+def v1_diagnose(body: DiagnoseBody, request: Request):
+    return diagnose(body=body, request=request)
 
 
 @app.get("/discover")
