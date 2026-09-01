@@ -2,6 +2,8 @@ import hmac
 import os
 import secrets
 import time
+import uuid
+import logging
 from contextlib import asynccontextmanager
 
 from pydantic import BaseModel
@@ -30,6 +32,18 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+_request_log = logging.getLogger("jobevolution.request")
+_diagnose_attempts: dict[str, list[float]] = {}
+
+
+@app.middleware("http")
+async def request_logging(request: Request, call_next):
+    started = time.perf_counter()
+    request_id = request.headers.get("X-Request-ID") or uuid.uuid4().hex
+    response = await call_next(request)
+    _request_log.info("request", extra={"request_id": request_id, "route": request.url.path, "status": response.status_code, "latency_ms": round((time.perf_counter() - started) * 1000, 1)})
+    response.headers["X-Request-ID"] = request_id
+    return response
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],
@@ -184,7 +198,13 @@ def update_resume_session(session_id: str, body: SessionUpdateBody):
 
 
 @app.post("/diagnose")
-def diagnose(body: DiagnoseBody):
+def diagnose(body: DiagnoseBody, request: Request):
+    ip = request.client.host if request.client else "unknown"
+    now = time.time()
+    recent = [stamp for stamp in _diagnose_attempts.get(ip, []) if stamp > now - 60]
+    if len(recent) >= 30:
+        raise HTTPException(429, "诊断请求过于频繁，请稍后重试")
+    _diagnose_attempts[ip] = recent + [now]
     job = graph.get_any_job(body.job_id)
     if job is None:
         raise HTTPException(404, "not found")

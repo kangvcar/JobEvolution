@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import json
 import os
+from datetime import date
 
 
 _cached = None
+_usage = {"day": date.today(), "calls": 0, "cost": 0.0}
 
 
 def _client():
@@ -23,6 +25,11 @@ def _client():
 
 
 def complete_json(messages) -> dict:
+    today = date.today()
+    if _usage["day"] != today:
+        _usage.update(day=today, calls=0, cost=0.0)
+    if _usage["calls"] >= int(os.environ.get("LLM_DAILY_CALL_CAP", "1000")) or _usage["cost"] >= float(os.environ.get("LLM_DAILY_COST_CAP", "100")):
+        raise RuntimeError("daily model quota exceeded")
     model = os.environ.get("DEEPSEEK_MODEL", "deepseek-v4-flash")
     last: Exception | None = None
     for _ in range(2):
@@ -36,6 +43,10 @@ def complete_json(messages) -> dict:
                 temperature=0,
             )
             content = raw.choices[0].message.content or "{}"
+            usage = getattr(raw, "usage", None)
+            tokens = int(getattr(usage, "total_tokens", 0) or 0)
+            _usage["calls"] += 1
+            _usage["cost"] += tokens / 1_000_000 * float(os.environ.get("LLM_COST_PER_MILLION", "1"))
             return json.loads(content)
         except Exception as exc:
             last = exc
