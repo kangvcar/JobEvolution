@@ -54,3 +54,10 @@ def save(payload: dict) -> str:
 def load(sid: str) -> dict | None:
     raw = cache_get(PREFIX + sid) if sid else None
     return json.loads(raw) if raw else None
+
+
+def update(sid: str, payload: dict) -> bool:
+    if not sid or cache_get(PREFIX + sid) is None:
+        return False
+    cache_set(PREFIX + sid, json.dumps(payload, ensure_ascii=False), TTL)
+    return True

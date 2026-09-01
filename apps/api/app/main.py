@@ -15,7 +15,7 @@ from app import graph
 from app.matching.report import neighbor_name, wrap_report
 from app.matching.resume import ResumeError, extract_text, parse_resume
 from app.matching.session import load as load_session
-from app.matching.session import save as save_session
+from app.matching.session import save as save_session, update as update_session
 from app.pipeline.gate import apply_event, passthrough_enabled, set_passthrough
 from app.pipeline.status import job_id_for
 
@@ -147,6 +147,7 @@ async def create_session(request: Request, file: UploadFile = File(...), consent
             "experience": parsed["experience"],
             "education": parsed["education"],
             "filename": file.filename,
+            "graph_release": graph.public_release().get("id"),
         }
     )
     return {
@@ -155,7 +156,31 @@ async def create_session(request: Request, file: UploadFile = File(...), consent
         "preview_text": text[:2000],
         "experience": parsed["experience"],
         "education": parsed["education"],
+        "graph_release": graph.public_release().get("id"),
     }
+
+
+class SessionUpdateBody(BaseModel):
+    skills: list[dict]
+
+
+@app.patch("/sessions/{session_id}")
+def update_resume_session(session_id: str, body: SessionUpdateBody):
+    session = load_session(session_id)
+    if session is None:
+        raise HTTPException(404, "session expired")
+    cleaned = []
+    for skill in body.skills:
+        if not isinstance(skill, dict) or not skill.get("skill_id"):
+            continue
+        proficiency = skill.get("proficiency")
+        if proficiency not in (None, "aware", "able", "expert"):
+            proficiency = None
+        cleaned.append({"skill_id": str(skill["skill_id"]), "name": str(skill.get("name") or skill["skill_id"]), "proficiency": proficiency})
+    session["skills"] = cleaned
+    if not update_session(session_id, session):
+        raise HTTPException(404, "session expired")
+    return {"session_id": session_id, "skills": cleaned, "graph_release": session.get("graph_release")}
 
 
 @app.post("/diagnose")

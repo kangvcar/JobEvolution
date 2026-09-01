@@ -119,6 +119,7 @@ def wrap_report(
     return {
         "job_id": job["id"],
         "session_id": resume.get("session_id"),
+        "graph_release": resume.get("graph_release"),
         "preview_text": resume.get("preview_text") or "",
         "score": core["score"],
         "band": core["band"],
