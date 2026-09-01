@@ -226,18 +226,16 @@ def list_skills(*, with_embed: bool = True) -> list[dict]:
         return []
     with _driver.session() as session:
         rows = list(session.run("MATCH (s:Skill) RETURN s.id AS id, s.name AS name, s.synonyms AS synonyms"))
-    out = []
-    embed_fn = None
-    if with_embed:
+    out = [dict(row) for row in rows]
+    for item in out:
+        item["synonyms"] = list(item.get("synonyms") or [])
+    if with_embed and out:
+        # ponytail: 每次调用整表重算嵌入；远端 bge-m3 后单请求约 3s，向太多时在 Skill 节点上落 embedding 属性
         from app.llm.embed import embed
 
-        embed_fn = embed
-    for row in rows:
-        item = dict(row)
-        item["synonyms"] = list(item.get("synonyms") or [])
-        if embed_fn is not None:
-            item["embedding"] = embed_fn([item["name"]])[0]
-        out.append(item)
+        vectors = embed([item["name"] for item in out])
+        for item, vec in zip(out, vectors, strict=True):
+            item["embedding"] = vec
     return out
 
 
