@@ -2,13 +2,23 @@
   "job_id": "job-e1662d9b8cfd059f",
   "band": "不匹配",
   "gap_ids": [
-    "skill-03312bee2e657c9e",
-    "skill-90cf7bd8432d0199",
-    "skill-18885f27b5af9012"
+    "skill-18885f27b5af9012",
+    "skill-fa1bd127be6dc95e",
+    "skill-6f61eba1083a3435",
+    "skill-4f5e698fecc870d2",
+    "skill-0962ad68a9646edd",
+    "skill-279b44d2ab4b40c0",
+    "skill-806f88fc0e700c25",
+    "skill-9513c60ab00ff4e3"
   ],
   "shift_ids": [
-    "skill-03312bee2e657c9e",
-    "skill-90cf7bd8432d0199",
-    "skill-18885f27b5af9012"
+    "skill-18885f27b5af9012",
+    "skill-fa1bd127be6dc95e",
+    "skill-6f61eba1083a3435",
+    "skill-4f5e698fecc870d2",
+    "skill-0962ad68a9646edd",
+    "skill-279b44d2ab4b40c0",
+    "skill-806f88fc0e700c25",
+    "skill-9513c60ab00ff4e3"
   ]
 }
