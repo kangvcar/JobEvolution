@@ -1,5 +1,7 @@
 import hmac
 import os
+import secrets
+import time
 from contextlib import asynccontextmanager
 
 from pydantic import BaseModel
@@ -7,6 +9,7 @@ from pydantic import BaseModel
 from fastapi import FastAPI, File, Header, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from starlette.responses import Response
 
 from app import graph
 from app.matching.report import neighbor_name, wrap_report
@@ -30,6 +33,7 @@ app.add_middleware(
     allow_origins=["http://localhost:3000"],
     allow_methods=["*"],
     allow_headers=["*"],
+    allow_credentials=True,
 )
 
 
@@ -209,6 +213,15 @@ class PassthroughBody(BaseModel):
     enabled: bool = False
 
 
+class LoginBody(BaseModel):
+    password: str
+
+
+_admin_sessions: dict[str, tuple[float, str]] = {}
+_login_attempts: dict[str, list[float]] = {}
+ADMIN_SESSION_TTL = 3600
+
+
 def _passwords_match(given: str, expected: str) -> bool:
     left = given.encode("utf-8")
     right = expected.encode("utf-8")
@@ -223,9 +236,52 @@ def _require_admin(
     x_admin_password: str | None = Header(default=None, alias="X-Admin-Password"),
 ):
     expected = os.environ.get("ADMIN_PASSWORD", "change-me")
-    given = x_admin_password or request.cookies.get("admin_password") or ""
-    if not _passwords_match(given, expected):
+    session_id = request.cookies.get("admin_session")
+    if session_id:
+        row = _admin_sessions.get(session_id)
+        if row and row[0] > time.time():
+            if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
+                csrf = request.headers.get("X-CSRF-Token")
+                if not csrf or not hmac.compare_digest(csrf, row[1]):
+                    raise HTTPException(403, "csrf required")
+            return
+        _admin_sessions.pop(session_id, None)
+    # Compatibility for scripts during the migration; browsers use the session cookie.
+    if x_admin_password and _passwords_match(x_admin_password, expected):
+        return
+    raise HTTPException(401, "unauthorized")
+
+
+@app.post("/admin/login")
+def admin_login(body: LoginBody, request: Request, response: Response):
+    now = time.time()
+    ip = request.client.host if request.client else "unknown"
+    attempts = [stamp for stamp in _login_attempts.get(ip, []) if stamp > now - 60]
+    if len(attempts) >= 5:
+        raise HTTPException(429, "too many login attempts")
+    _login_attempts[ip] = attempts + [now]
+    expected = os.environ.get("ADMIN_PASSWORD", "change-me")
+    if not _passwords_match(body.password, expected):
         raise HTTPException(401, "unauthorized")
+    session_id, csrf = secrets.token_urlsafe(32), secrets.token_urlsafe(24)
+    _admin_sessions[session_id] = (now + ADMIN_SESSION_TTL, csrf)
+    response.set_cookie("admin_session", session_id, max_age=ADMIN_SESSION_TTL, httponly=True,
+                        secure=os.environ.get("ADMIN_COOKIE_SECURE", "1") == "1",
+                        samesite="strict", path="/")
+    response.set_cookie("admin_csrf", csrf, max_age=ADMIN_SESSION_TTL, httponly=False,
+                        secure=os.environ.get("ADMIN_COOKIE_SECURE", "1") == "1",
+                        samesite="strict", path="/")
+    return {"expires_in": ADMIN_SESSION_TTL}
+
+
+@app.post("/admin/logout")
+def admin_logout(request: Request, response: Response):
+    session_id = request.cookies.get("admin_session")
+    if session_id:
+        _admin_sessions.pop(session_id, None)
+    response.delete_cookie("admin_session", path="/")
+    response.delete_cookie("admin_csrf", path="/")
+    return {"ok": True}
 
 
 @app.get("/admin/queue")

@@ -64,16 +64,19 @@ export default function AdminPage() {
   const [adjFile, setAdjFile] = useState<"jd" | "resume">("jd");
   const [gold, setGold] = useState<AdjState | null>(null);
 
-  const authHeaders = { "X-Admin-Password": password };
+  const csrfHeaders = (): Record<string, string> => {
+    const token = document.cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith("admin_csrf="))?.split("=")[1];
+    return token ? { "X-CSRF-Token": decodeURIComponent(token) } : {};
+  };
 
   async function loadQueue() {
-    const response = await fetch(`${API}/admin/queue`, { headers: authHeaders });
+    const response = await fetch(`${API}/admin/queue`, { credentials: "include" });
     if (!response.ok) throw new Error("口令错误");
     setQueue(await response.json());
   }
 
   async function loadNext(file: "jd" | "resume") {
-    const response = await fetch(`${API}/admin/adjudicate/next?file=${file}`, { headers: authHeaders });
+    const response = await fetch(`${API}/admin/adjudicate/next?file=${file}`, { credentials: "include" });
     if (!response.ok) throw new Error("裁决队列读取失败");
     setGold(await response.json());
   }
@@ -82,7 +85,7 @@ export default function AdminPage() {
     event.preventDefault();
     setError("");
     try {
-      const response = await fetch(`${API}/admin/passthrough`, { headers: authHeaders });
+      const response = await fetch(`${API}/admin/login`, { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ password }) });
       if (!response.ok) throw new Error("口令错误");
       setPassthrough((await response.json()).enabled);
       await loadQueue();
@@ -108,7 +111,8 @@ export default function AdminPage() {
     setError("");
     const response = await fetch(`${API}/admin/adjudicate/decide`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", ...authHeaders },
+      headers: { "Content-Type": "application/json", ...csrfHeaders() },
+      credentials: "include",
       body: JSON.stringify({ file: gold.file, row_id: gold.row.id, ...payload }),
     });
     if (!response.ok) {
@@ -140,7 +144,7 @@ export default function AdminPage() {
     try {
       const response = await fetch(`${API}/admin/passthrough`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", ...authHeaders },
+        headers: { "Content-Type": "application/json", ...csrfHeaders() }, credentials: "include",
         body: JSON.stringify({ enabled: !passthrough }),
       });
       if (!response.ok) throw new Error("开关更新失败");
@@ -157,9 +161,9 @@ export default function AdminPage() {
     const payload = item.payload ? { ...item.payload } : undefined;
     const draft = drafts[item.id];
     if (decision === "approved" && payload && draft !== undefined) payload.excerpt = draft;
-    const response = await fetch(`${API}/admin/queue/${item.id}/${decision === "approved" ? "approve" : "reject"}`, {
-      method: "POST",
-      headers: { "X-Admin-Password": password, "Content-Type": "application/json" },
+      const response = await fetch(`${API}/admin/queue/${item.id}/${decision === "approved" ? "approve" : "reject"}`, {
+        method: "POST",
+      headers: { "Content-Type": "application/json", ...csrfHeaders() }, credentials: "include",
       body: decision === "approved" ? JSON.stringify({ payload }) : undefined,
     });
     if (!response.ok) {
@@ -206,6 +210,7 @@ export default function AdminPage() {
         <button className="ghost" type="button" aria-pressed={passthrough} onClick={togglePassthrough}>
           {passthrough ? "直通开启" : "直通关闭"}
         </button>
+        <button className="ghost" type="button" onClick={async () => { await fetch(`${API}/admin/logout`, { method: "POST", credentials: "include", headers: csrfHeaders() }); window.location.reload(); }}>退出</button>
       </div>
       {error ? <p className="admin-error" role="alert">{error}</p> : null}
 
