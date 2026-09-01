@@ -1,4 +1,4 @@
-"""ADR-0011 裁决工作台：人只对存疑项按键，工具写 jsonl。python -m app.eval adjudicate [--file jd|resume]"""
+"""ADR-0011 金标裁决：LLM 起草（draft.py），人裁决。CLI 与管理页共用 prep/apply。"""
 
 from __future__ import annotations
 
@@ -14,13 +14,19 @@ from app.eval.freeze import load_freeze
 from app.pipeline.align import align_skill
 from app.llm.embed import embed
 
+FILES = {"jd": "jd.jsonl", "resume": "resume.jsonl"}
+_index_cache: list[dict] | None = None
+
 
 def _vocab() -> list[dict]:
-    skills = json.loads((eval_dir() / "skills.json").read_text(encoding="utf-8"))
-    vectors = embed([s["name"] for s in skills])
-    for skill, vec in zip(skills, vectors, strict=True):
-        skill["embedding"] = vec
-    return skills
+    global _index_cache
+    if _index_cache is None:
+        skills = json.loads((eval_dir() / "skills.json").read_text(encoding="utf-8"))
+        vectors = embed([s["name"] for s in skills])
+        for skill, vec in zip(skills, vectors, strict=True):
+            skill["embedding"] = vec
+        _index_cache = skills
+    return _index_cache
 
 
 def _names(by_id: dict, sid: str) -> list[str]:
@@ -39,9 +45,90 @@ def _row_text(row: dict) -> str:
     return row.get("text") or ""
 
 
-def _new_skill(name: str) -> dict:
-    sid = "skill-" + hashlib.blake2b(name.strip().casefold().encode("utf-8"), digest_size=8).hexdigest()
-    return {"id": sid, "name": name.strip(), "synonyms": [name.strip()], "embedding": None}
+def _mark_done(row: dict, *, skipped: bool, deleted: list[str], added: list[str]) -> None:
+    row.setdefault("notes", {})["adjudicated"] = {
+        "date": date.today().isoformat(),
+        "skipped": skipped,
+        "deleted": sorted(deleted),
+        "added": added,
+    }
+
+
+def prep_row(row: dict, index: list[dict], by_id: dict, cut: float) -> dict:
+    text = _row_text(row)
+    draft = (row.get("notes") or {}).get("gold_draft", {}).get("skills", [])
+    aligned: dict[str, str] = {}
+    for surf in draft:
+        hit = align_skill(surf, index, threshold=cut)
+        if hit:
+            aligned[hit["id"]] = surf
+    gold, suspects = [], []
+    for entry in row["skills"]:
+        sid = entry["id"]
+        traceable = sid in aligned or any(
+            n.strip().casefold() in text.casefold() for n in _names(by_id, sid) if n
+        )
+        target = gold if traceable else suspects
+        target.append({"id": sid, "name": _names(by_id, sid)[0] or sid})
+    held = {e["id"] for e in row["skills"]}
+    proposals = [
+        {"skill_id": sid, "name": (by_id.get(sid) or {}).get("name") or sid, "span": surf}
+        for sid, surf in aligned.items()
+        if sid not in held
+    ]
+    return {
+        "id": row["id"],
+        "title": row.get("title") or row.get("id"),
+        "text": text[:1500],
+        "kept": gold,
+        "suspects": suspects,
+        "proposals": proposals,
+        "unaligned": [s for s in draft if s not in set(aligned.values())],
+    }
+
+
+def next_row(file: str) -> dict:
+    rows = read_jsonl(eval_dir() / FILES[file])
+    done = sum(1 for r in rows if (r.get("notes") or {}).get("adjudicated"))
+    out = {"file": file, "total": len(rows), "done": done, "row": None}
+    row = next((r for r in rows if not (r.get("notes") or {}).get("adjudicated")), None)
+    if row is None:
+        return out
+    if not (row.get("notes") or {}).get("gold_draft"):
+        out["draft_missing"] = True
+        return out
+    index = _vocab()
+    out["row"] = prep_row(row, index, {s["id"]: s for s in index}, load_freeze()["align_threshold"])
+    return out
+
+
+def apply_decision(payload: dict) -> dict:
+    file = payload.get("file")
+    if file not in FILES:
+        raise ValueError(f"unknown file {file!r}")
+    row_id = payload["row_id"]
+    deleted = set(payload.get("deleted") or [])
+    added = payload.get("added") or []
+    path = eval_dir() / FILES[file]
+    rows = read_jsonl(path)
+    row = next((r for r in rows if r["id"] == row_id), None)
+    if row is None:
+        raise KeyError(row_id)
+    if not payload.get("skip"):
+        for item in added:
+            if item.get("span"):
+                row["mentions"] = (row.get("mentions") or []) + [
+                    {"span": item["span"], "skill_id": item["skill_id"]}
+                ]
+        row["skills"] = [e for e in row["skills"] if e["id"] not in deleted] + [
+            {"id": item["skill_id"], "kind": "required", "proficiency": None} for item in added
+        ]
+    _mark_done(row, skipped=bool(payload.get("skip")), deleted=sorted(deleted), added=[item["skill_id"] for item in added])
+    with open(path, "w", encoding="utf-8") as fh:
+        for r in rows:
+            fh.write(json.dumps(r, ensure_ascii=False) + "\n")
+    done = sum(1 for r in rows if (r.get("notes") or {}).get("adjudicated"))
+    return {"file": file, "total": len(rows), "done": done}
 
 
 def _ask(prompt: str, keys: str, default: str) -> str:
@@ -53,62 +140,34 @@ def _ask(prompt: str, keys: str, default: str) -> str:
     return raw if raw in keys else default
 
 
-def _adjudicate_row(row: dict, index: list[dict], by_id: dict, cut: float) -> bool:
-    title = row.get("title") or row.get("id")
-    text = _row_text(row)
-    print(f"\n{'=' * 70}\n[{title}] 原文（裁决只认这段）:")
-    print(text[:1500])
-    draft = (row.get("notes") or {}).get("gold_draft", {}).get("skills", [])
-    aligned = {}
-    for surf in draft:
-        hit = align_skill(surf, index, threshold=cut)
-        if hit:
-            aligned[hit["id"]] = surf
-
-    gold = row["skills"]
-    suspects, keeps = [], []
-    for entry in gold:
-        sid = entry["id"]
-        if sid in aligned or any(n.strip().casefold() in text.casefold() for n in _names(by_id, sid) if n):
-            keeps.append(entry)
-        else:
-            suspects.append(entry)
-    adds = [(sid, surf) for sid, surf in aligned.items() if sid not in {e["id"] for e in gold}]
-
-    print(f"自动留 {len(keeps)}（原文/草稿可溯）| 存疑 {len(suspects)} | 提案加 {len(adds)} | 草稿未对齐 {len(draft) - len(aligned)}")
+def _adjudicate_row(prep: dict) -> bool:
+    print(f"\n[{prep['title']}] 原文（裁决只认这段）:")
+    print(prep["text"])
+    print(
+        f"自动留 {len(prep['kept'])}（原文/草稿可溯）| 存疑 {len(prep['suspects'])}"
+        f" | 提案加 {len(prep['proposals'])} | 草稿未对齐 {len(prep['unaligned'])}"
+    )
     answer = _ask("回车=逐项 / A=全收提案 / D=全删存疑 / s=跳过 / q=保存退出: ", {"", "a", "d", "s", "q"}, "")
     if answer == "s":
-        return True
+        return "skip"
     if answer == "q":
         return False
-
     deleted: set[str] = set()
-    added: list[tuple[str, str]] = []
+    added: list[dict] = []
     if answer == "d":
-        deleted = {e["id"] for e in suspects}
-    if answer == "a":
-        added = list(adds)
-    if answer == "":
-        for entry in suspects:
-            names = " / ".join(n for n in _names(by_id, entry["id"]) if n)
-            if _ask(f"  存疑 [{names}] 原文找不到 → d=删 / 回车=留: ", {"d", ""}, "") == "d":
+        deleted = {e["id"] for e in prep["suspects"]}
+    elif answer == "a":
+        added = list(prep["proposals"])
+    else:
+        for entry in prep["suspects"]:
+            if _ask(f"  存疑 [{entry['name']}] 原文找不到 → d=删 / 回车=留: ", {"d", ""}, "") == "d":
                 deleted.add(entry["id"])
-        for sid, surf in adds:
-            if _ask(f"  提案加 [{by_id[sid]['name']}]（草稿: {surf}）→ a=加 / 回车=不加: ", {"a", ""}, "") == "a":
-                added.append((sid, surf))
-
-    for sid, surf in added:
-        row["mentions"] = (row.get("mentions") or []) + [{"span": surf, "skill_id": sid}]
-    row["skills"] = [e for e in gold if e["id"] not in deleted] + [
-        {"id": sid, "kind": "required", "proficiency": None} for sid, _ in added
-    ]
-    row.setdefault("notes", {})["adjudicated"] = {
-        "date": date.today().isoformat(),
-        "kept": len(keeps),
-        "deleted": sorted(deleted),
-        "added": [sid for sid, _ in added],
-    }
-    return True
+        for item in prep["proposals"]:
+            if _ask(f"  提案加 [{item['name']}]（草稿: {item['span']}）→ a=加 / 回车=不加: ", {"a", ""}, "") == "a":
+                added.append(item)
+    if deleted or added or answer in ("a", "d"):
+        return {"deleted": sorted(deleted), "added": added}
+    return "skip"
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -116,13 +175,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--file", choices=("jd", "resume", "all"), default="all")
     args = parser.parse_args(argv)
 
-    all_files = {"jd": "jd.jsonl", "resume": "resume.jsonl"}
-    names = all_files if args.file == "all" else {args.file: all_files[args.file]}
     cut = load_freeze()["align_threshold"]
     index = _vocab()
     by_id = {s["id"]: s for s in index}
+    chosen = FILES if args.file == "all" else {args.file: FILES[args.file]}
 
-    for label, filename in names.items():
+    for label, filename in chosen.items():
         path = eval_dir() / filename
         rows = read_jsonl(path)
         todo = [i for i, row in enumerate(rows) if not (row.get("notes") or {}).get("adjudicated")]
@@ -132,10 +190,24 @@ def main(argv: list[str] | None = None) -> int:
         shutil.copy2(path, path.with_suffix(".jsonl.bak"))
         try:
             for i, row in enumerate(rows):
-                if i in todo:
-                    print(f"\n--- {filename} {i + 1}/{len(rows)} ---")
-                    if not _adjudicate_row(row, index, by_id, cut):
-                        break
+                if i not in todo:
+                    continue
+                print(f"\n--- {filename} {i + 1}/{len(rows)} ---")
+                outcome = _adjudicate_row(prep_row(row, index, by_id, cut))
+                if outcome is False:
+                    break
+                if outcome == "skip":
+                    continue
+                row["mentions"] = (row.get("mentions") or []) + [
+                    {"span": item["span"], "skill_id": item["skill_id"]}
+                    for item in outcome["added"]
+                    if item.get("span")
+                ]
+                row["skills"] = [e for e in row["skills"] if e["id"] not in set(outcome["deleted"])] + [
+                    {"id": item["skill_id"], "kind": "required", "proficiency": None}
+                    for item in outcome["added"]
+                ]
+                _mark_done(row, skipped=False, deleted=outcome["deleted"], added=[item["skill_id"] for item in outcome["added"]])
         finally:
             with open(path, "w", encoding="utf-8") as fh:
                 for row in rows:

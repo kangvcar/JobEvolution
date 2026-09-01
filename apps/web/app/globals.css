@@ -512,6 +512,14 @@ button:active,
 .admin-event-head time { color: var(--color-muted); font-family: var(--font-mono-stack); font-size: var(--text-xs); }
 .admin-event-subject { margin: var(--space-2xs) 0 0 !important; color: var(--color-ink) !important; }
 
+.admin-tabs { display: flex; gap: var(--space-2xs); }
+.admin-tabs button[aria-pressed="true"] { border-color: var(--color-accent); color: var(--color-accent); }
+.adj-card { border-top: 1px solid var(--color-rule); margin-top: var(--space-lg); padding-top: var(--space-md); }
+.adj-text { white-space: pre-wrap; border: 1px solid var(--color-rule); padding: var(--space-sm); }
+.adj-text mark { background: color-mix(in oklch, var(--color-accent) 28%, transparent); color: inherit; padding: 0 0.1em; }
+.adj-list { list-style: none; margin: var(--space-2xs) 0; padding: 0; }
+.adj-list li { display: flex; justify-content: space-between; align-items: center; gap: var(--space-md); padding: var(--space-2xs) 0; border-bottom: 1px dashed var(--color-rule); }
+
 .primary {
   background: var(--color-accent);
   color: var(--color-accent-ink);

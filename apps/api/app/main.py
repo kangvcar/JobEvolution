@@ -197,6 +197,14 @@ class ApproveBody(BaseModel):
     payload: dict | None = None
 
 
+class AdjudicateBody(BaseModel):
+    file: str
+    row_id: str
+    deleted: list[str] = []
+    added: list[dict] = []
+    skip: bool = False
+
+
 class PassthroughBody(BaseModel):
     enabled: bool = False
 
@@ -255,6 +263,38 @@ def admin_reject(
         return apply_event(event_id, review="rejected")
     except KeyError:
         raise HTTPException(404, "not found") from None
+
+
+@app.get("/admin/adjudicate/next")
+def admin_adjudicate_next(
+    request: Request,
+    file: str = "jd",
+    x_admin_password: str | None = Header(default=None, alias="X-Admin-Password"),
+):
+    _require_admin(request, x_admin_password)
+    from app.eval import adjudicate as adjudicate_mod
+
+    try:
+        return adjudicate_mod.next_row(file)
+    except KeyError:
+        raise HTTPException(400, "unknown file") from None
+
+
+@app.post("/admin/adjudicate/decide")
+def admin_adjudicate_decide(
+    body: AdjudicateBody,
+    request: Request,
+    x_admin_password: str | None = Header(default=None, alias="X-Admin-Password"),
+):
+    _require_admin(request, x_admin_password)
+    from app.eval import adjudicate as adjudicate_mod
+
+    try:
+        return adjudicate_mod.apply_decision(body.model_dump())
+    except KeyError:
+        raise HTTPException(404, "not found") from None
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from None
 
 
 @app.get("/admin/passthrough")
