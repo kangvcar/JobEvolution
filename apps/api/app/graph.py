@@ -27,6 +27,8 @@ _CONSTRAINTS = (
     "CREATE CONSTRAINT review_decision_id IF NOT EXISTS FOR (n:ReviewDecision) REQUIRE n.id IS UNIQUE",
     "CREATE CONSTRAINT job_definition_version_id IF NOT EXISTS FOR (n:JobDefinitionVersion) REQUIRE n.id IS UNIQUE",
     "CREATE CONSTRAINT definition_claim_id IF NOT EXISTS FOR (n:DefinitionClaim) REQUIRE n.id IS UNIQUE",
+    "CREATE CONSTRAINT graph_release_id IF NOT EXISTS FOR (n:GraphRelease) REQUIRE n.id IS UNIQUE",
+    "CREATE CONSTRAINT graph_pointer_id IF NOT EXISTS FOR (n:GraphPointer) REQUIRE n.id IS UNIQUE",
     "CREATE INDEX evolution_event_at IF NOT EXISTS FOR (n:EvolutionEvent) ON (n.at)",
 )
 
@@ -561,6 +563,47 @@ def current_definition(job_id: str) -> list[dict]:
             id=job_id,
         )
         return [dict(row) for row in rows]
+
+
+def publish_graph_release(*, period: str = "", metadata: dict | None = None) -> dict:
+    """Create an immutable release and atomically move the public pointer."""
+    if _driver is None:
+        return {}
+    stamp = datetime.now().isoformat()
+    raw = json.dumps({"period": period, "metadata": metadata or {}, "at": stamp}, ensure_ascii=False, sort_keys=True)
+    release_id = "release-" + hashlib.sha256(raw.encode()).hexdigest()[:24]
+    with _driver.session() as session:
+        session.run(
+            """
+            MERGE (r:GraphRelease {id: $id})
+            ON CREATE SET r.period = $period, r.metadata = $metadata, r.created_at = datetime($at), r.status = 'ready'
+            MERGE (p:GraphPointer {id: 'public'})
+            SET p.release_id = $id, p.updated_at = datetime($at)
+            """,
+            id=release_id, period=period, metadata=json.dumps(metadata or {}, ensure_ascii=False), at=stamp,
+        )
+    return {"id": release_id, "period": period, "published_at": stamp}
+
+
+def rollback_graph_release(release_id: str) -> dict | None:
+    if _driver is None:
+        return None
+    with _driver.session() as session:
+        row = session.run("MATCH (r:GraphRelease {id: $id}) RETURN r.id AS id, r.period AS period", id=release_id).single()
+        if not row:
+            return None
+        session.run("MERGE (p:GraphPointer {id: 'public'}) SET p.release_id = $id, p.updated_at = datetime()", id=release_id)
+        return dict(row)
+
+
+def public_release() -> dict:
+    if _driver is None:
+        return {"id": None, "period": "", "published_at": None}
+    with _driver.session() as session:
+        row = session.run(
+            "MATCH (p:GraphPointer {id: 'public'}) OPTIONAL MATCH (r:GraphRelease {id: p.release_id}) RETURN p.release_id AS id, r.period AS period, toString(r.created_at) AS published_at"
+        ).single()
+    return dict(row) if row else {"id": None, "period": "", "published_at": None}
 
 
 def list_pending_events(*, include_auto_passed: bool = False) -> list[dict]:

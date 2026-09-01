@@ -51,6 +51,7 @@ async def http_error(_, exc: HTTPException):
 def meta():
     return {
         "domains": graph.list_domains(),
+        "graph_release": graph.public_release(),
         "model_provider": os.environ.get("LLM_PROVIDER", "configured model service"),
         "resume_retention_seconds": 3600,
         "resume_payload": "extracted text only",
@@ -236,6 +237,11 @@ class PassthroughBody(BaseModel):
     enabled: bool = False
 
 
+class ReleaseBody(BaseModel):
+    period: str = ""
+    metadata: dict = {}
+
+
 class LoginBody(BaseModel):
     password: str
 
@@ -395,3 +401,18 @@ def admin_passthrough_put(
     enabled = bool(body.enabled) if body else False
     set_passthrough(enabled)
     return {"enabled": passthrough_enabled()}
+
+
+@app.post("/admin/releases")
+def admin_publish_release(body: ReleaseBody, request: Request, x_admin_password: str | None = Header(default=None, alias="X-Admin-Password")):
+    _require_admin(request, x_admin_password)
+    return graph.publish_graph_release(period=body.period, metadata=body.metadata)
+
+
+@app.post("/admin/releases/{release_id}/rollback")
+def admin_rollback_release(release_id: str, request: Request, x_admin_password: str | None = Header(default=None, alias="X-Admin-Password")):
+    _require_admin(request, x_admin_password)
+    result = graph.rollback_graph_release(release_id)
+    if result is None:
+        raise HTTPException(404, "release not found")
+    return result
