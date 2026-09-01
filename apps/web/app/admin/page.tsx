@@ -228,11 +228,11 @@ export default function AdminPage() {
                 <li key={item.id}>
                   <div className="admin-event-head"><strong>{kindLabel(item.kind)} · {reviewLabel(item.review)}</strong><time dateTime={item.at}>{item.at.slice(0, 10)}</time></div>
                   <p className="admin-event-subject">{subject}</p>
-                  <p className="hint">{summary}</p>
+                  <p className="hint">原始提案：{summary}</p>
                   {layerLabel ? <p className="hint">{layerLabel}</p> : null}
                   {item.review !== "auto_passed" && item.kind !== "extract_failed" ? (
                     <label>
-                      改写摘要
+                      最终事实（可选改写，原稿仍保留）
                       <textarea value={drafts[item.id] ?? (payload.excerpt || "")} onChange={(event) => setDrafts((current) => ({ ...current, [item.id]: event.target.value }))} rows={3} />
                     </label>
                   ) : null}

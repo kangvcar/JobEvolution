@@ -130,6 +130,7 @@ def apply_event(event_id: str, *, review: str, payload: dict | None = None) -> d
     event["review"] = review
     if data.get("kind") != "extract_failed" and review in ("approved", "auto_passed"):
         graph.apply_requires(data)
+    graph.record_review_decision(event_id, review=review, payload=data, reason=str(data.get("review_reason") or ""))
     graph.upsert_event(event, job_id=data.get("job_id"))
     if data.get("job_id"):
         refresh_job_status(data["job_id"])

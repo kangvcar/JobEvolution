@@ -23,6 +23,8 @@ _CONSTRAINTS = (
     "CREATE CONSTRAINT evidence_id IF NOT EXISTS FOR (n:Evidence) REQUIRE n.id IS UNIQUE",
     "CREATE CONSTRAINT evolution_event_id IF NOT EXISTS FOR (n:EvolutionEvent) REQUIRE n.id IS UNIQUE",
     "CREATE CONSTRAINT requirement_version_id IF NOT EXISTS FOR (n:RequirementVersion) REQUIRE n.id IS UNIQUE",
+    "CREATE CONSTRAINT review_proposal_id IF NOT EXISTS FOR (n:ReviewProposal) REQUIRE n.id IS UNIQUE",
+    "CREATE CONSTRAINT review_decision_id IF NOT EXISTS FOR (n:ReviewDecision) REQUIRE n.id IS UNIQUE",
     "CREATE INDEX evolution_event_at IF NOT EXISTS FOR (n:EvolutionEvent) ON (n.at)",
 )
 
@@ -446,6 +448,19 @@ def upsert_event(event: dict, job_id: str | None) -> None:
             review=event.get("review") or "pending",
             payload=payload,
         )
+        session.run(
+            """
+            MERGE (p:ReviewProposal {id: $id})
+            ON CREATE SET p.event_id = $id, p.payload = $payload, p.created_at = datetime($at),
+                          p.model = $model, p.prompt = $prompt, p.confidence = $confidence
+            WITH p
+            MATCH (e:EvolutionEvent {id: $id})
+            MERGE (p)-[:FOR_EVENT]->(e)
+            """,
+            id=event["id"], payload=payload, at=event.get("at") or datetime.now().isoformat(),
+            model=event.get("model") or "", prompt=event.get("prompt") or "",
+            confidence=float(event.get("confidence") or 0),
+        )
         if job_id:
             session.run(
                 """
@@ -477,6 +492,27 @@ def get_event(event_id: str) -> dict | None:
     if isinstance(payload, str):
         data["payload"] = json.loads(payload)
     return data
+
+
+def record_review_decision(event_id: str, *, review: str, payload: dict, reason: str = "") -> str | None:
+    if _driver is None:
+        return None
+    raw = json.dumps({"event_id": event_id, "review": review, "payload": payload, "reason": reason}, ensure_ascii=False, sort_keys=True)
+    decision_id = "decision-" + hashlib.sha256(raw.encode("utf-8")).hexdigest()[:24]
+    with _driver.session() as session:
+        session.run(
+            """
+            MERGE (d:ReviewDecision {id: $id})
+            ON CREATE SET d.event_id = $event_id, d.review = $review, d.payload = $payload,
+                          d.reason = $reason, d.decided_at = datetime()
+            WITH d
+            MATCH (p:ReviewProposal {id: $event_id})
+            MERGE (p)-[:HAS_DECISION]->(d)
+            """,
+            id=decision_id, event_id=event_id, review=review,
+            payload=json.dumps(payload, ensure_ascii=False), reason=reason,
+        )
+    return decision_id
 
 
 def list_pending_events(*, include_auto_passed: bool = False) -> list[dict]:
