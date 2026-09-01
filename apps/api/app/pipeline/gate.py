@@ -12,7 +12,7 @@ from pydantic import ValidationError
 from app.collectors.normalize import is_channel_name, normalize_company
 from app.collectors.sink import STREAM_KEY, connect_redis
 from app.llm.embed import embed
-from app.pipeline.align import align_job, align_skill, cluster_texts
+from app.pipeline.align import align_job, align_skill, cluster_texts, split_composite
 from app.pipeline.constants import (
     COVERAGE_THRESHOLD,
     DISCOVER_MIN_CLUSTER,
@@ -293,7 +293,13 @@ def _gate_job(job_name: str, rows: list, index: list[dict], judged: str = "targe
                 continue
             pending_names.append((snap, skill, section))
 
-    names = [sk.name for _, sk, _ in pending_names]
+    # 并列串拆到条目级：C/C++ → C、C++ 两条，下游按名聚类/对齐/计覆盖
+    expanded: list[tuple] = []
+    for snap, sk, section in pending_names:
+        for piece in split_composite(sk.name, index):
+            expanded.append((snap, sk.model_copy(update={"name": piece}), section))
+
+    names = [sk.name for _, sk, _ in expanded]
     clustered = cluster_texts(names) if names else []
     centroid_for = {}
     for group in clustered:
@@ -302,14 +308,14 @@ def _gate_job(job_name: str, rows: list, index: list[dict], judged: str = "targe
             centroid_for[name] = (centroid, group)
 
     members_by_centroid: dict[str, list[tuple[str, str]]] = defaultdict(list)
-    for snap, skill, _ in pending_names:
+    for snap, skill, _ in expanded:
         centroid, _ = centroid_for.get(skill.name, (skill.name, [skill.name]))
         members_by_centroid[centroid].append((skill.name, skill.category or ""))
     category_for = {
         centroid: _merge_category(members) for centroid, members in members_by_centroid.items()
     }
 
-    for snap, skill, section in pending_names:
+    for snap, skill, section in expanded:
         centroid, group = centroid_for.get(skill.name, (skill.name, [skill.name]))
         hit = align_skill(centroid, index) or align_skill(skill.name, index)
         if hit is None:

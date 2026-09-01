@@ -10,7 +10,7 @@ from app.eval.paths import eval_dir, out_dir
 from app.eval.scan import skill_ids
 from app.matching.resume import parse_resume
 from app.matching.score import compare_job
-from app.pipeline.align import align_skill
+from app.pipeline.align import align_skill, split_composite
 from app.pipeline.extract import parse_extracted
 
 PASS = 0.90
@@ -65,12 +65,14 @@ def eval_jd(*, mock: bool = False) -> dict:
                 "body": item.get("text") or "",
             }
             parsed = parse_extracted(complete_json, snapshot=snapshot)
-            pred = {
-                hit["id"]
-                for skill in parsed.skills
-                if skill.section in ("duty", "requirement")
-                if (hit := align_skill(skill.name, index, threshold=cut)) is not None
-            }
+            pred = set()
+            for skill in parsed.skills:
+                if skill.section not in ("duty", "requirement"):
+                    continue
+                for surface in split_composite(skill.name, index):
+                    hit = align_skill(surface, index, threshold=cut)
+                    if hit:
+                        pred.add(hit["id"])
         return set_f1(pred, gold)
 
     return _evaluate("jd", read_jsonl(eval_dir() / "jd.jsonl"), predict, mock=mock, workers=JD_WORKERS)

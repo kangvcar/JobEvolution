@@ -5,6 +5,27 @@ from app.pipeline.constants import ALIGN_THRESHOLD, JOB_ALIGN_THRESHOLD
 from app.targets import JOB_TARGET_NAMES
 
 
+def _exact_hit(text: str, index: list[dict]) -> bool:
+    needle = (text or "").strip().casefold()
+    if not needle:
+        return False
+    for skill in index:
+        names = [skill.get("name") or "", *(skill.get("synonyms") or [])]
+        if needle in {n.strip().casefold() for n in names if n}:
+            return True
+    return False
+
+
+def split_composite(name: str, index: list[dict]) -> list[str]:
+    """并列串写（C/C++、Linux/Windows）只在每个部分都能精确命中词表时才拆，否则原样返回。"""
+    if "/" not in (name or ""):
+        return [name]
+    parts = [p.strip() for p in name.split("/") if p.strip()]
+    if len(parts) > 1 and all(_exact_hit(p, index) for p in parts):
+        return parts
+    return [name]
+
+
 def align_skill(
     text: str,
     index: list[dict],

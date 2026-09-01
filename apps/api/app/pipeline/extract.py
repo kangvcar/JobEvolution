@@ -9,6 +9,33 @@ from app.targets import JOB_TARGET_NAMES
 
 # 单段抽取。曾试验两段式（先列表后补字段，ADR-0012 草案），实测 R 反降
 # （0.729 → 0.604，enrich 丢名单项），回退单段；列表行为已由金标起草侧验证。
+FEWSHOT = (
+    "示例——输入：\n"
+    "title: 后端开发工程师\n"
+    "domain: ai\n"
+    "body:\n"
+    "岗位职责：负责数据接口与检索服务开发，参与数据建模。\n"
+    "任职要求：熟练掌握 Python 与 SQL，熟悉 C/C++；具备良好的沟通能力与团队合作精神。\n"
+    "输出（基础词与通用能力照列，并列串已拆开）：\n"
+    '{"job_name": "后端开发工程师", "domain": "ai", "target": "", "skills": ['
+    '{"name": "Python", "kind": "required", "proficiency": "able", "confidence": 0.9, '
+    '"excerpt": "熟练掌握 Python", "section": "requirement", "category": "language"}, '
+    '{"name": "SQL", "kind": "required", "proficiency": "able", "confidence": 0.9, '
+    '"excerpt": "熟练掌握 Python 与 SQL", "section": "requirement", "category": "language"}, '
+    '{"name": "检索", "kind": "required", "proficiency": "able", "confidence": 0.8, '
+    '"excerpt": "检索服务开发", "section": "duty", "category": "domain"}, '
+    '{"name": "数据建模", "kind": "required", "proficiency": "able", "confidence": 0.8, '
+    '"excerpt": "参与数据建模", "section": "duty", "category": "domain"}, '
+    '{"name": "C", "kind": "required", "proficiency": "able", "confidence": 0.7, '
+    '"excerpt": "熟悉 C/C++", "section": "requirement", "category": "language"}, '
+    '{"name": "C++", "kind": "required", "proficiency": "able", "confidence": 0.7, '
+    '"excerpt": "熟悉 C/C++", "section": "requirement", "category": "language"}, '
+    '{"name": "沟通能力", "kind": "required", "proficiency": "aware", "confidence": 0.6, '
+    '"excerpt": "具备良好的沟通能力", "section": "requirement", "category": "domain"}, '
+    '{"name": "团队合作", "kind": "required", "proficiency": "aware", "confidence": 0.6, '
+    '"excerpt": "团队合作精神", "section": "requirement", "category": "domain"}]}'
+)
+
 SYSTEM_PROMPT = (
     "从 JD 抽取 JSON。字段：job_name、domain、target、skills。"
     + SKILL_DEFINITION + " "
@@ -17,6 +44,7 @@ SYSTEM_PROMPT = (
     "三点边界：基础学科与通用能力（数学、算法、计算机、沟通能力、团队合作等）"
     "只要原文作为要求写出，同样算技能点；并列串写的技术要拆开，"
     "「C/C++/Java」拆成 C、C++、Java 三条；技能点名用原文的完整词。"
+    + FEWSHOT +
     "domain 必须是 ai、data、system、iot 之一。"
     "target 是岗位标题能对上的规范岗位名，对不上则为空，候选："
     f"{'、'.join(JOB_TARGET_NAMES)}。"
@@ -25,6 +53,8 @@ SYSTEM_PROMPT = (
     "section 只能 duty 或 requirement；category 必须是："
     + ", ".join(SKILL_CATEGORIES)
     + "。confidence 为 0-1。excerpt 是包含该技能点的最短原文片段。"
+    "字段拿不准时给保守默认值（kind=required、proficiency=able、confidence=0.5），"
+    "但正文里写出的技能点一个都不能因为字段拿不准而漏掉。"
     "不要发明枚举值。"
 )
 
