@@ -38,6 +38,26 @@ a {
   outline-offset: 2px;
 }
 
+button,
+select,
+summary,
+.nav a,
+.job-item,
+.kitem {
+  cursor: pointer;
+  transition:
+    color var(--dur-short) var(--ease-out),
+    border-color var(--dur-short) var(--ease-out),
+    background-color var(--dur-short) var(--ease-out),
+    box-shadow var(--dur-short) var(--ease-out);
+}
+
+button:active,
+.job-item:active,
+.kitem:active {
+  transform: translateY(1px);
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -132,7 +152,7 @@ a {
 }
 
 .page {
-  padding: var(--space-xl) var(--page-gutter);
+  padding: var(--space-xl) var(--page-gutter) var(--space-2xl);
 }
 
 .page p {
@@ -190,7 +210,15 @@ a {
 }
 
 .graph-hint {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs) var(--space-md);
   padding: var(--space-xs) var(--space-sm);
+}
+
+.graph-detail .primary {
+  margin-top: var(--space-md);
 }
 
 #g6 {
@@ -305,6 +333,31 @@ a {
 .drop span {
   border: 1px dashed var(--color-rule);
   padding: var(--space-md);
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: border-color var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out);
+}
+
+.drop:hover span,
+.drop.over span {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.drop.over span {
+  border-style: solid;
+}
+
+.drop:focus-within span {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.diagnose-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-md);
 }
 
 .diagnose-error {
@@ -349,14 +402,6 @@ a {
 .diagnose-split pre {
   white-space: pre-wrap;
   font-size: var(--text-sm);
-}
-
-.cells {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-xs);
-  padding: 0;
-  list-style: none;
 }
 
 .neighbors {
@@ -448,7 +493,18 @@ a {
 .admin-page { max-width: 58rem; }
 .admin-gate { width: min(28rem, 100%); }
 .admin-gate form { display: grid; gap: var(--space-xs); margin-top: var(--space-lg); }
-.admin-gate input { font: inherit; padding: var(--space-xs); border: 1px solid var(--color-rule); background: var(--color-paper); color: var(--color-ink); }
+.admin-gate input,
+.admin-queue textarea {
+  font: inherit;
+  padding: var(--space-xs);
+  border: 1px solid var(--color-rule);
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
+.admin-queue textarea {
+  width: 100%;
+}
 .admin-error { color: var(--color-danger) !important; margin-top: var(--space-sm); }
 .admin-queue { list-style: none; margin: var(--space-lg) 0 0; padding: 0; border-top: 1px solid var(--color-rule); }
 .admin-queue li { padding: var(--space-md) 0; border-bottom: 1px solid var(--color-rule); }
@@ -459,6 +515,10 @@ a {
 .primary {
   background: var(--color-accent);
   color: var(--color-accent-ink);
+}
+
+.primary:hover {
+  background: var(--color-accent-strong);
 }
 
 .ghost {
@@ -546,6 +606,25 @@ a {
   box-shadow: inset 0 0 0 2px var(--color-accent);
 }
 
+.swatch.add {
+  box-shadow: inset 0 0 0 2px var(--color-fall);
+}
+
+.swatch.exp {
+  box-shadow: inset 0 0 0 2px var(--color-rise);
+}
+
+.g-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm) var(--space-md);
+  font-family: var(--font-mono-stack);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
 #g6home {
   min-height: 0;
   height: 100%;
@@ -567,26 +646,6 @@ a {
   font-size: var(--text-lg);
   font-weight: 500;
   margin: 0;
-}
-
-.facts {
-  display: grid;
-  gap: 0;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  border-bottom: 1px solid var(--color-rule);
-}
-
-.facts li {
-  padding-block: var(--space-xs);
-  font-size: var(--text-sm);
-}
-
-.facts b {
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
-  font-size: var(--text-md);
 }
 
 .readout {
@@ -764,6 +823,10 @@ a {
 .col h2,
 .disc-lower h2,
 .disc-feed h2,
+.how-body h2,
+.graph-detail h2,
+.graph-detail h3,
+.diagnose-done h2,
 .block-title {
   font-size: var(--text-xs);
   margin: var(--space-sm) 0;
@@ -772,6 +835,15 @@ a {
   text-transform: uppercase;
   color: var(--color-muted);
   font-weight: 500;
+}
+
+.diagnose-done h2 {
+  margin-top: var(--space-xl);
+}
+
+.page .verdict {
+  color: var(--color-ink);
+  font-size: var(--text-md);
 }
 
 .kitem {

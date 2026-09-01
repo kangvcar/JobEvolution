@@ -52,6 +52,7 @@ export function Workbench() {
   const [detail, setDetail] = useState<JobDetail | null>(null);
   const [slice, setSlice] = useState<Slice | null>(null);
   const [evidenceTarget, setEvidenceTarget] = useState<EvidenceTarget | null>(null);
+  const [loading, setLoading] = useState(false);
   const opener = useRef<HTMLElement | null>(null);
   const background = useRef<HTMLElement>(null);
 
@@ -123,15 +124,18 @@ export function Workbench() {
     setDetail(null);
     setSlice(null);
     setEvidenceTarget(null);
+    setLoading(true);
     Promise.all([
       fetch(`${API}/jobs/${encodeURIComponent(selected)}`).then((r) => (r.ok ? r.json() : null)),
       fetch(`${API}/graph/jobs/${encodeURIComponent(selected)}`).then((r) => (r.ok ? r.json() : null)),
     ]).then(([job, graph]) => {
       setDetail(job);
       setSlice(graph);
+      setLoading(false);
     }).catch(() => {
       setDetail(null);
       setSlice(null);
+      setLoading(false);
     });
   }, [selected]);
 
@@ -277,7 +281,17 @@ export function Workbench() {
       </aside>
       <section className="graph-stage">
         <p className="graph-hint">
-          岗位 → 类目 → 技能点。标签前带 + 的绿描边是本周期新增或升值，红描边归入「本周期失效」；无技能点时画布为空。
+          <span>岗位 → 类目 → 技能点</span>
+          <span className="g-legend">
+            <span>
+              <i className="swatch add" />
+              本周期新增
+            </span>
+            <span>
+              <i className="swatch exp" />
+              本周期失效
+            </span>
+          </span>
         </p>
         <div
           id="g6"
@@ -308,8 +322,10 @@ export function Workbench() {
             对照简历
             </Link>
           </>
+        ) : loading ? (
+          <p className="empty">载入中…</p>
         ) : (
-          <p>未接数据</p>
+          <p className="empty">未接数据</p>
         )}
       </aside>
     </main>

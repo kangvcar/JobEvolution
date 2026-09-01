@@ -64,6 +64,8 @@ export function DiagnoseForm() {
   const [preview, setPreview] = useState("");
   const [sessionId, setSessionId] = useState("");
   const [report, setReport] = useState<Report | null>(null);
+  const [over, setOver] = useState(false);
+  const [copied, setCopied] = useState(false);
   const abort = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -159,6 +161,15 @@ export function DiagnoseForm() {
     await runDiagnose(sid, jobId);
   }
 
+  function pick(next: File | null) {
+    abort.current?.abort();
+    setFile(next);
+    setSessionId("");
+    setReport(null);
+    setPreview("");
+    setPhase("idle");
+  }
+
   function switchJob(id: string) {
     if (id === jobId) return;
     setJobId(id);
@@ -220,22 +231,27 @@ export function DiagnoseForm() {
               ))}
             </select>
           </label>
-          <label className="drop">
+          <label
+            className={`drop${over ? " over" : ""}`}
+            onDragOver={(event) => {
+              event.preventDefault();
+              setOver(true);
+            }}
+            onDragLeave={() => setOver(false)}
+            onDrop={(event) => {
+              event.preventDefault();
+              setOver(false);
+              pick(event.dataTransfer.files?.[0] ?? null);
+            }}
+          >
             简历（PDF / docx）
             <input
               className="sr-only"
               type="file"
               accept=".pdf,.docx"
-              onChange={(e) => {
-                abort.current?.abort();
-                setFile(e.target.files?.[0] ?? null);
-                setSessionId("");
-                setReport(null);
-                setPreview("");
-                setPhase("idle");
-              }}
+              onChange={(e) => pick(e.target.files?.[0] ?? null)}
             />
-            <span>{file ? file.name : "选择文件"}</span>
+            <span>{file ? file.name : "选择文件或拖入此处"}</span>
           </label>
           <div className="diagnose-actions">
             <button type="submit" disabled={phase === "run"}>
@@ -261,10 +277,19 @@ export function DiagnoseForm() {
             <strong>{jobs.find((j) => j.id === jobId)?.name}</strong>
             <button
               type="button"
-              onClick={() => navigator.clipboard.writeText(link)}
+              onClick={() => {
+                navigator.clipboard.writeText(link);
+                setCopied(true);
+                window.setTimeout(() => setCopied(false), 1500);
+              }}
             >
               复制对照链接
             </button>
+            {copied ? (
+              <span className="hint" role="status">
+                已复制
+              </span>
+            ) : null}
             <button
               type="button"
               onClick={() => {
@@ -282,14 +307,26 @@ export function DiagnoseForm() {
             </aside>
             <section>
               <h2>判断</h2>
-              <p>{report.groups.judge.summary}</p>
+              <p className="verdict">{report.groups.judge.summary}</p>
               <p>档位 {report.groups.judge.band}</p>
-              <ul className="cells">
-                <li>必备覆盖 {report.groups.judge.cells.required}</li>
-                <li>半档 {report.groups.judge.cells.half}</li>
-                <li>经验 {report.groups.judge.cells.experience}</li>
-                <li>学历 {report.groups.judge.cells.education}</li>
-              </ul>
+              <dl className="readout">
+                <div>
+                  <dt>必备覆盖</dt>
+                  <dd>{report.groups.judge.cells.required}</dd>
+                </div>
+                <div>
+                  <dt>半档</dt>
+                  <dd>{report.groups.judge.cells.half}</dd>
+                </div>
+                <div>
+                  <dt>经验</dt>
+                  <dd>{report.groups.judge.cells.experience}</dd>
+                </div>
+                <div>
+                  <dt>学历</dt>
+                  <dd>{report.groups.judge.cells.education}</dd>
+                </div>
+              </dl>
               <p>目标岗 {report.groups.judge.job_status}</p>
               <p>换档条件 {names(report.groups.judge.shift_set)}</p>
 

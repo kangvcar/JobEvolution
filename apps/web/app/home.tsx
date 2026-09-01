@@ -126,11 +126,20 @@ export function Home() {
         </p>
       </div>
       <aside className="inspector">
-        <ul className="facts">
-          <li>
-            萌芽 <b>{feed?.emerging ?? 0}</b> 岗，谱内 <b>{feed?.in_graph ?? 0}</b>
-          </li>
-        </ul>
+        {feed ? (
+          <dl className="readout">
+            <div>
+              <dt>萌芽</dt>
+              <dd>{feed.emerging}</dd>
+            </div>
+            <div>
+              <dt>谱内</dt>
+              <dd>{feed.in_graph}</dd>
+            </div>
+          </dl>
+        ) : (
+          <p className="hint">载入中…</p>
+        )}
         {(feed?.stories || []).map((story) => (
           <article className="story" key={story.kind}>
             <span className={`pill ${story.kind === "discover" ? "hot" : "mid"}`}>

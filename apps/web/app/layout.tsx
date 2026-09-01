@@ -16,7 +16,10 @@ const plexMono = IBM_Plex_Mono({
   variable: "--font-plex-mono",
 });
 
-export const metadata: Metadata = { title: "智演" };
+export const metadata: Metadata = {
+  title: "智演",
+  description: "多源数据驱动的岗位能力图谱：岗位定位、差距分析与学习路径。",
+};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

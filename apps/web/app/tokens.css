@@ -8,6 +8,7 @@
   --color-muted:      oklch(0.46 0.022 250);
   --color-faint:      oklch(0.62 0.016 250);
   --color-accent:     oklch(0.52 0.14 38);
+  --color-accent-strong: oklch(0.45 0.148 38);
   --color-accent-ink: oklch(0.985 0.008 90);
   --color-focus:      oklch(0.52 0.14 38);
   --color-ok:         oklch(0.46 0.07 175);
