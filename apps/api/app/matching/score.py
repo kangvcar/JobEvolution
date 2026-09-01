@@ -12,7 +12,11 @@ def compare_job(requires: list[dict], resume_skills: list[dict]) -> dict:
     by_id = {row["skill_id"]: row for row in resume_skills if row.get("skill_id")}
     required = [row for row in requires if row.get("kind") != "bonus"]
     bonus = [row for row in requires if row.get("kind") == "bonus"]
-    req_full = float(len(required))
+    groups: dict[str, list[dict]] = {}
+    for row in required:
+        if row.get("group_id"):
+            groups.setdefault(str(row["group_id"]), []).append(row)
+    req_full = float(len(required) - sum(len(rows) - 1 for rows in groups.values()))
     bonus_full = float(len(bonus))
     req_cover = 0.0
     bonus_cover = 0.0
@@ -22,7 +26,26 @@ def compare_job(requires: list[dict], resume_skills: list[dict]) -> dict:
     ledger: list[dict] = []
     shift_items: list[dict] = []
 
+    seen_groups: set[str] = set()
     for row in required:
+        group_id = str(row.get("group_id") or "")
+        if group_id:
+            if group_id in seen_groups:
+                continue
+            seen_groups.add(group_id)
+            members = groups[group_id]
+            member_values = [cover_required((by_id.get(m["skill_id"]) or {}).get("proficiency") if m["skill_id"] in by_id else None, m.get("proficiency"), m["skill_id"] in by_id) for m in members]
+            minimum = max(1, int(row.get("min_required") or 1))
+            value = min(1.0, sum(sorted(member_values, reverse=True)[:minimum]) / minimum)
+            req_cover += value
+            if value < 1:
+                item = {"skill_id": row["skill_id"], "name": row.get("name") or row["skill_id"], "excerpt": row.get("excerpt") or "", "cover": value, "group_id": group_id, "min_required": minimum}
+                gaps.append(item)
+                shift_items.extend({"id": m["skill_id"], "delta": (1.0 - value), "name": m.get("name") or m["skill_id"], "excerpt": m.get("excerpt") or "", "why": "要求组缺口"} for m in members if m["skill_id"] not in by_id)
+            else:
+                covered.extend({"skill_id": m["skill_id"], "name": m.get("name") or m["skill_id"], "excerpt": m.get("excerpt") or "", "cover": 1.0, "group_id": group_id} for m in members)
+            ledger.append({"skill_id": row["skill_id"], "name": row.get("name") or row["skill_id"], "cover": value, "side": "required", "group_id": group_id, "min_required": minimum})
+            continue
         sid = row["skill_id"]
         got = by_id.get(sid)
         value = cover_required(

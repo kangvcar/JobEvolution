@@ -266,7 +266,7 @@ def apply_requires(payload: dict) -> None:
         # Business fields define identity; evidence can change without creating a new fact.
         signature_payload = {
             key: payload.get(key)
-            for key in ("job_id", "skill_id", "kind_edge", "proficiency", "weight", "levels", "layer")
+            for key in ("job_id", "skill_id", "kind_edge", "proficiency", "weight", "levels", "layer", "group_id", "min_required")
         }
         signature = hashlib.sha256(
             json.dumps(signature_payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
@@ -301,6 +301,10 @@ def apply_requires(payload: dict) -> None:
             MERGE (j)-[rv:REQUIRES_VERSION {id: $id}]->(v)
             SET rv.active = true
             MERGE (v)-[:FOR_SKILL]->(s)
+            FOREACH (_ IN CASE WHEN $group_id IS NULL THEN [] ELSE [1] END |
+                MERGE (g:RequirementGroup {id: $group_id})
+                SET g.min_required = $min_required
+                MERGE (v)-[:IN_GROUP]->(g))
             """,
             id=version_id,
             signature=signature,
@@ -315,6 +319,7 @@ def apply_requires(payload: dict) -> None:
             sources=list(payload.get("sources") or []),
             excerpt=payload.get("excerpt") or "",
             valid_from=valid_from,
+            group_id=payload.get("group_id"), min_required=int(payload.get("min_required") or 1),
         )
         session.run(
             """
@@ -384,14 +389,16 @@ def list_requires(job_id: str) -> list[dict]:
             """
             MATCH (j:Job {id: $id})-[:REQUIRES_VERSION {active: true}]->(v:RequirementVersion)-[:FOR_SKILL]->(s:Skill)
             OPTIONAL MATCH (s)-[:IN_CATEGORY]->(c:SkillCategory)
+            OPTIONAL MATCH (v)-[:IN_GROUP]->(g:RequirementGroup)
             OPTIONAL MATCH (v)-[:SUPPORTED_BY]->(e:Evidence)
-            WITH s, v, c, collect(e.id) AS evidence_ids
+            WITH s, v, c, g, collect(e.id) AS evidence_ids
             RETURN s.id AS skill_id, s.name AS name, v.kind AS kind,
                    c.id AS category_id, c.name AS category,
                    v.proficiency AS proficiency, v.layer AS layer,
                    v.confidence AS confidence, coalesce(v.sources, evidence_ids) AS sources,
                    v.levels AS levels, v.weight AS weight,
                    coalesce(v.excerpt, '') AS excerpt,
+                   g.id AS group_id, g.min_required AS min_required,
                    toString(v.valid_from) AS valid_from, toString(v.valid_to) AS valid_to
             """,
             id=job_id,
@@ -409,6 +416,7 @@ def list_requires(job_id: str) -> list[dict]:
                    r.confidence AS confidence, r.sources AS sources,
                    r.levels AS levels, r.weight AS weight,
                    coalesce(r.excerpt, '') AS excerpt,
+                   null AS group_id, 1 AS min_required,
                    toString(r.valid_from) AS valid_from, toString(r.valid_to) AS valid_to
             """,
             id=job_id,
