@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from collections import Counter, defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
@@ -47,6 +48,24 @@ def passthrough_enabled() -> bool:
     except Exception:
         pass
     return _passthrough
+
+
+def automatic_review(payload: dict) -> tuple[bool, dict]:
+    """Independent, fail-closed review for high-confidence proposals."""
+    if payload.get("layer") != "high" or not payload.get("excerpt") or len(set(payload.get("sources") or [])) < 3 or not payload.get("valid_from"):
+        return False, {"deterministic": False, "reason": "deterministic checks failed"}
+    model = os.environ.get("LLM_REVIEW_MODEL", "")
+    extractor = os.environ.get("LLM_MODEL", "")
+    if not model or model == extractor:
+        return False, {"deterministic": True, "reason": "independent model unavailable"}
+    try:
+        from app.llm.client import complete_json
+        prompt = "review-v1"
+        result = complete_json([{"role": "system", "content": prompt}, {"role": "user", "content": json.dumps(payload, ensure_ascii=False)}])
+        ok = isinstance(result, dict) and result.get("approved") is True
+        return ok, {"deterministic": True, "model": model, "prompt": prompt, "reason": result.get("reason", "") if isinstance(result, dict) else "invalid response"}
+    except Exception:
+        return False, {"deterministic": True, "model": model, "prompt": "review-v1", "reason": "review model failed"}
 
 
 def confidence_layer(*, excerpt: str, n_sources: int, extract_confidence: float) -> str:
@@ -400,8 +419,12 @@ def _gate_job(job_name: str, rows: list, index: list[dict], judged: str = "targe
             ),
         }
         review = "pending"
-        if passthrough_enabled() and layer in ("high", "mid"):
-            review = "auto_passed"
+        review_meta = {}
+        if passthrough_enabled() and layer == "high":
+            approved, review_meta = automatic_review(payload)
+            if approved:
+                review = "auto_passed"
+                payload["automatic_review"] = review_meta
         event = {
             "id": _event_id(payload),
             "kind": "requires_add",
@@ -409,6 +432,8 @@ def _gate_job(job_name: str, rows: list, index: list[dict], judged: str = "targe
             "confidence": rec["confidence"],
             "review": review,
             "payload": payload,
+            "model": review_meta.get("model", ""),
+            "prompt": review_meta.get("prompt", ""),
         }
         graph.upsert_event(event, job_id=job_id)
         _emit("review_enqueued", event)
