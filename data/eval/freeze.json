@@ -1,6 +1,6 @@
 {
-  "align_threshold": 0.85,
-  "job_align_threshold": 0.80,
+  "align_threshold": 0.70,
   "model": "deepseek-v4-flash",
-  "date": "2026-08-30"
+  "embed": "bge-m3@siliconflow",
+  "date": "2026-09-01"
 }

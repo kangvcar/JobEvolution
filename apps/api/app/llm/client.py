@@ -32,6 +32,8 @@ def complete_json(messages) -> dict:
                 messages=messages,
                 response_format={"type": "json_object"},
                 extra_body={"thinking": {"type": "disabled"}},
+                # 管线产物要可复现：同一份缓存 + 同一判别提示，重跑不许换答案（io.md 对得上 EvolutionEvent 的前提）
+                temperature=0,
             )
             content = raw.choices[0].message.content or "{}"
             return json.loads(content)

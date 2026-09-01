@@ -1,8 +1,11 @@
 import os
 
 COVERAGE_THRESHOLD = 0.30
-ALIGN_THRESHOLD = float(os.environ.get("ALIGN_THRESHOLD", "0.85"))
-JOB_ALIGN_THRESHOLD = 0.80
+# 0.70 为 bge-m3 余弦校准值（金标 mention 变体互近邻配对，F1 峰值），哈希兜底时代是 0.85
+ALIGN_THRESHOLD = float(os.environ.get("ALIGN_THRESHOLD", "0.70"))
+# 0.84 为 bge-m3 岗位名校准值：17 靶子两两最高 0.828，别名变体（大模型应用开发工程师）0.965 起步；
+# 更近的别名（LLM 业务工程师 0.562）余弦够不着，留给簇判别写 ALIAS_OF。哈希兜底时代是 0.80
+JOB_ALIGN_THRESHOLD = 0.84
 EXTRACT_WORKERS = int(os.environ.get("EXTRACT_WORKERS", "8"))
 PASSTHROUGH_KEY = "gate:passthrough"
 EMERGING_SOURCES = 3

@@ -1,5 +1,6 @@
 from app.eval.io import read_jsonl
 from app.eval.paths import eval_dir
+from app.eval.freeze import load_freeze
 from app.eval.run import eval_jd, eval_match, eval_resume, write_summary
 
 
@@ -60,7 +61,7 @@ def test_unmocked_three_items_read_freeze_not_env(monkeypatch, tmp_path):
     assert resume["f1"] >= 0.90
     assert match["f1"] >= 0.90
     assert not jd["mock"]
-    assert set(seen_thresholds) == {0.85}
+    assert set(seen_thresholds) == {load_freeze()["align_threshold"]}
 
 
 def test_mock_three_items_pass_and_ignore_env(monkeypatch, tmp_path):
@@ -96,7 +97,7 @@ def test_resume_eval_passes_frozen_threshold_to_parser(monkeypatch, tmp_path):
     monkeypatch.setattr(run_mod, "out_dir", lambda: tmp_path)
     monkeypatch.setattr(run_mod, "parse_resume", fake_parse)
     assert eval_resume(mock=False)["f1"] == 1.0
-    assert set(calls) == {0.85}
+    assert set(calls) == {load_freeze()["align_threshold"]}
 
 
 def test_summary_records_unavailable_unmocked_tasks(monkeypatch, tmp_path):

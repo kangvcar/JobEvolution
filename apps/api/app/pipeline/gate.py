@@ -221,7 +221,10 @@ def run_extract_and_gate(
     aligned: dict[str, list] = defaultdict(list)
     unmatched: dict[str, list] = defaultdict(list)
     for snap, parsed in extracted_rows:
-        hit = None if snap.get("alias_candidate") else (parsed.target or align_job(parsed.job_name))
+        # LLM 抽出的 target 不一定是规范名，先过靶子名单，非规范名走 align_job 消解；
+        # 别名池快照一律不直连靶子（f26a666：近名批先聚类判别，防止误计独立源）
+        raw = None if snap.get("alias_candidate") else (parsed.target or parsed.job_name)
+        hit = raw if raw in JOB_TARGET_NAMES else align_job(raw)
         if hit:
             aligned[hit].append((snap, parsed, hit))
         else:

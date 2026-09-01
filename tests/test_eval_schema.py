@@ -20,9 +20,10 @@ def test_freeze_json_and_ignores_env(monkeypatch):
     from app.eval import freeze as freeze_mod
 
     freeze_mod._cache = None
+    expected = float(json.loads((_eval() / "freeze.json").read_text(encoding="utf-8"))["align_threshold"])
     data = load_freeze()
-    assert data["align_threshold"] == 0.85
-    assert align_threshold() == 0.85
+    assert data["align_threshold"] == expected
+    assert align_threshold() == expected
     freeze_mod._cache = None
 
 
