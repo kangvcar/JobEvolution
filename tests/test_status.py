@@ -138,6 +138,7 @@ def test_agent_engineer_emerging_with_three_sources(tmp_path, client):
     events = run_extract_and_gate(
         snaps, complete_json=_extract("Agent 工程师", "FastAPI"), workers=1
     )
+    _no_extract_failed(events)
     for event in events:
         if event.get("review") == "pending":
             client.post(
@@ -159,11 +160,13 @@ def test_llm_app_requires_and_period_delta(tmp_path, client):
     name = "大模型应用工程师"
     old = _snaps(tmp_path, suffix + "a", name, companies=("甲", "乙", "丙"), at="2023-03-01")
     events = run_extract_and_gate(old, complete_json=_extract(name, "FastAPI"), workers=1)
+    _no_extract_failed(events)
     for event in events:
         if event.get("review") == "pending":
             apply_event(event["id"], review="approved")
     new = _snaps(tmp_path, suffix + "b", name, companies=("丁", "戊", "己"), at="2024-06-01")
     events2 = run_extract_and_gate(new, complete_json=_extract(name, "Neo4j"), workers=1)
+    _no_extract_failed(events2)
     for event in events2:
         if event.get("review") == "pending":
             apply_event(event["id"], review="approved")
@@ -206,11 +209,12 @@ def test_alias_not_in_candidate_column(tmp_path, client):
         companies=("庚", "辛", "壬"),
         at="2024-06-10",
     )
-    run_extract_and_gate(
+    events = run_extract_and_gate(
         alias_snaps,
         complete_json=_extract("LLM 业务工程师", "FastAPI", classify="alias"),
         workers=1,
     )
+    _no_extract_failed(events)
     board = client.get("/discover").json()
     names = {row["name"] for row in board["candidate"]}
     assert "LLM 业务工程师" not in names
@@ -219,9 +223,15 @@ def test_alias_not_in_candidate_column(tmp_path, client):
     graph_clean(suffix)
 
 
+def _no_extract_failed(events):
+    # 守卫：桩坏了会静默变成 extract_failed 事件，测试在空库上全部 vacuous pass（本地脏库还会假装全绿）
+    failed = [e for e in events if e.get("kind") == "extract_failed"]
+    assert not failed, f"抽取桩失败，事件里出现 extract_failed: {failed[:2]}"
+
+
 def _extract(job_name, skill, classify=None):
     def complete(_messages):
-        text = str(messages)
+        text = str(_messages)
         if "Classify" in text or "kind" in text and "alias_of" in text:
             if classify == "alias":
                 return {"kind": "alias", "alias_of": "大模型应用工程师"}
