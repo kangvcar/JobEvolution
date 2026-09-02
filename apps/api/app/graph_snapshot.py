@@ -36,7 +36,7 @@ def export_snapshot(path: str | Path) -> dict:
         "skill_merges": [x["row"] for x in skill_merges],
         "relationships": [dict(x) for x in relationships],
     }
-    Path(path).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    Path(path).write_text(json.dumps(payload, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
     return {"schema_version": SCHEMA, "counts": {key: len(value) for key, value in payload.items() if isinstance(value, list)}}
 
 

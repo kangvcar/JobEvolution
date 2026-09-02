@@ -1,0 +1,37 @@
+{
+  "schema_version": "jobevolution.dual-diagnose.v1",
+  "redacted": true,
+  "source": "synthetic fixture; no personal data",
+  "graph_release": "2093c34",
+  "direction": "无法区分方向",
+  "jobs": [
+    {
+      "job_id": "job-redacted-a",
+      "name": "大模型应用工程师",
+      "band": "有明显差距",
+      "required_coverage": {"covered": 2.0, "total": 5.0},
+      "minimum_shift_skill_count": 2,
+      "shift_set": ["RAG", "评测设计"],
+      "evidence": [
+        {"requirement": "Python", "level": "result", "quote": "[已脱敏] 使用 Python 构建服务并降低延迟"},
+        {"requirement": "RAG", "level": "未提及", "quote": ""}
+      ]
+    },
+    {
+      "job_id": "job-redacted-b",
+      "name": "Agent 工程师",
+      "band": "有明显差距",
+      "required_coverage": {"covered": 2.0, "total": 5.0},
+      "minimum_shift_skill_count": 2,
+      "shift_set": ["Agent 流程编排", "评测设计"],
+      "evidence": [
+        {"requirement": "Python", "level": "result", "quote": "[已脱敏] 使用 Python 构建服务并降低延迟"},
+        {"requirement": "Agent 流程编排", "level": "未提及", "quote": ""}
+      ]
+    }
+  ],
+  "review_notes": [
+    "结论只引用脱敏证据，未证明的能力标为未提及。",
+    "最小换档数量参与方向比较；并列时明确告知用户无法区分。"
+  ]
+}
