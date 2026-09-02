@@ -168,6 +168,8 @@ PDF：`pdfplumber` 取文本层。`.docx`：`python-docx`。支持中英文混�
 
 DeepSeek JSON 拆两个子任务并行：基本信息+教育+经历；技能点列表（引导词表用当前图谱技能名）。输出过 `align_skill`。首次诊断前可修改技能点与明确的熟练级,修改只写当前会话。会话结果进不持久化的 Redis，TTL 1 小时，key `session:{id}`；Redis 重启后提示重新上传。字段级 F1 另报，不进三项准确率。
 
+上传前页面必须告知必要简历文本会发送给当前配置的模型服务商,产品数据库不保存简历,匿名会话最长保留一小时。选择文件或拖放即表示确认本次处理范围,不增加单独 checkbox。原文件仍按 ADR-0032 在解析完成或失败后立即删除；服务商没有经合同和配置验证的数据承诺时,页面不得写"绝不留存"。
+
 双栏版式掉点时再引入 SmartResume 版面重建，见 [`research/resume-parsing.md`](research/resume-parsing.md)。一期不做。
 
 ### 对齐与匹配分
@@ -200,14 +202,14 @@ JSON，UTF-8。错误体 `{ "error": str, "detail": str | null }`。管理口令
 |---|---|---|
 | GET | `/meta` | 四领域、演示统计。直通开关只在管理路由返回 |
 | GET | `/jobs` | 列表。query：`domain`，`status`，`q`。无口令丢掉 `candidate`；`status=candidate` 无口令返回空列表 |
-| GET | `/jobs/{id}` | 定义、独立源数、技能点表、证据摘要。candidate 无口令 404 |
-| GET | `/graph/jobs/{id}` | 当前岗切片：类目、技能点、`REQUIRES`（按 `levels` 过滤）、`period_delta`（`added` / `expired`）。expired 是本周期已写 `valid_to` 的边，给切片差分挂「本周期失效」。candidate 404 |
+| GET | `/jobs/{id}` | 获批定义、典型职责、独立源数、岗位更新时间、数据状态、相近岗位和证据摘要。candidate 无口令 404 |
+| GET | `/graph/jobs/{id}` | 当前与上一周期、类目、按必备 / 加分 / 观测中分组的技能点、`REQUIRES` 判定摘要与票数、`period_delta` 文字清单。candidate 404 |
 | POST | `/sessions` | multipart 简历 → `{session_id, skills, preview_text}` |
 | PUT | `/sessions/{id}/skills` | 会话内修正技能点与明确熟练级 |
 | POST | `/diagnose` | `{session_id, job_id, levels?}` → 对照报告。含换档条件与按此排序的学习路径、邻近岗档位。`job_id` 为 candidate 时 400。前端可用 query `session_id` + `job_id` 自动再 POST |
 | POST | `/diagnose/simulate` | `{session_id, job_ids, assumed_skill_ids, watching_skill_ids?}` → 两个对照岗位与邻近岗位的假设档位和换档条件。不写会话技能或简历证据 |
 | GET | `/discover` | 候选 / 萌芽 / 成型看板。有 `ALIAS_OF` 出边的岗不进候选列 |
-| GET | `/discover/{id}` | 卷宗：簇、独立源、证据、事件。候选也可以 |
+| GET | `/discover/{id}` | 卷宗：形成原因、去重公司、近期要求、相近岗位差异、市场关注建议、证据与事件。候选也可以 |
 | GET | `/feed` | 故事、萌芽/谱内计数、管线、热度、流水。候选簇不计别名。总览第一屏只用故事和计数；管线/热度/流水给发现页和总览 `<details>` |
 | POST | `/admin/session` | 校验共享口令并签发短期管理会话 |
 | DELETE | `/admin/session` | 注销当前管理会话 |
