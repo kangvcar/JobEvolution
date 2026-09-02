@@ -273,7 +273,7 @@ export function Workbench() {
           <input type="search" aria-label="搜索岗位" value={q} onChange={(e) => setQ(e.target.value)} />
         </label>
         {jobs.length === 0 ? (
-          <p className="empty">当前筛选没有仍有要求边的技能点，请换个筛选</p>
+          <p className="empty">当前筛选没有有效岗位要求，请换个筛选</p>
         ) : (
           <ul className="job-list">
             {jobs.map((job) => (
@@ -310,7 +310,7 @@ export function Workbench() {
           ref={canvas}
           tabIndex={0}
           role="application"
-          aria-label="岗位切片画布"
+          aria-label="岗位要求关系图"
         /> : <div className="requirement-list" aria-label="岗位要求清单">
           {(["required", "bonus"] as const).map((kind) => <section key={kind}><h2>{kind === "required" ? "必备" : "加分"}</h2><ul>{visibleRequires.filter((skill) => (kind === "required" ? skill.kind !== "bonus" : skill.kind === "bonus")).map((skill) => <li key={skill.skill_id}><button type="button" onClick={() => { opener.current = document.activeElement as HTMLElement; setSelectedSkill(skill.skill_id); setEvidenceTarget(skill); }}>{skill.name}</button><span>{skill.proficiency || "未标熟练级"}</span></li>)}</ul></section>)}{detail?.watching?.length ? <section><h2>观测中</h2><p className="hint">市场开始提，但还没进要求，不算你的缺口。</p><p className="watching-ids">{detail.watching.join("、")}</p></section> : null}</div>}
       </section>
@@ -348,7 +348,7 @@ export function Workbench() {
       <>
         <button type="button" className="evidence-backdrop" aria-label="关闭证据抽屉" onClick={closeEvidence} />
         <aside className="evidence-drawer" role="dialog" aria-modal="true" aria-labelledby="evidence-title">
-          <header><div><p className="mono">要求边证据</p><h2 id="evidence-title">{evidenceTarget.name}</h2></div><button type="button" onClick={closeEvidence} aria-label="关闭证据抽屉">关闭</button></header>
+          <header><div><p className="mono">岗位要求证据</p><h2 id="evidence-title">{evidenceTarget.name}</h2></div><button type="button" onClick={closeEvidence} aria-label="关闭证据抽屉">关闭</button></header>
           {evidenceTarget.expired && <p className="evidence-status">本周期失效</p>}
           {(() => {
             const all = slice?.evidence || [];

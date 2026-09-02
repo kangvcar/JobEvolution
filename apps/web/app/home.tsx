@@ -69,7 +69,7 @@ export function Home() {
               <dd>{feed.emerging}</dd>
             </div>
             <div>
-              <dt>谱内</dt>
+              <dt>岗位总数</dt>
               <dd>{feed.in_graph}</dd>
             </div>
           </dl>
@@ -107,18 +107,18 @@ export function Home() {
           <summary>本周期怎么算出来的</summary>
           <div className="how-body">
             <section>
-              <h2>发现管线</h2>
-              <p className="hint">证据按渠道计。和发现页同一份口径。</p>
+              <h2>数据来源</h2>
+              <p className="hint">按招聘渠道去重统计，和市场变化页使用同一份口径。</p>
               <Pipe rows={feed?.pipeline || []} />
             </section>
             <section>
-              <h2>技能热度</h2>
-              <p className="hint">谱内岗位占比，不是搜索指数。簇内覆盖率过 30% 才入池。</p>
+              <h2>技能出现情况</h2>
+              <p className="hint">这是公开岗位中的出现比例，不是搜索指数。</p>
               <Heat rows={feed?.heat || []} />
             </section>
             <section>
-              <h2>演化流水</h2>
-              <p className="hint">边级事件，不是时间轴控件。</p>
+              <h2>岗位变化记录</h2>
+              <p className="hint">记录岗位要求和状态的变化。</p>
               <EventList rows={feed?.events || []} />
             </section>
           </div>

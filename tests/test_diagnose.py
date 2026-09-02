@@ -206,6 +206,23 @@ def test_expired_session_is_404(client):
     assert res.status_code in (404, 400)
 
 
+def test_two_job_diagnosis_returns_direction_payload(client):
+    from app.matching.session import save
+
+    sid = save({"preview_text": "Python FastAPI", "skills": [{"skill_id": "python", "name": "Python"}], "experience": "3年", "education": "本科"})
+    from app import graph
+
+    candidates = [job for job in client.get("/jobs").json() if graph.diagnostic_release(job["id"])["ok"]]
+    if len(candidates) < 2:
+        return
+    response = client.post("/diagnose", json={"session_id": sid, "job_ids": [candidates[0]["id"], candidates[1]["id"]]})
+    assert response.status_code == 200
+    body = response.json()
+    assert body["direction"]
+    assert len(body["jobs"]) == 2
+    assert all("shift_set" in item for item in body["jobs"])
+
+
 def test_session_correction_cannot_promote_unproven_result(client):
     from app.matching.session import save
 

@@ -138,11 +138,11 @@ export function DiscoverBoard() {
             <dd>{feed.formed}</dd>
           </div>
           <div>
-            <dt>待审</dt>
+            <dt>审核中</dt>
             <dd>{feed.pending}</dd>
           </div>
           <div>
-            <dt>拦下</dt>
+            <dt>暂不展示</dt>
             <dd>{feed.barred}</dd>
           </div>
         </dl>
@@ -168,7 +168,7 @@ export function DiscoverBoard() {
                     </span>
                     <b>{card.name}</b>
                     <span className="meta">
-                      {DOMAIN[card.domain] || card.domain} · 独立源 {card.n_sources ?? 0}
+                      {DOMAIN[card.domain] || card.domain} · 去重招聘公司 {card.n_sources ?? 0}
                     </span>
                   </button>
           ))}
@@ -238,13 +238,13 @@ export function DiscoverBoard() {
       </div>
       <div className="disc-lower">
         <section>
-          <h2>发现管线</h2>
-          <p className="hint">与总览同一口径。</p>
+          <h2>数据来源</h2>
+          <p className="hint">与首页同一口径。</p>
           <Pipe rows={feed?.pipeline || []} />
         </section>
         <section>
-          <h2>技能热度</h2>
-          <p className="hint">谱内岗位占比。与总览同一张表。</p>
+          <h2>技能出现情况</h2>
+          <p className="hint">公开岗位中的出现比例，与首页同一张表。</p>
           <Heat rows={feed?.heat || []} />
         </section>
         <aside className="move">
@@ -270,7 +270,7 @@ export function DiscoverBoard() {
       </div>
       <section className="disc-feed">
         <h2>演化流水</h2>
-        <p className="hint">边级事件，与总览同一份。</p>
+        <p className="hint">岗位要求和状态变化，与首页同一份记录。</p>
         <EventList rows={feed?.events || []} />
       </section>
     </main>

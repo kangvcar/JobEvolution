@@ -21,6 +21,8 @@ type Report = {
   session_id?: string;
   preview_text?: string;
   band: string;
+  direction?: string;
+  jobs?: { job_id: string; name: string; band: string; required_coverage?: { covered: number; total: number }; shift_set?: Named[]; transferable_engineering?: number; job_specific_experience?: number; experience_education_risk?: boolean }[];
   groups: {
     judge: {
       summary: string;
@@ -272,7 +274,7 @@ export function DiagnoseForm() {
       categories.push({ id: "uncategorized", name: "未分类" });
     }
     return (
-      <div className="mini-graph" aria-label="岗位切片对照小图谱">
+      <div className="mini-graph" aria-label="岗位要求对照图">
         <span className="mini-node mini-job">{jobs.find((j) => j.id === jobId)?.name || "岗位"}</span>
         {categories.map((category) => {
           const skills = requires.filter((skill) => (skill.category_id || skill.category || "uncategorized") === category.id || skill.category === category.name);
@@ -390,7 +392,10 @@ export function DiagnoseForm() {
               再分析一次
             </button>
           </header>
-          <div className="diagnose-split">
+          {report.direction ? <section className="direction-report" aria-live="polite">
+            <p className="verdict">{report.direction === "无法区分方向" ? "两个岗位当前没有可区分的优势，请比较各自换档条件。" : `当前更接近：${report.direction}`}</p>
+            <div className="direction-cards">{(report.jobs || []).map((item) => <article key={item.job_id}><h2>{item.name}</h2><p>当前档位：{item.band}</p><p>必备覆盖：{item.required_coverage?.covered ?? 0}/{item.required_coverage?.total ?? 0}</p><p>可迁移工程能力：{item.transferable_engineering ?? 0} 项</p><p>岗位独有经历：{item.job_specific_experience ?? 0} 项</p><p>换档条件：{names(item.shift_set)}</p></article>)}</div>
+          </section> : <div className="diagnose-split">
             <aside>
               <h2>简历</h2>
               <pre>{report.preview_text || preview || "（无预览）"}</pre>
@@ -500,7 +505,7 @@ export function DiagnoseForm() {
               <p>简历多出来的 {names(report.groups.explain.extra)}</p>
               <p>{report.groups.explain.notes}</p>
             </section>
-          </div>
+          </div>}
         </div>
       )}
     </main>
