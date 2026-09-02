@@ -1,6 +1,6 @@
 {
   "schema_version": "jobevolution.snapshot.v1",
-  "git_commit": "90dfb89180beb104af3d45ea72a4ad027fab5748",
+  "git_commit": "4990f3ae92b86c883b22add924fb4111fc9c34d7",
   "evidence_hash": "3b12eb60769f4c312cc374d6c5d617532759c6849123e57cdda67b875ee28639",
   "jobs": [
     {
@@ -10236,8 +10236,422 @@
   ],
   "requirement_versions": [],
   "requirement_groups": [],
-  "definitions": [],
-  "claims": [],
+  "definitions": [
+    {
+      "job_id": "job-2e05993e43fccbe5",
+      "created_at": "2026-09-02T07:46:17.562000000+00:00",
+      "id": "defv-0473ed6dd72c0e21977a8033",
+      "status": "approved"
+    },
+    {
+      "job_id": "job-40b74ded178bff2c",
+      "created_at": "2026-09-02T07:46:17.767000000+00:00",
+      "id": "defv-f59341177ca1e00d6f3625c8",
+      "status": "approved"
+    },
+    {
+      "job_id": "job-e1662d9b8cfd059f",
+      "created_at": "2026-09-02T07:46:18.040000000+00:00",
+      "id": "defv-2fa89c53508f27da2829cd71",
+      "status": "approved"
+    },
+    {
+      "job_id": "job-a370116653d8774b",
+      "created_at": "2026-09-02T07:46:18.106000000+00:00",
+      "id": "defv-545319154938dce3b1365df5",
+      "status": "approved"
+    },
+    {
+      "job_id": "job-32f619c0fc80a1fc",
+      "created_at": "2026-09-02T07:46:18.139000000+00:00",
+      "id": "defv-1853559ee95d5dec97ea5b94",
+      "status": "approved"
+    },
+    {
+      "job_id": "job-bfb58df219dea6da",
+      "created_at": "2026-09-02T07:46:18.182000000+00:00",
+      "id": "defv-4e506558147758e6fdd6deac",
+      "status": "approved"
+    },
+    {
+      "job_id": "job-a79d144297bbd067",
+      "created_at": "2026-09-02T07:46:18.229000000+00:00",
+      "id": "defv-abd156a9ca9021d8218146b8",
+      "status": "approved"
+    },
+    {
+      "job_id": "job-b5aca4b206c14849",
+      "created_at": "2026-09-02T07:46:18.264000000+00:00",
+      "id": "defv-152ddd1454f47bfd7df3d146",
+      "status": "approved"
+    },
+    {
+      "job_id": "job-33132afe3605942b",
+      "created_at": "2026-09-02T07:46:18.296000000+00:00",
+      "id": "defv-c38e1950ed5fbb0670783371",
+      "status": "approved"
+    },
+    {
+      "job_id": "job-a9ac115088d21ed1",
+      "created_at": "2026-09-02T07:46:18.389000000+00:00",
+      "id": "defv-a881dcea0c861c8cf99eb77a",
+      "status": "approved"
+    },
+    {
+      "job_id": "job-661af08d5165c417",
+      "created_at": "2026-09-02T07:46:18.528000000+00:00",
+      "id": "defv-2ae39e24e609ce9b067ab0dd",
+      "status": "approved"
+    },
+    {
+      "job_id": "job-120f74d5401b7981",
+      "created_at": "2026-09-02T07:46:18.628000000+00:00",
+      "id": "defv-64fe19496d8c69a7a7852da3",
+      "status": "approved"
+    },
+    {
+      "job_id": "job-23453144f0f0efad",
+      "created_at": "2026-09-02T07:46:18.654000000+00:00",
+      "id": "defv-9edba457ed78bb62bf4bedfc",
+      "status": "approved"
+    },
+    {
+      "job_id": "job-45dc1ffa121a5dd4",
+      "created_at": "2026-09-02T07:46:18.712000000+00:00",
+      "id": "defv-c51ef29ccd1415c35b7ecd7d",
+      "status": "approved"
+    }
+  ],
+  "claims": [
+    {
+      "sources": [
+        "jd-003025c54a283f19",
+        "jd-8cee774c3708590e",
+        "jd-a199887680aef910",
+        "jd-a88821019329fdf2"
+      ],
+      "review": "approved",
+      "id": "claim-8cc31980bb898e769070b086",
+      "text": "Agent 工程师的招聘信息主要围绕：掌握 AIGC 技术，能将 LLM 集成至 Agent 系统；熟悉大模型及AI Agent平台架构",
+      "type": "responsibility"
+    },
+    {
+      "sources": [
+        "jd-021724ba06694e40",
+        "jd-0bd7ecff959396c1",
+        "jd-1ce8dcb85f53c9c8",
+        "jd-2cac1887cdce7f31",
+        "jd-48891c9ba200b3f6",
+        "jd-537110b77e0b29b0",
+        "jd-680eb8ca741fda24",
+        "jd-a376d38edd9488f3",
+        "jd-b28fc928d1f1ab8f",
+        "jd-b54ab19589079589",
+        "jd-b66184fb900cb92e",
+        "jd-cd499a924af6a5d3",
+        "jd-ea5ed81756bbf4d4"
+      ],
+      "review": "approved",
+      "id": "claim-99ae586b08790ec76a1881cf",
+      "text": "多模态算法工程师的招聘信息主要围绕：有 AIGC 视觉算法经验，包括但不限于视频生成、可控生成等；熟悉深度学习技术",
+      "type": "responsibility"
+    },
+    {
+      "sources": [
+        "jd-00492bebf7086f9e",
+        "jd-0c6e60f2e40dc120",
+        "jd-11b5744cb1f4ed17",
+        "jd-27176309c868fd69",
+        "jd-27340f7f9ea4f76a",
+        "jd-49a47d4e4529d35c",
+        "jd-72e32a670c445e47",
+        "jd-73b5198cc43ec3f8",
+        "jd-78004018e0c594a3",
+        "jd-9ae3fc1b92811893",
+        "jd-9dee3b4d336b5e15",
+        "jd-a9e08b2995f5a2a3",
+        "jd-aed5cf37a404dd30",
+        "jd-b968411d156e16c3",
+        "jd-b998996d1e3bba3d",
+        "jd-d02235975c2e4451",
+        "jd-e2d53958cf0a9068",
+        "jd-f5cb1d00f9273ed6"
+      ],
+      "review": "approved",
+      "id": "claim-c5ba8912e73b49e52a41a688",
+      "text": "大模型应用工程师的招聘信息主要围绕：精通 Python 等编程语言；深入理解深度学习的基本原理",
+      "type": "responsibility"
+    },
+    {
+      "sources": [
+        "jd-0a4371f2241b255a",
+        "jd-303387099756d173",
+        "jd-54fb36808655cb69",
+        "jd-a214fc9018a32613",
+        "jd-bff3bba1aa93e733",
+        "jd-c553c20d005874fe",
+        "jd-e0fe05196a530119"
+      ],
+      "review": "approved",
+      "id": "claim-f5828b5b0acb67d506578532",
+      "text": "提示词工程师的招聘信息主要围绕：分析用户行为与需求，建立数据模型；参与设计个性化搜索建议及自然语言处理算法",
+      "type": "responsibility"
+    },
+    {
+      "sources": [
+        "jd-00b4bb0795344407",
+        "jd-0489ebcaae187464",
+        "jd-1a9b2c7d2b243797",
+        "jd-2997abd27ad2d9aa",
+        "jd-333192399f643882",
+        "jd-37528fcca0e0efd4",
+        "jd-57fd95a66df20c40",
+        "jd-7d106baca8c44d68",
+        "jd-823188ffa0ab8105",
+        "jd-8a4017418d43c03d",
+        "jd-a0a3b62c6b8c6945",
+        "jd-a44d541123892770",
+        "jd-b7656d0675d3eb38",
+        "jd-cc4b8a2c2a3349f3"
+      ],
+      "review": "approved",
+      "id": "claim-6eafe61b6cfed47e52370a74",
+      "text": "数据分析师的招聘信息主要围绕：撰写数据分析报告；懂得常用的EXCEL函数及数据透视表",
+      "type": "responsibility"
+    },
+    {
+      "sources": [
+        "jd-1593ed0f1acee729",
+        "jd-4f86105b97f4740c",
+        "jd-5fdc91e4577c5ad3",
+        "jd-6625e8784511b64b",
+        "jd-6931cdc8808d4788",
+        "jd-6b51c4722f9f0616",
+        "jd-e6eb806da8cdba38",
+        "jd-fb43bdd3601c2e74"
+      ],
+      "review": "approved",
+      "id": "claim-95f6fe2d5503fb9df5b920a9",
+      "text": "数据工程师的招聘信息主要围绕：具有良好的SQL语言开发技能；了解Hadoop生态圈",
+      "type": "responsibility"
+    },
+    {
+      "sources": [
+        "jd-0009de9cec940f73",
+        "jd-08434503f7dbc089",
+        "jd-0b0c504f9388f8f2",
+        "jd-0c40c9ad4ee390a4",
+        "jd-139d35926d3b47f9",
+        "jd-14e6a3c7e5a792b9",
+        "jd-1fee6f76246d65ca",
+        "jd-381aac593dc7b371",
+        "jd-4323de9002a3d4ad",
+        "jd-497b697f93018db0",
+        "jd-4b0ed0a36eeaed85",
+        "jd-4e6a83a818c0d6b5",
+        "jd-54aeb7a4bfe6933b",
+        "jd-57859a62f0065299",
+        "jd-5885e11e1f912ae5",
+        "jd-63c90f9b1ba551b6",
+        "jd-651dd5703fa17e3a",
+        "jd-6630453b880cbfde",
+        "jd-6a952efcdc552a47",
+        "jd-6aba08d03c0d1cba",
+        "jd-7657fa946a9d4601",
+        "jd-7769011675a9ef06",
+        "jd-886dca90b0150348",
+        "jd-896d2e71af96b294",
+        "jd-8d5cc7604f66e7e7",
+        "jd-90800fc8901f0c7a",
+        "jd-930124f7b08a3298",
+        "jd-9f347ebb2a9004c2",
+        "jd-a1bc160c875c6f72",
+        "jd-a4d99e4c786aa38a",
+        "jd-ae02122dd6a11140",
+        "jd-ae5bd4f43b5b3ad6",
+        "jd-b3f4e87f06a3b1b2",
+        "jd-b455b239ed89cd16",
+        "jd-b49fc6343d37b56a",
+        "jd-b554c0231699a4c4",
+        "jd-b6aaf3d0c0fc3683",
+        "jd-bbf73c590b0c26f7",
+        "jd-c0c0acfb61d999c8",
+        "jd-c13e93a740c00a86",
+        "jd-cc68a6e9f4851522",
+        "jd-cdb092407b00fab4",
+        "jd-ce671040aa849927",
+        "jd-d7e270f9bdf35876",
+        "jd-d98bafa00e4374a1",
+        "jd-da2327f56bbe7675",
+        "jd-ddd40eadaceaa735",
+        "jd-ed0306df2d11c3b4",
+        "jd-f2a6ff3b7a9f352c",
+        "jd-f4d8f8f978832240"
+      ],
+      "review": "approved",
+      "id": "claim-424716e5350596f62a781008",
+      "text": "数据科学家的招聘信息主要围绕：进行数据分析；Hadoop, NoSQL, Java are strong plus",
+      "type": "responsibility"
+    },
+    {
+      "sources": [
+        "jd-008575da9d36e993",
+        "jd-04f469bb9b92b427",
+        "jd-070f5a511086d77e",
+        "jd-0c73b1f437e6256c",
+        "jd-1306db94ba8827f4",
+        "jd-1a31b96767773ac5",
+        "jd-1c2db90579fa276e",
+        "jd-219dfdc790483600",
+        "jd-25449855d5612c5e",
+        "jd-29d671d7b4450392",
+        "jd-2bba9f098d3ceefb",
+        "jd-30d567c479e563ff",
+        "jd-3562c7b0b3abe296",
+        "jd-3df63a6d5c8e3039",
+        "jd-4365b87190080916",
+        "jd-44eb79863fc9c85e",
+        "jd-4e6ee575a2f487e5",
+        "jd-531e6590cce6a412",
+        "jd-5f6917256b5330f9",
+        "jd-61d23f1aa0578256",
+        "jd-6d10eb98acfd3659",
+        "jd-756660c402ae1499",
+        "jd-7594a7ca378ba640",
+        "jd-7af83b6ea1580bed",
+        "jd-85b42ac876c6687d",
+        "jd-a125995b75290f81",
+        "jd-a7fa4d77c35cb1b1",
+        "jd-aafe5a20726f3609",
+        "jd-aee4c94866de5957",
+        "jd-b82855a7f4ba49c0",
+        "jd-c82a045ad3ca80d8",
+        "jd-d478d9f5fe045dc3",
+        "jd-d67524038b8d8b20",
+        "jd-d6ebc066cb488c04",
+        "jd-df42bcc92c3de299",
+        "jd-e3184b04dd648f5d",
+        "jd-e46aa75572b4f9ed",
+        "jd-f3c40bb6fff8cbda",
+        "jd-ff7a4b45dbd2382e"
+      ],
+      "review": "approved",
+      "id": "claim-ecc43fa2347dc0733d44c44b",
+      "text": "机器人软件工程师的招聘信息主要围绕：实现多机器人系统的协同控制，确保系统的高效通信和数据同步；精通C++/Python",
+      "type": "responsibility"
+    },
+    {
+      "sources": [
+        "jd-0048a5109aaf0c72",
+        "jd-00ad6197b80b71e9",
+        "jd-0478dd62b9591ca6",
+        "jd-17bd54e1242f81bd",
+        "jd-1d6bd40ec8e9cc41",
+        "jd-2098d59f1c3a392a",
+        "jd-21882bb1d2694f80",
+        "jd-2637d049abcdc468",
+        "jd-31bfbff5725b4cf1",
+        "jd-3b85d76eb2c343dc",
+        "jd-534ecd2f83645f56",
+        "jd-56c3e8694c4ef334",
+        "jd-65dbbdd4c5cd8257",
+        "jd-687b3b8bdba06c64",
+        "jd-690c8922b5304f7c",
+        "jd-6b4720866e4f4402",
+        "jd-6bfcb004fe60f2e8",
+        "jd-6ca27985599bb3cf",
+        "jd-7404a43763480e26",
+        "jd-760c5d1e4c2d8a99",
+        "jd-7731b9fa8ca7d883",
+        "jd-7aace38e95f4e252",
+        "jd-7f65b20b979acc05",
+        "jd-80eb0ae9c4506bc3",
+        "jd-836a12f6ac0aa962",
+        "jd-95330486892c0c82",
+        "jd-9e9abb87d8b22e37",
+        "jd-a732a327c7014e1c",
+        "jd-a87618f04d579cbf",
+        "jd-a9b8212db9c27c8c",
+        "jd-ae2d4b90f3784037",
+        "jd-b09563940e1d31ce",
+        "jd-b9018731ae5ebd14",
+        "jd-b91ad0705daff9ae",
+        "jd-be1df19526980895",
+        "jd-c7447b7bdeb950a3",
+        "jd-c8c3fd1ca0d01f85",
+        "jd-de0133bbe4785ca5",
+        "jd-e3821d23e709aa20",
+        "jd-e71f5e2a16341a71",
+        "jd-eaeb36a0c339247d",
+        "jd-f9338e48ded84712",
+        "jd-fc0bec05041a27c8"
+      ],
+      "review": "approved",
+      "id": "claim-54d0e8b22ef9086e7f95401a",
+      "text": "机器学习工程师的招聘信息主要围绕：Familiar with Dockers, Kubernetes, API Design；掌握Python编程",
+      "type": "responsibility"
+    },
+    {
+      "sources": [
+        "jd-24b30a26a73f9ac2",
+        "jd-679fdd59b54f5c62"
+      ],
+      "review": "approved",
+      "id": "claim-d6886622b9d90bb5f8080e3d",
+      "text": "模型评测工程师的招聘信息主要围绕：熟悉大模型评测方法，能够独立搭建大模型评测环境；熟练使用声学测量相关设备和软件，包括人工头、声卡、麦克风、Audition等",
+      "type": "responsibility"
+    },
+    {
+      "sources": [
+        "jd-1751aafd6cd22986",
+        "jd-80f79c9077fc0a02"
+      ],
+      "review": "approved",
+      "id": "claim-a614cb68ec79c19aca6bbe58",
+      "text": "物联网平台工程师的招聘信息主要围绕：精通C++、C#或Java开发工作；精通高并发、高性能的分布式系统的设计及应用",
+      "type": "responsibility"
+    },
+    {
+      "sources": [
+        "jd-85b1ec422e5d58ee",
+        "jd-f394d0caf9ab795f"
+      ],
+      "review": "approved",
+      "id": "claim-e31f8fb47e8e3e90427af069",
+      "text": "物联网应用开发工程师的招聘信息主要围绕：熟悉C#开发环境；熟悉HTML、CSS、JavaScript 等前端技术",
+      "type": "responsibility"
+    },
+    {
+      "sources": [
+        "jd-1ba70f5baed9b4e0",
+        "jd-223f49da2ad1b180",
+        "jd-6b94e959dfc0929f",
+        "jd-6fb6ef4eacf03082",
+        "jd-7197b4e793d78672",
+        "jd-7ddda55434b49c7d",
+        "jd-80acea219d189fa3",
+        "jd-b5b470ea943eb334",
+        "jd-c2e7055bc944d919",
+        "jd-edbe11921acdf56b",
+        "jd-eeaa7f710f7b9a8d"
+      ],
+      "review": "approved",
+      "id": "claim-2d1dc704eb0e0475af8b2fbc",
+      "text": "算法工程师的招聘信息主要围绕：精通Python、Java、Matlab、R、C/C++之一；通过数据分析手段，描述业务特征",
+      "type": "responsibility"
+    },
+    {
+      "sources": [
+        "jd-07e7d21c1915a9a5",
+        "jd-4afd0e1d27a850d2",
+        "jd-5607378cbb7778fa"
+      ],
+      "review": "approved",
+      "id": "claim-dd611e15b50bb31aba6f33f7",
+      "text": "边缘计算工程师的招聘信息主要围绕：至少精通Java、Python、Go、C/C++其中的一种；熟悉Caffe、TensorFlow、Yolo、Pytorch等一种或多种深度学习平台使用",
+      "type": "responsibility"
+    }
+  ],
   "skill_merges": [],
   "relationships": [
     {
@@ -10245,6 +10659,7 @@
       "src_id": "job-a79d144297bbd067",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-0009de9cec940f73",
           "jd-05dbb2d41b680fc8",
@@ -10330,10 +10745,11 @@
       "src_id": "job-661af08d5165c417",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1751aafd6cd22986"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.7,
         "valid_from": "2022-03-30T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -10354,6 +10770,7 @@
       "src_id": "job-e1662d9b8cfd059f",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1410fcf5d9cba2c4"
         ],
@@ -10378,10 +10795,12 @@
       "src_id": "job-661af08d5165c417",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-80f79c9077fc0a02"
         ],
         "kind": "bonus",
+        "valid_to": "2026-09-02T07:46:17.293230000+00:00",
         "confidence": 0.9,
         "valid_from": "2023-02-24T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -10418,6 +10837,7 @@
       "src_id": "job-40b74ded178bff2c",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-021724ba06694e40",
           "jd-1ce8dcb85f53c9c8",
@@ -10483,6 +10903,7 @@
       "src_id": "job-120f74d5401b7981",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-85b1ec422e5d58ee"
         ],
@@ -10515,6 +10936,7 @@
       "src_id": "job-2e05993e43fccbe5",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-a88821019329fdf2",
           "jd-b28e9ac36fc4e4c9",
@@ -10557,6 +10979,7 @@
       "src_id": "job-e1662d9b8cfd059f",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1410fcf5d9cba2c4"
         ],
@@ -10581,6 +11004,7 @@
       "src_id": "job-2e05993e43fccbe5",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-8cee774c3708590e",
           "jd-a88821019329fdf2"
@@ -10862,6 +11286,7 @@
       "src_id": "job-a9ac115088d21ed1",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-679fdd59b54f5c62"
         ],
@@ -11102,6 +11527,7 @@
       "src_id": "job-e1662d9b8cfd059f",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-0464f82a5bbfe535",
           "jd-07fe8e7ca49a5c18",
@@ -11136,6 +11562,7 @@
       "src_id": "job-33132afe3605942b",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1d6bd40ec8e9cc41",
           "jd-2098d59f1c3a392a",
@@ -11177,6 +11604,7 @@
       "src_id": "job-33132afe3605942b",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-0048a5109aaf0c72",
           "jd-00ad6197b80b71e9",
@@ -11235,6 +11663,7 @@
       "src_id": "job-23453144f0f0efad",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1ba70f5baed9b4e0",
           "jd-223f49da2ad1b180",
@@ -11298,6 +11727,7 @@
       "src_id": "job-b5aca4b206c14849",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-008575da9d36e993",
           "jd-04f469bb9b92b427",
@@ -11344,6 +11774,7 @@
       "src_id": "job-23453144f0f0efad",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-223f49da2ad1b180",
           "jd-6b94e959dfc0929f",
@@ -11377,6 +11808,7 @@
       "src_id": "job-40b74ded178bff2c",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-021724ba06694e40",
           "jd-0bd7ecff959396c1",
@@ -11421,6 +11853,7 @@
       "src_id": "job-33132afe3605942b",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-0048a5109aaf0c72",
           "jd-0478dd62b9591ca6",
@@ -11438,7 +11871,7 @@
           "jd-e71f5e2a16341a71",
           "jd-f9338e48ded84712"
         ],
-        "kind": "bonus",
+        "kind": "required",
         "confidence": 1.0,
         "valid_from": "2026-12-17T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -11459,6 +11892,7 @@
       "src_id": "job-a370116653d8774b",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-0a4371f2241b255a",
           "jd-303387099756d173",
@@ -11469,7 +11903,7 @@
           "jd-d2a908fbed324c59",
           "jd-e0fe05196a530119"
         ],
-        "kind": "bonus",
+        "kind": "required",
         "confidence": 0.95,
         "valid_from": "2025-08-15T11:44:02.000000000+00:00",
         "weight": 1.0,
@@ -11498,6 +11932,7 @@
       "src_id": "job-23453144f0f0efad",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-223f49da2ad1b180",
           "jd-5c1c8e924a6ba26c",
@@ -11531,6 +11966,7 @@
       "src_id": "job-a9ac115088d21ed1",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-679fdd59b54f5c62"
         ],
@@ -11555,6 +11991,7 @@
       "src_id": "job-23453144f0f0efad",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-5f69100ba3ffd289",
           "jd-80acea219d189fa3",
@@ -11607,6 +12044,7 @@
       "src_id": "job-b5aca4b206c14849",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-008575da9d36e993",
           "jd-04f469bb9b92b427",
@@ -11654,6 +12092,7 @@
       "src_id": "job-a9ac115088d21ed1",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-679fdd59b54f5c62"
         ],
@@ -11678,6 +12117,7 @@
       "src_id": "job-b5aca4b206c14849",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-04f469bb9b92b427",
           "jd-070f5a511086d77e",
@@ -11728,6 +12168,7 @@
       "src_id": "job-b5aca4b206c14849",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-008575da9d36e993",
           "jd-04f469bb9b92b427",
@@ -11785,10 +12226,11 @@
       "src_id": "job-a9ac115088d21ed1",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-679fdd59b54f5c62"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.8,
         "valid_from": "2025-06-04T15:16:26.000000000+00:00",
         "weight": 1.0,
@@ -11803,6 +12245,38 @@
       },
       "dst_label": "Skill",
       "dst_id": "skill-fab6880784313bb8"
+    },
+    {
+      "src_label": "JobDefinitionVersion",
+      "src_id": "defv-152ddd1454f47bfd7df3d146",
+      "type": "HAS_CLAIM",
+      "props": {},
+      "dst_label": "DefinitionClaim",
+      "dst_id": "claim-ecc43fa2347dc0733d44c44b"
+    },
+    {
+      "src_label": "Job",
+      "src_id": "job-120f74d5401b7981",
+      "type": "HAS_DEFINITION",
+      "props": {},
+      "dst_label": "JobDefinitionVersion",
+      "dst_id": "defv-64fe19496d8c69a7a7852da3"
+    },
+    {
+      "src_label": "Job",
+      "src_id": "job-661af08d5165c417",
+      "type": "HAS_DEFINITION",
+      "props": {},
+      "dst_label": "JobDefinitionVersion",
+      "dst_id": "defv-2ae39e24e609ce9b067ab0dd"
+    },
+    {
+      "src_label": "JobDefinitionVersion",
+      "src_id": "defv-a881dcea0c861c8cf99eb77a",
+      "type": "HAS_CLAIM",
+      "props": {},
+      "dst_label": "DefinitionClaim",
+      "dst_id": "claim-d6886622b9d90bb5f8080e3d"
     },
     {
       "src_label": "Evidence",
@@ -11829,6 +12303,14 @@
       "dst_id": "domain"
     },
     {
+      "src_label": "JobDefinitionVersion",
+      "src_id": "defv-2ae39e24e609ce9b067ab0dd",
+      "type": "HAS_CLAIM",
+      "props": {},
+      "dst_label": "DefinitionClaim",
+      "dst_id": "claim-a614cb68ec79c19aca6bbe58"
+    },
+    {
       "src_label": "Skill",
       "src_id": "skill-9efab62721cfd0dc",
       "type": "IN_CATEGORY",
@@ -11841,6 +12323,7 @@
       "src_id": "job-b5aca4b206c14849",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-008575da9d36e993",
           "jd-070f5a511086d77e",
@@ -11887,6 +12370,7 @@
       "src_id": "job-2e05993e43fccbe5",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-a199887680aef910",
           "jd-b28e9ac36fc4e4c9"
@@ -11912,6 +12396,7 @@
       "src_id": "job-2e05993e43fccbe5",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-a199887680aef910",
           "jd-a88821019329fdf2",
@@ -11938,6 +12423,7 @@
       "src_id": "job-40b74ded178bff2c",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-021724ba06694e40",
           "jd-0bd7ecff959396c1",
@@ -11985,6 +12471,7 @@
       "src_id": "job-2e05993e43fccbe5",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-003025c54a283f19",
           "jd-a199887680aef910",
@@ -12023,10 +12510,19 @@
       "dst_id": "framework"
     },
     {
+      "src_label": "JobDefinitionVersion",
+      "src_id": "defv-9edba457ed78bb62bf4bedfc",
+      "type": "HAS_CLAIM",
+      "props": {},
+      "dst_label": "DefinitionClaim",
+      "dst_id": "claim-2d1dc704eb0e0475af8b2fbc"
+    },
+    {
       "src_label": "Job",
       "src_id": "job-a370116653d8774b",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-4c043c19f1c0a464",
           "jd-54fb36808655cb69",
@@ -12085,10 +12581,11 @@
       "src_id": "job-45dc1ffa121a5dd4",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-4afd0e1d27a850d2"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.7,
         "valid_from": "2023-02-24T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -12157,6 +12654,7 @@
       "src_id": "job-2e05993e43fccbe5",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-a199887680aef910",
           "jd-b28e9ac36fc4e4c9"
@@ -12190,6 +12688,7 @@
       "src_id": "job-2e05993e43fccbe5",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-8cee774c3708590e",
           "jd-da11a9e6c57eef2a"
@@ -12215,6 +12714,7 @@
       "src_id": "job-40b74ded178bff2c",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-680eb8ca741fda24",
           "jd-7be1c3148f66bada",
@@ -12246,6 +12746,7 @@
       "src_id": "job-a9ac115088d21ed1",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-679fdd59b54f5c62"
         ],
@@ -12310,6 +12811,7 @@
       "src_id": "job-2e05993e43fccbe5",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-003025c54a283f19",
           "jd-8cee774c3708590e",
@@ -12344,6 +12846,7 @@
       "src_id": "job-2e05993e43fccbe5",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-a199887680aef910",
           "jd-b28e9ac36fc4e4c9",
@@ -12394,11 +12897,12 @@
       "src_id": "job-2e05993e43fccbe5",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-8cee774c3708590e",
           "jd-a199887680aef910"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.9,
         "valid_from": "2025-08-19T11:13:50.000000000+00:00",
         "weight": 1.0,
@@ -12427,12 +12931,14 @@
       "src_id": "job-a370116653d8774b",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-0a4371f2241b255a",
           "jd-bff3bba1aa93e733",
           "jd-c553c20d005874fe"
         ],
         "kind": "required",
+        "valid_to": "2026-09-02T07:46:17.293230000+00:00",
         "confidence": 0.9,
         "valid_from": "2025-04-28T10:16:56.000000000+00:00",
         "weight": 1.0,
@@ -12525,6 +13031,7 @@
       "src_id": "job-45dc1ffa121a5dd4",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-07e7d21c1915a9a5",
           "jd-4afd0e1d27a850d2"
@@ -12566,6 +13073,7 @@
       "src_id": "job-32f619c0fc80a1fc",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-0489ebcaae187464",
           "jd-1a9b2c7d2b243797",
@@ -12620,6 +13128,7 @@
       "src_id": "job-33132afe3605942b",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-0048a5109aaf0c72",
           "jd-00ad6197b80b71e9",
@@ -12677,6 +13186,7 @@
       "src_id": "job-2e05993e43fccbe5",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-003025c54a283f19",
           "jd-8cee774c3708590e"
@@ -12723,14 +13233,23 @@
     },
     {
       "src_label": "Job",
+      "src_id": "job-a79d144297bbd067",
+      "type": "HAS_DEFINITION",
+      "props": {},
+      "dst_label": "JobDefinitionVersion",
+      "dst_id": "defv-abd156a9ca9021d8218146b8"
+    },
+    {
+      "src_label": "Job",
       "src_id": "job-2e05993e43fccbe5",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-a199887680aef910",
           "jd-da11a9e6c57eef2a"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.9,
         "valid_from": "2025-08-18T18:23:03.000000000+00:00",
         "weight": 1.0,
@@ -12783,6 +13302,7 @@
       "src_id": "job-33132afe3605942b",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-00ad6197b80b71e9",
           "jd-17bd54e1242f81bd",
@@ -12832,6 +13352,7 @@
       "src_id": "job-a9ac115088d21ed1",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-679fdd59b54f5c62"
         ],
@@ -12864,6 +13385,7 @@
       "src_id": "job-2e05993e43fccbe5",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-a199887680aef910",
           "jd-da11a9e6c57eef2a"
@@ -12889,10 +13411,11 @@
       "src_id": "job-661af08d5165c417",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1751aafd6cd22986"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.7,
         "valid_from": "2022-03-30T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -12913,6 +13436,7 @@
       "src_id": "job-2e05993e43fccbe5",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-8cee774c3708590e",
           "jd-a199887680aef910"
@@ -12946,11 +13470,12 @@
       "src_id": "job-2e05993e43fccbe5",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-a199887680aef910",
           "jd-da11a9e6c57eef2a"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.9,
         "valid_from": "2025-08-18T18:23:03.000000000+00:00",
         "weight": 1.0,
@@ -12979,6 +13504,7 @@
       "src_id": "job-2e05993e43fccbe5",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-8cee774c3708590e",
           "jd-b28e9ac36fc4e4c9",
@@ -13077,6 +13603,7 @@
       "src_id": "job-a9ac115088d21ed1",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-679fdd59b54f5c62"
         ],
@@ -13101,11 +13628,13 @@
       "src_id": "job-e1662d9b8cfd059f",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-0464f82a5bbfe535",
           "jd-1410fcf5d9cba2c4"
         ],
         "kind": "required",
+        "valid_to": "2026-09-02T07:46:17.293230000+00:00",
         "confidence": 0.9,
         "valid_from": "2025-08-18T09:00:55.000000000+00:00",
         "weight": 1.0,
@@ -13166,6 +13695,7 @@
       "src_id": "job-a9ac115088d21ed1",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-24b30a26a73f9ac2"
         ],
@@ -13190,6 +13720,7 @@
       "src_id": "job-32f619c0fc80a1fc",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-00b4bb0795344407",
           "jd-0489ebcaae187464",
@@ -13227,6 +13758,7 @@
       "src_id": "job-a9ac115088d21ed1",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-24b30a26a73f9ac2"
         ],
@@ -13251,6 +13783,7 @@
       "src_id": "job-45dc1ffa121a5dd4",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-5607378cbb7778fa"
         ],
@@ -13339,6 +13872,7 @@
       "src_id": "job-a9ac115088d21ed1",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-679fdd59b54f5c62"
         ],
@@ -13371,6 +13905,7 @@
       "src_id": "job-a9ac115088d21ed1",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-24b30a26a73f9ac2"
         ],
@@ -13403,6 +13938,7 @@
       "src_id": "job-a9ac115088d21ed1",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-24b30a26a73f9ac2"
         ],
@@ -13427,6 +13963,7 @@
       "src_id": "job-a9ac115088d21ed1",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-24b30a26a73f9ac2",
           "jd-679fdd59b54f5c62"
@@ -13564,6 +14101,7 @@
       "src_id": "job-661af08d5165c417",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-80f79c9077fc0a02"
         ],
@@ -13588,6 +14126,7 @@
       "src_id": "job-a9ac115088d21ed1",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-679fdd59b54f5c62"
         ],
@@ -13628,6 +14167,7 @@
       "src_id": "job-a9ac115088d21ed1",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-679fdd59b54f5c62"
         ],
@@ -13652,6 +14192,7 @@
       "src_id": "job-a370116653d8774b",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-0a4371f2241b255a",
           "jd-303387099756d173",
@@ -13710,6 +14251,7 @@
       "src_id": "job-a9ac115088d21ed1",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-679fdd59b54f5c62"
         ],
@@ -13744,6 +14286,14 @@
       "props": {},
       "dst_label": "SkillCategory",
       "dst_id": "domain"
+    },
+    {
+      "src_label": "JobDefinitionVersion",
+      "src_id": "defv-1853559ee95d5dec97ea5b94",
+      "type": "HAS_CLAIM",
+      "props": {},
+      "dst_label": "DefinitionClaim",
+      "dst_id": "claim-6eafe61b6cfed47e52370a74"
     },
     {
       "src_label": "Skill",
@@ -13982,6 +14532,7 @@
       "src_id": "job-a79d144297bbd067",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-05dbb2d41b680fc8",
           "jd-0b0c504f9388f8f2",
@@ -14009,7 +14560,7 @@
           "jd-ddd40eadaceaa735",
           "jd-f4d8f8f978832240"
         ],
-        "kind": "bonus",
+        "kind": "required",
         "confidence": 1.0,
         "valid_from": "2026-08-04T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -14030,6 +14581,7 @@
       "src_id": "job-a79d144297bbd067",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-0009de9cec940f73",
           "jd-08434503f7dbc089",
@@ -14189,6 +14741,7 @@
       "src_id": "job-a9ac115088d21ed1",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-679fdd59b54f5c62"
         ],
@@ -14237,6 +14790,7 @@
       "src_id": "job-661af08d5165c417",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-80f79c9077fc0a02"
         ],
@@ -14285,6 +14839,7 @@
       "src_id": "job-a370116653d8774b",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-0a4371f2241b255a",
           "jd-303387099756d173",
@@ -14339,6 +14894,7 @@
       "src_id": "job-661af08d5165c417",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-80f79c9077fc0a02"
         ],
@@ -14427,10 +14983,12 @@
       "src_id": "job-661af08d5165c417",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1751aafd6cd22986"
         ],
         "kind": "bonus",
+        "valid_to": "2026-09-02T07:46:17.293230000+00:00",
         "confidence": 0.8,
         "valid_from": "2022-03-30T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -14459,6 +15017,7 @@
       "src_id": "job-bfb58df219dea6da",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1593ed0f1acee729",
           "jd-6625e8784511b64b",
@@ -14495,6 +15054,7 @@
       "src_id": "job-120f74d5401b7981",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-85b1ec422e5d58ee"
         ],
@@ -14559,10 +15119,11 @@
       "src_id": "job-661af08d5165c417",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1751aafd6cd22986"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.7,
         "valid_from": "2022-03-30T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -14583,6 +15144,7 @@
       "src_id": "job-a370116653d8774b",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-75480f9c1766c4ad",
           "jd-a214fc9018a32613",
@@ -14617,6 +15179,7 @@
       "src_id": "job-661af08d5165c417",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-80f79c9077fc0a02"
         ],
@@ -14641,6 +15204,7 @@
       "src_id": "job-45dc1ffa121a5dd4",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-4afd0e1d27a850d2",
           "jd-5607378cbb7778fa"
@@ -14666,6 +15230,7 @@
       "src_id": "job-a79d144297bbd067",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-0009de9cec940f73",
           "jd-4323de9002a3d4ad",
@@ -14738,10 +15303,11 @@
       "src_id": "job-45dc1ffa121a5dd4",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-4afd0e1d27a850d2"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.7,
         "valid_from": "2023-02-24T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -14764,6 +15330,14 @@
       "props": {},
       "dst_label": "SkillCategory",
       "dst_id": "domain"
+    },
+    {
+      "src_label": "Job",
+      "src_id": "job-a370116653d8774b",
+      "type": "HAS_DEFINITION",
+      "props": {},
+      "dst_label": "JobDefinitionVersion",
+      "dst_id": "defv-545319154938dce3b1365df5"
     },
     {
       "src_label": "EvolutionEvent",
@@ -14802,6 +15376,7 @@
       "src_id": "job-120f74d5401b7981",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-85b1ec422e5d58ee"
         ],
@@ -14831,9 +15406,18 @@
     },
     {
       "src_label": "Job",
+      "src_id": "job-a9ac115088d21ed1",
+      "type": "HAS_DEFINITION",
+      "props": {},
+      "dst_label": "JobDefinitionVersion",
+      "dst_id": "defv-a881dcea0c861c8cf99eb77a"
+    },
+    {
+      "src_label": "Job",
       "src_id": "job-a370116653d8774b",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-0a4371f2241b255a",
           "jd-75480f9c1766c4ad",
@@ -14877,6 +15461,7 @@
       "src_id": "job-45dc1ffa121a5dd4",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-07e7d21c1915a9a5"
         ],
@@ -14925,6 +15510,7 @@
       "src_id": "job-45dc1ffa121a5dd4",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-07e7d21c1915a9a5"
         ],
@@ -14965,6 +15551,7 @@
       "src_id": "job-bfb58df219dea6da",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1593ed0f1acee729",
           "jd-4f86105b97f4740c",
@@ -14993,6 +15580,7 @@
       "src_id": "job-bfb58df219dea6da",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1593ed0f1acee729",
           "jd-4f86105b97f4740c",
@@ -15001,7 +15589,7 @@
           "jd-e6eb806da8cdba38",
           "jd-fb43bdd3601c2e74"
         ],
-        "kind": "bonus",
+        "kind": "required",
         "confidence": 0.95,
         "valid_from": "2026-12-27T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -15022,6 +15610,7 @@
       "src_id": "job-bfb58df219dea6da",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1593ed0f1acee729",
           "jd-4f86105b97f4740c",
@@ -15030,7 +15619,7 @@
           "jd-e6eb806da8cdba38",
           "jd-fb43bdd3601c2e74"
         ],
-        "kind": "bonus",
+        "kind": "required",
         "confidence": 0.95,
         "valid_from": "2026-12-27T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -15051,10 +15640,11 @@
       "src_id": "job-120f74d5401b7981",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-85b1ec422e5d58ee"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.8,
         "valid_from": "2022-07-18T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -15075,10 +15665,11 @@
       "src_id": "job-e1662d9b8cfd059f",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1410fcf5d9cba2c4"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.8,
         "valid_from": "2025-08-18T09:00:55.000000000+00:00",
         "weight": 1.0,
@@ -15219,6 +15810,7 @@
       "src_id": "job-a370116653d8774b",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-0a4371f2241b255a",
           "jd-303387099756d173",
@@ -15519,6 +16111,7 @@
       "src_id": "job-bfb58df219dea6da",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-05914df562795a4d",
           "jd-4c95e2dccbce9a41",
@@ -15527,6 +16120,7 @@
           "jd-fb43bdd3601c2e74"
         ],
         "kind": "required",
+        "valid_to": "2026-09-02T07:46:17.293230000+00:00",
         "confidence": 0.8,
         "valid_from": "2026-12-27T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -15747,6 +16341,7 @@
       "src_id": "job-32f619c0fc80a1fc",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1a9b2c7d2b243797",
           "jd-2997abd27ad2d9aa",
@@ -15784,6 +16379,7 @@
       "src_id": "job-a79d144297bbd067",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-0009de9cec940f73",
           "jd-08434503f7dbc089",
@@ -15841,6 +16437,7 @@
       "src_id": "job-40b74ded178bff2c",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1ce8dcb85f53c9c8",
           "jd-2cac1887cdce7f31",
@@ -15878,10 +16475,11 @@
       "src_id": "job-120f74d5401b7981",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-f394d0caf9ab795f"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.8,
         "valid_from": "2026-10-29T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -15958,6 +16556,7 @@
       "src_id": "job-a79d144297bbd067",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-0009de9cec940f73",
           "jd-381aac593dc7b371",
@@ -16039,10 +16638,11 @@
       "src_id": "job-e1662d9b8cfd059f",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1410fcf5d9cba2c4"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.7,
         "valid_from": "2025-08-18T09:00:55.000000000+00:00",
         "weight": 1.0,
@@ -16095,6 +16695,7 @@
       "src_id": "job-120f74d5401b7981",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-85b1ec422e5d58ee"
         ],
@@ -16319,6 +16920,7 @@
       "src_id": "job-120f74d5401b7981",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-85b1ec422e5d58ee"
         ],
@@ -16351,6 +16953,7 @@
       "src_id": "job-120f74d5401b7981",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-85b1ec422e5d58ee"
         ],
@@ -16375,6 +16978,7 @@
       "src_id": "job-120f74d5401b7981",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-85b1ec422e5d58ee"
         ],
@@ -16415,6 +17019,7 @@
       "src_id": "job-120f74d5401b7981",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-f394d0caf9ab795f"
         ],
@@ -16439,6 +17044,7 @@
       "src_id": "job-661af08d5165c417",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-80f79c9077fc0a02"
         ],
@@ -16463,6 +17069,7 @@
       "src_id": "job-120f74d5401b7981",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-85b1ec422e5d58ee",
           "jd-f394d0caf9ab795f"
@@ -16504,10 +17111,11 @@
       "src_id": "job-e1662d9b8cfd059f",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-0464f82a5bbfe535"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.9,
         "valid_from": "2024-07-30T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -16524,10 +17132,19 @@
       "dst_id": "skill-bbef28c9ea693db8"
     },
     {
+      "src_label": "JobDefinitionVersion",
+      "src_id": "defv-0473ed6dd72c0e21977a8033",
+      "type": "HAS_CLAIM",
+      "props": {},
+      "dst_label": "DefinitionClaim",
+      "dst_id": "claim-8cc31980bb898e769070b086"
+    },
+    {
       "src_label": "Job",
       "src_id": "job-120f74d5401b7981",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-85b1ec422e5d58ee"
         ],
@@ -16576,10 +17193,11 @@
       "src_id": "job-661af08d5165c417",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1751aafd6cd22986"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.8,
         "valid_from": "2022-03-30T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -16600,10 +17218,11 @@
       "src_id": "job-120f74d5401b7981",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-85b1ec422e5d58ee"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.8,
         "valid_from": "2022-07-18T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -16688,10 +17307,11 @@
       "src_id": "job-e1662d9b8cfd059f",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-0464f82a5bbfe535"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.9,
         "valid_from": "2024-07-30T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -16720,6 +17340,7 @@
       "src_id": "job-120f74d5401b7981",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-f394d0caf9ab795f"
         ],
@@ -16754,6 +17375,14 @@
       "props": {},
       "dst_label": "SkillCategory",
       "dst_id": "engineering"
+    },
+    {
+      "src_label": "JobDefinitionVersion",
+      "src_id": "defv-c38e1950ed5fbb0670783371",
+      "type": "HAS_CLAIM",
+      "props": {},
+      "dst_label": "DefinitionClaim",
+      "dst_id": "claim-54d0e8b22ef9086e7f95401a"
     },
     {
       "src_label": "Skill",
@@ -16800,6 +17429,7 @@
       "src_id": "job-120f74d5401b7981",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-f394d0caf9ab795f"
         ],
@@ -16828,6 +17458,14 @@
       "dst_id": "framework"
     },
     {
+      "src_label": "Job",
+      "src_id": "job-b5aca4b206c14849",
+      "type": "HAS_DEFINITION",
+      "props": {},
+      "dst_label": "JobDefinitionVersion",
+      "dst_id": "defv-152ddd1454f47bfd7df3d146"
+    },
+    {
       "src_label": "Skill",
       "src_id": "skill-7f0188692116ad26",
       "type": "IN_CATEGORY",
@@ -16848,10 +17486,11 @@
       "src_id": "job-120f74d5401b7981",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-f394d0caf9ab795f"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.85,
         "valid_from": "2026-10-29T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -16888,6 +17527,7 @@
       "src_id": "job-120f74d5401b7981",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-f394d0caf9ab795f"
         ],
@@ -16920,10 +17560,11 @@
       "src_id": "job-120f74d5401b7981",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-f394d0caf9ab795f"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.85,
         "valid_from": "2026-10-29T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -16952,6 +17593,7 @@
       "src_id": "job-120f74d5401b7981",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-f394d0caf9ab795f"
         ],
@@ -16976,6 +17618,7 @@
       "src_id": "job-120f74d5401b7981",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-f394d0caf9ab795f"
         ],
@@ -17008,10 +17651,12 @@
       "src_id": "job-661af08d5165c417",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1751aafd6cd22986"
         ],
         "kind": "bonus",
+        "valid_to": "2026-09-02T07:46:17.293230000+00:00",
         "confidence": 0.8,
         "valid_from": "2022-03-30T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -17032,10 +17677,11 @@
       "src_id": "job-661af08d5165c417",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1751aafd6cd22986"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.7,
         "valid_from": "2022-03-30T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -17056,10 +17702,11 @@
       "src_id": "job-120f74d5401b7981",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-f394d0caf9ab795f"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.85,
         "valid_from": "2026-10-29T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -17080,10 +17727,11 @@
       "src_id": "job-120f74d5401b7981",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-f394d0caf9ab795f"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.85,
         "valid_from": "2026-10-29T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -17176,10 +17824,11 @@
       "src_id": "job-120f74d5401b7981",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-f394d0caf9ab795f"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.85,
         "valid_from": "2026-10-29T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -17200,6 +17849,7 @@
       "src_id": "job-661af08d5165c417",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1751aafd6cd22986",
           "jd-80f79c9077fc0a02"
@@ -17233,10 +17883,11 @@
       "src_id": "job-120f74d5401b7981",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-f394d0caf9ab795f"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.7,
         "valid_from": "2026-10-29T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -17281,6 +17932,7 @@
       "src_id": "job-661af08d5165c417",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1751aafd6cd22986"
         ],
@@ -17321,6 +17973,7 @@
       "src_id": "job-45dc1ffa121a5dd4",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-5607378cbb7778fa"
         ],
@@ -17361,10 +18014,12 @@
       "src_id": "job-661af08d5165c417",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1751aafd6cd22986"
         ],
         "kind": "bonus",
+        "valid_to": "2026-09-02T07:46:17.293230000+00:00",
         "confidence": 0.8,
         "valid_from": "2022-03-30T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -17449,6 +18104,7 @@
       "src_id": "job-e1662d9b8cfd059f",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-0c6e60f2e40dc120",
           "jd-49a47d4e4529d35c",
@@ -17504,10 +18160,11 @@
       "src_id": "job-661af08d5165c417",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1751aafd6cd22986"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.7,
         "valid_from": "2022-03-30T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -17536,10 +18193,11 @@
       "src_id": "job-661af08d5165c417",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1751aafd6cd22986"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.85,
         "valid_from": "2022-03-30T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -17616,6 +18274,7 @@
       "src_id": "job-661af08d5165c417",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1751aafd6cd22986"
         ],
@@ -17640,11 +18299,12 @@
       "src_id": "job-661af08d5165c417",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1751aafd6cd22986",
           "jd-80f79c9077fc0a02"
         ],
-        "kind": "bonus",
+        "kind": "required",
         "confidence": 0.95,
         "valid_from": "2023-02-24T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -17673,10 +18333,12 @@
       "src_id": "job-661af08d5165c417",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1751aafd6cd22986"
         ],
         "kind": "required",
+        "valid_to": "2026-09-02T07:46:17.293230000+00:00",
         "confidence": 0.7,
         "valid_from": "2022-03-30T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -17737,10 +18399,11 @@
       "src_id": "job-661af08d5165c417",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-80f79c9077fc0a02"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.8,
         "valid_from": "2023-02-24T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -17825,10 +18488,11 @@
       "src_id": "job-45dc1ffa121a5dd4",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-4afd0e1d27a850d2"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.8,
         "valid_from": "2023-02-24T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -17845,6 +18509,14 @@
       "dst_id": "skill-0140b5f11d58c83b"
     },
     {
+      "src_label": "Job",
+      "src_id": "job-2e05993e43fccbe5",
+      "type": "HAS_DEFINITION",
+      "props": {},
+      "dst_label": "JobDefinitionVersion",
+      "dst_id": "defv-0473ed6dd72c0e21977a8033"
+    },
+    {
       "src_label": "Skill",
       "src_id": "skill-7d23598066da3a57",
       "type": "IN_CATEGORY",
@@ -17857,10 +18529,11 @@
       "src_id": "job-45dc1ffa121a5dd4",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-5607378cbb7778fa"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.6,
         "valid_from": "2022-08-22T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -17945,6 +18618,7 @@
       "src_id": "job-e1662d9b8cfd059f",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-0464f82a5bbfe535",
           "jd-07fe8e7ca49a5c18",
@@ -18043,6 +18717,7 @@
       "src_id": "job-661af08d5165c417",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-80f79c9077fc0a02"
         ],
@@ -18187,10 +18862,11 @@
       "src_id": "job-661af08d5165c417",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1751aafd6cd22986"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.7,
         "valid_from": "2022-03-30T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -18219,10 +18895,11 @@
       "src_id": "job-661af08d5165c417",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1751aafd6cd22986"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.8,
         "valid_from": "2022-03-30T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -18259,10 +18936,11 @@
       "src_id": "job-661af08d5165c417",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-80f79c9077fc0a02"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.8,
         "valid_from": "2023-02-24T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -18291,6 +18969,7 @@
       "src_id": "job-661af08d5165c417",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-80f79c9077fc0a02"
         ],
@@ -18347,6 +19026,7 @@
       "src_id": "job-40b74ded178bff2c",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-021724ba06694e40",
           "jd-0bd7ecff959396c1",
@@ -18428,6 +19108,7 @@
       "src_id": "job-661af08d5165c417",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-80f79c9077fc0a02"
         ],
@@ -18524,10 +19205,11 @@
       "src_id": "job-661af08d5165c417",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-80f79c9077fc0a02"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.85,
         "valid_from": "2023-02-24T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -18588,6 +19270,7 @@
       "src_id": "job-45dc1ffa121a5dd4",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-4afd0e1d27a850d2",
           "jd-5607378cbb7778fa"
@@ -18613,6 +19296,7 @@
       "src_id": "job-45dc1ffa121a5dd4",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-07e7d21c1915a9a5",
           "jd-4afd0e1d27a850d2",
@@ -18711,11 +19395,12 @@
       "src_id": "job-45dc1ffa121a5dd4",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-07e7d21c1915a9a5",
           "jd-4afd0e1d27a850d2"
         ],
-        "kind": "bonus",
+        "kind": "required",
         "confidence": 0.8,
         "valid_from": "2023-02-24T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -18736,6 +19421,7 @@
       "src_id": "job-e1662d9b8cfd059f",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-07fe8e7ca49a5c18",
           "jd-1410fcf5d9cba2c4"
@@ -18769,11 +19455,12 @@
       "src_id": "job-45dc1ffa121a5dd4",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-07e7d21c1915a9a5",
           "jd-4afd0e1d27a850d2"
         ],
-        "kind": "bonus",
+        "kind": "required",
         "confidence": 0.8,
         "valid_from": "2023-02-24T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -18802,6 +19489,7 @@
       "src_id": "job-45dc1ffa121a5dd4",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-07e7d21c1915a9a5"
         ],
@@ -18834,10 +19522,11 @@
       "src_id": "job-45dc1ffa121a5dd4",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-5607378cbb7778fa"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.8,
         "valid_from": "2022-08-22T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -18922,6 +19611,7 @@
       "src_id": "job-a370116653d8774b",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-0a4371f2241b255a",
           "jd-54fb36808655cb69",
@@ -18991,6 +19681,7 @@
       "src_id": "job-e1662d9b8cfd059f",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-07fe8e7ca49a5c18",
           "jd-1410fcf5d9cba2c4"
@@ -19016,10 +19707,11 @@
       "src_id": "job-45dc1ffa121a5dd4",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-5607378cbb7778fa"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.8,
         "valid_from": "2022-08-22T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -19080,10 +19772,11 @@
       "src_id": "job-45dc1ffa121a5dd4",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-5607378cbb7778fa"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.8,
         "valid_from": "2022-08-22T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -19128,10 +19821,11 @@
       "src_id": "job-45dc1ffa121a5dd4",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-5607378cbb7778fa"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.8,
         "valid_from": "2022-08-22T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -19152,6 +19846,7 @@
       "src_id": "job-45dc1ffa121a5dd4",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-5607378cbb7778fa"
         ],
@@ -19176,6 +19871,7 @@
       "src_id": "job-e1662d9b8cfd059f",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-07fe8e7ca49a5c18",
           "jd-1410fcf5d9cba2c4"
@@ -19201,11 +19897,13 @@
       "src_id": "job-e1662d9b8cfd059f",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-0464f82a5bbfe535",
           "jd-1410fcf5d9cba2c4"
         ],
         "kind": "required",
+        "valid_to": "2026-09-02T07:46:17.293230000+00:00",
         "confidence": 0.9,
         "valid_from": "2025-08-18T09:00:55.000000000+00:00",
         "weight": 1.0,
@@ -19250,6 +19948,7 @@
       "src_id": "job-45dc1ffa121a5dd4",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-5607378cbb7778fa"
         ],
@@ -19314,6 +20013,7 @@
       "src_id": "job-45dc1ffa121a5dd4",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-4afd0e1d27a850d2"
         ],
@@ -19346,10 +20046,11 @@
       "src_id": "job-e1662d9b8cfd059f",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-07fe8e7ca49a5c18"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.9,
         "valid_from": "2025-08-08T11:00:46.000000000+00:00",
         "weight": 1.0,
@@ -19378,6 +20079,7 @@
       "src_id": "job-e1662d9b8cfd059f",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-07fe8e7ca49a5c18",
           "jd-1410fcf5d9cba2c4"
@@ -19411,6 +20113,7 @@
       "src_id": "job-45dc1ffa121a5dd4",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-4afd0e1d27a850d2"
         ],
@@ -19523,10 +20226,11 @@
       "src_id": "job-45dc1ffa121a5dd4",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-4afd0e1d27a850d2"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.7,
         "valid_from": "2023-02-24T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -19659,6 +20363,7 @@
       "src_id": "job-e1662d9b8cfd059f",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-0464f82a5bbfe535",
           "jd-1410fcf5d9cba2c4"
@@ -19756,6 +20461,7 @@
       "src_id": "job-e1662d9b8cfd059f",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-0464f82a5bbfe535",
           "jd-1410fcf5d9cba2c4"
@@ -19813,10 +20519,12 @@
       "src_id": "job-e1662d9b8cfd059f",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1410fcf5d9cba2c4"
         ],
         "kind": "required",
+        "valid_to": "2026-09-02T07:46:17.293230000+00:00",
         "confidence": 0.9,
         "valid_from": "2025-08-18T09:00:55.000000000+00:00",
         "weight": 1.0,
@@ -19885,6 +20593,7 @@
       "src_id": "job-e1662d9b8cfd059f",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1410fcf5d9cba2c4"
         ],
@@ -20458,13 +21167,23 @@
     },
     {
       "src_label": "Job",
+      "src_id": "job-40b74ded178bff2c",
+      "type": "HAS_DEFINITION",
+      "props": {},
+      "dst_label": "JobDefinitionVersion",
+      "dst_id": "defv-f59341177ca1e00d6f3625c8"
+    },
+    {
+      "src_label": "Job",
       "src_id": "job-e1662d9b8cfd059f",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1410fcf5d9cba2c4"
         ],
         "kind": "required",
+        "valid_to": "2026-09-02T07:46:17.293230000+00:00",
         "confidence": 0.8,
         "valid_from": "2025-08-18T09:00:55.000000000+00:00",
         "weight": 1.0,
@@ -20481,6 +21200,14 @@
       "dst_id": "skill-4ce266d144fe9254"
     },
     {
+      "src_label": "JobDefinitionVersion",
+      "src_id": "defv-4e506558147758e6fdd6deac",
+      "type": "HAS_CLAIM",
+      "props": {},
+      "dst_label": "DefinitionClaim",
+      "dst_id": "claim-95f6fe2d5503fb9df5b920a9"
+    },
+    {
       "src_label": "Skill",
       "src_id": "skill-c0849221b6de1ade",
       "type": "IN_CATEGORY",
@@ -20493,6 +21220,7 @@
       "src_id": "job-e1662d9b8cfd059f",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1410fcf5d9cba2c4"
         ],
@@ -20533,10 +21261,11 @@
       "src_id": "job-e1662d9b8cfd059f",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1410fcf5d9cba2c4"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.7,
         "valid_from": "2025-08-18T09:00:55.000000000+00:00",
         "weight": 1.0,
@@ -20557,10 +21286,11 @@
       "src_id": "job-e1662d9b8cfd059f",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1410fcf5d9cba2c4"
         ],
-        "kind": "required",
+        "kind": "bonus",
         "confidence": 0.8,
         "valid_from": "2025-08-18T09:00:55.000000000+00:00",
         "weight": 1.0,
@@ -20601,6 +21331,14 @@
       "dst_id": "framework"
     },
     {
+      "src_label": "Job",
+      "src_id": "job-23453144f0f0efad",
+      "type": "HAS_DEFINITION",
+      "props": {},
+      "dst_label": "JobDefinitionVersion",
+      "dst_id": "defv-9edba457ed78bb62bf4bedfc"
+    },
+    {
       "src_label": "Skill",
       "src_id": "skill-0119803da011816a",
       "type": "IN_CATEGORY",
@@ -20621,6 +21359,7 @@
       "src_id": "job-e1662d9b8cfd059f",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1410fcf5d9cba2c4"
         ],
@@ -20693,10 +21432,12 @@
       "src_id": "job-e1662d9b8cfd059f",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-1410fcf5d9cba2c4"
         ],
         "kind": "required",
+        "valid_to": "2026-09-02T07:46:17.293230000+00:00",
         "confidence": 0.9,
         "valid_from": "2025-08-18T09:00:55.000000000+00:00",
         "weight": 1.0,
@@ -20727,6 +21468,14 @@
       "props": {},
       "dst_label": "SkillCategory",
       "dst_id": "platform"
+    },
+    {
+      "src_label": "JobDefinitionVersion",
+      "src_id": "defv-f59341177ca1e00d6f3625c8",
+      "type": "HAS_CLAIM",
+      "props": {},
+      "dst_label": "DefinitionClaim",
+      "dst_id": "claim-99ae586b08790ec76a1881cf"
     },
     {
       "src_label": "EvolutionEvent",
@@ -20977,6 +21726,14 @@
       "dst_id": "platform"
     },
     {
+      "src_label": "JobDefinitionVersion",
+      "src_id": "defv-2fa89c53508f27da2829cd71",
+      "type": "HAS_CLAIM",
+      "props": {},
+      "dst_label": "DefinitionClaim",
+      "dst_id": "claim-c5ba8912e73b49e52a41a688"
+    },
+    {
       "src_label": "Skill",
       "src_id": "skill-b3ea754611cafbcc",
       "type": "IN_CATEGORY",
@@ -20993,12 +21750,28 @@
       "dst_id": "engineering"
     },
     {
+      "src_label": "Job",
+      "src_id": "job-e1662d9b8cfd059f",
+      "type": "HAS_DEFINITION",
+      "props": {},
+      "dst_label": "JobDefinitionVersion",
+      "dst_id": "defv-2fa89c53508f27da2829cd71"
+    },
+    {
       "src_label": "Skill",
       "src_id": "skill-694a9fd4dc259257",
       "type": "IN_CATEGORY",
       "props": {},
       "dst_label": "SkillCategory",
       "dst_id": "engineering"
+    },
+    {
+      "src_label": "Job",
+      "src_id": "job-32f619c0fc80a1fc",
+      "type": "HAS_DEFINITION",
+      "props": {},
+      "dst_label": "JobDefinitionVersion",
+      "dst_id": "defv-1853559ee95d5dec97ea5b94"
     },
     {
       "src_label": "Skill",
@@ -21009,12 +21782,28 @@
       "dst_id": "domain"
     },
     {
+      "src_label": "JobDefinitionVersion",
+      "src_id": "defv-545319154938dce3b1365df5",
+      "type": "HAS_CLAIM",
+      "props": {},
+      "dst_label": "DefinitionClaim",
+      "dst_id": "claim-f5828b5b0acb67d506578532"
+    },
+    {
       "src_label": "Skill",
       "src_id": "skill-64cb6318f0bab915",
       "type": "IN_CATEGORY",
       "props": {},
       "dst_label": "SkillCategory",
       "dst_id": "engineering"
+    },
+    {
+      "src_label": "Job",
+      "src_id": "job-bfb58df219dea6da",
+      "type": "HAS_DEFINITION",
+      "props": {},
+      "dst_label": "JobDefinitionVersion",
+      "dst_id": "defv-4e506558147758e6fdd6deac"
     },
     {
       "src_label": "Skill",
@@ -21033,6 +21822,14 @@
       "dst_id": "engineering"
     },
     {
+      "src_label": "Job",
+      "src_id": "job-33132afe3605942b",
+      "type": "HAS_DEFINITION",
+      "props": {},
+      "dst_label": "JobDefinitionVersion",
+      "dst_id": "defv-c38e1950ed5fbb0670783371"
+    },
+    {
       "src_label": "Skill",
       "src_id": "skill-1af758a6b982a620",
       "type": "IN_CATEGORY",
@@ -21041,12 +21838,36 @@
       "dst_id": "engineering"
     },
     {
+      "src_label": "JobDefinitionVersion",
+      "src_id": "defv-abd156a9ca9021d8218146b8",
+      "type": "HAS_CLAIM",
+      "props": {},
+      "dst_label": "DefinitionClaim",
+      "dst_id": "claim-424716e5350596f62a781008"
+    },
+    {
+      "src_label": "JobDefinitionVersion",
+      "src_id": "defv-64fe19496d8c69a7a7852da3",
+      "type": "HAS_CLAIM",
+      "props": {},
+      "dst_label": "DefinitionClaim",
+      "dst_id": "claim-e31f8fb47e8e3e90427af069"
+    },
+    {
       "src_label": "Skill",
       "src_id": "skill-18c1896cefbb5e7c",
       "type": "IN_CATEGORY",
       "props": {},
       "dst_label": "SkillCategory",
       "dst_id": "platform"
+    },
+    {
+      "src_label": "JobDefinitionVersion",
+      "src_id": "defv-c51ef29ccd1415c35b7ecd7d",
+      "type": "HAS_CLAIM",
+      "props": {},
+      "dst_label": "DefinitionClaim",
+      "dst_id": "claim-dd611e15b50bb31aba6f33f7"
     },
     {
       "src_label": "Skill",
@@ -21137,6 +21958,14 @@
       "dst_id": "framework"
     },
     {
+      "src_label": "Job",
+      "src_id": "job-45dc1ffa121a5dd4",
+      "type": "HAS_DEFINITION",
+      "props": {},
+      "dst_label": "JobDefinitionVersion",
+      "dst_id": "defv-c51ef29ccd1415c35b7ecd7d"
+    },
+    {
       "src_label": "Skill",
       "src_id": "skill-a49890a606bd5e66",
       "type": "IN_CATEGORY",
@@ -21149,10 +21978,12 @@
       "src_id": "job-e1662d9b8cfd059f",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-0464f82a5bbfe535"
         ],
         "kind": "required",
+        "valid_to": "2026-09-02T07:46:17.293230000+00:00",
         "confidence": 0.9,
         "valid_from": "2024-07-30T00:00:00.000000000+00:00",
         "weight": 1.0,
@@ -22493,6 +23324,7 @@
       "src_id": "job-a9ac115088d21ed1",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-679fdd59b54f5c62"
         ],
@@ -23549,6 +24381,7 @@
       "src_id": "job-e1662d9b8cfd059f",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-0464f82a5bbfe535",
           "jd-07fe8e7ca49a5c18",
@@ -23783,6 +24616,7 @@
       "src_id": "job-2e05993e43fccbe5",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-003025c54a283f19",
           "jd-8cee774c3708590e",
@@ -24051,6 +24885,7 @@
       "src_id": "job-e1662d9b8cfd059f",
       "type": "REQUIRES",
       "props": {
+        "curation_version": "public-curation-v1",
         "sources": [
           "jd-0464f82a5bbfe535"
         ],
