@@ -125,11 +125,12 @@ def neighbor_name(job_name: str) -> str | None:
 def recommend_jobs(jobs: list[dict], resume: dict, *, limit: int = 3) -> list[dict]:
     ranked = []
     resume_skills = resume.get("skills") or []
+    evidence_ids = {f.get("skill_id") for f in resume.get("evidence_fragments") or []}
     for job in jobs:
         report = compare_job(job.get("requires") or [], resume_skills)
         covered = report.get("covered") or []
-        specific = sum(1 for row in covered if row.get("required_proficiency") and row.get("skill_id"))
-        evidence = sum(1 for row in covered if row.get("skill_id") in {f.get("skill_id") for f in resume.get("evidence_fragments") or []})
+        specific_evidence = sum(1 for row in covered if row.get("category") == "domain" and row.get("skill_id") in evidence_ids)
+        transferable = sum(1 for row in covered if row.get("category") == "engineering")
         reasons = [
             {"code": "band", "text": f"当前档位为{report['band']}"},
             {"code": "required", "text": f"必备覆盖 {report['req_cover']:g}/{report['req_full']:g}"},
@@ -138,9 +139,9 @@ def recommend_jobs(jobs: list[dict], resume: dict, *, limit: int = 3) -> list[di
             (
                 BAND_ORDER.get(report["band"], 0),
                 report.get("req_cover", 0) / report.get("req_full", 1) if report.get("req_full") else 0,
-                evidence,
-                specific,
-                -len(report.get("shift_ids") or []),
+                specific_evidence,
+                transferable,
+                str(job.get("latest_observed_at") or job.get("updated_at") or ""),
                 len(job.get("sources") or []),
                 job,
                 report,
@@ -174,6 +175,7 @@ def direction_report(jobs: list[dict], resume: dict) -> dict:
                 "resume_evidence": sum(1 for row in core.get("covered") or [] if row.get("skill_id") in evidence_ids),
                 "transferable_engineering": sum(1 for row in core.get("covered") or [] if row.get("category") == "engineering"),
                 "job_specific_experience": sum(1 for row in core.get("covered") or [] if row.get("category") == "domain"),
+                "job_specific_evidence": sum(1 for row in core.get("covered") or [] if row.get("category") == "domain" and row.get("skill_id") in evidence_ids),
                 "experience_education_risk": bool(resume.get("experience") == "简历未标" or resume.get("education") == "简历未标"),
                 "shift_set": core.get("path") or [],
                 "minimum_shift_skill_count": len(core.get("shift_ids") or []),
@@ -181,11 +183,11 @@ def direction_report(jobs: list[dict], resume: dict) -> dict:
         )
     if len(results) < 2:
         return {"direction": "insufficient", "jobs": results}
-    keys = ("band", "required_coverage", "resume_evidence", "transferable_engineering", "job_specific_experience", "experience_education_risk", "minimum_shift_skill_count")
+    keys = ("band", "required_coverage", "job_specific_evidence", "transferable_engineering", "minimum_shift_skill_count")
     direction = "无法区分方向" if all(results[0][key] == results[1][key] for key in keys) else ""
     if not direction:
-        left = (BAND_ORDER.get(results[0]["band"], 0), results[0]["required_coverage"]["covered"], results[0]["resume_evidence"], -results[0]["minimum_shift_skill_count"])
-        right = (BAND_ORDER.get(results[1]["band"], 0), results[1]["required_coverage"]["covered"], results[1]["resume_evidence"], -results[1]["minimum_shift_skill_count"])
+        left = (BAND_ORDER.get(results[0]["band"], 0), results[0]["required_coverage"]["covered"], results[0]["job_specific_evidence"], results[0]["transferable_engineering"], -results[0]["minimum_shift_skill_count"])
+        right = (BAND_ORDER.get(results[1]["band"], 0), results[1]["required_coverage"]["covered"], results[1]["job_specific_evidence"], results[1]["transferable_engineering"], -results[1]["minimum_shift_skill_count"])
         direction = results[0]["name"] if left > right else results[1]["name"]
     return {"direction": direction, "jobs": results}
 

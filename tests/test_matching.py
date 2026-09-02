@@ -162,6 +162,21 @@ def test_recommendation_is_structured_and_direction_can_be_indistinguishable():
     assert report["jobs"][0]["minimum_shift_skill_count"] == 0
 
 
+def test_recommendation_uses_job_specific_evidence_before_freshness():
+    resume = {
+        "skills": [
+            {"skill_id": "domain", "name": "领域能力"},
+            {"skill_id": "eng", "name": "工程能力"},
+        ],
+        "evidence_fragments": [{"skill_id": "domain", "text": "交付领域项目"}],
+    }
+    jobs = [
+        {"id": "generic", "name": "通用岗", "sources": ["甲", "乙", "丙"], "latest_observed_at": "2099-01-01", "requires": [{"skill_id": "eng", "name": "工程能力", "kind": "required", "category": "engineering"}]},
+        {"id": "specific", "name": "领域岗", "sources": ["甲"], "latest_observed_at": "2020-01-01", "requires": [{"skill_id": "domain", "name": "领域能力", "kind": "required", "category": "domain"}]},
+    ]
+    assert recommend_jobs(jobs, resume, limit=2)[0]["job_id"] == "specific"
+
+
 def test_resume_analysis_cites_only_resume_evidence_and_limits_actions():
     resume = {
         "skills": [{"skill_id": "python", "name": "Python"}],

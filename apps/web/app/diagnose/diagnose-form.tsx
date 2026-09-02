@@ -22,7 +22,7 @@ type Report = {
   preview_text?: string;
   band: string;
   direction?: string;
-  jobs?: { job_id: string; name: string; band: string; required_coverage?: { covered: number; total: number }; shift_set?: Named[]; minimum_shift_skill_count?: number; transferable_engineering?: number; job_specific_experience?: number; experience_education_risk?: boolean }[];
+  jobs?: { job_id: string; name: string; band: string; required_coverage?: { covered: number; total: number }; shift_set?: Named[]; minimum_shift_skill_count?: number; transferable_engineering?: number; job_specific_experience?: number; job_specific_evidence?: number; experience_education_risk?: boolean }[];
   groups: {
     judge: {
       summary: string;
@@ -403,7 +403,7 @@ export function DiagnoseForm() {
           </header>
           {report.direction ? <section className="direction-report" aria-live="polite">
             <p className="verdict">{report.direction === "无法区分方向" ? "两个岗位当前没有可区分的优势，请比较各自换档条件。" : `当前更接近：${report.direction}`}</p>
-            <div className="direction-cards">{(report.jobs || []).map((item) => <article key={item.job_id}><h2>{item.name}</h2><p>当前档位：{item.band}</p><p>必备覆盖：{item.required_coverage?.covered ?? 0}/{item.required_coverage?.total ?? 0}</p><p>可迁移工程能力：{item.transferable_engineering ?? 0} 项</p><p>岗位独有经历：{item.job_specific_experience ?? 0} 项</p><p>最小换档：{item.minimum_shift_skill_count ?? item.shift_set?.length ?? 0} 项</p><p>换档条件：{names(item.shift_set)}</p></article>)}</div>
+            <div className="direction-cards">{(report.jobs || []).map((item) => <article key={item.job_id}><h2>{item.name}</h2><p>当前档位：{item.band}</p><p>必备覆盖：{item.required_coverage?.covered ?? 0}/{item.required_coverage?.total ?? 0}</p><p>岗位专属证据：{item.job_specific_evidence ?? 0} 项</p><p>可迁移工程能力：{item.transferable_engineering ?? 0} 项</p><p>岗位独有经历：{item.job_specific_experience ?? 0} 项</p><p>最小换档：{item.minimum_shift_skill_count ?? item.shift_set?.length ?? 0} 项</p><p>换档条件：{names(item.shift_set)}</p></article>)}</div>
           </section> : <div className="diagnose-split">
             <aside>
               <h2>简历</h2>
