@@ -1,25 +1,19 @@
 import type { Metadata } from "next";
-import { JetBrains_Mono, Noto_Sans_SC, Space_Grotesk } from "next/font/google";
+import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import Link from "next/link";
 import { AdminLink, Nav } from "./nav";
 import "./globals.css";
 
-const space = Space_Grotesk({
+const plexSans = IBM_Plex_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
-  variable: "--font-space",
+  variable: "--font-plex-sans",
 });
 
-const noto = Noto_Sans_SC({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-noto",
-});
-
-const jetbrains = JetBrains_Mono({
+const plexMono = IBM_Plex_Mono({
   subsets: ["latin"],
   weight: ["400", "500"],
-  variable: "--font-jetbrains",
+  variable: "--font-plex-mono",
 });
 
 export const metadata: Metadata = {
@@ -29,7 +23,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="zh-Hans" className={`${space.variable} ${noto.variable} ${jetbrains.variable}`}>
+    <html lang="zh-Hans" className={`${plexSans.variable} ${plexMono.variable}`}>
       <body>
         <a className="skip-link" href="#main">
           跳到主内容

@@ -1,37 +1,33 @@
-/* JobEvolution visual system: signal navigation */
+/* JobE frontend tokens — IBM Plex, hairline, no rounding */
 :root {
-  --color-paper: #f3f6f8;
-  --color-paper-2: #e9eff3;
-  --color-panel: #ffffff;
-  --color-rule: #d3dfe6;
-  --color-rule-2: #aec1cd;
-  --color-ink: #10243a;
-  --color-ink-2: #2c465f;
-  --color-muted: #657a8c;
-  --color-faint: #93a5b1;
-  --color-accent: #e36f4d;
-  --color-accent-strong: #bd5338;
-  --color-accent-ink: #fffaf5;
-  --color-focus: #0c6b9e;
-  --color-ok: #2a7f72;
-  --color-danger: #b64846;
-  --color-rise: #b64846;
-  --color-fall: #2a7f72;
-  --color-overlay: rgb(16 36 58 / 0.48);
-  --color-glow: rgb(227 111 77 / 0.18);
+  --color-paper:      oklch(0.968 0.007 248);
+  --color-paper-2:    oklch(0.948 0.01 248);
+  --color-rule:       oklch(0.88 0.012 248);
+  --color-rule-2:     oklch(0.80 0.014 248);
+  --color-ink:        oklch(0.236 0.028 250);
+  --color-muted:      oklch(0.46 0.022 250);
+  --color-faint:      oklch(0.62 0.016 250);
+  --color-accent:     oklch(0.52 0.14 38);
+  --color-accent-strong: oklch(0.45 0.148 38);
+  --color-accent-ink: oklch(0.985 0.008 90);
+  --color-focus:      oklch(0.52 0.14 38);
+  --color-ok:         oklch(0.46 0.07 175);
+  --color-danger:     oklch(0.5 0.155 28);
+  --color-rise:       oklch(0.5 0.155 28);
+  --color-fall:       oklch(0.46 0.07 175);
+  --color-overlay:    oklch(0.236 0.028 250 / 0.4);
 
-  --font-body: var(--font-noto), "PingFang SC", "Hiragino Sans GB", sans-serif;
-  --font-display: var(--font-space), var(--font-body);
-  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
-  --font-mono-stack: var(--font-mono);
+  --font-display: "IBM Plex Sans", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", sans-serif;
+  --font-mono:    "IBM Plex Mono", ui-monospace, monospace;
+  --font-mono-stack: var(--font-plex-mono), var(--font-mono);
 
   --space-2xs: 0.25rem;
-  --space-xs: 0.5rem;
-  --space-sm: 0.75rem;
-  --space-md: 1rem;
-  --space-lg: 1.5rem;
-  --space-xl: 2.5rem;
-  --space-2xl: 5rem;
+  --space-xs:  0.5rem;
+  --space-sm:  0.75rem;
+  --space-md:  1rem;
+  --space-lg:  1.5rem;
+  --space-xl:  2.5rem;
+  --space-2xl: 4rem;
 
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
@@ -40,17 +36,11 @@
   --text-xl: 1.75rem;
   --text-display: 2rem;
 
-  --radius-sm: 0.625rem;
-  --radius-md: 1.125rem;
-  --radius-lg: 1.75rem;
-  --shadow-panel: 0 18px 45px rgb(16 36 58 / 0.08);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --dur-micro: 120ms;
   --dur-short: 220ms;
-  --dur-long: 420ms;
 
   --z-sticky: 200;
   --z-modal: 400;
 
-  --page-gutter: clamp(1rem, 3vw, 3rem);
+  --page-gutter: 1.5rem;
 }

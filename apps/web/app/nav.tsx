@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 
 const LINKS = [
   { href: "/", label: "首页" },
-  { href: "/graph", label: "岗位图谱" },
+  { href: "/graph", label: "岗位" },
   { href: "/discover", label: "市场变化" },
 ] as const;
 
@@ -26,7 +26,7 @@ export function AdminLink() {
   const path = usePathname();
   return (
     <Link className="admin" href="/admin" aria-current={path === "/admin" ? "page" : undefined}>
-      管理入口
+      管理
     </Link>
   );
 }
