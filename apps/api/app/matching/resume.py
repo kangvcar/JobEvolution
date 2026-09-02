@@ -108,10 +108,12 @@ def _evidence_fragments(text: str, skills: list[dict], index: list[dict]) -> lis
 
 
 INFO_PROMPT = (
-    "Extract resume JSON. Fields: experience, education. "
+    "Extract resume JSON. Fields: experience, education, profile, education_items, experiences, projects. "
     "experience is a short years string like 3年, or 简历未标. "
     "education is a short school/degree string, or 简历未标. "
-    "Do not invent. No other enum values."
+    "profile may contain role and experience. education_items is a list of {text}. "
+    "experiences is a list of {company,title,start,end,summary}; projects is a list of {name,summary}. "
+    "Keep only facts visible in the resume, omit unknown fields, and do not invent."
 )
 SKILL_PROMPT = (
     "Extract resume skills JSON: {skills:[{name, proficiency}]}. "
@@ -164,17 +166,27 @@ def parse_resume(
         if not _marks_level_for_skill(text, row.get("name") or ""):
             row["proficiency"] = None
     fallback = _resume_info_from_text(text)
+    profile_raw = info.get("profile") if isinstance(info.get("profile"), dict) else {}
     experience = str(info.get("experience") or "").strip()
     education = str(info.get("education") or "").strip()
     experience = ("" if experience == "简历未标" else experience) or fallback["experience"] or "简历未标"
     education = ("" if education == "简历未标" else education) or fallback["education"] or "简历未标"
+    role = str(profile_raw.get("role") or info.get("role") or "").strip()
+    profile_experience = str(profile_raw.get("experience") or "").strip()
+    if profile_experience and profile_experience != "简历未标":
+        experience = profile_experience
+    education_items = _structured_items(info.get("education_items"), ("text",))
+    if not education_items and education != "简历未标":
+        education_items = [{"text": education}]
+    experiences = _structured_items(info.get("experiences"), ("company", "title", "start", "end", "summary"))
+    projects = _structured_items(info.get("projects"), ("name", "summary"))
     fragments = _evidence_fragments(text, skills, index)
     return {
-        "profile": {"role": "", "experience": experience},
+        "profile": {"role": role, "experience": experience},
         "education": education,
-        "education_items": [{"text": education}] if education != "简历未标" else [],
-        "experiences": [],
-        "projects": [],
+        "education_items": education_items,
+        "experiences": experiences,
+        "projects": projects,
         "experience": experience,
         "education_text": education,
         "skills": skills,
@@ -184,7 +196,21 @@ def parse_resume(
     }
 
 
+def _structured_items(value, fields: tuple[str, ...]) -> list[dict]:
+    if not isinstance(value, list):
+        return []
+    items = []
+    for raw in value:
+        if not isinstance(raw, dict):
+            continue
+        item = {field: str(raw[field]).strip() for field in fields if raw.get(field) not in (None, "")}
+        if item:
+            items.append(item)
+    return items
+
+
 def date_conflicts(text: str) -> list[dict]:
+    # ponytail: bounded date regex and pairwise overlap scan; use a structured timeline parser if formats or volume expand.
     ranges = []
     for match in re.finditer(r"(20\d{2})[./-](\d{1,2}).{0,3}(20\d{2})[./-](\d{1,2})", text or ""):
         start = int(match.group(1)) * 12 + int(match.group(2))

@@ -176,31 +176,41 @@ def direction_report(jobs: list[dict], resume: dict) -> dict:
                 "job_specific_experience": sum(1 for row in core.get("covered") or [] if row.get("category") == "domain"),
                 "experience_education_risk": bool(resume.get("experience") == "简历未标" or resume.get("education") == "简历未标"),
                 "shift_set": core.get("path") or [],
+                "minimum_shift_skill_count": len(core.get("shift_ids") or []),
             }
         )
     if len(results) < 2:
         return {"direction": "insufficient", "jobs": results}
-    keys = ("band", "required_coverage", "resume_evidence", "transferable_engineering", "job_specific_experience", "experience_education_risk")
+    keys = ("band", "required_coverage", "resume_evidence", "transferable_engineering", "job_specific_experience", "experience_education_risk", "minimum_shift_skill_count")
     direction = "无法区分方向" if all(results[0][key] == results[1][key] for key in keys) else ""
     if not direction:
-        left = (BAND_ORDER.get(results[0]["band"], 0), results[0]["required_coverage"]["covered"], results[0]["resume_evidence"])
-        right = (BAND_ORDER.get(results[1]["band"], 0), results[1]["required_coverage"]["covered"], results[1]["resume_evidence"])
+        left = (BAND_ORDER.get(results[0]["band"], 0), results[0]["required_coverage"]["covered"], results[0]["resume_evidence"], -results[0]["minimum_shift_skill_count"])
+        right = (BAND_ORDER.get(results[1]["band"], 0), results[1]["required_coverage"]["covered"], results[1]["resume_evidence"], -results[1]["minimum_shift_skill_count"])
         direction = results[0]["name"] if left > right else results[1]["name"]
     return {"direction": direction, "jobs": results}
 
 
 def evidence_map(requires: list[dict], resume: dict) -> list[dict]:
-    fragments = {row.get("skill_id"): row for row in resume.get("evidence_fragments") or [] if row.get("skill_id")}
-    return [
-        {
-            "requirement_id": row.get("skill_id"),
-            "requirement_name": row.get("name") or row.get("skill_id"),
-            "evidence_fragment_id": (fragments.get(row.get("skill_id")) or {}).get("id"),
-            "evidence_level": (fragments.get(row.get("skill_id")) or {}).get("evidence_level") or "未提及",
-            "quote": (fragments.get(row.get("skill_id")) or {}).get("text") or "",
-        }
-        for row in requires
-    ]
+    fragments: dict[str, list[dict]] = {}
+    for fragment in resume.get("evidence_fragments") or []:
+        if fragment.get("skill_id"):
+            fragments.setdefault(str(fragment["skill_id"]), []).append(fragment)
+    relations = []
+    for row in requires:
+        matches = fragments.get(str(row.get("skill_id")), [])
+        if not matches:
+            matches = [{}]
+        relations.extend(
+            {
+                "requirement_id": row.get("skill_id"),
+                "requirement_name": row.get("name") or row.get("skill_id"),
+                "evidence_fragment_id": fragment.get("id"),
+                "evidence_level": fragment.get("evidence_level") or "未提及",
+                "quote": fragment.get("text") or "",
+            }
+            for fragment in matches
+        )
+    return relations
 
 
 def simulate_job(requires: list[dict], resume: dict, assumed_skill_ids: list[str]) -> dict:
@@ -225,16 +235,18 @@ def migration_map(jobs: list[dict], resume: dict) -> list[dict]:
     for job in jobs[:3]:
         requires = job.get("requires") or []
         report = compare_job(requires, resume.get("skills") or [])
-        target_ids = {row.get("skill_id") for row in requires}
-        resume_ids = {row.get("skill_id") for row in resume.get("skills") or []}
+        target_names = {row.get("skill_id"): row.get("name") or row.get("skill_id") for row in requires}
+        resume_names = {row.get("skill_id"): row.get("name") or row.get("skill_id") for row in resume.get("skills") or []}
+        target_ids = set(target_names)
+        resume_ids = set(resume_names)
         result.append(
             {
                 "job_id": job.get("id"),
                 "name": job.get("name") or job.get("id"),
                 "band": report["band"],
                 "minimum_shift_skill_count": len(report.get("shift_ids") or []),
-                "shared_capabilities": sorted(target_ids & resume_ids),
-                "unique_requirements": sorted(target_ids - resume_ids),
+                "shared_capabilities": sorted(target_names[sid] for sid in target_ids & resume_ids),
+                "unique_requirements": sorted(target_names[sid] for sid in target_ids - resume_ids),
             }
         )
     return result
@@ -298,7 +310,7 @@ def resume_analysis(*, job: dict, requires: list[dict], resume: dict, core: dict
         "strengths": strengths,
         "risks": risks,
         "content_states": states,
-        "evidence_map": states,
+        "evidence_map": evidence_map(requires, resume),
         "keywords": {
             "已有证据": [item["name"] for item in states if item["state"] == "证据充分"],
             "只有提及": [item["name"] for item in states if item["state"] == "已提及但证据较弱"],

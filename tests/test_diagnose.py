@@ -121,6 +121,28 @@ def test_parse_resume_reads_explicit_info_without_model():
     assert out["education"] == "Bachelor"
 
 
+def test_parse_resume_preserves_structured_profile_experience_and_projects():
+    index = [{"id": "s1", "name": "Python", "synonyms": [], "embedding": embed(["Python"])[0]}]
+
+    def structured(messages):
+        if "experience" in messages[0]["content"]:
+            return {
+                "profile": {"role": "后端工程师", "experience": "4年"},
+                "experience": "4年",
+                "education": "硕士",
+                "education_items": [{"text": "某大学 · 硕士"}],
+                "experiences": [{"company": "甲科技", "title": "后端工程师", "start": "2021-01", "end": "2024-01", "summary": "负责 Python 服务"}],
+                "projects": [{"name": "推荐系统", "summary": "构建离线评测"}],
+            }
+        return {"skills": [{"name": "Python"}]}
+
+    out = parse_resume("后端工程师，使用 Python", index, complete_json=structured)
+    assert out["profile"] == {"role": "后端工程师", "experience": "4年"}
+    assert out["education_items"] == [{"text": "某大学 · 硕士"}]
+    assert out["experiences"][0]["company"] == "甲科技"
+    assert out["projects"][0]["name"] == "推荐系统"
+
+
 def test_parse_resume_strict_mode_surfaces_model_failure():
     with pytest.raises(RuntimeError, match="offline"):
         parse_resume(

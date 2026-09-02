@@ -6,7 +6,7 @@ from datetime import datetime
 from neo4j import GraphDatabase
 
 from app.pipeline.constants import SKILL_CATEGORIES
-from app.pipeline.status import source_stats
+from app.pipeline.status import job_id_for, source_stats
 
 DOMAINS = [
     {"id": "ai", "name": "人工智能"},
@@ -167,7 +167,8 @@ def _job_row(job_id: str, *, public_only: bool) -> dict | None:
     WHERE true {extra}
     RETURN j.id AS id, j.name AS name, j.status AS status, d.id AS domain,
            j.code AS code, j.esco_id AS esco_id, j.onet_id AS onet_id,
-           coalesce(j.watching, []) AS watching, coalesce(j.judged, '') AS judged
+           coalesce(j.watching, []) AS watching, coalesce(j.judged, '') AS judged,
+           coalesce(j.diagnostic_override_reason, '') AS diagnostic_override_reason
     """
     if _driver is None:
         return None
@@ -815,13 +816,14 @@ def diagnostic_release(job_id: str, *, override_reason: str = "") -> dict:
 
     history = list_requires_history(job_id)
     previous = [row for row in history if row.get("valid_to")]
+    job = get_any_job(job_id) or {}
     return validate_diagnostic_release(
         job_id=job_id,
         definition=current_definition(job_id),
         requires=list_requires(job_id),
         evidence=list_job_evidence(job_id, include_retracted=True),
         previous_requires=previous,
-        override_reason=override_reason,
+        override_reason=override_reason or str(job.get("diagnostic_override_reason") or ""),
     )
 
 
@@ -1026,6 +1028,7 @@ def discover_dossier(job_id: str) -> dict | None:
     if job is None:
         return None
     evidence = list_job_evidence(job_id)
+    delta = period_delta(job_id)
     n_window, n_total, _ = source_stats(evidence)
     companies = []
     seen = set()
@@ -1034,11 +1037,31 @@ def discover_dossier(job_id: str) -> dict | None:
         if name and name not in seen:
             seen.add(name)
             companies.append(name)
+    neighbor_names = {"大模型应用工程师": "Agent 工程师", "Agent 工程师": "大模型应用工程师"}
+    neighbor = None
+    neighbor_name = neighbor_names.get(job.get("name") or "")
+    if neighbor_name:
+        other = get_public_job(job_id_for(neighbor_name))
+        if other:
+            current_requires = list_requires(job_id)
+            current_names = {row.get("skill_id"): row.get("name") or row.get("skill_id") for row in current_requires}
+            current_ids = set(current_names)
+            other_requires = list_requires(other["id"])
+            other_names = {row.get("skill_id"): row.get("name") or row.get("skill_id") for row in other_requires}
+            other_ids = set(other_names)
+            neighbor = {
+                "job_id": other["id"],
+                "name": other["name"],
+                "shared_requirements": sorted(current_names[sid] for sid in current_ids & other_ids),
+                "unique_requirements": sorted(other_names[sid] for sid in other_ids - current_ids),
+            }
     return {
         **job,
         "n_sources": n_total,
         "n_window": n_window,
         "cluster": {"n": len(evidence), "n_sources": n_total},
+        "period_delta": delta,
+        "neighbor": neighbor,
         "sources": companies,
         "evidence": evidence,
         "events": list_job_events(job_id),

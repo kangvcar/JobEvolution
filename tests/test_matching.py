@@ -159,6 +159,7 @@ def test_recommendation_is_structured_and_direction_can_be_indistinguishable():
     report = direction_report(jobs, resume)
     assert report["direction"] == "无法区分方向"
     assert len(report["jobs"][0]["shift_set"]) <= 5
+    assert report["jobs"][0]["minimum_shift_skill_count"] == 0
 
 
 def test_resume_analysis_cites_only_resume_evidence_and_limits_actions():
@@ -198,8 +199,10 @@ def test_simulation_uses_only_formal_gap_and_keeps_watching_out_of_score():
 
 
 def test_evidence_map_and_migration_map_are_bounded_and_traceable():
-    resume = {"skills": [{"skill_id": "python", "name": "Python"}], "evidence_fragments": [{"id": "ev-1", "skill_id": "python", "text": "用 Python"}]}
+    resume = {"skills": [{"skill_id": "python", "name": "Python"}], "evidence_fragments": [{"id": "ev-1", "skill_id": "python", "text": "用 Python"}, {"id": "ev-2", "skill_id": "python", "text": "维护 Python"}]}
     requires = [{"skill_id": "python", "name": "Python", "kind": "required"}, {"skill_id": "rag", "name": "RAG", "kind": "required"}]
-    assert evidence_map(requires, resume)[0]["evidence_fragment_id"] == "ev-1"
+    mapped = evidence_map(requires, resume)
+    assert [row["evidence_fragment_id"] for row in mapped[:2]] == ["ev-1", "ev-2"]
+    assert mapped[-1]["evidence_level"] == "未提及"
     jobs = [{"id": str(i), "name": f"岗位{i}", "requires": requires} for i in range(5)]
     assert len(migration_map(jobs, resume)) == 3

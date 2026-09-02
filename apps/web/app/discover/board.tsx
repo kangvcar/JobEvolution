@@ -36,6 +36,8 @@ type Dossier = {
   aliases_in: { id: string; name: string }[];
   alias_of: { id: string; name: string } | null;
   cluster?: { n: number; n_sources: number };
+  period_delta?: { added?: { name: string }[]; expired?: { name: string }[] };
+  neighbor?: { job_id: string; name: string; shared_requirements: string[]; unique_requirements: string[] } | null;
 };
 type Feed = {
   emerging: number;
@@ -197,8 +199,10 @@ export function DiscoverBoard() {
               <p className="hint">{dossier.sources.length ? dossier.sources.slice(0, 5).join("、") : "暂无公司证据。"}{dossier.n_sources > 5 ? ` 等 ${dossier.n_sources} 家` : ""}</p>
               <h2 className="dossier-question">现在值得关注吗？</h2>
               <p className="hint">{dossier.status === "formed" ? "可以开始比较，岗位定义和证据已通过发布校验。" : dossier.status === "emerging" ? "继续观察近期招聘变化，再决定是否比较。" : "证据仍在审核，先阅读卷宗。"}</p>
+              <h2 className="dossier-question">本周期新增了什么要求？</h2>
+              <p className="hint">新增：{dossier.period_delta?.added?.map((row) => row.name).join("、") || "无"}。失效：{dossier.period_delta?.expired?.map((row) => row.name).join("、") || "无"}。</p>
               <h2 className="dossier-question">它和已有岗位有什么区别？</h2>
-              <p className="hint">{dossier.alias_of ? `它是${dossier.alias_of.name}的别名，不重复计入结果。` : "暂无已确认的相近岗位差异摘要。"}</p>
+              <p className="hint">{dossier.alias_of ? `它是${dossier.alias_of.name}的别名，不重复计入结果。` : dossier.neighbor ? `与${dossier.neighbor.name}共享${dossier.neighbor.shared_requirements.slice(0, 3).join("、") || "暂无"}；对方独有要求包括${dossier.neighbor.unique_requirements.slice(0, 3).join("、") || "暂无"}。` : "暂无已确认的相近岗位差异摘要。"}</p>
               {dossier.status === "candidate" ? (
                 <p className="hint">未入谱。不能对照简历，不能进工作台。</p>
               ) : (

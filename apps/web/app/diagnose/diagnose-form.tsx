@@ -22,7 +22,7 @@ type Report = {
   preview_text?: string;
   band: string;
   direction?: string;
-  jobs?: { job_id: string; name: string; band: string; required_coverage?: { covered: number; total: number }; shift_set?: Named[]; transferable_engineering?: number; job_specific_experience?: number; experience_education_risk?: boolean }[];
+  jobs?: { job_id: string; name: string; band: string; required_coverage?: { covered: number; total: number }; shift_set?: Named[]; minimum_shift_skill_count?: number; transferable_engineering?: number; job_specific_experience?: number; experience_education_risk?: boolean }[];
   groups: {
     judge: {
       summary: string;
@@ -56,7 +56,7 @@ type Report = {
         core_judgments?: { fit_band?: string; advantage?: string; blocker?: string };
         strengths?: { text: string; quote?: string }[];
         risks?: { text: string; check_scope?: string }[];
-        evidence_map?: { skill_id?: string; name?: string; state?: string; evidence_fragment_id?: string; quote?: string; check_scope?: string }[];
+        evidence_map?: { requirement_id?: string; requirement_name?: string; evidence_fragment_id?: string; evidence_level?: string; quote?: string }[];
         rewrites?: { original?: string; problem?: string; suggestion?: string; facts_to_add?: string[] }[];
         actions?: { rewrite?: unknown[]; capability?: { name?: string; why?: string }[] };
         narrative?: string;
@@ -252,7 +252,7 @@ export function DiagnoseForm() {
   }
 
   function copyActions() {
-    const analysis = report?.groups.explain.analysis;
+    const analysis = report?.groups?.explain?.analysis;
     if (!analysis) return;
     const lines = ["表达轨：", ...(analysis.rewrites || []).slice(0, 5).map((item) => `- ${item.suggestion || item.original || "补充经历证据"}`), "能力轨：", ...(analysis.actions?.capability || []).map((item) => `- ${item.name || "能力缺口"}：${item.why || "补齐下一档要求"}`)];
     void navigator.clipboard.writeText(lines.join("\n"));
@@ -403,7 +403,7 @@ export function DiagnoseForm() {
           </header>
           {report.direction ? <section className="direction-report" aria-live="polite">
             <p className="verdict">{report.direction === "无法区分方向" ? "两个岗位当前没有可区分的优势，请比较各自换档条件。" : `当前更接近：${report.direction}`}</p>
-            <div className="direction-cards">{(report.jobs || []).map((item) => <article key={item.job_id}><h2>{item.name}</h2><p>当前档位：{item.band}</p><p>必备覆盖：{item.required_coverage?.covered ?? 0}/{item.required_coverage?.total ?? 0}</p><p>可迁移工程能力：{item.transferable_engineering ?? 0} 项</p><p>岗位独有经历：{item.job_specific_experience ?? 0} 项</p><p>换档条件：{names(item.shift_set)}</p></article>)}</div>
+            <div className="direction-cards">{(report.jobs || []).map((item) => <article key={item.job_id}><h2>{item.name}</h2><p>当前档位：{item.band}</p><p>必备覆盖：{item.required_coverage?.covered ?? 0}/{item.required_coverage?.total ?? 0}</p><p>可迁移工程能力：{item.transferable_engineering ?? 0} 项</p><p>岗位独有经历：{item.job_specific_experience ?? 0} 项</p><p>最小换档：{item.minimum_shift_skill_count ?? item.shift_set?.length ?? 0} 项</p><p>换档条件：{names(item.shift_set)}</p></article>)}</div>
           </section> : <div className="diagnose-split">
             <aside>
               <h2>简历</h2>
@@ -441,7 +441,7 @@ export function DiagnoseForm() {
                 <p><b>阻碍：</b>{report.groups.explain.analysis.core_judgments?.blocker}</p>
                 {(report.groups.explain.analysis.strengths || []).map((item) => <p key={item.text}>有依据：{item.quote || item.text}</p>)}
                 {(report.groups.explain.analysis.risks || []).map((item) => <p key={item.text}>待核对：{item.text}（{item.check_scope}）</p>)}
-                <details><summary>查看简历证据地图</summary><div className="evidence-map-list">{(report.groups.explain.analysis.evidence_map || []).map((item) => <div key={item.skill_id}><b>{item.name}</b><span>{item.state}</span><small>{item.quote || item.check_scope}</small></div>)}</div></details>
+                <details><summary>查看简历证据地图</summary><div className="evidence-map-list">{(report.groups.explain.analysis.evidence_map || []).map((item, index) => <div key={`${item.requirement_id}-${item.evidence_fragment_id || index}`}><b>{item.requirement_name || item.requirement_id}</b><span>{item.evidence_level || "未提及"}</span><small>{item.quote || "简历中未找到对应证据"}</small></div>)}</div></details>
                 {(report.groups.explain.analysis.rewrites || []).slice(0, 5).map((item, index) => <details key={`${item.original}-${index}`}><summary>表达建议 {index + 1}</summary><p>原文：{item.original}</p><p>问题：{item.problem}</p><p>建议：{item.suggestion}</p><p className="hint">仍需补充：{(item.facts_to_add || []).join("、") || "无需补充"}</p></details>)}
                 {(report.groups.explain.analysis.actions?.capability || []).map((item) => <p key={item.name}>能力轨：{item.name}。{item.why}</p>)}
                 {report.groups.explain.analysis.narrative && <details><summary>面试自我介绍草稿</summary><p>{report.groups.explain.analysis.narrative}</p></details>}
