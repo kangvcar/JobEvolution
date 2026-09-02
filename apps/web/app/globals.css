@@ -336,6 +336,13 @@ button:active,
 .recommendation small { color: var(--color-muted); }
 .analysis-card { background: var(--color-paper-2); }
 
+@media print {
+  .top, .skip-link, .diagnose-bar button, .diagnose-bar .hint, .evidence-drawer, .evidence-backdrop, .diagnose-split > aside, .diagnose-form { display: none !important; }
+  .shell, .page, .diagnose-done, .diagnose-split { display: block; height: auto; max-width: none; padding: 0; }
+  .diagnose-done section { break-inside: avoid; }
+  .analysis-card details { display: block; }
+}
+
 .diagnose-form label,
 .drop {
   display: grid;

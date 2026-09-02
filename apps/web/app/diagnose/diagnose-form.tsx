@@ -54,6 +54,7 @@ type Report = {
         core_judgments?: { fit_band?: string; advantage?: string; blocker?: string };
         strengths?: { text: string; quote?: string }[];
         risks?: { text: string; check_scope?: string }[];
+        rewrites?: { original?: string; problem?: string; suggestion?: string; facts_to_add?: string[] }[];
         actions?: { rewrite?: unknown[]; capability?: { name?: string; why?: string }[] };
         narrative?: string;
       };
@@ -228,6 +229,13 @@ export function DiagnoseForm() {
     return (rows || []).map((row) => row.name).filter(Boolean).join("、") || "无";
   }
 
+  function copyActions() {
+    const analysis = report?.groups.explain.analysis;
+    if (!analysis) return;
+    const lines = ["表达轨：", ...(analysis.rewrites || []).slice(0, 5).map((item) => `- ${item.suggestion || item.original || "补充经历证据"}`), "能力轨：", ...(analysis.actions?.capability || []).map((item) => `- ${item.name || "能力缺口"}：${item.why || "补齐下一档要求"}`)];
+    void navigator.clipboard.writeText(lines.join("\n"));
+  }
+
   function MiniGraph() {
     const slice = report?.groups.locate.slice;
     const delta = slice?.period_delta || {};
@@ -343,6 +351,8 @@ export function DiagnoseForm() {
             >
               复制对照链接
             </button>
+            <button type="button" onClick={() => window.print()}>打印结论</button>
+            <button type="button" onClick={copyActions}>复制双轨行动</button>
             {copied ? (
               <span className="hint" role="status">
                 已复制
@@ -396,6 +406,8 @@ export function DiagnoseForm() {
                 <p><b>阻碍：</b>{report.groups.explain.analysis.core_judgments?.blocker}</p>
                 {(report.groups.explain.analysis.strengths || []).map((item) => <p key={item.text}>有依据：{item.quote || item.text}</p>)}
                 {(report.groups.explain.analysis.risks || []).map((item) => <p key={item.text}>待核对：{item.text}（{item.check_scope}）</p>)}
+                {(report.groups.explain.analysis.rewrites || []).slice(0, 5).map((item, index) => <details key={`${item.original}-${index}`}><summary>表达建议 {index + 1}</summary><p>原文：{item.original}</p><p>问题：{item.problem}</p><p>建议：{item.suggestion}</p><p className="hint">仍需补充：{(item.facts_to_add || []).join("、") || "无需补充"}</p></details>)}
+                {(report.groups.explain.analysis.actions?.capability || []).map((item) => <p key={item.name}>能力轨：{item.name}。{item.why}</p>)}
                 {report.groups.explain.analysis.narrative && <details><summary>面试自我介绍草稿</summary><p>{report.groups.explain.analysis.narrative}</p></details>}
               </section>}
 
