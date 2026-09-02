@@ -16,7 +16,12 @@ def compare_job(requires: list[dict], resume_skills: list[dict]) -> dict:
     for row in required:
         if row.get("group_id"):
             groups.setdefault(str(row["group_id"]), []).append(row)
-    req_full = float(len(required) - sum(len(rows) - 1 for rows in groups.values()))
+    group_member_ids = {m["skill_id"] for rows in groups.values() for m in rows}
+    standalone_ids = {
+        row["skill_id"] for row in required if not row.get("group_id") and row["skill_id"] not in group_member_ids
+    }
+    req_full = float(len(standalone_ids))
+    req_full += float(sum(max(1, int(rows[0].get("min_required") or 1)) for rows in groups.values()))
     bonus_full = float(len(bonus))
     req_cover = 0.0
     bonus_cover = 0.0
@@ -41,12 +46,15 @@ def compare_job(requires: list[dict], resume_skills: list[dict]) -> dict:
             if value < 1:
                 item = {"skill_id": row["skill_id"], "name": row.get("name") or row["skill_id"], "excerpt": row.get("excerpt") or "", "cover": value, "group_id": group_id, "min_required": minimum}
                 gaps.append(item)
-                shift_items.extend({"id": m["skill_id"], "delta": (1.0 - value), "name": m.get("name") or m["skill_id"], "excerpt": m.get("excerpt") or "", "why": "要求组缺口"} for m in members if m["skill_id"] not in by_id)
+                missing = max(0, minimum - sum(1 for member_value in member_values if member_value >= 1))
+                shift_items.extend({"id": m["skill_id"], "delta": (1.0 - value), "name": m.get("name") or m["skill_id"], "excerpt": m.get("excerpt") or "", "why": "要求组缺口"} for m in members if m["skill_id"] not in by_id for _ in range(missing))
             else:
                 covered.extend({"skill_id": m["skill_id"], "name": m.get("name") or m["skill_id"], "excerpt": m.get("excerpt") or "", "cover": 1.0, "group_id": group_id, "required_proficiency": m.get("proficiency"), "resume_proficiency": (by_id.get(m["skill_id"]) or {}).get("proficiency")} for m in members)
             ledger.append({"skill_id": row["skill_id"], "name": row.get("name") or row["skill_id"], "cover": value, "side": "required", "group_id": group_id, "min_required": minimum})
             continue
         sid = row["skill_id"]
+        if sid in group_member_ids:
+            continue
         got = by_id.get(sid)
         value = cover_required(
             None if got is None else got.get("proficiency"),

@@ -107,3 +107,40 @@ def test_path_why_shift_and_excerpt():
     assert report["path"][0]["why"] == "换档"
     assert report["path"][0]["excerpt"]
     assert {step["why"] for step in report["path"]} <= {"换档", "半档", "缺口"}
+
+
+def test_requirement_group_counts_minimum_and_one_gap():
+    report = compare_job(
+        [
+            {"skill_id": "torch", "name": "PyTorch", "kind": "required", "group_id": "dl", "min_required": 1},
+            {"skill_id": "tf", "name": "TensorFlow", "kind": "required", "group_id": "dl", "min_required": 1},
+        ],
+        [{"skill_id": "torch", "name": "PyTorch"}],
+    )
+    assert report["req_full"] == 1
+    assert report["req_cover"] == 1
+    assert report["gaps"] == []
+
+    two = compare_job(
+        [
+            {"skill_id": "aws", "name": "AWS", "kind": "required", "group_id": "cloud", "min_required": 2},
+            {"skill_id": "ali", "name": "阿里云", "kind": "required", "group_id": "cloud", "min_required": 2},
+            {"skill_id": "tencent", "name": "腾讯云", "kind": "required", "group_id": "cloud", "min_required": 2},
+        ],
+        [{"skill_id": "aws", "name": "AWS"}],
+    )
+    assert two["req_full"] == 2
+    assert two["req_cover"] == 0.5
+    assert len(two["gaps"]) == 1
+
+
+def test_requirement_group_member_is_not_counted_again_as_standalone():
+    report = compare_job(
+        [
+            {"skill_id": "python", "name": "Python", "kind": "required", "group_id": "lang", "min_required": 1},
+            {"skill_id": "go", "name": "Go", "kind": "required", "group_id": "lang", "min_required": 1},
+            {"skill_id": "python", "name": "Python", "kind": "required"},
+        ],
+        [{"skill_id": "python", "name": "Python"}],
+    )
+    assert report["req_full"] == 1

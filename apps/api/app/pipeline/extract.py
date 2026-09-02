@@ -191,6 +191,8 @@ class ExtractedSkill(BaseModel):
     context: str = ""
     candidate_type: Literal["skill", "brand", "generic", "broad_domain", "unknown"] = "unknown"
     vote: Literal["required_explicit", "bonus_explicit", "unmarked"] = "unmarked"
+    group_id: str = ""
+    min_required: int = Field(default=1, ge=1)
 
 
 class ExtractedJd(BaseModel):
@@ -251,6 +253,13 @@ def requirement_vote(value, *, excerpt: str = "", section: str = "requirement") 
     return vote
 
 
+def _positive_int(value, default: int = 1) -> int:
+    try:
+        return max(1, int(value))
+    except (TypeError, ValueError):
+        return default
+
+
 def coerce_extracted(payload: dict) -> dict:
     if not isinstance(payload, dict):
         return {"job_name": "", "domain": "ai", "target": "", "skills": []}
@@ -292,6 +301,8 @@ def coerce_extracted(payload: dict) -> dict:
                     excerpt=str(raw.get("excerpt") or "").strip(),
                     section=_alias(_SECTION, raw.get("section"), "requirement"),
                 ),
+                "group_id": str(raw.get("group_id") or raw.get("group") or "").strip(),
+                "min_required": _positive_int(raw.get("min_required")),
             }
         )
     domain = _alias(_DOMAIN, payload.get("domain"), "ai")

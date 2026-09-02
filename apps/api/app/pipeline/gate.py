@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 from collections import Counter, defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
@@ -126,6 +127,15 @@ def summarize_requirement_votes(votes: dict[str, str], companies: dict[str, str]
         "proposed_kind": proposed,
         "decision_reason": reason,
     }
+
+
+def infer_requirement_group(excerpt: str, *, fallback: str = "") -> tuple[str, int]:
+    text = excerpt or ""
+    if not any(token in text for token in ("或", "任选", "至少", "任一")):
+        return fallback, 1
+    match = re.search(r"至少\s*(\d+)", text)
+    minimum = int(match.group(1)) if match else 1
+    return fallback or "group-" + hashlib.sha256(text.encode("utf-8")).hexdigest()[:12], max(1, minimum)
 
 
 def _merge_category(members: list[tuple[str, str]]) -> str:
@@ -436,9 +446,14 @@ def _gate_job(job_name: str, rows: list, index: list[dict], judged: str = "targe
                 "candidate_type": candidate_type,
                 "watch_only": watch_only,
                 "votes": {},
+                "group_id": skill.group_id or infer_requirement_group(skill.excerpt)[0],
+                "min_required": max(skill.min_required, infer_requirement_group(skill.excerpt)[1]),
             },
         )
         rec["evidence"].add(snap["id"])
+        if skill.group_id:
+            rec["group_id"] = skill.group_id
+            rec["min_required"] = max(rec.get("min_required", 1), skill.min_required)
         previous_vote = rec["votes"].get(snap["id"], "unmarked")
         if _VOTE_RANK.get(skill.vote, 0) >= _VOTE_RANK.get(previous_vote, 0):
             rec["votes"][snap["id"]] = skill.vote
@@ -485,6 +500,8 @@ def _gate_job(job_name: str, rows: list, index: list[dict], judged: str = "targe
             "excerpt": rec["excerpt"],
             "raw_name": rec["skill"].get("raw_name") or rec["skill"]["name"],
             "candidate_type": rec.get("candidate_type") or "unknown",
+            "group_id": rec.get("group_id") or None,
+            "min_required": int(rec.get("min_required") or 1),
             "watching": watching,
             "weight": 1.0,
             "levels": ["junior", "mid", "senior"],
