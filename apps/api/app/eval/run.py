@@ -7,7 +7,7 @@ from app.eval.f1 import mean_f1, set_f1
 from app.eval.freeze import align_threshold, freeze_hash, load_freeze
 from app.eval.io import read_jsonl, write_json
 from app.eval.paths import eval_dir, out_dir
-from app.eval.scan import skill_ids
+from app.eval.scan import mention_skill_ids, skill_ids
 from app.matching.resume import parse_resume
 from app.matching.score import compare_job
 from app.pipeline.align import align_skill, split_composite
@@ -66,12 +66,14 @@ def eval_jd(*, mock: bool = False) -> dict:
             }
             parsed = parse_extracted(complete_json, snapshot=snapshot)
             pred = set()
+            # 只允许回指 JD 原文的词表命中，阻止语义嵌入把模型臆测变成技能事实。
+            mentioned_ids = {row["id"] for row in mention_skill_ids(snapshot["body"], index, threshold=cut)}
             for skill in parsed.skills:
                 if skill.section not in ("duty", "requirement"):
                     continue
                 for surface in split_composite(skill.name, index):
                     hit = align_skill(surface, index, threshold=cut)
-                    if hit:
+                    if hit and hit["id"] in mentioned_ids:
                         pred.add(hit["id"])
         return set_f1(pred, gold)
 

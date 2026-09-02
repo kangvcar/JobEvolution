@@ -42,6 +42,16 @@ def test_unmocked_three_items_read_freeze_not_env(monkeypatch, tmp_path):
                     for row in (item.get("skills") or [])
                     if isinstance(row, dict)
                 ]
+                if item.get("id") == "jd-0001":
+                    skills.append(
+                        {
+                            "name": "量子通信",
+                            "kind": "required",
+                            "section": "requirement",
+                            "proficiency": "able",
+                            "confidence": 0.9,
+                        }
+                    )
                 return {
                     "job_name": title,
                     "domain": item.get("domain") or "ai",
@@ -67,6 +77,7 @@ def test_unmocked_three_items_read_freeze_not_env(monkeypatch, tmp_path):
     resume = eval_resume(mock=False)
     match = eval_match(mock=False)
     assert jd["f1"] >= 0.90
+    assert jd["precision"] >= 0.99
     assert resume["f1"] >= 0.90
     assert match["f1"] >= 0.90
     assert not jd["mock"]
