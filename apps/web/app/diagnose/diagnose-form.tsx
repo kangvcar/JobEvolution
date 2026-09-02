@@ -54,6 +54,7 @@ type Report = {
         core_judgments?: { fit_band?: string; advantage?: string; blocker?: string };
         strengths?: { text: string; quote?: string }[];
         risks?: { text: string; check_scope?: string }[];
+        evidence_map?: { skill_id?: string; name?: string; state?: string; evidence_fragment_id?: string; quote?: string; check_scope?: string }[];
         rewrites?: { original?: string; problem?: string; suggestion?: string; facts_to_add?: string[] }[];
         actions?: { rewrite?: unknown[]; capability?: { name?: string; why?: string }[] };
         narrative?: string;
@@ -151,6 +152,9 @@ export function DiagnoseForm() {
       setReport(body);
       setPhase("done");
       setStep("report");
+      if (body.groups?.explain) {
+        void fetch(`${API}/diagnose/simulate`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ session_id: sid, job_id: jid, assumed_skill_ids: [], watching_skill_ids: (body.groups.explain.watching || []).map((row: Named) => row.skill_id) }) }).then((response) => response.ok ? response.json() : null).then((value) => value && setSimulation(value));
+      }
     } catch (err) {
       if ((err as Error).name === "AbortError") return;
       setError((err as Error).message);
@@ -423,6 +427,7 @@ export function DiagnoseForm() {
                 <p><b>阻碍：</b>{report.groups.explain.analysis.core_judgments?.blocker}</p>
                 {(report.groups.explain.analysis.strengths || []).map((item) => <p key={item.text}>有依据：{item.quote || item.text}</p>)}
                 {(report.groups.explain.analysis.risks || []).map((item) => <p key={item.text}>待核对：{item.text}（{item.check_scope}）</p>)}
+                <details><summary>查看简历证据地图</summary><div className="evidence-map-list">{(report.groups.explain.analysis.evidence_map || []).map((item) => <div key={item.skill_id}><b>{item.name}</b><span>{item.state}</span><small>{item.quote || item.check_scope}</small></div>)}</div></details>
                 {(report.groups.explain.analysis.rewrites || []).slice(0, 5).map((item, index) => <details key={`${item.original}-${index}`}><summary>表达建议 {index + 1}</summary><p>原文：{item.original}</p><p>问题：{item.problem}</p><p>建议：{item.suggestion}</p><p className="hint">仍需补充：{(item.facts_to_add || []).join("、") || "无需补充"}</p></details>)}
                 {(report.groups.explain.analysis.actions?.capability || []).map((item) => <p key={item.name}>能力轨：{item.name}。{item.why}</p>)}
                 {report.groups.explain.analysis.narrative && <details><summary>面试自我介绍草稿</summary><p>{report.groups.explain.analysis.narrative}</p></details>}

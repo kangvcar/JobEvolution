@@ -279,7 +279,7 @@ def resume_analysis(*, job: dict, requires: list[dict], resume: dict, core: dict
     states = []
     for row in requires:
         fragment = evidence_by_skill.get(row.get("skill_id"))
-        states.append({"skill_id": row.get("skill_id"), "name": row.get("name"), "state": "证据充分" if fragment and fragment.get("evidence_level") == "result" else "已提及但证据较弱" if fragment else "简历中未找到"})
+        states.append({"skill_id": row.get("skill_id"), "name": row.get("name"), "state": "证据充分" if fragment and fragment.get("evidence_level") == "result" else "已提及但证据较弱" if fragment else "简历中未找到", "evidence_fragment_id": fragment.get("id") if fragment else None, "quote": fragment.get("text") if fragment else "", "check_scope": "经历、项目和技能栏" if not fragment else "引用的简历原文"})
     rewrites = []
     for fragment in fragments:
         rewrites.append({"original": fragment.get("text"), "problem": "缺少职责或可核对结果" if fragment.get("evidence_level") != "result" else "可保留并补充上下文", "suggestion": fragment.get("text"), "facts_used": [fragment.get("text")], "facts_to_add": ["规模、延迟、成本或业务结果中的一项"] if fragment.get("evidence_level") != "result" else []})
@@ -298,6 +298,7 @@ def resume_analysis(*, job: dict, requires: list[dict], resume: dict, core: dict
         "strengths": strengths,
         "risks": risks,
         "content_states": states,
+        "evidence_map": states,
         "keywords": {
             "已有证据": [item["name"] for item in states if item["state"] == "证据充分"],
             "只有提及": [item["name"] for item in states if item["state"] == "已提及但证据较弱"],

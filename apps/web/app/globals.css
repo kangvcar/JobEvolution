@@ -344,6 +344,10 @@ button:active,
 .migration-map article { display: grid; gap: 3px; border-top: 2px solid var(--color-ink); padding-top: var(--space-xs); font-size: var(--text-sm); }
 .migration-map small, .market-radar span { color: var(--color-muted); }
 .market-radar { display: grid; gap: 3px; margin-top: var(--space-md); font-size: var(--text-sm); }
+.evidence-map-list { display: grid; gap: var(--space-xs); margin-top: var(--space-xs); }
+.evidence-map-list div { display: grid; grid-template-columns: 9rem max-content 1fr; gap: var(--space-xs); border-bottom: 1px solid var(--color-rule); padding: var(--space-xs) 0; font-size: var(--text-sm); }
+.evidence-map-list span { color: var(--color-accent); }
+.evidence-map-list small { color: var(--color-muted); }
 
 @media print {
   .top, .skip-link, .diagnose-bar button, .diagnose-bar .hint, .evidence-drawer, .evidence-backdrop, .diagnose-split > aside, .diagnose-form { display: none !important; }
@@ -498,6 +502,7 @@ button:active,
     grid-template-columns: 1fr;
   }
   .migration-map { grid-template-columns: 1fr; }
+  .evidence-map-list div { grid-template-columns: 1fr; }
 }
 
 .hint {
