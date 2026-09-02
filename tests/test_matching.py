@@ -1,6 +1,6 @@
 from app.matching.bands import band_of, cover_required, match_score, shift_set
 from app.matching.score import WATCHING_COPY, compare_job
-from app.matching.report import direction_report, recommend_jobs, resume_analysis
+from app.matching.report import direction_report, evidence_map, market_signal_radar, migration_map, recommend_jobs, resume_analysis, simulate_job
 
 
 def test_band_thresholds():
@@ -184,3 +184,22 @@ def test_resume_analysis_cites_only_resume_evidence_and_limits_actions():
     assert len(analysis["actions"]["rewrite"]) <= 5
     assert analysis["project_evidence_prompts"][0]["evidence_fragment_id"] == "ev-python"
     assert "87" not in str(analysis)
+
+
+def test_simulation_uses_only_formal_gap_and_keeps_watching_out_of_score():
+    requires = [{"skill_id": "rag", "name": "RAG", "kind": "required", "proficiency": "able"}]
+    resume = {"skills": [], "evidence_fragments": []}
+    original = simulate_job(requires, resume, [])
+    simulated = simulate_job(requires, resume, ["rag"])
+    assert original["original_band"] == original["simulated_band"]
+    assert original["allowed_skill_ids"] == ["rag"]
+    assert simulated["simulated_band"] == "高度匹配"
+    assert market_signal_radar([{"skill_id": "watch", "name": "Watch"}], [{"id": "j", "requires": [], "sources": []}], "j")[0]["sample_occurrence_ratio"] == 0
+
+
+def test_evidence_map_and_migration_map_are_bounded_and_traceable():
+    resume = {"skills": [{"skill_id": "python", "name": "Python"}], "evidence_fragments": [{"id": "ev-1", "skill_id": "python", "text": "用 Python"}]}
+    requires = [{"skill_id": "python", "name": "Python", "kind": "required"}, {"skill_id": "rag", "name": "RAG", "kind": "required"}]
+    assert evidence_map(requires, resume)[0]["evidence_fragment_id"] == "ev-1"
+    jobs = [{"id": str(i), "name": f"岗位{i}", "requires": requires} for i in range(5)]
+    assert len(migration_map(jobs, resume)) == 3

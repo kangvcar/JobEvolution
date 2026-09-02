@@ -16,7 +16,7 @@ from fastapi.responses import JSONResponse
 from starlette.responses import Response
 
 from app import graph
-from app.matching.report import direction_report, neighbor_name, recommend_jobs, wrap_report
+from app.matching.report import direction_report, evidence_map, market_signal_radar, migration_map, neighbor_name, recommend_jobs, simulate_job, wrap_report
 from app.matching.resume import ResumeError, date_conflicts, evidence_level, extract_text, parse_resume
 from app.matching.session import TTL as SESSION_TTL
 from app.matching.session import load as load_session
@@ -162,6 +162,14 @@ class RecommendBody(BaseModel):
     session_id: str
 
 
+class SimulateBody(BaseModel):
+    session_id: str
+    job_ids: list[str] = []
+    job_id: str | None = None
+    assumed_skill_ids: list[str] = []
+    watching_skill_ids: list[str] = []
+
+
 @app.post("/sessions")
 async def create_session(request: Request, file: UploadFile = File(...), consent: bool = Form(False)):
     ip = request.client.host if request.client else "unknown"
@@ -265,7 +273,8 @@ def update_resume_session(session_id: str, body: SessionUpdateBody):
         order = {"mention": 0, "use": 1, "result": 2}
         if order[level] > order[inferred]:
             raise HTTPException(400, "证据级不能超过简历原文支持的范围")
-        fragments.append({"skill_id": sid, "text": text, "section": str(fragment.get("section") or "experience"), "evidence_level": level})
+        fragment_id = str(fragment.get("id") or "resume-evidence-" + hashlib.sha256(f"{sid}:{text}".encode()).hexdigest()[:16])
+        fragments.append({"id": fragment_id, "skill_id": sid, "text": text, "section": str(fragment.get("section") or "experience"), "evidence_level": level})
     added = []
     for item in body.user_added:
         if isinstance(item, dict) and item.get("skill_id") and str(item["skill_id"]) not in original_ids:
@@ -381,6 +390,66 @@ def diagnose_recommend(body: RecommendBody):
             continue
         candidates.append({**job, "requires": graph.list_requires(job["id"]), "sources": graph.list_job_evidence(job["id"])})
     return {"session_id": body.session_id, "graph_release": resume.get("graph_release"), "jobs": recommend_jobs(candidates, resume, limit=3)}
+
+
+@app.post("/diagnose/simulate")
+def diagnose_simulate(body: SimulateBody):
+    resume = load_session(body.session_id)
+    if resume is None:
+        raise HTTPException(404, "session expired")
+    selected_ids = [job_id for job_id in body.job_ids if job_id]
+    if body.job_id and not selected_ids:
+        selected_ids = [body.job_id]
+    if not selected_ids or len(selected_ids) > 2:
+        raise HTTPException(400, "请选择一至两个岗位")
+    release = graph.public_release().get("id")
+    if resume.get("graph_release") and release and resume["graph_release"] != release:
+        raise HTTPException(409, "简历对应的岗位图谱版本已更新，请重新解析")
+    selected = []
+    for job_id in selected_ids:
+        job = graph.get_public_job(job_id)
+        if job is None or not graph.diagnostic_release(job_id)["ok"]:
+            raise HTTPException(409, "岗位数据正在校验，暂不可模拟")
+        selected.append({**job, "requires": graph.list_requires(job_id), "sources": graph.list_job_evidence(job_id)})
+    allowed = set()
+    simulations = []
+    for job in selected:
+        original = simulate_job(job["requires"], resume, [])
+        allowed.update(original.get("allowed_skill_ids") or [])
+    invalid = sorted(set(body.assumed_skill_ids) - allowed)
+    if invalid:
+        raise HTTPException(400, "只能模拟当前缺口、熟练级不足或要求组候选技能")
+    for job in selected:
+        simulations.append({"job_id": job["id"], "name": job.get("name") or job["id"], **simulate_job(job["requires"], resume, body.assumed_skill_ids)})
+    index = {row["id"]: row for row in graph.list_skills(with_embed=False)}
+    watching_ids = set(body.watching_skill_ids)
+    watching = [{"skill_id": sid, "name": (index.get(sid) or {}).get("name") or sid} for sid in watching_ids]
+    all_jobs = []
+    for job in graph.list_jobs(domain=None, status=None, q=None):
+        if not graph.diagnostic_release(job["id"])["ok"]:
+            continue
+        all_jobs.append({**job, "requires": graph.list_requires(job["id"]), "sources": graph.list_job_evidence(job["id"])})
+    related = list(selected)
+    for job in all_jobs:
+        if job["id"] not in {item["id"] for item in related}:
+            related.append(job)
+        if len(related) == 3:
+            break
+    evidence = evidence_map(selected[0]["requires"], resume)
+    return {
+        "session_id": body.session_id,
+        "graph_release": resume.get("graph_release"),
+        "simulations": simulations,
+        "evidence_map": {"job_id": selected[0]["id"], "relations": evidence},
+        "migration_map": migration_map(related, resume),
+        "market_signal_radar": market_signal_radar(watching, all_jobs, selected[0]["id"]),
+        "watching_skill_ids": sorted(watching_ids),
+    }
+
+
+@app.post("/v1/diagnose/simulate")
+def v1_diagnose_simulate(body: SimulateBody):
+    return diagnose_simulate(body)
 
 
 @app.post("/v1/diagnose/recommend")

@@ -189,6 +189,78 @@ def direction_report(jobs: list[dict], resume: dict) -> dict:
     return {"direction": direction, "jobs": results}
 
 
+def evidence_map(requires: list[dict], resume: dict) -> list[dict]:
+    fragments = {row.get("skill_id"): row for row in resume.get("evidence_fragments") or [] if row.get("skill_id")}
+    return [
+        {
+            "requirement_id": row.get("skill_id"),
+            "requirement_name": row.get("name") or row.get("skill_id"),
+            "evidence_fragment_id": (fragments.get(row.get("skill_id")) or {}).get("id"),
+            "evidence_level": (fragments.get(row.get("skill_id")) or {}).get("evidence_level") or "未提及",
+            "quote": (fragments.get(row.get("skill_id")) or {}).get("text") or "",
+        }
+        for row in requires
+    ]
+
+
+def simulate_job(requires: list[dict], resume: dict, assumed_skill_ids: list[str]) -> dict:
+    original = compare_job(requires, resume.get("skills") or [])
+    by_id = {row.get("skill_id"): row for row in resume.get("skills") or []}
+    assumed = [sid for sid in dict.fromkeys(assumed_skill_ids) if sid not in by_id]
+    simulated_skills = [*(resume.get("skills") or []), *({"skill_id": sid, "name": sid, "proficiency": "able"} for sid in assumed)]
+    simulated = compare_job(requires, simulated_skills)
+    return {
+        "original_band": original["band"],
+        "simulated_band": simulated["band"],
+        "original_score": original["score"],
+        "simulated_score": simulated["score"],
+        "shift_set": simulated.get("path") or [],
+        "allowed_skill_ids": list(original.get("shift_ids") or []),
+        "assumed_skill_ids": assumed,
+    }
+
+
+def migration_map(jobs: list[dict], resume: dict) -> list[dict]:
+    result = []
+    for job in jobs[:3]:
+        requires = job.get("requires") or []
+        report = compare_job(requires, resume.get("skills") or [])
+        target_ids = {row.get("skill_id") for row in requires}
+        resume_ids = {row.get("skill_id") for row in resume.get("skills") or []}
+        result.append(
+            {
+                "job_id": job.get("id"),
+                "name": job.get("name") or job.get("id"),
+                "band": report["band"],
+                "minimum_shift_skill_count": len(report.get("shift_ids") or []),
+                "shared_capabilities": sorted(target_ids & resume_ids),
+                "unique_requirements": sorted(target_ids - resume_ids),
+            }
+        )
+    return result
+
+
+def market_signal_radar(watching: list[dict], jobs: list[dict], target_job_id: str) -> list[dict]:
+    total_jobs = len(jobs)
+    rows = []
+    for signal in watching:
+        sid = signal.get("skill_id")
+        matches = [job for job in jobs if sid in {row.get("skill_id") for row in job.get("requires") or []}]
+        evidence = [source for job in matches for source in job.get("sources") or []]
+        rows.append(
+            {
+                "skill_id": sid,
+                "name": signal.get("name") or sid,
+                "sample_occurrence_ratio": round(len(matches) / total_jobs, 4) if total_jobs else 0,
+                "company_count": len(set(evidence)),
+                "period_change": signal.get("period_change") or "观测中",
+                "evidence_summary": f"{len(matches)} 个公开岗位提及，覆盖 {len(set(evidence))} 家招聘公司",
+                "formal_requirement_reason": "观测样本尚未达到必备多数票和独立来源门槛",
+            }
+        )
+    return rows
+
+
 def resume_analysis(*, job: dict, requires: list[dict], resume: dict, core: dict | None = None) -> dict:
     core = core or compare_job(requires, resume.get("skills") or [])
     fragments = resume.get("evidence_fragments") or []
