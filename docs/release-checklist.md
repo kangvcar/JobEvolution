@@ -8,10 +8,10 @@
 
 ## 2026-09-02 发布验证记录
 
-- 后端全量：`.venv/bin/pytest -q`，144 passed，1 skipped。已覆盖会话隔离、岗位诊断发布门禁、批量审核幂等、换档模拟、证据级、结构化简历字段、证据地图、推荐岗位和版本化元数据路由。
+- 后端全量：`.venv/bin/pytest -q`，147 passed，1 skipped。已覆盖会话隔离、岗位诊断发布门禁、批量审核幂等、换档模拟、证据级、结构化简历字段、证据地图、推荐岗位、正式技能边界和版本化元数据路由。
 - 前端：`cd apps/web && npm run typecheck` 通过；`npm run build` 通过。Next 构建仅报告既有 autoprefixer `flex-start` 兼容性警告。
 - Compose：`docker compose config --quiet` 通过。未在本机重启容器，避免覆盖当前运行中的用户环境；正式发布前按第 1、2、3 项执行空卷导入和健康检查。
-- 镜像：`docker compose build api web` 通过；一次性 API 容器确认最新源码包含 `/v1/meta` 路由。运行中的旧容器未重启，因此不以旧镜像的 404 结果代替新镜像验证。
+- 镜像：最新一次 `docker compose build api web` 通过；一次性 API 容器确认最新镜像包含 `/v1/meta` 路由。运行中的旧容器未重启，因此不以旧镜像的 404 结果代替新镜像验证。
 - 图谱校准：执行 `PYTHONPATH=apps/api NEO4J_URI=bolt://localhost:7687 .venv/bin/python -m app.pipeline.curate_public --period 2026-09-02`，14 个公开岗位全部通过诊断发布门禁；大模型应用工程师收敛为 12 条必备、23 条正式要求，通用素质和模型品牌以 `valid_to` 可回滚失效，14 条岗位定义声明均有至少两个独立证据源。
 - 空卷导入：使用临时 Neo4j 空数据卷导入 `data/snapshot/release-2026-09-02.json` 成功，核对 16 个岗位、280 条证据、14 个岗位定义和 14 条声明；临时容器和数据卷已清理。
 - 评测基线：金标扫描现与正式技能边界一致，排除通用素质和无动作模型品牌；重建了 100 条 JD、100 条简历和 100 条匹配样本。最新未 mock JD 重跑因 DeepSeek API 余额不足（HTTP 402）中止，暂不宣称新 F1；上一轮可用未 mock 结果为 JD 0.702、简历 0.993、匹配 1.000，JD 低于 0.90。差距样本和复跑要求已写入 `data/eval/out/summary.md`，没有修改金标以伪造达标。
