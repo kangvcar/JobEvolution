@@ -231,23 +231,35 @@ JSON，UTF-8。错误体 `{ "error": str, "detail": str | null }`。管理口令
 
 图谱前端用 AntV G6 画这一岗的切片，默认 Canvas。切 WebGL 仅当单岗节点明显卡顿。不用 Timebar，不在边上发采集粒子。
 
-## DeepSeek 集成
+## LLM 供应商集成
 
-`app/llm/client.py` 是唯一打 DeepSeek 的地方。其它模块只依赖 `complete_json(messages) -> dict`（内部对传输错误重试一次）。
+`app/llm/client.py` 是唯一的生成模型出口。其它模块只依赖 `complete_json(messages) -> dict`，通过 `LLM_PROVIDER` 在 DeepSeek 官方端点和 B.AI OpenAI 兼容端点之间切换。B.AI 的 Chat Completions 地址是 `https://api.b.ai/v1/chat/completions`，认证使用 `BAI_API_KEY` 的 Bearer Token；配置依据其 API 参考文档。
+
+默认 DeepSeek：
 
 ```
+LLM_PROVIDER=deepseek
 DEEPSEEK_API_KEY     必填
 DEEPSEEK_BASE_URL    默认 https://api.deepseek.com
 DEEPSEEK_MODEL       默认 deepseek-v4-flash
 ```
 
+B.AI 免费模型评测配置：
+
+```
+LLM_PROVIDER=bai
+BAI_API_KEY          必填，不写入仓库
+BAI_BASE_URL         默认 https://api.b.ai/v1
+BAI_MODEL            默认 deepseek-v4-flash-vision-exp
+```
+
 调用约定：
 
-- OpenAI SDK，`base_url` 指到官方。
-- 抽取、簇判别、简历 JSON：`thinking: {"type": "disabled"}`，`response_format: {"type": "json_object"}`。思考模式会拖慢批量抽取。
+- OpenAI SDK，`base_url` 按供应商配置。B.AI 使用其 OpenAI 兼容 Chat Completions 协议；其文档列明 `/v1/chat/completions` 支持 `messages`、`response_format` 和 `temperature`。
+- 抽取、簇判别、简历 JSON：DeepSeek 发送 `thinking: {"type": "disabled"}`；B.AI 不发送 DeepSeek 专属扩展参数；两者都使用 `response_format: {"type": "json_object"}`。
 - 诊断总结、学习资源：同样非思考；需要稍长文案时仍用 flash，不上 pro，除非 flash 连续失败。
-- 超时 60s，失败重试一次。JSON 对不上 Pydantic 算失败。
-- 外部模型设置全局每日调用量与费用上限,并保留公开接口的每 IP 限速；额度耗尽时明确失败,不切换到其他模型。
+- 超时 60s，失败重试一次；若首个 JSON 截断，第二次追加紧凑输出约束。JSON 对不上 Pydantic 算失败。
+- 外部模型设置全局每日调用量与费用上限,并保留公开接口的每 IP 限速；额度耗尽时明确失败,不在请求中途静默切换供应商。
 - 禁止在业务里直接 `openai.OpenAI(...)`。测抽取时 mock `complete_json`。
 
 结构化日志保留 14 天,记录请求 ID、路由、状态码、耗时、模型、Token、费用、管线版本和错误类型；不得记录简历正文、管理员口令、Cookie 或完整会话 ID。每日版本化 JSON 复制到服务器外并保留 30 天,恢复只走幂等导入器。管线失败、连续 48 小时数据陈旧、备份失败和图谱发布失败统一发到一个可配置 Webhook,管理页同时显示最近运行状态。

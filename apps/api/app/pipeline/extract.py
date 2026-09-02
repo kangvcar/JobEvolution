@@ -52,6 +52,7 @@ SYSTEM_PROMPT = (
     "raw_name、action、context、candidate_type。candidate_type 只能是 skill、brand、generic、"
     "broad_domain、unknown。"
     "vote 只能 required_explicit、bonus_explicit、unmarked；kind 仅为兼容字段，可为 required 或 bonus；"
+    "为保证输出可靠，skills 最多 40 条；excerpt 只保留包含技能名的最短原文片段，最多 80 字；不得重复。"
     "proficiency 只能 aware、able、expert；"
     "section 只能 duty 或 requirement；category 必须是："
     + ", ".join(SKILL_CATEGORIES)

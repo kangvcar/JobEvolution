@@ -1,6 +1,6 @@
 # 首次正式发布检查
 
-1. 配置 `ADMIN_PASSWORD`、`DEEPSEEK_API_KEY`、`CORS_ORIGINS`，并在 HTTPS 反向代理后执行 `docker compose up -d`。
+1. 配置 `ADMIN_PASSWORD`、`CORS_ORIGINS`，并选择 `LLM_PROVIDER=deepseek` + `DEEPSEEK_API_KEY` 或 `LLM_PROVIDER=bai` + `BAI_API_KEY`，再在 HTTPS 反向代理后执行 `docker compose up -d`。
 2. 确认 `pipeline` 独立容器每日运行，`GET /v1/meta` 返回图谱版本与运行状态。
 3. 从空卷导入 `SNAPSHOT_PATH=/app/data/snapshot/reviewed.json`，验证岗位浏览、简历上传、会话修正、诊断和管理审核。
 4. 运行 `cd apps/api && ../../.venv/bin/pytest -q`；运行 `cd apps/web && npm run build`。
@@ -18,3 +18,4 @@
 - 快照：`data/snapshot/release-2026-09-02.json` 与 `data/snapshot/reviewed.json` 已按校准后图谱重导出，包含 16 个岗位、633 项技能、280 条未撤回证据、201 个事件、14 个岗位定义和 14 条声明；文件 SHA-256 为 `6d295b89d638eb5146bf05d370792660b4b11823cb617e10e4115e583096da03`，两个快照字节一致，快照内代码提交为 `450d3be`。导出脚本已处理 Neo4j DateTime 属性。`data/eval/freeze.json` 哈希仍为 `5194b7b806d8fb48714ad3b9f91fe1556a737d36750fe41ab7946a4aadcec438`。
 - 双岗样例：`data/eval/deliver/dual-diagnose.redacted.json`，仅使用合成、脱敏证据，展示方向并列、最小换档数量和未提及证据的报告结构。
 - 人工项：首屏、五步诊断、证据地图、换档模拟、岗位清单、市场卷宗和管理批量审核已通过代码构建验证；320px、200% 缩放、真实 PDF/docx、打印预览和键盘读屏仍需在带浏览器和模型凭据的发布环境复核。
+- B.AI 供应商：已接入 `LLM_PROVIDER=bai`、`BAI_BASE_URL=https://api.b.ai/v1`、`BAI_MODEL=deepseek-v4-flash-vision-exp`，并按 B.AI OpenAI 兼容 Chat Completions 协议移除 DeepSeek 专属 `thinking` 参数；当前本地未配置 `BAI_API_KEY`，端点无凭据返回 401，完整 B.AI 评测待配置密钥后执行。

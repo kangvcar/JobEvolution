@@ -8,7 +8,7 @@
 
 ```
 cp .env.example .env
-# 填 DEEPSEEK_API_KEY、ADMIN_PASSWORD；可选 EMBED_API_KEY（硅基流动，嵌入走 BAAI/bge-m3，缺省回落本地哈希向量）
+# 默认填 DEEPSEEK_API_KEY、ADMIN_PASSWORD；也可将 `LLM_PROVIDER=bai` 并填 `BAI_API_KEY` 使用 B.AI 的 OpenAI 兼容端点。可选 EMBED_API_KEY（硅基流动，嵌入走 BAAI/bge-m3，缺省回落本地哈希向量）
 docker compose up --build
 ```
 

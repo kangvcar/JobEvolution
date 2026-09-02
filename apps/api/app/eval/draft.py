@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import os
 from datetime import date
 
 from app.eval.io import read_jsonl
@@ -31,7 +30,7 @@ def _draft_text(row: dict) -> str:
 
 
 def _draft_one(row: dict) -> dict:
-    from app.llm.client import complete_json
+    from app.llm.client import _provider_config, complete_json
 
     text = _draft_text(row)
     payload = complete_json(
@@ -43,8 +42,10 @@ def _draft_one(row: dict) -> dict:
     skills = payload.get("skills") if isinstance(payload, dict) else None
     notes = row.get("notes")
     notes = dict(notes) if isinstance(notes, dict) else {}
+    provider, _, _, model = _provider_config()
     notes["gold_draft"] = {
-        "model": os.environ.get("DEEPSEEK_MODEL", "deepseek-v4-flash"),
+        "provider": provider,
+        "model": model,
         "date": date.today().isoformat(),
         "prompt": PROMPT_VERSION,
         "skills": [str(s) for s in skills] if isinstance(skills, list) else [],

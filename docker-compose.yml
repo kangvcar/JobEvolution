@@ -51,6 +51,10 @@ services:
     ports:
       - "8000:8000"
     environment:
+      LLM_PROVIDER: ${LLM_PROVIDER:-deepseek}
+      BAI_API_KEY: ${BAI_API_KEY:-}
+      BAI_BASE_URL: ${BAI_BASE_URL:-https://api.b.ai/v1}
+      BAI_MODEL: ${BAI_MODEL:-deepseek-v4-flash-vision-exp}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
       DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
       DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-v4-flash}
@@ -86,6 +90,10 @@ services:
     build: ./apps/api
     command: sh -c 'while true; do python -m app.pipeline || true; sleep 86400; done'
     environment:
+      LLM_PROVIDER: ${LLM_PROVIDER:-deepseek}
+      BAI_API_KEY: ${BAI_API_KEY:-}
+      BAI_BASE_URL: ${BAI_BASE_URL:-https://api.b.ai/v1}
+      BAI_MODEL: ${BAI_MODEL:-deepseek-v4-flash-vision-exp}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
       DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
       DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-v4-flash}
