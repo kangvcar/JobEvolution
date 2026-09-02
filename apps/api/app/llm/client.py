@@ -71,6 +71,8 @@ def _client():
             api_key=api_key,
             base_url=base_url,
             timeout=60.0,
+            # 业务层已有一次紧凑 JSON 重试；禁用 SDK 隐式重试，避免长文本请求放大。
+            max_retries=0,
         )
         _cached_signature = signature
     return _cached
