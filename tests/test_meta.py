@@ -7,3 +7,9 @@ def test_meta_returns_four_domains(client):
         {"id": "system", "name": "智能系统"},
         {"id": "iot", "name": "物联网"},
     ]
+
+
+def test_v1_meta_alias_is_available(client):
+    response = client.get("/v1/meta")
+    assert response.status_code == 200
+    assert response.json()["domains"][0]["id"] == "ai"
