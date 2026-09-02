@@ -17,7 +17,8 @@ from starlette.responses import Response
 
 from app import graph
 from app.matching.report import neighbor_name, wrap_report
-from app.matching.resume import ResumeError, extract_text, parse_resume
+from app.matching.resume import ResumeError, date_conflicts, evidence_level, extract_text, parse_resume
+from app.matching.session import TTL as SESSION_TTL
 from app.matching.session import load as load_session
 from app.matching.session import save as save_session, update as update_session
 from app.pipeline.gate import apply_event, passthrough_enabled, set_passthrough
@@ -182,11 +183,19 @@ async def create_session(request: Request, file: UploadFile = File(...), consent
     session_id = save_session(
         {
             "preview_text": text[:4000],
+            "profile": parsed.get("profile") or {},
+            "education_items": parsed.get("education_items") or [],
+            "experiences": parsed.get("experiences") or [],
+            "projects": parsed.get("projects") or [],
             "skills": parsed["skills"],
+            "evidence_fragments": parsed.get("evidence_fragments") or [],
+            "date_conflicts": parsed.get("date_conflicts") or [],
+            "user_added": [],
             "experience": parsed["experience"],
             "education": parsed["education"],
             "filename": file.filename,
             "graph_release": graph.public_release().get("id"),
+            "expires_at": time.time() + SESSION_TTL,
         }
     )
     return {
@@ -195,6 +204,14 @@ async def create_session(request: Request, file: UploadFile = File(...), consent
         "preview_text": text[:2000],
         "experience": parsed["experience"],
         "education": parsed["education"],
+        "profile": parsed.get("profile") or {},
+        "education_items": parsed.get("education_items") or [],
+        "experiences": parsed.get("experiences") or [],
+        "projects": parsed.get("projects") or [],
+        "evidence_fragments": parsed.get("evidence_fragments") or [],
+        "date_conflicts": parsed.get("date_conflicts") or [],
+        "user_added": [],
+        "expires_at": time.time() + SESSION_TTL,
         "graph_release": graph.public_release().get("id"),
     }
 
@@ -205,7 +222,13 @@ async def v1_create_session(request: Request, file: UploadFile = File(...), cons
 
 
 class SessionUpdateBody(BaseModel):
-    skills: list[dict]
+    skills: list[dict] = []
+    profile: dict = {}
+    education_items: list[dict] = []
+    experiences: list[dict] = []
+    projects: list[dict] = []
+    evidence_fragments: list[dict] = []
+    user_added: list[dict] = []
 
 
 @app.patch("/sessions/{session_id}")
@@ -221,10 +244,50 @@ def update_resume_session(session_id: str, body: SessionUpdateBody):
         if proficiency not in (None, "aware", "able", "expert"):
             proficiency = None
         cleaned.append({"skill_id": str(skill["skill_id"]), "name": str(skill.get("name") or skill["skill_id"]), "proficiency": proficiency})
+    original_ids = {str(skill.get("skill_id")) for skill in session.get("skills") or [] if skill.get("skill_id")}
+    fragments = []
+    for fragment in body.evidence_fragments:
+        if not isinstance(fragment, dict):
+            continue
+        sid = str(fragment.get("skill_id") or "")
+        text = str(fragment.get("text") or "").strip()
+        level = str(fragment.get("evidence_level") or "mention")
+        if sid not in original_ids or not text or text not in (session.get("preview_text") or ""):
+            raise HTTPException(400, "证据片段必须来自当前简历原文")
+        if level not in ("mention", "use", "result"):
+            raise HTTPException(400, "证据级无效")
+        inferred = evidence_level(text, str(fragment.get("name") or sid))
+        order = {"mention": 0, "use": 1, "result": 2}
+        if order[level] > order[inferred]:
+            raise HTTPException(400, "证据级不能超过简历原文支持的范围")
+        fragments.append({"skill_id": sid, "text": text, "section": str(fragment.get("section") or "experience"), "evidence_level": level})
+    added = []
+    for item in body.user_added:
+        if isinstance(item, dict) and item.get("skill_id") and str(item["skill_id"]) not in original_ids:
+            added.append({"skill_id": str(item["skill_id"]), "name": str(item.get("name") or item["skill_id"]), "reason": "你补充的，简历尚未证明"})
     session["skills"] = cleaned
+    session["profile"] = body.profile
+    session["education_items"] = body.education_items
+    session["experiences"] = body.experiences
+    session["projects"] = body.projects
+    session["evidence_fragments"] = fragments or session.get("evidence_fragments") or []
+    session["user_added"] = added
+    session["date_conflicts"] = date_conflicts(session.get("preview_text") or "")
     if not update_session(session_id, session):
         raise HTTPException(404, "session expired")
-    return {"session_id": session_id, "skills": cleaned, "graph_release": session.get("graph_release")}
+    return {
+        "session_id": session_id,
+        "skills": cleaned,
+        "profile": session.get("profile") or {},
+        "education_items": session.get("education_items") or [],
+        "experiences": session.get("experiences") or [],
+        "projects": session.get("projects") or [],
+        "evidence_fragments": session.get("evidence_fragments") or [],
+        "user_added": session.get("user_added") or [],
+        "date_conflicts": session.get("date_conflicts") or [],
+        "expires_at": session.get("expires_at"),
+        "graph_release": session.get("graph_release"),
+    }
 
 
 @app.post("/diagnose")

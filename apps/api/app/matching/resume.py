@@ -61,6 +61,50 @@ def _name_in_text(name: str, blob: str) -> bool:
     return re.search(rf"(?<![a-z0-9_]){re.escape(needle)}(?![a-z0-9_])", blob) is not None
 
 
+def evidence_level(text: str, name: str) -> str:
+    """Classify only what the sentence visibly proves."""
+    sentence = next((part.strip() for part in re.split(r"[\n。.!！]", text or "") if _name_in_text(name, part)), "") or (text or "").strip()
+    if not sentence:
+        return "mention"
+    has_result = bool(re.search(r"\d+(?:\.\d+)?\s*(?:%|ms|秒|万|qps|次)?", sentence, re.I)) and bool(
+        re.search(r"负责|主导|交付|实现|提升|降低|built|led|delivered|improv|reduc", sentence, re.I)
+    )
+    if has_result:
+        return "result"
+    if re.search(r"负责|使用|开发|构建|维护|实现|参与|used|built|develop|worked", sentence, re.I):
+        return "use"
+    return "mention"
+
+
+def _sentence_for(text: str, names: list[str]) -> str:
+    for sentence in re.split(r"[\n。.!！]", text or ""):
+        if any(_name_in_text(name, sentence) for name in names if name):
+            return sentence.strip()
+    return ""
+
+
+def _evidence_fragments(text: str, skills: list[dict], index: list[dict]) -> list[dict]:
+    by_id = {row.get("id"): row for row in index}
+    fragments = []
+    for skill in skills:
+        vocab = by_id.get(skill.get("skill_id"), {})
+        names = [vocab.get("name") or skill.get("name") or "", *(vocab.get("synonyms") or [])]
+        excerpt = skill.get("llm_excerpt") or _sentence_for(text, names)
+        if excerpt and excerpt not in text:
+            excerpt = _sentence_for(text, names)
+        if not excerpt:
+            continue
+        fragments.append(
+            {
+                "skill_id": skill["skill_id"],
+                "text": excerpt,
+                "section": "project" if re.search(r"项目|project", excerpt, re.I) else "experience",
+                "evidence_level": evidence_level(excerpt, names[0]),
+            }
+        )
+    return fragments
+
+
 INFO_PROMPT = (
     "Extract resume JSON. Fields: experience, education. "
     "experience is a short years string like 3年, or 简历未标. "
@@ -122,7 +166,36 @@ def parse_resume(
     education = str(info.get("education") or "").strip()
     experience = ("" if experience == "简历未标" else experience) or fallback["experience"] or "简历未标"
     education = ("" if education == "简历未标" else education) or fallback["education"] or "简历未标"
-    return {"experience": experience, "education": education, "skills": skills}
+    fragments = _evidence_fragments(text, skills, index)
+    return {
+        "profile": {"role": "", "experience": experience},
+        "education": education,
+        "education_items": [{"text": education}] if education != "简历未标" else [],
+        "experiences": [],
+        "projects": [],
+        "experience": experience,
+        "education_text": education,
+        "skills": skills,
+        "evidence_fragments": fragments,
+        "date_conflicts": date_conflicts(text),
+        "user_added": [],
+    }
+
+
+def date_conflicts(text: str) -> list[dict]:
+    ranges = []
+    for match in re.finditer(r"(20\d{2})[./-](\d{1,2}).{0,3}(20\d{2})[./-](\d{1,2})", text or ""):
+        start = int(match.group(1)) * 12 + int(match.group(2))
+        end = int(match.group(3)) * 12 + int(match.group(4))
+        if end < start:
+            ranges.append({"text": match.group(0), "reason": "结束时间早于开始时间"})
+        ranges.append({"start": start, "end": end, "text": match.group(0)})
+    conflicts = []
+    for i, left in enumerate(ranges):
+        for right in ranges[i + 1 :]:
+            if "start" in left and "start" in right and max(left["start"], right["start"]) <= min(left["end"], right["end"]):
+                conflicts.append({"left": left["text"], "right": right["text"], "reason": "经历时间重叠"})
+    return conflicts
 
 
 def _marks_level_for_skill(text: str, name: str) -> bool:
@@ -166,6 +239,7 @@ def _align_skills(rows: list, index: list[dict], *, threshold: float | None = No
                 "skill_id": hit["id"],
                 "name": hit.get("name") or name,
                 "proficiency": proficiency,
+                "llm_excerpt": str(raw.get("evidence") or raw.get("excerpt") or "").strip(),
             }
         )
     return found

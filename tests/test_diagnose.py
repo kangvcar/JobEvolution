@@ -7,7 +7,7 @@ import pytest
 
 from app.llm.embed import embed
 from app.matching.report import lookup_resource
-from app.matching.resume import ResumeError, extract_text, parse_resume, skills_from_text
+from app.matching.resume import ResumeError, evidence_level, extract_text, parse_resume, skills_from_text
 from app.pipeline.status import job_id_for
 
 
@@ -104,6 +104,12 @@ def test_parse_resume_aligns_and_keeps_unmarked_proficiency():
     assert guessed["skills"][0]["proficiency"] is None
 
 
+def test_resume_evidence_levels_only_claim_visible_facts():
+    assert evidence_level("FastAPI", "FastAPI") == "mention"
+    assert evidence_level("使用 FastAPI 开发接口", "FastAPI") == "use"
+    assert evidence_level("负责 FastAPI 接口，延迟降低 30%", "FastAPI") == "result"
+
+
 def test_parse_resume_reads_explicit_info_without_model():
     index = [{"id": "s1", "name": "Python", "synonyms": [], "embedding": embed(["Python"])[0]}]
     out = parse_resume(
@@ -198,6 +204,27 @@ def test_expired_session_is_404(client):
     job_id = job_id_for("大模型应用工程师")
     res = client.post("/diagnose", json={"session_id": "no-such", "job_id": job_id})
     assert res.status_code in (404, 400)
+
+
+def test_session_correction_cannot_promote_unproven_result(client):
+    from app.matching.session import save
+
+    sid = save({
+        "preview_text": "只在技能栏提到 FastAPI",
+        "skills": [{"skill_id": "s1", "name": "FastAPI", "proficiency": None}],
+        "evidence_fragments": [{"skill_id": "s1", "text": "只在技能栏提到 FastAPI", "evidence_level": "mention"}],
+    })
+    rejected = client.patch(
+        f"/sessions/{sid}",
+        json={"skills": [{"skill_id": "s1", "name": "FastAPI"}], "evidence_fragments": [{"skill_id": "s1", "text": "只在技能栏提到 FastAPI", "evidence_level": "result"}]},
+    )
+    assert rejected.status_code == 400
+    accepted = client.patch(
+        f"/sessions/{sid}",
+        json={"skills": [{"skill_id": "s1", "name": "FastAPI"}], "user_added": [{"skill_id": "s2", "name": "PyTorch"}]},
+    )
+    assert accepted.status_code == 200
+    assert accepted.json()["user_added"][0]["reason"] == "你补充的，简历尚未证明"
 
 
 def test_sessions_rejects_doc(client):
