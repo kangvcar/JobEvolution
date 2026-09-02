@@ -1,1319 +1,5 @@
 [
   {
-    "id": "skill-18885f27b5af9012",
-    "name": "Python",
-    "synonyms": [
-      "Python"
-    ]
-  },
-  {
-    "id": "skill-048b00a47fe7ccb9",
-    "name": "深度学习框架",
-    "synonyms": [
-      "深度学习框架"
-    ]
-  },
-  {
-    "id": "skill-d8665f4890d015b3",
-    "name": "大模型应用开发",
-    "synonyms": [
-      "大模型应用开发"
-    ]
-  },
-  {
-    "id": "skill-eb8849f239ce6dcb",
-    "name": "自然语言处理",
-    "synonyms": [
-      "自然语言处理"
-    ]
-  },
-  {
-    "id": "skill-83644c34322891ab",
-    "name": "数据处理与分析",
-    "synonyms": [
-      "数据处理与分析"
-    ]
-  },
-  {
-    "id": "skill-50b3ce31646573c1",
-    "name": "性能优化",
-    "synonyms": [
-      "性能优化"
-    ]
-  },
-  {
-    "id": "skill-4ce266d144fe9254",
-    "name": "团队协作",
-    "synonyms": [
-      "团队协作"
-    ]
-  },
-  {
-    "id": "skill-6e843d5d91a87010",
-    "name": "商业数据分析",
-    "synonyms": [
-      "商业数据分析"
-    ]
-  },
-  {
-    "id": "skill-fa1bd127be6dc95e",
-    "name": "LLM微调和训练",
-    "synonyms": [
-      "LLM微调和训练"
-    ]
-  },
-  {
-    "id": "skill-cdced850e983ab8b",
-    "name": "数据处理",
-    "synonyms": [
-      "数据处理"
-    ]
-  },
-  {
-    "id": "skill-53b60fb3a0d63e55",
-    "name": "模型集成与部署",
-    "synonyms": [
-      "模型集成与部署"
-    ]
-  },
-  {
-    "id": "skill-85f99197bc6f8829",
-    "name": "技术调研",
-    "synonyms": [
-      "技术调研"
-    ]
-  },
-  {
-    "id": "skill-b4a06b2bf2034993",
-    "name": "模型评估",
-    "synonyms": [
-      "模型评估"
-    ]
-  },
-  {
-    "id": "skill-806f88fc0e700c25",
-    "name": "PyTorch/TensorFlow/Keras",
-    "synonyms": [
-      "PyTorch/TensorFlow/Keras",
-      "PyTorch/TensorFlow"
-    ]
-  },
-  {
-    "id": "skill-5b3cbe168f7b443b",
-    "name": "大模型训练框架",
-    "synonyms": [
-      "大模型训练框架"
-    ]
-  },
-  {
-    "id": "skill-0ebe1d66f5a67dc0",
-    "name": "机器学习基础",
-    "synonyms": [
-      "机器学习基础"
-    ]
-  },
-  {
-    "id": "skill-0002ac79318121b8",
-    "name": "LLM技术理解",
-    "synonyms": [
-      "LLM技术理解"
-    ]
-  },
-  {
-    "id": "skill-e0ab0981aba5c06d",
-    "name": "机器学习",
-    "synonyms": [
-      "机器学习",
-      "迁移学习"
-    ]
-  },
-  {
-    "id": "skill-9bea2bda7ac5f70a",
-    "name": "深度学习",
-    "synonyms": [
-      "深度学习"
-    ]
-  },
-  {
-    "id": "skill-63c34d5ded165a69",
-    "name": "LangChain",
-    "synonyms": [
-      "LangChain"
-    ]
-  },
-  {
-    "id": "skill-053c22fb733f24bd",
-    "name": "AutoGen",
-    "synonyms": [
-      "AutoGen"
-    ]
-  },
-  {
-    "id": "skill-5e360ac275cfcd4e",
-    "name": "PromptAppGPT",
-    "synonyms": [
-      "PromptAppGPT"
-    ]
-  },
-  {
-    "id": "skill-bda807377e970a4f",
-    "name": "Agent开发",
-    "synonyms": [
-      "Agent开发",
-      "API开发"
-    ]
-  },
-  {
-    "id": "skill-b2d4743e0a3cf7ae",
-    "name": "软件架构",
-    "synonyms": [
-      "软件架构"
-    ]
-  },
-  {
-    "id": "skill-ed249d417dcd38db",
-    "name": "GitHub Copilot",
-    "synonyms": [
-      "GitHub Copilot"
-    ]
-  },
-  {
-    "id": "skill-54920e2565489045",
-    "name": "CodeGeeX",
-    "synonyms": [
-      "CodeGeeX"
-    ]
-  },
-  {
-    "id": "skill-263200d7d529b522",
-    "name": "数据库",
-    "synonyms": [
-      "数据库"
-    ]
-  },
-  {
-    "id": "skill-4c4de1acf61ceacf",
-    "name": "Web开发框架",
-    "synonyms": [
-      "Web开发框架"
-    ]
-  },
-  {
-    "id": "skill-260f3d5b40647ffe",
-    "name": "LangChain/LangGraph",
-    "synonyms": [
-      "LangChain/LangGraph",
-      "LangGraph"
-    ]
-  },
-  {
-    "id": "skill-90cf7bd8432d0199",
-    "name": "TensorFlow",
-    "synonyms": [
-      "TensorFlow",
-      "Tensorflow"
-    ]
-  },
-  {
-    "id": "skill-03312bee2e657c9e",
-    "name": "PyTorch",
-    "synonyms": [
-      "PyTorch",
-      "Pytorch"
-    ]
-  },
-  {
-    "id": "skill-266e9979b143c56b",
-    "name": "H5",
-    "synonyms": [
-      "H5"
-    ]
-  },
-  {
-    "id": "skill-c1ba60ce13586503",
-    "name": "Java",
-    "synonyms": [
-      "Java",
-      "JAVA"
-    ]
-  },
-  {
-    "id": "skill-9513c60ab00ff4e3",
-    "name": "大语言模型应用开发",
-    "synonyms": [
-      "大语言模型应用开发",
-      "大语言模型应用"
-    ]
-  },
-  {
-    "id": "skill-b602ebce988c0bea",
-    "name": "前后端开发",
-    "synonyms": [
-      "前后端开发"
-    ]
-  },
-  {
-    "id": "skill-a049dca9d8f1e021",
-    "name": "项目管理",
-    "synonyms": [
-      "项目管理"
-    ]
-  },
-  {
-    "id": "skill-b650400c4151bcf6",
-    "name": "大模型训练",
-    "synonyms": [
-      "大模型训练"
-    ]
-  },
-  {
-    "id": "skill-2a54ab6b84d5bbc2",
-    "name": "大模型调优",
-    "synonyms": [
-      "大模型调优"
-    ]
-  },
-  {
-    "id": "skill-75b1ab8204872a64",
-    "name": "技术方案设计",
-    "synonyms": [
-      "技术方案设计"
-    ]
-  },
-  {
-    "id": "skill-47f741ba6105ccce",
-    "name": "文档编写",
-    "synonyms": [
-      "文档编写"
-    ]
-  },
-  {
-    "id": "skill-18326ce5b1c34f3f",
-    "name": "FastGPT",
-    "synonyms": [
-      "FastGPT"
-    ]
-  },
-  {
-    "id": "skill-6174547d38d3acdf",
-    "name": "Prompt工程",
-    "synonyms": [
-      "Prompt工程"
-    ]
-  },
-  {
-    "id": "skill-f77fb5fc13e89e5d",
-    "name": "RAG",
-    "synonyms": [
-      "RAG"
-    ]
-  },
-  {
-    "id": "skill-b48c8be327b363ef",
-    "name": "AI Agent",
-    "synonyms": [
-      "Agent",
-      "AI Agent",
-      "AI agent",
-      "AGENT"
-    ]
-  },
-  {
-    "id": "skill-e6169e958b37ce86",
-    "name": "Docker",
-    "synonyms": [
-      "Docker"
-    ]
-  },
-  {
-    "id": "skill-943ad8db4c33ab4a",
-    "name": "云计算平台",
-    "synonyms": [
-      "云计算平台"
-    ]
-  },
-  {
-    "id": "skill-32fd72a0e0746043",
-    "name": "AWS",
-    "synonyms": [
-      "AWS"
-    ]
-  },
-  {
-    "id": "skill-3140d22d8cb307e2",
-    "name": "Azure",
-    "synonyms": [
-      "Azure"
-    ]
-  },
-  {
-    "id": "skill-e16fc821f34228d1",
-    "name": "阿里云",
-    "synonyms": [
-      "阿里云"
-    ]
-  },
-  {
-    "id": "skill-7f0188692116ad26",
-    "name": "英语阅读",
-    "synonyms": [
-      "英语阅读"
-    ]
-  },
-  {
-    "id": "skill-e4ef33ad78616b7e",
-    "name": "AI chatbot开发",
-    "synonyms": [
-      "AI chatbot开发"
-    ]
-  },
-  {
-    "id": "skill-57d543759bac63a4",
-    "name": "大模型微调",
-    "synonyms": [
-      "大模型微调"
-    ]
-  },
-  {
-    "id": "skill-04312dc28ec1b3c4",
-    "name": "大模型应用开发框架",
-    "synonyms": [
-      "大模型应用开发框架"
-    ]
-  },
-  {
-    "id": "skill-db127380eea5860f",
-    "name": "智能体技术",
-    "synonyms": [
-      "智能体技术"
-    ]
-  },
-  {
-    "id": "skill-c5d792090d5771ea",
-    "name": "大模型微调技术",
-    "synonyms": [
-      "大模型微调技术"
-    ]
-  },
-  {
-    "id": "skill-9ecf4f6e4dc71868",
-    "name": "RAG技术",
-    "synonyms": [
-      "RAG技术"
-    ]
-  },
-  {
-    "id": "skill-6dc38fda45c9340e",
-    "name": "Linux开发",
-    "synonyms": [
-      "Linux开发"
-    ]
-  },
-  {
-    "id": "skill-92943a74d235be67",
-    "name": "大模型落地经验",
-    "synonyms": [
-      "大模型落地经验"
-    ]
-  },
-  {
-    "id": "skill-94b8d2ab625dd979",
-    "name": "大语言模型",
-    "synonyms": [
-      "大语言模型"
-    ]
-  },
-  {
-    "id": "skill-0f6059b2d9e48cbb",
-    "name": "智能问答",
-    "synonyms": [
-      "智能问答"
-    ]
-  },
-  {
-    "id": "skill-82fc92acfd34a7f6",
-    "name": "语义理解",
-    "synonyms": [
-      "语义理解"
-    ]
-  },
-  {
-    "id": "skill-32a0238c75558201",
-    "name": "数据预处理",
-    "synonyms": [
-      "数据预处理"
-    ]
-  },
-  {
-    "id": "skill-3c48d8ed41371f37",
-    "name": "数据结构",
-    "synonyms": [
-      "数据结构"
-    ]
-  },
-  {
-    "id": "skill-af84cfb6c1bb0e98",
-    "name": "算法",
-    "synonyms": [
-      "算法"
-    ]
-  },
-  {
-    "id": "skill-756c3418ca7c9aae",
-    "name": "系统开发",
-    "synonyms": [
-      "系统开发"
-    ]
-  },
-  {
-    "id": "skill-c7b9fb670dbb0d72",
-    "name": "代码调试",
-    "synonyms": [
-      "代码调试"
-    ]
-  },
-  {
-    "id": "skill-dbb07e6b126f72d6",
-    "name": "LoRA/Adapter",
-    "synonyms": [
-      "LoRA/Adapter"
-    ]
-  },
-  {
-    "id": "skill-732251014dc9fd93",
-    "name": "FAISS",
-    "synonyms": [
-      "FAISS"
-    ]
-  },
-  {
-    "id": "skill-0648d2111ec0ca3d",
-    "name": "DeepSeek",
-    "synonyms": [
-      "DeepSeek"
-    ]
-  },
-  {
-    "id": "skill-aa77889c8c35bd45",
-    "name": "ChatGLM",
-    "synonyms": [
-      "ChatGLM"
-    ]
-  },
-  {
-    "id": "skill-4f5e698fecc870d2",
-    "name": "多模态数据处理",
-    "synonyms": [
-      "多模态数据处理"
-    ]
-  },
-  {
-    "id": "skill-0e159f7ab2835418",
-    "name": "HEC-RAS",
-    "synonyms": [
-      "HEC-RAS"
-    ]
-  },
-  {
-    "id": "skill-bff70485135c5473",
-    "name": "MIKE",
-    "synonyms": [
-      "MIKE"
-    ]
-  },
-  {
-    "id": "skill-aeb3fd4f17162e9b",
-    "name": "GIS",
-    "synonyms": [
-      "GIS"
-    ]
-  },
-  {
-    "id": "skill-3780bdc0ede6ede2",
-    "name": "LLM应用平台搭建",
-    "synonyms": [
-      "LLM应用平台搭建"
-    ]
-  },
-  {
-    "id": "skill-dcf6614778f258e8",
-    "name": "RAG部署与调优",
-    "synonyms": [
-      "RAG部署与调优"
-    ]
-  },
-  {
-    "id": "skill-0962ad68a9646edd",
-    "name": "提示词工程",
-    "synonyms": [
-      "提示词工程"
-    ]
-  },
-  {
-    "id": "skill-c0955f7ef40c5d7a",
-    "name": "Agent流程编排",
-    "synonyms": [
-      "Agent流程编排"
-    ]
-  },
-  {
-    "id": "skill-52ebb748d5b8963e",
-    "name": "AIGC场景调研与落地",
-    "synonyms": [
-      "AIGC场景调研与落地"
-    ]
-  },
-  {
-    "id": "skill-084613987a2b30a7",
-    "name": "主流大模型特性了解",
-    "synonyms": [
-      "主流大模型特性了解"
-    ]
-  },
-  {
-    "id": "skill-c75018bfd167c234",
-    "name": "知识库/智能体平台",
-    "synonyms": [
-      "知识库/智能体平台"
-    ]
-  },
-  {
-    "id": "skill-77b7bfb167eb7dc1",
-    "name": "系统整合与改造",
-    "synonyms": [
-      "系统整合与改造"
-    ]
-  },
-  {
-    "id": "skill-009a8ae19d3227a4",
-    "name": "RAG准确率优化",
-    "synonyms": [
-      "RAG准确率优化"
-    ]
-  },
-  {
-    "id": "skill-844035dc2df03967",
-    "name": "智能办公平台开发",
-    "synonyms": [
-      "智能办公平台开发"
-    ]
-  },
-  {
-    "id": "skill-07fb420f763c6700",
-    "name": "Agent调试",
-    "synonyms": [
-      "Agent调试"
-    ]
-  },
-  {
-    "id": "skill-e71b09a37a68957f",
-    "name": "Prompt调试",
-    "synonyms": [
-      "Prompt调试"
-    ]
-  },
-  {
-    "id": "skill-81199a2347fd2e4a",
-    "name": "技术架构设计",
-    "synonyms": [
-      "技术架构设计"
-    ]
-  },
-  {
-    "id": "skill-59881cca58004619",
-    "name": "本地大模型部署",
-    "synonyms": [
-      "本地大模型部署",
-      "大模型部署"
-    ]
-  },
-  {
-    "id": "skill-b81924b916fa91e0",
-    "name": "并发推理性能调优",
-    "synonyms": [
-      "并发推理性能调优"
-    ]
-  },
-  {
-    "id": "skill-0e8c62bfb95027d4",
-    "name": "RAG准确率提升经验",
-    "synonyms": [
-      "RAG准确率提升经验"
-    ]
-  },
-  {
-    "id": "skill-3d3c76f4b6d3b9e6",
-    "name": "AIGC企业级应用落地",
-    "synonyms": [
-      "AIGC企业级应用落地"
-    ]
-  },
-  {
-    "id": "skill-27a711e6a1e67912",
-    "name": "智能办公AI场景落地",
-    "synonyms": [
-      "智能办公AI场景落地"
-    ]
-  },
-  {
-    "id": "skill-7dd873dfe52acf22",
-    "name": "AI编程推动",
-    "synonyms": [
-      "AI编程推动"
-    ]
-  },
-  {
-    "id": "skill-909d0528d0eaa209",
-    "name": "半导体或智能制造行业经验",
-    "synonyms": [
-      "半导体或智能制造行业经验"
-    ]
-  },
-  {
-    "id": "skill-9f4b3788943435e6",
-    "name": "模型训练",
-    "synonyms": [
-      "模型训练"
-    ]
-  },
-  {
-    "id": "skill-e7b195f5e3375423",
-    "name": "模型调优",
-    "synonyms": [
-      "模型调优"
-    ]
-  },
-  {
-    "id": "skill-b62485f1eac59123",
-    "name": "算法设计",
-    "synonyms": [
-      "算法设计"
-    ]
-  },
-  {
-    "id": "skill-5a555537fddfa477",
-    "name": "效果评估",
-    "synonyms": [
-      "效果评估"
-    ]
-  },
-  {
-    "id": "skill-d25a85f112658069",
-    "name": "计算机视觉",
-    "synonyms": [
-      "计算机视觉"
-    ]
-  },
-  {
-    "id": "skill-f5d2a4c68a7578b5",
-    "name": "AIGC",
-    "synonyms": [
-      "AIGC"
-    ]
-  },
-  {
-    "id": "skill-644378336ad3ca24",
-    "name": "客户交流",
-    "synonyms": [
-      "客户交流"
-    ]
-  },
-  {
-    "id": "skill-93ab31a9de419a7e",
-    "name": "编程基础",
-    "synonyms": [
-      "编程基础"
-    ]
-  },
-  {
-    "id": "skill-796aae4da0c90314",
-    "name": "多模态模型",
-    "synonyms": [
-      "多模态模型"
-    ]
-  },
-  {
-    "id": "skill-d18aca33a335a81c",
-    "name": "Dify",
-    "synonyms": [
-      "Dify",
-      "dify"
-    ]
-  },
-  {
-    "id": "skill-8411c36688aa6984",
-    "name": "Coze",
-    "synonyms": [
-      "Coze"
-    ]
-  },
-  {
-    "id": "skill-505b2eebf5e93035",
-    "name": "LLM部署",
-    "synonyms": [
-      "LLM部署"
-    ]
-  },
-  {
-    "id": "skill-d7372245770c8f05",
-    "name": "RAG性能优化",
-    "synonyms": [
-      "RAG性能优化"
-    ]
-  },
-  {
-    "id": "skill-f2d910ee59495197",
-    "name": "AIGC落地",
-    "synonyms": [
-      "AIGC落地"
-    ]
-  },
-  {
-    "id": "skill-ce6a10e0f1734992",
-    "name": "AI编程",
-    "synonyms": [
-      "AI编程"
-    ]
-  },
-  {
-    "id": "skill-fc4df3c7c8a7e0e3",
-    "name": "信息检索",
-    "synonyms": [
-      "信息检索"
-    ]
-  },
-  {
-    "id": "skill-60dd357bbdf2d54d",
-    "name": "知识图谱",
-    "synonyms": [
-      "知识图谱"
-    ]
-  },
-  {
-    "id": "skill-0b3830053cfc0e4b",
-    "name": "应用落地",
-    "synonyms": [
-      "应用落地"
-    ]
-  },
-  {
-    "id": "skill-7151470ffb9910df",
-    "name": "Transformer",
-    "synonyms": [
-      "Transformer",
-      "Transformers"
-    ]
-  },
-  {
-    "id": "skill-2c4e6f6c46954cd6",
-    "name": "GPT",
-    "synonyms": [
-      "GPT"
-    ]
-  },
-  {
-    "id": "skill-2e3023678e5977e8",
-    "name": "Bert",
-    "synonyms": [
-      "Bert",
-      "BERT"
-    ]
-  },
-  {
-    "id": "skill-d0a1babe92a2e063",
-    "name": "LSTM",
-    "synonyms": [
-      "LSTM"
-    ]
-  },
-  {
-    "id": "skill-32c9dfd45151bbc3",
-    "name": "数据挖掘",
-    "synonyms": [
-      "数据挖掘"
-    ]
-  },
-  {
-    "id": "skill-2df7697dbb612878",
-    "name": "智能体",
-    "synonyms": [
-      "智能体"
-    ]
-  },
-  {
-    "id": "skill-cf93c46e2af92a29",
-    "name": "数据集构建",
-    "synonyms": [
-      "数据集构建"
-    ]
-  },
-  {
-    "id": "skill-615bf7926ac69b16",
-    "name": "大模型评测",
-    "synonyms": [
-      "大模型评测"
-    ]
-  },
-  {
-    "id": "skill-bd6418862e36bf1e",
-    "name": "大模型应用算法",
-    "synonyms": [
-      "大模型应用算法"
-    ]
-  },
-  {
-    "id": "skill-f46977b7651f9e9b",
-    "name": "多模态大模型",
-    "synonyms": [
-      "多模态大模型"
-    ]
-  },
-  {
-    "id": "skill-5ef4c8367834ddb0",
-    "name": "LLM模型训练",
-    "synonyms": [
-      "LLM模型训练"
-    ]
-  },
-  {
-    "id": "skill-f82f60c9bfcdf374",
-    "name": "LLM模型调优",
-    "synonyms": [
-      "LLM模型调优"
-    ]
-  },
-  {
-    "id": "skill-f1deb75fa21d3c47",
-    "name": "C++",
-    "synonyms": [
-      "C++"
-    ]
-  },
-  {
-    "id": "skill-b723f2bd5d265237",
-    "name": "数据爬取",
-    "synonyms": [
-      "数据爬取"
-    ]
-  },
-  {
-    "id": "skill-076030a19a15986c",
-    "name": "数据清洗",
-    "synonyms": [
-      "数据清洗"
-    ]
-  },
-  {
-    "id": "skill-400f80f7690d9950",
-    "name": "数据标注",
-    "synonyms": [
-      "数据标注"
-    ]
-  },
-  {
-    "id": "skill-e1d8c4c0ac6232a7",
-    "name": "模型集成",
-    "synonyms": [
-      "模型集成"
-    ]
-  },
-  {
-    "id": "skill-54219c1a8f39b789",
-    "name": "模型部署",
-    "synonyms": [
-      "模型部署"
-    ]
-  },
-  {
-    "id": "skill-fab6880784313bb8",
-    "name": "NLP技术",
-    "synonyms": [
-      "NLP技术"
-    ]
-  },
-  {
-    "id": "skill-e35507459c904312",
-    "name": "提示工程",
-    "synonyms": [
-      "提示工程"
-    ]
-  },
-  {
-    "id": "skill-e496901261121286",
-    "name": "MCP架构",
-    "synonyms": [
-      "MCP架构"
-    ]
-  },
-  {
-    "id": "skill-70958db5cbcf91f8",
-    "name": "模块接口规范设计",
-    "synonyms": [
-      "模块接口规范设计"
-    ]
-  },
-  {
-    "id": "skill-02f7b02d6ca729d2",
-    "name": "工作流编排",
-    "synonyms": [
-      "工作流编排"
-    ]
-  },
-  {
-    "id": "skill-333c0e125f1a7035",
-    "name": "AI开发工具",
-    "synonyms": [
-      "AI开发工具"
-    ]
-  },
-  {
-    "id": "skill-fbfa7bc09e9ba73e",
-    "name": "API集成",
-    "synonyms": [
-      "API集成"
-    ]
-  },
-  {
-    "id": "skill-48e62a1980d45b10",
-    "name": "工具学习",
-    "synonyms": [
-      "工具学习"
-    ]
-  },
-  {
-    "id": "skill-674900a77b798af1",
-    "name": "LLM",
-    "synonyms": [
-      "LLM"
-    ]
-  },
-  {
-    "id": "skill-c7bdea3142254923",
-    "name": "Prompt Engineering",
-    "synonyms": [
-      "Prompt Engineering"
-    ]
-  },
-  {
-    "id": "skill-783095dae27b6318",
-    "name": "Fine-tuning",
-    "synonyms": [
-      "Fine-tuning"
-    ]
-  },
-  {
-    "id": "skill-bbef28c9ea693db8",
-    "name": "LlamaIndex",
-    "synonyms": [
-      "LlamaIndex"
-    ]
-  },
-  {
-    "id": "skill-eae0788c45723861",
-    "name": "vLLM",
-    "synonyms": [
-      "vLLM",
-      "vllm",
-      "VLLM"
-    ]
-  },
-  {
-    "id": "skill-4828e60247c1636f",
-    "name": "Linux",
-    "synonyms": [
-      "Linux"
-    ]
-  },
-  {
-    "id": "skill-a37d07fe30048d3a",
-    "name": "Kubernetes",
-    "synonyms": [
-      "Kubernetes"
-    ]
-  },
-  {
-    "id": "skill-bc82e5665a1c182a",
-    "name": "DeepSpeed",
-    "synonyms": [
-      "DeepSpeed"
-    ]
-  },
-  {
-    "id": "skill-fc5aaffbb5fc53ad",
-    "name": "TensorRT-LLM",
-    "synonyms": [
-      "TensorRT-LLM",
-      "TensorRTLLM"
-    ]
-  },
-  {
-    "id": "skill-4c35576f2c588737",
-    "name": "Triton",
-    "synonyms": [
-      "Triton"
-    ]
-  },
-  {
-    "id": "skill-78437560ec1796eb",
-    "name": "RLHF",
-    "synonyms": [
-      "RLHF"
-    ]
-  },
-  {
-    "id": "skill-fed5301c150ef0a4",
-    "name": "Multi-modal models",
-    "synonyms": [
-      "Multi-modal models"
-    ]
-  },
-  {
-    "id": "skill-0290ca203f6764e1",
-    "name": "MindSpore",
-    "synonyms": [
-      "MindSpore",
-      "Mindspore"
-    ]
-  },
-  {
-    "id": "skill-d203a277f19a8f7d",
-    "name": "huggingface",
-    "synonyms": [
-      "huggingface"
-    ]
-  },
-  {
-    "id": "skill-027220eee9d0817b",
-    "name": "分布式算法",
-    "synonyms": [
-      "分布式算法"
-    ]
-  },
-  {
-    "id": "skill-893ec5802b402647",
-    "name": "大规模分布式算法",
-    "synonyms": [
-      "大规模分布式算法"
-    ]
-  },
-  {
-    "id": "skill-636396f02b6571e4",
-    "name": "n8n",
-    "synonyms": [
-      "n8n"
-    ]
-  },
-  {
-    "id": "skill-e74ce12051b9b654",
-    "name": "工作流搭建",
-    "synonyms": [
-      "工作流搭建"
-    ]
-  },
-  {
-    "id": "skill-e771f54a91e29ddc",
-    "name": "chatflow",
-    "synonyms": [
-      "chatflow"
-    ]
-  },
-  {
-    "id": "skill-53f13ae99ed53bd3",
-    "name": "MCP",
-    "synonyms": [
-      "MCP"
-    ]
-  },
-  {
-    "id": "skill-c5253ae0d0d25563",
-    "name": "深度学习平台开发",
-    "synonyms": [
-      "深度学习平台开发"
-    ]
-  },
-  {
-    "id": "skill-bbffa0f5f809f050",
-    "name": "大模型开发",
-    "synonyms": [
-      "大模型开发"
-    ]
-  },
-  {
-    "id": "skill-2d3163c8d63e3da3",
-    "name": "分布式训练",
-    "synonyms": [
-      "分布式训练"
-    ]
-  },
-  {
-    "id": "skill-b3782288b3dd220c",
-    "name": "NLP",
-    "synonyms": [
-      "NLP"
-    ]
-  },
-  {
-    "id": "skill-5d7b7e77768bfdfc",
-    "name": "多模态",
-    "synonyms": [
-      "多模态"
-    ]
-  },
-  {
-    "id": "skill-25d7abe5864ab04a",
-    "name": "大模型",
-    "synonyms": [
-      "大模型"
-    ]
-  },
-  {
-    "id": "skill-d5edfed2ce8ebf2e",
-    "name": "需求分析",
-    "synonyms": [
-      "需求分析"
-    ]
-  },
-  {
-    "id": "skill-a7e43c55c0f5a29b",
-    "name": "系统设计",
-    "synonyms": [
-      "系统设计"
-    ]
-  },
-  {
-    "id": "skill-a7a9f796e583a30e",
-    "name": "问题解决",
-    "synonyms": [
-      "问题解决"
-    ]
-  },
-  {
-    "id": "skill-8eabc876dfb9b72a",
-    "name": "学习能力",
-    "synonyms": [
-      "学习能力"
-    ]
-  },
-  {
-    "id": "skill-eeed14fad8af23d2",
-    "name": "神经网络",
-    "synonyms": [
-      "神经网络"
-    ]
-  },
-  {
-    "id": "skill-50a4122943273ad2",
-    "name": "ChatGPT",
-    "synonyms": [
-      "ChatGPT"
-    ]
-  },
-  {
-    "id": "skill-b2979bbbf5d2e9c4",
-    "name": "模型开发",
-    "synonyms": [
-      "模型开发"
-    ]
-  },
-  {
-    "id": "skill-ad9cbdd14b8b292c",
-    "name": "模型微调",
-    "synonyms": [
-      "模型微调"
-    ]
-  },
-  {
-    "id": "skill-dc10eb8bd51b9a63",
-    "name": "模型优化",
-    "synonyms": [
-      "模型优化"
-    ]
-  },
-  {
-    "id": "skill-93a27c2afa79459b",
-    "name": "检索算法",
-    "synonyms": [
-      "检索算法"
-    ]
-  },
-  {
-    "id": "skill-581ddb38e1db0966",
-    "name": "融合算法",
-    "synonyms": [
-      "融合算法"
-    ]
-  },
-  {
-    "id": "skill-6cc8519b91584e8b",
-    "name": "Go",
-    "synonyms": [
-      "Go"
-    ]
-  },
-  {
-    "id": "skill-05e5761575c48080",
-    "name": "ModelScope",
-    "synonyms": [
-      "ModelScope"
-    ]
-  },
-  {
-    "id": "skill-63ec07c37e2abece",
-    "name": "模型量化",
-    "synonyms": [
-      "模型量化"
-    ]
-  },
-  {
-    "id": "skill-25aa0e7e5877b4b6",
-    "name": "模型蒸馏",
-    "synonyms": [
-      "模型蒸馏"
-    ]
-  },
-  {
-    "id": "skill-2dffed8e6351d1a1",
-    "name": "模型加速",
-    "synonyms": [
-      "模型加速"
-    ]
-  },
-  {
-    "id": "skill-bf06a361b0a5c6b0",
-    "name": "微调",
-    "synonyms": [
-      "微调"
-    ]
-  },
-  {
-    "id": "skill-d7ba2d72a14c98f0",
-    "name": "后端开发",
-    "synonyms": [
-      "后端开发"
-    ]
-  },
-  {
-    "id": "skill-0466964109531230",
-    "name": "分布式部署",
-    "synonyms": [
-      "分布式部署"
-    ]
-  },
-  {
-    "id": "skill-6e272254514f9708",
-    "name": "容器化部署",
-    "synonyms": [
-      "容器化部署"
-    ]
-  },
-  {
-    "id": "skill-19ec3528b7f82f6d",
-    "name": "监控运维",
-    "synonyms": [
-      "监控运维"
-    ]
-  },
-  {
     "id": "skill-f1c97a0b362b39dc",
     "name": "容灾方案",
     "synonyms": [
@@ -1332,13 +18,6 @@
     "name": "弹性扩缩容",
     "synonyms": [
       "弹性扩缩容"
-    ]
-  },
-  {
-    "id": "skill-401d59551643e265",
-    "name": "自动化工具开发",
-    "synonyms": [
-      "自动化工具开发"
     ]
   },
   {
@@ -1363,27 +42,6 @@
     ]
   },
   {
-    "id": "skill-e1725554fe237da3",
-    "name": "分布式计算",
-    "synonyms": [
-      "分布式计算"
-    ]
-  },
-  {
-    "id": "skill-00af04cab01aa09d",
-    "name": "分布式系统开发",
-    "synonyms": [
-      "分布式系统开发"
-    ]
-  },
-  {
-    "id": "skill-2bc6f890600cd0e1",
-    "name": "系统集成",
-    "synonyms": [
-      "系统集成"
-    ]
-  },
-  {
     "id": "skill-b4d8289c3333c7ef",
     "name": "并行计算",
     "synonyms": [
@@ -1391,11 +49,11 @@
     ]
   },
   {
-    "id": "skill-ea49523d744c40bc",
-    "name": "GPU",
+    "id": "skill-47c09ee7784131a4",
+    "name": "GPU编程",
     "synonyms": [
       "GPU",
-      "GPGPU"
+      "GPU编程"
     ]
   },
   {
@@ -1409,7 +67,8 @@
     "id": "skill-6b23c0d5f35d1b11",
     "name": "C",
     "synonyms": [
-      "C"
+      "C",
+      "R"
     ]
   },
   {
@@ -1417,35 +76,10 @@
     "name": "Shell脚本",
     "synonyms": [
       "Shell脚本",
-      "shell脚本"
-    ]
-  },
-  {
-    "id": "skill-ee2b979c4c0b621e",
-    "name": "iOS开发",
-    "synonyms": [
-      "iOS开发"
-    ]
-  },
-  {
-    "id": "skill-80f755780d2e71d3",
-    "name": "Mac OS X开发",
-    "synonyms": [
-      "Mac OS X开发"
-    ]
-  },
-  {
-    "id": "skill-5d8ec6f62009eef7",
-    "name": "数据分析",
-    "synonyms": [
-      "数据分析"
-    ]
-  },
-  {
-    "id": "skill-84f1a53f97f12db5",
-    "name": "编程",
-    "synonyms": [
-      "编程"
+      "Shell脚本编程",
+      "shell脚本",
+      "Shell",
+      "脚本语言"
     ]
   },
   {
@@ -1453,34 +87,6 @@
     "name": "版本控制",
     "synonyms": [
       "版本控制"
-    ]
-  },
-  {
-    "id": "skill-df2fe412e0691a9f",
-    "name": "广告算法",
-    "synonyms": [
-      "广告算法"
-    ]
-  },
-  {
-    "id": "skill-3c1109d2f0a392ee",
-    "name": "搜索算法",
-    "synonyms": [
-      "搜索算法"
-    ]
-  },
-  {
-    "id": "skill-06231185b611b9db",
-    "name": "推荐算法",
-    "synonyms": [
-      "推荐算法"
-    ]
-  },
-  {
-    "id": "skill-6e7c7cc1de33c162",
-    "name": "C/C++",
-    "synonyms": [
-      "C/C++"
     ]
   },
   {
@@ -1498,33 +104,12 @@
     ]
   },
   {
-    "id": "skill-841dda20ea826b6c",
-    "name": "机器学习算法",
-    "synonyms": [
-      "机器学习算法"
-    ]
-  },
-  {
-    "id": "skill-21ba1f6852aee8b6",
-    "name": "图像处理",
-    "synonyms": [
-      "图像处理"
-    ]
-  },
-  {
-    "id": "skill-e8c9d57ceeb9ec35",
-    "name": "推理优化",
-    "synonyms": [
-      "推理优化"
-    ]
-  },
-  {
     "id": "skill-20f3bd11a0565a60",
     "name": "NumPy",
     "synonyms": [
       "NumPy",
       "Numpy",
-      "协同过滤"
+      "SciPy"
     ]
   },
   {
@@ -1533,13 +118,6 @@
     "synonyms": [
       "Pandas",
       "pandas"
-    ]
-  },
-  {
-    "id": "skill-d36e4c5559c5de76",
-    "name": "数据挖掘算法",
-    "synonyms": [
-      "数据挖掘算法"
     ]
   },
   {
@@ -1564,39 +142,23 @@
     ]
   },
   {
-    "id": "skill-ca777c967ff9ada9",
-    "name": "机器/深度学习建模",
-    "synonyms": [
-      "机器/深度学习建模"
-    ]
-  },
-  {
     "id": "skill-e6910bd404b0f318",
     "name": "OpenCV",
     "synonyms": [
-      "OpenCV"
+      "OpenCV",
+      "OpenAI",
+      "Open3D",
+      "OpenGL",
+      "OpenCL"
     ]
   },
   {
-    "id": "skill-0abe526a29c05cc3",
-    "name": "开源算法",
-    "synonyms": [
-      "开源算法"
-    ]
-  },
-  {
-    "id": "skill-b74b361892c8a003",
-    "name": "Matlab",
+    "id": "skill-cdf74c872e4cd3cd",
+    "name": "Matplotlib",
     "synonyms": [
       "Matlab",
+      "Matplotlib",
       "MATLAB"
-    ]
-  },
-  {
-    "id": "skill-8c2574892063f995",
-    "name": "R",
-    "synonyms": [
-      "R"
     ]
   },
   {
@@ -1616,26 +178,32 @@
     ]
   },
   {
-    "id": "skill-af48338f0994e599",
-    "name": "Hive",
+    "id": "skill-8fa6b88e90aa6e57",
+    "name": "HiveSQL",
     "synonyms": [
       "Hive",
+      "HiveSQL",
       "hive"
     ]
   },
   {
-    "id": "skill-529bc3b07127ecb7",
-    "name": "Spark",
+    "id": "skill-6ff8f164717cd980",
+    "name": "Spark MLLib",
     "synonyms": [
       "Spark",
-      "spark"
+      "Spark MLLib",
+      "SparkSQL",
+      "spark",
+      "SparkML",
+      "Spark MLlib"
     ]
   },
   {
     "id": "skill-6f338c13e3a27831",
     "name": "Flink",
     "synonyms": [
-      "Flink"
+      "Flink",
+      "Flink CDC"
     ]
   },
   {
@@ -1650,63 +218,33 @@
     "id": "skill-6cab6d272b4dad91",
     "name": "ETL",
     "synonyms": [
-      "ETL"
+      "ETL",
+      "ETL工具",
+      "ETL开发",
+      "ETL技术"
     ]
   },
   {
-    "id": "skill-b60cf6b3d0c2e5c2",
-    "name": "数据仓库建模",
+    "id": "skill-42552bc7f40b7e25",
+    "name": "时间序列建模",
     "synonyms": [
-      "数据仓库建模"
-    ]
-  },
-  {
-    "id": "skill-25d0604098bddba5",
-    "name": "优化算法",
-    "synonyms": [
-      "优化算法"
-    ]
-  },
-  {
-    "id": "skill-cc62adf86f054c28",
-    "name": "海量数据处理",
-    "synonyms": [
-      "海量数据处理"
-    ]
-  },
-  {
-    "id": "skill-dadfd58d24e42cec",
-    "name": "统计建模",
-    "synonyms": [
-      "统计建模"
-    ]
-  },
-  {
-    "id": "skill-a716b567c19da3cc",
-    "name": "英文文献阅读",
-    "synonyms": [
-      "英文文献阅读"
-    ]
-  },
-  {
-    "id": "skill-6e867432688c93db",
-    "name": "机器学习建模",
-    "synonyms": [
-      "机器学习建模"
-    ]
-  },
-  {
-    "id": "skill-f1306195ec180fdd",
-    "name": "机器学习模型",
-    "synonyms": [
-      "机器学习模型"
-    ]
-  },
-  {
-    "id": "skill-7f334965198dca77",
-    "name": "统计分析",
-    "synonyms": [
-      "统计分析"
+      "统计建模",
+      "统计分析",
+      "建模",
+      "时间序列建模",
+      "数学建模",
+      "数学统计",
+      "时序模型",
+      "时间序列分析",
+      "多元时间序列分析",
+      "三维建模",
+      "模型构建",
+      "数学",
+      "时序数据算法",
+      "量化建模",
+      "时间序列预测",
+      "预测建模",
+      "风控建模"
     ]
   },
   {
@@ -1717,18 +255,12 @@
     ]
   },
   {
-    "id": "skill-cdf74c872e4cd3cd",
-    "name": "Matplotlib",
-    "synonyms": [
-      "Matplotlib"
-    ]
-  },
-  {
     "id": "skill-197b0ff11cd452f0",
     "name": "scikit-learn",
     "synonyms": [
       "scikit-learn",
       "Scikit-learn",
+      "sk-learn",
       "Scikit-Learn"
     ]
   },
@@ -1744,85 +276,48 @@
     "id": "skill-a49890a606bd5e66",
     "name": "SVM",
     "synonyms": [
-      "SVM"
-    ]
-  },
-  {
-    "id": "skill-47c09ee7784131a4",
-    "name": "GPU编程",
-    "synonyms": [
-      "GPU编程"
+      "SVM",
+      "MVC",
+      "MVVM"
     ]
   },
   {
     "id": "skill-2126e14003278913",
     "name": "生成式人工智能",
     "synonyms": [
-      "生成式人工智能"
+      "生成式人工智能",
+      "生成式模型",
+      "图像生成模型",
+      "三维模型生成",
+      "生成式AI解决方案",
+      "生成式AI"
     ]
   },
   {
-    "id": "skill-352cbb71c6dc9538",
-    "name": "物理仿真",
+    "id": "skill-29e58a728c5f80c2",
+    "name": "电化学仿真",
     "synonyms": [
-      "物理仿真"
-    ]
-  },
-  {
-    "id": "skill-d47575388e54d6da",
-    "name": "仿真软件",
-    "synonyms": [
-      "仿真软件"
-    ]
-  },
-  {
-    "id": "skill-c8a20d5fd2113fc9",
-    "name": "团队合作",
-    "synonyms": [
-      "团队合作"
+      "物理仿真",
+      "仿真软件",
+      "电化学仿真"
     ]
   },
   {
     "id": "skill-490118143f0c4ffb",
     "name": "特征工程",
     "synonyms": [
-      "特征工程"
+      "特征工程",
+      "特征提取"
     ]
   },
   {
     "id": "skill-e3da5420025c0915",
     "name": "数据可视化",
     "synonyms": [
-      "数据可视化"
-    ]
-  },
-  {
-    "id": "skill-29f11dbc633f60ef",
-    "name": "GPT-4",
-    "synonyms": [
-      "GPT-4"
-    ]
-  },
-  {
-    "id": "skill-8b7d1a3187ab355d",
-    "name": "OpenAI",
-    "synonyms": [
-      "OpenAI",
-      "OpenAI API"
-    ]
-  },
-  {
-    "id": "skill-5aeed17afe2bd10b",
-    "name": "图像识别",
-    "synonyms": [
-      "图像识别"
-    ]
-  },
-  {
-    "id": "skill-7c2240c03ec21c80",
-    "name": "英语读写",
-    "synonyms": [
-      "英语读写"
+      "数据可视化",
+      "Data Architecture",
+      "Data Visualisation",
+      "Data Visualization"
     ]
   },
   {
@@ -1836,7 +331,8 @@
     "id": "skill-e5dda24ce58eb3e1",
     "name": "创新思维",
     "synonyms": [
-      "创新思维"
+      "创新思维",
+      "创造性思维"
     ]
   },
   {
@@ -1850,14 +346,20 @@
     "id": "skill-7542ea2c19e36906",
     "name": "线性规划",
     "synonyms": [
-      "线性规划"
+      "线性规划",
+      "轨迹规划"
     ]
   },
   {
     "id": "skill-fb3a056443975b53",
     "name": "目标分类识别",
     "synonyms": [
-      "目标分类识别"
+      "目标分类识别",
+      "目标检测",
+      "目标定位",
+      "智能目标检测",
+      "目标行为分析",
+      "目标跟踪"
     ]
   },
   {
@@ -1868,73 +370,35 @@
     ]
   },
   {
-    "id": "skill-2f8d0e71421992b1",
-    "name": "代码开发能力",
-    "synonyms": [
-      "代码开发能力"
-    ]
-  },
-  {
-    "id": "skill-067d4916f011aea6",
-    "name": "算法优化",
-    "synonyms": [
-      "算法优化"
-    ]
-  },
-  {
-    "id": "skill-297a7a1fd8e237a8",
-    "name": "TensorRT",
-    "synonyms": [
-      "TensorRT"
-    ]
-  },
-  {
-    "id": "skill-bd9554fbebf2c24c",
-    "name": "模型压缩",
-    "synonyms": [
-      "模型压缩"
-    ]
-  },
-  {
     "id": "skill-5a5a36794f858ac9",
     "name": "边缘计算框架",
     "synonyms": [
-      "边缘计算框架"
+      "边缘计算框架",
+      "边缘推理部署",
+      "边缘计算"
     ]
   },
   {
-    "id": "skill-a7056a455639d1c7",
-    "name": "SQL",
+    "id": "skill-c8d61c28ed91dffc",
+    "name": "SQL Server",
     "synonyms": [
-      "SQL"
-    ]
-  },
-  {
-    "id": "skill-6529b90d974c09df",
-    "name": "LLM微调",
-    "synonyms": [
-      "LLM微调"
-    ]
-  },
-  {
-    "id": "skill-e4a2ec1d9359f770",
-    "name": "数据建模",
-    "synonyms": [
-      "数据建模"
-    ]
-  },
-  {
-    "id": "skill-7ca26638152962a2",
-    "name": "数据仓库设计",
-    "synonyms": [
-      "数据仓库设计"
+      "SQL",
+      "NoSQL",
+      "SQL Server",
+      "MySQL",
+      "RDBMS",
+      "MYSQL",
+      "PostgreSQL",
+      "MSSQL"
     ]
   },
   {
     "id": "skill-279b44d2ab4b40c0",
     "name": "Agents",
     "synonyms": [
-      "Agents"
+      "Agents",
+      "Multi-Agent",
+      "复杂Agent协作"
     ]
   },
   {
@@ -1945,13 +409,6 @@
     ]
   },
   {
-    "id": "skill-6bd797a5cd2cde50",
-    "name": "英语科技文档阅读",
-    "synonyms": [
-      "英语科技文档阅读"
-    ]
-  },
-  {
     "id": "skill-071ce6610a8dff67",
     "name": "算法应用工程化",
     "synonyms": [
@@ -1959,60 +416,10 @@
     ]
   },
   {
-    "id": "skill-fe51b92744df14e2",
-    "name": "神经网络算法",
-    "synonyms": [
-      "神经网络算法"
-    ]
-  },
-  {
-    "id": "skill-595775f8f9fc4539",
-    "name": "大模型应用",
-    "synonyms": [
-      "大模型应用"
-    ]
-  },
-  {
-    "id": "skill-edc8188895a17823",
-    "name": "机器学习理论基础",
-    "synonyms": [
-      "机器学习理论",
-      "机器学习理论基础"
-    ]
-  },
-  {
     "id": "skill-e305d6e198668944",
     "name": "智能工艺控制算法",
     "synonyms": [
       "智能工艺控制算法"
-    ]
-  },
-  {
-    "id": "skill-6db749a7881379f5",
-    "name": "生成式模型",
-    "synonyms": [
-      "生成式模型"
-    ]
-  },
-  {
-    "id": "skill-99c0b84e7616df4c",
-    "name": "预测模型",
-    "synonyms": [
-      "预测模型"
-    ]
-  },
-  {
-    "id": "skill-161332dd5ba244f1",
-    "name": "人工智能",
-    "synonyms": [
-      "人工智能"
-    ]
-  },
-  {
-    "id": "skill-331bdb8dedbb5625",
-    "name": "时序模型",
-    "synonyms": [
-      "时序模型"
     ]
   },
   {
@@ -2037,24 +444,48 @@
     ]
   },
   {
-    "id": "skill-aa0aa713a4561495",
-    "name": "DeepConvNet",
-    "synonyms": [
-      "DeepConvNet"
-    ]
-  },
-  {
-    "id": "skill-443457cd8001c997",
-    "name": "神经科学",
-    "synonyms": [
-      "神经科学"
-    ]
-  },
-  {
     "id": "skill-212566bc3f677b47",
     "name": "信号预处理",
     "synonyms": [
-      "信号预处理"
+      "信号预处理",
+      "信号处理",
+      "数字信号处理",
+      "数据分析",
+      "统计分析",
+      "机器学习",
+      "数据可视化",
+      "时间序列分析",
+      "大数据",
+      "数据库",
+      "数据挖掘",
+      "Data Preprocessing",
+      "数据清洗",
+      "数据建模",
+      "数据采集",
+      "数据抽取",
+      "数据处理",
+      "数据结构",
+      "业务数据分析",
+      "数据仓库",
+      "数据预处理",
+      "数据质量控制",
+      "数据敏感",
+      "数据质量评估",
+      "预测分析",
+      "数字分析",
+      "数据安全",
+      "Data Analytics",
+      "支付数据分析",
+      "数据可视化工具",
+      "数据合成",
+      "数据分析方法论",
+      "数据评价",
+      "数据解释",
+      "数据科学",
+      "大数据处理",
+      "Data Analysis",
+      "Data Exploration",
+      "数据应用产品研发"
     ]
   },
   {
@@ -2075,7 +506,8 @@
     "id": "skill-69f049c34a6c0d70",
     "name": "小波变换",
     "synonyms": [
-      "小波变换"
+      "小波变换",
+      "小波分析"
     ]
   },
   {
@@ -2124,7 +556,8 @@
     "id": "skill-ae2960c0b15f1b5f",
     "name": "自监督学习",
     "synonyms": [
-      "自监督学习"
+      "自监督学习",
+      "自监督/多模态弱监督"
     ]
   },
   {
@@ -2142,41 +575,6 @@
     ]
   },
   {
-    "id": "skill-dd13746a559f09dc",
-    "name": "AI系统架构设计",
-    "synonyms": [
-      "AI系统架构设计"
-    ]
-  },
-  {
-    "id": "skill-d968145ff29c5a25",
-    "name": "容器化技术",
-    "synonyms": [
-      "容器化技术"
-    ]
-  },
-  {
-    "id": "skill-1cb676165ac8d0c9",
-    "name": "网络运维",
-    "synonyms": [
-      "网络运维"
-    ]
-  },
-  {
-    "id": "skill-e0678b6faaa7ac1e",
-    "name": "服务器运维",
-    "synonyms": [
-      "服务器运维"
-    ]
-  },
-  {
-    "id": "skill-cf5fbef922b8091a",
-    "name": "AI开发经验",
-    "synonyms": [
-      "AI开发经验"
-    ]
-  },
-  {
     "id": "skill-80a3026e70143956",
     "name": "粤语听说",
     "synonyms": [
@@ -2184,38 +582,33 @@
     ]
   },
   {
-    "id": "skill-8e277b9ad0c906a9",
-    "name": "金融行业项目经验",
+    "id": "skill-b982e3b55cf4bf2a",
+    "name": "Data Mining",
     "synonyms": [
-      "金融行业项目经验"
-    ]
-  },
-  {
-    "id": "skill-5508497e78f6999e",
-    "name": "云计算认证",
-    "synonyms": [
-      "云计算认证"
-    ]
-  },
-  {
-    "id": "skill-3dbaf5181fa85baf",
-    "name": "NoSQL",
-    "synonyms": [
-      "NoSQL"
-    ]
-  },
-  {
-    "id": "skill-f1ce490047c112f4",
-    "name": "数学优化",
-    "synonyms": [
-      "数学优化"
-    ]
-  },
-  {
-    "id": "skill-5b5fea64c7467736",
-    "name": "Databricks",
-    "synonyms": [
-      "Databricks"
+      "Databricks",
+      "Data Mining",
+      "机器学习",
+      "数据挖掘",
+      "算法分析",
+      "Deep Learning",
+      "Machine Learning",
+      "Data Analysis",
+      "Big Data Analysis",
+      "深度学习",
+      "Optimization Algorithms",
+      "传统机器学习算法",
+      "深度学习算法",
+      "机器学习理论基础",
+      "机器学习算法",
+      "数据分析",
+      "在线机器学习系统",
+      "人工智能",
+      "Statistical Modeling",
+      "算法",
+      "深度神经网络",
+      "深度学习框架",
+      "深度神经网络构建",
+      "Automation"
     ]
   },
   {
@@ -2247,95 +640,57 @@
     ]
   },
   {
-    "id": "skill-d1648bacbc1630a6",
-    "name": "英语",
-    "synonyms": [
-      "英语"
-    ]
-  },
-  {
     "id": "skill-7177bc630f28734f",
     "name": "推荐系统",
     "synonyms": [
-      "推荐系统"
+      "推荐系统",
+      "个性化推荐",
+      "推荐策略",
+      "推荐算法",
+      "推荐引擎开发"
     ]
   },
   {
-    "id": "skill-515559957fd3acbd",
-    "name": "分类",
+    "id": "skill-81c01149697e2dba",
+    "name": "图像分类",
     "synonyms": [
-      "分类"
-    ]
-  },
-  {
-    "id": "skill-dafffcf5a8744c9e",
-    "name": "回归",
-    "synonyms": [
-      "回归"
-    ]
-  },
-  {
-    "id": "skill-6e33e96fbca9333b",
-    "name": "聚类",
-    "synonyms": [
-      "聚类"
-    ]
-  },
-  {
-    "id": "skill-88950756718710e2",
-    "name": "算法分析",
-    "synonyms": [
-      "算法分析"
-    ]
-  },
-  {
-    "id": "skill-b6b4956a5d10e8cf",
-    "name": "建模",
-    "synonyms": [
-      "建模"
+      "分类",
+      "图像分类",
+      "图像分割",
+      "图像/视频分析",
+      "算法设计",
+      "算法落地",
+      "图像处理",
+      "图像处理算法",
+      "文本分类"
     ]
   },
   {
     "id": "skill-8bc4e223211e9430",
     "name": "回归分析",
     "synonyms": [
-      "回归分析"
+      "回归",
+      "回归分析",
+      "回归预测"
     ]
   },
   {
-    "id": "skill-2b4c4a5f83e0c95a",
-    "name": "时间序列分析",
+    "id": "skill-6e33e96fbca9333b",
+    "name": "聚类",
     "synonyms": [
-      "时间序列分析"
-    ]
-  },
-  {
-    "id": "skill-bcd41373249e3050",
-    "name": "Deep Learning",
-    "synonyms": [
-      "Deep Learning"
-    ]
-  },
-  {
-    "id": "skill-9316cd4d881e21d7",
-    "name": "Machine Learning",
-    "synonyms": [
-      "Machine Learning"
-    ]
-  },
-  {
-    "id": "skill-e325ac5651b062c0",
-    "name": "Big Data Analysis",
-    "synonyms": [
-      "Data Analysis",
-      "Big Data Analysis"
+      "聚类",
+      "聚类分析"
     ]
   },
   {
     "id": "skill-ed7edfc445a0ec6d",
     "name": "Linux/Ubuntu",
     "synonyms": [
-      "Linux/Ubuntu"
+      "Linux",
+      "Linux/Ubuntu",
+      "Linux/Unix",
+      "嵌入式Linux",
+      "Ubuntu"
     ]
   },
   {
@@ -2343,20 +698,6 @@
     "name": "Jenkins",
     "synonyms": [
       "Jenkins"
-    ]
-  },
-  {
-    "id": "skill-88ec5b959a877752",
-    "name": "Open3D",
-    "synonyms": [
-      "Open3D"
-    ]
-  },
-  {
-    "id": "skill-b982e3b55cf4bf2a",
-    "name": "Data Mining",
-    "synonyms": [
-      "Data Mining"
     ]
   },
   {
@@ -2370,14 +711,10 @@
     "id": "skill-b8e48eee8dadc00f",
     "name": "Product Development",
     "synonyms": [
-      "Product Development"
-    ]
-  },
-  {
-    "id": "skill-240f4081b446a5b5",
-    "name": "Product Testing",
-    "synonyms": [
-      "Product Testing"
+      "Product Development",
+      "Product Testing",
+      "数据产品开发",
+      "数据结构设计"
     ]
   },
   {
@@ -2416,20 +753,6 @@
     ]
   },
   {
-    "id": "skill-57703882c984dd87",
-    "name": "LLM Pre-training",
-    "synonyms": [
-      "LLM Pre-training"
-    ]
-  },
-  {
-    "id": "skill-7672f31fcc77780a",
-    "name": "Instruction Tuning",
-    "synonyms": [
-      "Instruction Tuning"
-    ]
-  },
-  {
     "id": "skill-3c26e7a5b744df5a",
     "name": "CI/CD",
     "synonyms": [
@@ -2444,27 +767,6 @@
     ]
   },
   {
-    "id": "skill-42552bc7f40b7e25",
-    "name": "时间序列建模",
-    "synonyms": [
-      "时间序列建模"
-    ]
-  },
-  {
-    "id": "skill-d7db1bafa398ed4d",
-    "name": "回归预测",
-    "synonyms": [
-      "回归预测"
-    ]
-  },
-  {
-    "id": "skill-bba764133ac15759",
-    "name": "强化学习",
-    "synonyms": [
-      "强化学习"
-    ]
-  },
-  {
     "id": "skill-719ea4d775b93e70",
     "name": "COMSOL仿真",
     "synonyms": [
@@ -2472,101 +774,58 @@
     ]
   },
   {
-    "id": "skill-29e58a728c5f80c2",
-    "name": "电化学仿真",
-    "synonyms": [
-      "电化学仿真"
-    ]
-  },
-  {
     "id": "skill-4e9260f0252d0b3d",
     "name": "工业机器人运动学建模",
     "synonyms": [
-      "工业机器人运动学建模"
-    ]
-  },
-  {
-    "id": "skill-15d486a64cd9ab64",
-    "name": "轨迹规划",
-    "synonyms": [
-      "轨迹规划"
+      "工业机器人运动学建模",
+      "运动仿真"
     ]
   },
   {
     "id": "skill-966ff645ecd7ee42",
     "name": "路径跟踪控制",
     "synonyms": [
-      "路径跟踪控制"
+      "路径跟踪控制",
+      "路径规划算法",
+      "算法优化",
+      "性能优化",
+      "路径规划与控制算法"
     ]
   },
   {
     "id": "skill-1d62d1f70c18d2c0",
     "name": "MPC",
     "synonyms": [
-      "MPC"
+      "MPC",
+      "MFC"
     ]
   },
   {
     "id": "skill-3f302a2a7158a024",
     "name": "PID",
     "synonyms": [
-      "PID"
-    ]
-  },
-  {
-    "id": "skill-64daf1febf91100a",
-    "name": "数学建模",
-    "synonyms": [
-      "数学建模"
-    ]
-  },
-  {
-    "id": "skill-64bf41b075c9fdcb",
-    "name": "数据采集",
-    "synonyms": [
-      "数据采集"
-    ]
-  },
-  {
-    "id": "skill-22b6e1abda40a5a9",
-    "name": "模型验证",
-    "synonyms": [
-      "模型验证"
+      "PID",
+      "PID算法"
     ]
   },
   {
     "id": "skill-e8c92c9f1f1bca6d",
     "name": "人脸识别",
     "synonyms": [
-      "人脸识别"
+      "人脸识别",
+      "动作识别",
+      "语音识别",
+      "语音合成",
+      "人机交互"
     ]
   },
   {
     "id": "skill-5855f640041b6ab4",
     "name": "OCR识别",
     "synonyms": [
-      "OCR识别"
-    ]
-  },
-  {
-    "id": "skill-ac357220132f4d5c",
-    "name": "目标检测",
-    "synonyms": [
-      "目标检测"
-    ]
-  },
-  {
-    "id": "skill-7439b6ba4bb58f27",
-    "name": "图像分割",
-    "synonyms": [
-      "图像分割"
-    ]
-  },
-  {
-    "id": "skill-6d9eb4bf256c86c5",
-    "name": "动作识别",
-    "synonyms": [
-      "动作识别"
+      "OCR识别",
+      "OCR",
+      "OCR系统开发"
     ]
   },
   {
@@ -2574,20 +833,6 @@
     "name": "MLOps",
     "synonyms": [
       "MLOps"
-    ]
-  },
-  {
-    "id": "skill-bf5c11962ab7573d",
-    "name": "API Design",
-    "synonyms": [
-      "API Design"
-    ]
-  },
-  {
-    "id": "skill-c8d61c28ed91dffc",
-    "name": "SQL Server",
-    "synonyms": [
-      "SQL Server"
     ]
   },
   {
@@ -2626,13 +871,6 @@
     ]
   },
   {
-    "id": "skill-ba040d45065f6fdb",
-    "name": "Deepchecks",
-    "synonyms": [
-      "Deepchecks"
-    ]
-  },
-  {
     "id": "skill-79b060a2b6513cce",
     "name": "Fairlearn",
     "synonyms": [
@@ -2648,20 +886,6 @@
     ]
   },
   {
-    "id": "skill-e183137c263e9d8a",
-    "name": "RDBMS",
-    "synonyms": [
-      "RDBMS"
-    ]
-  },
-  {
-    "id": "skill-0ff2c52ba5ce6428",
-    "name": "Optimization Algorithms",
-    "synonyms": [
-      "Optimization Algorithms"
-    ]
-  },
-  {
     "id": "skill-32dad0fd4ae570a4",
     "name": "Model Deployment",
     "synonyms": [
@@ -2669,38 +893,22 @@
     ]
   },
   {
-    "id": "skill-e19ca557ed697484",
-    "name": "传统机器学习算法",
-    "synonyms": [
-      "传统机器学习算法"
-    ]
-  },
-  {
-    "id": "skill-838db47222f45d9d",
-    "name": "深度学习算法",
-    "synonyms": [
-      "深度学习算法"
-    ]
-  },
-  {
-    "id": "skill-6485b8482a4c4614",
-    "name": "模型开发与优化",
-    "synonyms": [
-      "模型开发与优化"
-    ]
-  },
-  {
     "id": "skill-c147bedbbfd945fa",
     "name": "指导初级工程师",
     "synonyms": [
-      "指导初级工程师"
+      "指导初级工程师",
+      "指导培训"
     ]
   },
   {
     "id": "skill-db29e82a9287fc28",
     "name": "Spring",
     "synonyms": [
-      "Spring"
+      "Spring",
+      "Spring Boot",
+      "SpringCloud",
+      "SpringBoot",
+      "Spring Cloud"
     ]
   },
   {
@@ -2721,13 +929,7 @@
     "id": "skill-4b37e85c8445700f",
     "name": "LightGBM",
     "synonyms": [
-      "LightGBM"
-    ]
-  },
-  {
-    "id": "skill-b6f2156a76357c5b",
-    "name": "GBM",
-    "synonyms": [
+      "LightGBM",
       "GBM"
     ]
   },
@@ -2735,7 +937,8 @@
     "id": "skill-d6f3ebb34335d196",
     "name": "DRF",
     "synonyms": [
-      "DRF"
+      "DRF",
+      "CRF"
     ]
   },
   {
@@ -2746,31 +949,10 @@
     ]
   },
   {
-    "id": "skill-5fcc33cf364793af",
-    "name": "模型监控",
-    "synonyms": [
-      "模型监控"
-    ]
-  },
-  {
     "id": "skill-d19b2ae00a5691e5",
     "name": "ONNX",
     "synonyms": [
       "ONNX"
-    ]
-  },
-  {
-    "id": "skill-7f28bafb27bcb5f0",
-    "name": "边缘推理部署",
-    "synonyms": [
-      "边缘推理部署"
-    ]
-  },
-  {
-    "id": "skill-81c01149697e2dba",
-    "name": "图像分类",
-    "synonyms": [
-      "图像分类"
     ]
   },
   {
@@ -2809,38 +991,10 @@
     ]
   },
   {
-    "id": "skill-c79947d9a76a52bd",
-    "name": "多模态学习",
-    "synonyms": [
-      "多模态学习"
-    ]
-  },
-  {
-    "id": "skill-aa0b63126c1303bc",
-    "name": "检索",
-    "synonyms": [
-      "检索"
-    ]
-  },
-  {
     "id": "skill-6570a98f2850fb4f",
     "name": "排名",
     "synonyms": [
       "排名"
-    ]
-  },
-  {
-    "id": "skill-30f8a1680f6d4019",
-    "name": "在线机器学习系统",
-    "synonyms": [
-      "在线机器学习系统"
-    ]
-  },
-  {
-    "id": "skill-b1a2db7f45044a2a",
-    "name": "数学统计",
-    "synonyms": [
-      "数学统计"
     ]
   },
   {
@@ -2851,46 +1005,23 @@
     ]
   },
   {
-    "id": "skill-36855ea84a8b80b8",
-    "name": "计算机科学",
-    "synonyms": [
-      "计算机科学"
-    ]
-  },
-  {
     "id": "skill-d375f809b4fd4462",
     "name": "模式识别",
     "synonyms": [
-      "模式识别"
+      "模式识别",
+      "特征识别",
+      "行为识别"
     ]
   },
   {
     "id": "skill-872c1fa141b5ed8d",
     "name": "数学",
     "synonyms": [
-      "数学"
-    ]
-  },
-  {
-    "id": "skill-643840c3cd946c22",
-    "name": "sk-learn",
-    "synonyms": [
-      "sk-learn"
-    ]
-  },
-  {
-    "id": "skill-6ff8f164717cd980",
-    "name": "Spark MLLib",
-    "synonyms": [
-      "Spark MLLib",
-      "Spark MLlib"
-    ]
-  },
-  {
-    "id": "skill-7ec0b244672dfbf8",
-    "name": "SparkSQL",
-    "synonyms": [
-      "SparkSQL"
+      "数学",
+      "数学功底",
+      "数学和统计学",
+      "Statistics",
+      "Mathematics"
     ]
   },
   {
@@ -2901,20 +1032,6 @@
     ]
   },
   {
-    "id": "skill-8fa6b88e90aa6e57",
-    "name": "HiveSQL",
-    "synonyms": [
-      "HiveSQL"
-    ]
-  },
-  {
-    "id": "skill-d59fba020291caf9",
-    "name": "持续学习",
-    "synonyms": [
-      "持续学习"
-    ]
-  },
-  {
     "id": "skill-e2781de372d468cc",
     "name": "求知欲",
     "synonyms": [
@@ -2922,17 +1039,11 @@
     ]
   },
   {
-    "id": "skill-7cf89e5eb6598f4d",
-    "name": "探索能力",
-    "synonyms": [
-      "探索能力"
-    ]
-  },
-  {
     "id": "skill-37114cf01163480a",
     "name": "业界新成果敏感度",
     "synonyms": [
-      "业界新成果敏感度"
+      "业界新成果敏感度",
+      "数据敏感度"
     ]
   },
   {
@@ -2940,14 +1051,6 @@
     "name": "sklearn",
     "synonyms": [
       "sklearn"
-    ]
-  },
-  {
-    "id": "skill-211906c1c32db77e",
-    "name": "MySQL",
-    "synonyms": [
-      "MySQL",
-      "MYSQL"
     ]
   },
   {
@@ -2965,24 +1068,21 @@
     ]
   },
   {
-    "id": "skill-c184cf97f0b37445",
-    "name": "Shell脚本编程",
-    "synonyms": [
-      "Shell脚本编程"
-    ]
-  },
-  {
     "id": "skill-622515f4eb9040b8",
     "name": "气象AI算法",
     "synonyms": [
-      "气象AI算法"
+      "气象AI算法",
+      "人工智能算法",
+      "AI识别算法",
+      "视觉识别"
     ]
   },
   {
     "id": "skill-e438aa4322365ea0",
     "name": "数值模式",
     "synonyms": [
-      "数值模式"
+      "数值模式",
+      "设计模式"
     ]
   },
   {
@@ -3017,21 +1117,64 @@
     "id": "skill-7a51998a95305246",
     "name": "运动规划",
     "synonyms": [
-      "运动规划"
+      "运动规划",
+      "轨迹规划"
     ]
   },
   {
     "id": "skill-aa44e0cef5218365",
     "name": "机器人控制",
     "synonyms": [
-      "机器人控制"
-    ]
-  },
-  {
-    "id": "skill-9fba9c1e2bb2f569",
-    "name": "多模态感知",
-    "synonyms": [
-      "多模态感知"
+      "机器人控制",
+      "机器人动力学建模",
+      "力控制算法",
+      "伺服控制",
+      "电机控制",
+      "机器人系统",
+      "工业机器人算法",
+      "PLC开发",
+      "PLC",
+      "机器人控制系统",
+      "工控机与机器人间通讯",
+      "PLC与机器人间通讯",
+      "机器人调试",
+      "机器人应用软件及脚本编写",
+      "运动控制算法",
+      "算法设计",
+      "仿真测试",
+      "机械臂控制理论和算法",
+      "运动控制",
+      "自动控制",
+      "机器人应用软件二次开发",
+      "运动学建模",
+      "机械臂控制",
+      "动力学建模",
+      "机器人运动学",
+      "机构仿真",
+      "伺服电机",
+      "驱动控制技术",
+      "运动控制仿真",
+      "机器人编程语言",
+      "仿真软件",
+      "机械臂控制或规划",
+      "控制理论",
+      "自动控制理论",
+      "机器人相关技术",
+      "仿真环境",
+      "算法",
+      "控制",
+      "仿真",
+      "机器人运动控制算法",
+      "机器人导航算法",
+      "复合机器人项目",
+      "机器人软件开发",
+      "主流机器人软件产品/功能",
+      "机器人控制理论",
+      "机器人学",
+      "机器人SDK",
+      "力控",
+      "多机器人协同",
+      "聊天机器人"
     ]
   },
   {
@@ -3042,24 +1185,20 @@
     ]
   },
   {
-    "id": "skill-01ee85df2fc038ab",
-    "name": "图算法",
-    "synonyms": [
-      "图算法"
-    ]
-  },
-  {
     "id": "skill-9b0af800a00c5b1d",
     "name": "文本/数据挖掘",
     "synonyms": [
-      "文本/数据挖掘"
+      "文本/数据挖掘",
+      "数据挖掘建模"
     ]
   },
   {
-    "id": "skill-af24e9e2df72f8ac",
-    "name": "GNSS定位",
+    "id": "skill-70227c31d044aee0",
+    "name": "GNSS相关知识",
     "synonyms": [
-      "GNSS定位"
+      "GNSS定位",
+      "GNSS相关知识",
+      "GNSS算法开发"
     ]
   },
   {
@@ -3067,20 +1206,6 @@
     "name": "惯导融合",
     "synonyms": [
       "惯导融合"
-    ]
-  },
-  {
-    "id": "skill-70227c31d044aee0",
-    "name": "GNSS相关知识",
-    "synonyms": [
-      "GNSS相关知识"
-    ]
-  },
-  {
-    "id": "skill-517ba3844358c227",
-    "name": "GNSS算法开发",
-    "synonyms": [
-      "GNSS算法开发"
     ]
   },
   {
@@ -3094,28 +1219,21 @@
     "id": "skill-285927222814b4dc",
     "name": "物体检测",
     "synonyms": [
-      "物体检测"
+      "物体检测",
+      "异常检测",
+      "故障检测"
     ]
   },
   {
     "id": "skill-fe34924d143b8145",
     "name": "ROS",
     "synonyms": [
-      "ROS"
-    ]
-  },
-  {
-    "id": "skill-4bb62f21ce4b1c8f",
-    "name": "目标定位",
-    "synonyms": [
-      "目标定位"
-    ]
-  },
-  {
-    "id": "skill-28a0ec0b7b0fd31b",
-    "name": "OpenGL",
-    "synonyms": [
-      "OpenGL"
+      "ROS",
+      "ROS2",
+      "ROS/ROS2",
+      "ROS功能包开发",
+      "ROS 2",
+      "ROS驱动"
     ]
   },
   {
@@ -3126,24 +1244,12 @@
     ]
   },
   {
-    "id": "skill-485a989ad24c5912",
-    "name": "3D视觉",
-    "synonyms": [
-      "3D视觉"
-    ]
-  },
-  {
-    "id": "skill-46a793ce01d7a83f",
-    "name": "数据结构与算法",
-    "synonyms": [
-      "数据结构与算法"
-    ]
-  },
-  {
     "id": "skill-fb4a6da5c7b0ca0f",
     "name": "论文发表",
     "synonyms": [
-      "论文发表"
+      "论文发表",
+      "学术研究",
+      "学术论文发表"
     ]
   },
   {
@@ -3169,31 +1275,10 @@
     ]
   },
   {
-    "id": "skill-07c918c45956ff96",
-    "name": "人工智能算法",
-    "synonyms": [
-      "人工智能算法"
-    ]
-  },
-  {
-    "id": "skill-9ca7e9ea4dff659a",
-    "name": "路径规划算法",
-    "synonyms": [
-      "路径规划算法"
-    ]
-  },
-  {
     "id": "skill-60ab53101057f960",
     "name": "专家系统算法",
     "synonyms": [
       "专家系统算法"
-    ]
-  },
-  {
-    "id": "skill-0ed58f7d08713b73",
-    "name": "遗传算法",
-    "synonyms": [
-      "遗传算法"
     ]
   },
   {
@@ -3214,7 +1299,12 @@
     "id": "skill-6891efa1e4185db9",
     "name": "编程语言",
     "synonyms": [
-      "编程语言"
+      "编程语言",
+      "编程风格",
+      "编程习惯",
+      "Coding",
+      "系统开发",
+      "Programming"
     ]
   },
   {
@@ -3225,38 +1315,11 @@
     ]
   },
   {
-    "id": "skill-1729148f3f834410",
-    "name": "设计模式",
-    "synonyms": [
-      "设计模式"
-    ]
-  },
-  {
     "id": "skill-ad5cb31d98cb2aa9",
     "name": "多线程编程",
     "synonyms": [
-      "多线程编程"
-    ]
-  },
-  {
-    "id": "skill-a31661cd8b768725",
-    "name": "调度系统开发",
-    "synonyms": [
-      "调度系统开发"
-    ]
-  },
-  {
-    "id": "skill-27f7c8805c3eb7c7",
-    "name": "英文文献检索和阅读",
-    "synonyms": [
-      "英文文献检索和阅读"
-    ]
-  },
-  {
-    "id": "skill-75f62aa4789629ba",
-    "name": "分布式系统",
-    "synonyms": [
-      "分布式系统"
+      "多线程编程",
+      "多线程"
     ]
   },
   {
@@ -3281,20 +1344,6 @@
     ]
   },
   {
-    "id": "skill-87302efabd07d293",
-    "name": "机器视觉",
-    "synonyms": [
-      "机器视觉"
-    ]
-  },
-  {
-    "id": "skill-d366940b4a6716ea",
-    "name": "相机标定",
-    "synonyms": [
-      "相机标定"
-    ]
-  },
-  {
     "id": "skill-d4e73d679092beba",
     "name": "光源选型",
     "synonyms": [
@@ -3306,48 +1355,6 @@
     "name": "Visual Studio",
     "synonyms": [
       "Visual Studio"
-    ]
-  },
-  {
-    "id": "skill-6ebba0c271ceb36b",
-    "name": "图像/视频分析",
-    "synonyms": [
-      "图像/视频分析"
-    ]
-  },
-  {
-    "id": "skill-8c42861d3e6f96e1",
-    "name": "智能目标检测",
-    "synonyms": [
-      "智能目标检测"
-    ]
-  },
-  {
-    "id": "skill-28e5e896d7007f64",
-    "name": "特征识别",
-    "synonyms": [
-      "特征识别"
-    ]
-  },
-  {
-    "id": "skill-53886e25a48c2063",
-    "name": "目标行为分析",
-    "synonyms": [
-      "目标行为分析"
-    ]
-  },
-  {
-    "id": "skill-9fff163c0a6c301a",
-    "name": "算法仿真与开发",
-    "synonyms": [
-      "算法仿真与开发"
-    ]
-  },
-  {
-    "id": "skill-e6268cdd338a99f8",
-    "name": "算法文档编写",
-    "synonyms": [
-      "算法文档编写"
     ]
   },
   {
@@ -3375,42 +1382,93 @@
     "id": "skill-0feebe184fcaa584",
     "name": "支持向量机",
     "synonyms": [
-      "支持向量机"
+      "支持向量机",
+      "向量数据库"
     ]
   },
   {
     "id": "skill-53e82c7937d459be",
     "name": "功率预测建模",
     "synonyms": [
-      "功率预测建模"
+      "数学建模",
+      "功率预测建模",
+      "数据建模"
     ]
   },
   {
     "id": "skill-1c7d7185ba16a8a7",
     "name": "算法平台维护与优化",
     "synonyms": [
-      "算法平台维护与优化"
+      "算法平台维护与优化",
+      "算法开发支持"
     ]
   },
   {
-    "id": "skill-d32f5672144f2b29",
-    "name": "沟通能力",
+    "id": "skill-c703387c70bf7de5",
+    "name": "WinForm",
     "synonyms": [
-      "沟通能力"
+      "WinForm"
     ]
   },
   {
-    "id": "skill-5e5bea5354e3f22e",
-    "name": "OCR",
+    "id": "skill-4eae3a22f13e6759",
+    "name": "WPF",
     "synonyms": [
-      "OCR"
+      "WPF"
     ]
   },
   {
-    "id": "skill-d5d1525e8f90ddfb",
-    "name": "模型轻量化",
+    "id": "skill-45eb3fbf3f8fbd87",
+    "name": "Qt",
     "synonyms": [
-      "模型轻量化"
+      "Qt",
+      "QT"
+    ]
+  },
+  {
+    "id": "skill-7a0beaa2945802c2",
+    "name": "串口通信",
+    "synonyms": [
+      "串口通信",
+      "通信接口"
+    ]
+  },
+  {
+    "id": "skill-c56923dad50497c9",
+    "name": "TCP/IP",
+    "synonyms": [
+      "TCP/IP",
+      "TCP/UDP通信协议",
+      "TCP/UDP/HTTP"
+    ]
+  },
+  {
+    "id": "skill-dc4030f9688d6e67",
+    "name": "UDP",
+    "synonyms": [
+      "UDP"
+    ]
+  },
+  {
+    "id": "skill-dc7620ebfc35d54e",
+    "name": "Oracle",
+    "synonyms": [
+      "Oracle",
+      "Oracle开发"
+    ]
+  },
+  {
+    "id": "skill-866674eac9935a84",
+    "name": "DSP",
+    "synonyms": [
+      "DSP"
+    ]
+  },
+  {
+    "id": "skill-dcbfca4bced0a7f2",
+    "name": "FPGA",
+    "synonyms": [
+      "FPGA"
     ]
   },
   {
@@ -3421,27 +1479,6 @@
     ]
   },
   {
-    "id": "skill-4cd8ac228e3ef2ac",
-    "name": "分布式",
-    "synonyms": [
-      "分布式"
-    ]
-  },
-  {
-    "id": "skill-f04226f9720aacec",
-    "name": "安卓开发",
-    "synonyms": [
-      "安卓开发"
-    ]
-  },
-  {
-    "id": "skill-95a792201917e0b1",
-    "name": "团队管理",
-    "synonyms": [
-      "团队管理"
-    ]
-  },
-  {
     "id": "skill-bfed332e0a3ace80",
     "name": "学术研究",
     "synonyms": [
@@ -3449,66 +1486,11 @@
     ]
   },
   {
-    "id": "skill-e31bd96521b614b3",
-    "name": "数字信号处理",
+    "id": "skill-ba600c945993d706",
+    "name": "stm32单片机",
     "synonyms": [
-      "数字信号处理"
-    ]
-  },
-  {
-    "id": "skill-12a98682f5c690a3",
-    "name": "统计学习",
-    "synonyms": [
-      "统计学习"
-    ]
-  },
-  {
-    "id": "skill-b3ea8a6f6dbdd5a1",
-    "name": "团队领导",
-    "synonyms": [
-      "团队领导"
-    ]
-  },
-  {
-    "id": "skill-c70479b37286272c",
-    "name": "ETL工具",
-    "synonyms": [
-      "ETL工具"
-    ]
-  },
-  {
-    "id": "skill-5f1a0292dcf5e034",
-    "name": "机器人动力学建模",
-    "synonyms": [
-      "机器人动力学建模"
-    ]
-  },
-  {
-    "id": "skill-66d9ed158dac599c",
-    "name": "力控制算法",
-    "synonyms": [
-      "力控制算法"
-    ]
-  },
-  {
-    "id": "skill-676850515f6106d0",
-    "name": "伺服控制",
-    "synonyms": [
-      "伺服控制"
-    ]
-  },
-  {
-    "id": "skill-8d286a2e588469e1",
-    "name": "英语文献阅读",
-    "synonyms": [
-      "英语文献阅读"
-    ]
-  },
-  {
-    "id": "skill-bcc374c6c87d0c69",
-    "name": "STM32",
-    "synonyms": [
-      "STM32"
+      "STM32",
+      "stm32单片机"
     ]
   },
   {
@@ -3536,7 +1518,8 @@
     "id": "skill-96930e04ec7410ca",
     "name": "IIC",
     "synonyms": [
-      "IIC"
+      "IIC",
+      "I2C"
     ]
   },
   {
@@ -3589,27 +1572,6 @@
     ]
   },
   {
-    "id": "skill-bbb8f0286a296b32",
-    "name": "电机控制",
-    "synonyms": [
-      "电机控制"
-    ]
-  },
-  {
-    "id": "skill-a4f7cbe44e925942",
-    "name": "传感器",
-    "synonyms": [
-      "传感器"
-    ]
-  },
-  {
-    "id": "skill-416445e3f745ef66",
-    "name": "PID算法",
-    "synonyms": [
-      "PID算法"
-    ]
-  },
-  {
     "id": "skill-2889ce7ae4151040",
     "name": "扫地机",
     "synonyms": [
@@ -3617,81 +1579,37 @@
     ]
   },
   {
-    "id": "skill-8ebbdb219835ce43",
-    "name": "架构设计",
-    "synonyms": [
-      "架构设计"
-    ]
-  },
-  {
-    "id": "skill-45eb3fbf3f8fbd87",
-    "name": "Qt",
-    "synonyms": [
-      "Qt",
-      "QT"
-    ]
-  },
-  {
-    "id": "skill-ba600c945993d706",
-    "name": "stm32单片机",
-    "synonyms": [
-      "stm32单片机"
-    ]
-  },
-  {
     "id": "skill-953bfc806a06bbd3",
     "name": "arm单片机",
     "synonyms": [
-      "arm单片机"
+      "arm单片机",
+      "ARM"
     ]
   },
   {
     "id": "skill-4d0ff9fb280dba21",
     "name": "视频编码解码",
     "synonyms": [
-      "视频编码解码"
-    ]
-  },
-  {
-    "id": "skill-3c6e2cdc754d442d",
-    "name": "机器人系统",
-    "synonyms": [
-      "机器人系统"
-    ]
-  },
-  {
-    "id": "skill-9ab5313f6a73e7e8",
-    "name": "工业机器人算法",
-    "synonyms": [
-      "工业机器人算法"
-    ]
-  },
-  {
-    "id": "skill-82dfdba77731ff17",
-    "name": "产线设备控制开发",
-    "synonyms": [
-      "产线设备控制开发"
-    ]
-  },
-  {
-    "id": "skill-6b30fc82dc2968b9",
-    "name": "PLC开发",
-    "synonyms": [
-      "PLC开发"
+      "视频编码解码",
+      "编码实现"
     ]
   },
   {
     "id": "skill-5c8fd47ec16ae548",
     "name": "产线设备工作原理理解",
     "synonyms": [
-      "产线设备工作原理理解"
+      "产线设备控制开发",
+      "产线设备工作原理理解",
+      "设备驱动开发"
     ]
   },
   {
     "id": "skill-c1ee21b5331bfc5f",
     "name": "工业机器人应用二次开发",
     "synonyms": [
-      "工业机器人应用二次开发"
+      "工业机器人应用二次开发",
+      "工业机器人控制技术",
+      "工业机器人应用技术"
     ]
   },
   {
@@ -3702,17 +1620,11 @@
     ]
   },
   {
-    "id": "skill-343d852763824833",
-    "name": "AI识别算法",
-    "synonyms": [
-      "AI识别算法"
-    ]
-  },
-  {
     "id": "skill-9c25cac6d3f57bdf",
     "name": "智能工厂与制造自动化",
     "synonyms": [
-      "智能工厂与制造自动化"
+      "智能工厂与制造自动化",
+      "工业自动化"
     ]
   },
   {
@@ -3723,34 +1635,6 @@
     ]
   },
   {
-    "id": "skill-64981432f23e8e1a",
-    "name": "通信接口",
-    "synonyms": [
-      "通信接口"
-    ]
-  },
-  {
-    "id": "skill-ce1d73449bd71b54",
-    "name": "PLC",
-    "synonyms": [
-      "PLC"
-    ]
-  },
-  {
-    "id": "skill-7d660898a14197ca",
-    "name": "机器人控制系统",
-    "synonyms": [
-      "机器人控制系统"
-    ]
-  },
-  {
-    "id": "skill-fdeb5e3dd6feb47a",
-    "name": "自动化平台软件开发",
-    "synonyms": [
-      "自动化平台软件开发"
-    ]
-  },
-  {
     "id": "skill-1a852b688ee89537",
     "name": "工业机器人坐标系标定与示教",
     "synonyms": [
@@ -3758,123 +1642,47 @@
     ]
   },
   {
-    "id": "skill-f1bf6e0240b49ba7",
-    "name": "工控机与机器人间通讯",
-    "synonyms": [
-      "工控机与机器人间通讯"
-    ]
-  },
-  {
-    "id": "skill-e096498d9a9be1c8",
-    "name": "PLC与机器人间通讯",
-    "synonyms": [
-      "PLC与机器人间通讯"
-    ]
-  },
-  {
-    "id": "skill-fddc5039014f7591",
-    "name": "TCP/UDP通信协议",
-    "synonyms": [
-      "TCP/UDP通信协议"
-    ]
-  },
-  {
     "id": "skill-05fb68884eed58cf",
     "name": "线程/进程内部通信",
     "synonyms": [
-      "线程/进程内部通信"
+      "线程/进程内部通信",
+      "多线程/多进程编程"
     ]
   },
   {
-    "id": "skill-b63aaf0fd7b9dfbb",
-    "name": "上位机编程",
+    "id": "skill-7d20696725dd4ea1",
+    "name": "上位机软件开发",
     "synonyms": [
-      "上位机编程"
-    ]
-  },
-  {
-    "id": "skill-8a003c38fe7226e7",
-    "name": "机器人调试",
-    "synonyms": [
-      "机器人调试"
+      "上位机编程",
+      "上位机软件开发",
+      "嵌入式编程",
+      "嵌入式硬件系统开发",
+      "嵌入式系统开发",
+      "实时嵌入式系统",
+      "嵌入式开发",
+      "嵌入式系统"
     ]
   },
   {
     "id": "skill-a3952e8c36ca4cef",
     "name": "方案设计",
     "synonyms": [
-      "方案设计"
+      "方案设计",
+      "路径规划",
+      "规划",
+      "测试设计",
+      "自动化测试工具开发",
+      "System Design",
+      "方案编制",
+      "方案宣讲"
     ]
   },
   {
-    "id": "skill-11f83759c4f83937",
-    "name": "程序编制",
-    "synonyms": [
-      "程序编制"
-    ]
-  },
-  {
-    "id": "skill-76a827179c1cb6ae",
-    "name": "机器人应用软件及脚本编写",
-    "synonyms": [
-      "机器人应用软件及脚本编写"
-    ]
-  },
-  {
-    "id": "skill-9f59ae3da1fca24d",
-    "name": "系统部署",
-    "synonyms": [
-      "系统部署"
-    ]
-  },
-  {
-    "id": "skill-04b054d3365fcc25",
-    "name": "软件测试与调试",
-    "synonyms": [
-      "软件测试与调试"
-    ]
-  },
-  {
-    "id": "skill-96f1c2ff81d58bcc",
-    "name": "工业机器人控制技术",
-    "synonyms": [
-      "工业机器人控制技术"
-    ]
-  },
-  {
-    "id": "skill-886026fc45c1d1c7",
-    "name": "运动控制算法",
-    "synonyms": [
-      "运动控制算法"
-    ]
-  },
-  {
-    "id": "skill-8f3b34185152a7a0",
-    "name": "嵌入式硬件系统开发",
-    "synonyms": [
-      "嵌入式硬件系统开发"
-    ]
-  },
-  {
-    "id": "skill-75826641d5bc273d",
-    "name": "数学模型构建",
-    "synonyms": [
-      "数学模型构建"
-    ]
-  },
-  {
-    "id": "skill-8617e0a45eaa4d1a",
-    "name": "仿真测试",
-    "synonyms": [
-      "仿真测试"
-    ]
-  },
-  {
-    "id": "skill-4ebe6dcee2b23ba9",
-    "name": "SLAM",
+    "id": "skill-c0405972b4ca4c3e",
+    "name": "激光SLAM导航",
     "synonyms": [
       "SLAM",
-      ".NET"
+      "激光SLAM导航"
     ]
   },
   {
@@ -3892,165 +1700,23 @@
     ]
   },
   {
-    "id": "skill-57aaa8ec2c58d71d",
-    "name": "多传感器融合",
+    "id": "skill-c515e9fbe75f8829",
+    "name": "定位模块算法",
     "synonyms": [
-      "多传感器融合"
-    ]
-  },
-  {
-    "id": "skill-c0175713c0a1edca",
-    "name": "激光定位",
-    "synonyms": [
-      "激光定位"
-    ]
-  },
-  {
-    "id": "skill-3cb2b68049fadcb3",
-    "name": "机械臂控制理论和算法",
-    "synonyms": [
-      "机械臂控制理论和算法"
-    ]
-  },
-  {
-    "id": "skill-416d1db53a824a64",
-    "name": "编码实现",
-    "synonyms": [
-      "编码实现"
-    ]
-  },
-  {
-    "id": "skill-0c222bfdfc0a55a6",
-    "name": "技术文档编写",
-    "synonyms": [
-      "技术文档编写"
-    ]
-  },
-  {
-    "id": "skill-0dfec67055932113",
-    "name": "软件架构设计",
-    "synonyms": [
-      "软件架构设计"
-    ]
-  },
-  {
-    "id": "skill-870da02199f8de46",
-    "name": "传感器数据处理",
-    "synonyms": [
-      "传感器数据处理"
-    ]
-  },
-  {
-    "id": "skill-a9f33c20dd020865",
-    "name": "路径规划",
-    "synonyms": [
-      "路径规划"
-    ]
-  },
-  {
-    "id": "skill-02a3e3fba0eddcc1",
-    "name": "运动控制",
-    "synonyms": [
-      "运动控制"
-    ]
-  },
-  {
-    "id": "skill-00cc94fba412807a",
-    "name": "自动控制",
-    "synonyms": [
-      "自动控制"
-    ]
-  },
-  {
-    "id": "skill-654ca458d60fd927",
-    "name": "自动控制架构设计",
-    "synonyms": [
-      "自动控制架构设计"
+      "激光定位",
+      "定位模块算法",
+      "激光雷达",
+      "高精度定位"
     ]
   },
   {
     "id": "skill-0e0329c5da916735",
     "name": "电气控制设计",
     "synonyms": [
-      "电气控制设计"
-    ]
-  },
-  {
-    "id": "skill-2d744fb5787e6b0f",
-    "name": "项目总体规划",
-    "synonyms": [
-      "项目总体规划"
-    ]
-  },
-  {
-    "id": "skill-5f4e253f9ca1a013",
-    "name": "机器人应用软件二次开发",
-    "synonyms": [
-      "机器人应用软件二次开发"
-    ]
-  },
-  {
-    "id": "skill-bb95dab5db3d9351",
-    "name": "视觉系统软件设计",
-    "synonyms": [
-      "视觉系统软件设计"
-    ]
-  },
-  {
-    "id": "skill-7d20696725dd4ea1",
-    "name": "上位机软件开发",
-    "synonyms": [
-      "上位机软件开发"
-    ]
-  },
-  {
-    "id": "skill-4226c90bcc6f9769",
-    "name": "软件开发",
-    "synonyms": [
-      "软件开发"
-    ]
-  },
-  {
-    "id": "skill-b6fc1ca2400ae61e",
-    "name": "Linux/Unix",
-    "synonyms": [
-      "Linux/Unix"
-    ]
-  },
-  {
-    "id": "skill-ae7723bcf16ee20e",
-    "name": "ROS/ROS2",
-    "synonyms": [
-      "ROS2",
-      "ROS/ROS2"
-    ]
-  },
-  {
-    "id": "skill-ba640d344ce0a62f",
-    "name": "C++11",
-    "synonyms": [
-      "C++11"
-    ]
-  },
-  {
-    "id": "skill-91bea2fc93810871",
-    "name": "运动学建模",
-    "synonyms": [
-      "运动学建模"
-    ]
-  },
-  {
-    "id": "skill-422b0b824764639a",
-    "name": "机械臂控制",
-    "synonyms": [
-      "机械臂控制"
-    ]
-  },
-  {
-    "id": "skill-e0f7cf2b81ae147e",
-    "name": "动力学建模",
-    "synonyms": [
-      "动力学建模"
+      "电气控制设计",
+      "电气自动化",
+      "电气设计",
+      "控制工程"
     ]
   },
   {
@@ -4061,45 +1727,12 @@
     ]
   },
   {
-    "id": "skill-cbd1c86373953ea2",
-    "name": "自动化集成",
-    "synonyms": [
-      "自动化集成"
-    ]
-  },
-  {
     "id": "skill-b3ea754611cafbcc",
     "name": "计算机原理",
     "synonyms": [
-      "计算机原理"
-    ]
-  },
-  {
-    "id": "skill-b7712acf40c341ab",
-    "name": "电气自动化",
-    "synonyms": [
-      "电气自动化"
-    ]
-  },
-  {
-    "id": "skill-71e40baea72ab858",
-    "name": "电气设计",
-    "synonyms": [
-      "电气设计"
-    ]
-  },
-  {
-    "id": "skill-6fc14f4c8b3b8c30",
-    "name": "运动控制软件设计",
-    "synonyms": [
-      "运动控制软件设计"
-    ]
-  },
-  {
-    "id": "skill-c233a22503344dff",
-    "name": "机器人运动学",
-    "synonyms": [
-      "机器人运动学"
+      "计算机原理",
+      "机械原理",
+      "计算机"
     ]
   },
   {
@@ -4110,45 +1743,10 @@
     ]
   },
   {
-    "id": "skill-cf43cd038b1a533b",
-    "name": "机构仿真",
-    "synonyms": [
-      "机构仿真"
-    ]
-  },
-  {
-    "id": "skill-2657c0dd262290ce",
-    "name": "代码开发",
-    "synonyms": [
-      "代码开发"
-    ]
-  },
-  {
     "id": "skill-a064a6e578e285d6",
     "name": "单元测试",
     "synonyms": [
       "单元测试"
-    ]
-  },
-  {
-    "id": "skill-fb6053581680d0e1",
-    "name": "Bug修复",
-    "synonyms": [
-      "Bug修复"
-    ]
-  },
-  {
-    "id": "skill-ceca34cff2e9afc6",
-    "name": "机械原理",
-    "synonyms": [
-      "机械原理"
-    ]
-  },
-  {
-    "id": "skill-15416d42733462bb",
-    "name": "伺服电机",
-    "synonyms": [
-      "伺服电机"
     ]
   },
   {
@@ -4173,45 +1771,21 @@
     ]
   },
   {
-    "id": "skill-c657774a0b7e5c71",
-    "name": "驱动控制技术",
-    "synonyms": [
-      "驱动控制技术"
-    ]
-  },
-  {
     "id": "skill-605df255f9db3761",
     "name": "通信与总线协议",
     "synonyms": [
-      "通信与总线协议"
-    ]
-  },
-  {
-    "id": "skill-bee1fee2d06d4965",
-    "name": "运动控制仿真",
-    "synonyms": [
-      "运动控制仿真"
+      "通信与总线协议",
+      "网络通信",
+      "通信协议",
+      "通信系统协议"
     ]
   },
   {
     "id": "skill-16ce142c9b25b9ea",
     "name": "产品结构总体设计",
     "synonyms": [
-      "产品结构总体设计"
-    ]
-  },
-  {
-    "id": "skill-b37a7fe98a59fa13",
-    "name": "产品外形设计",
-    "synonyms": [
+      "产品结构总体设计",
       "产品外形设计"
-    ]
-  },
-  {
-    "id": "skill-d3bb43c3e75670b5",
-    "name": "结构件设计",
-    "synonyms": [
-      "结构件设计"
     ]
   },
   {
@@ -4225,35 +1799,10 @@
     "id": "skill-d2d2976284e88d41",
     "name": "沟通协调",
     "synonyms": [
-      "沟通协调"
-    ]
-  },
-  {
-    "id": "skill-d0610c00e0886bb8",
-    "name": "编程风格",
-    "synonyms": [
-      "编程风格"
-    ]
-  },
-  {
-    "id": "skill-74538fdea8ccc7d2",
-    "name": "团队精神",
-    "synonyms": [
-      "团队精神"
-    ]
-  },
-  {
-    "id": "skill-040228846ead4a41",
-    "name": "C#",
-    "synonyms": [
-      "C#"
-    ]
-  },
-  {
-    "id": "skill-0dae31d95c7d6d6f",
-    "name": "Windows软件开发",
-    "synonyms": [
-      "Windows软件开发"
+      "沟通协调",
+      "沟通技巧",
+      "Communication",
+      "沟通能力"
     ]
   },
   {
@@ -4264,17 +1813,11 @@
     ]
   },
   {
-    "id": "skill-c56923dad50497c9",
-    "name": "TCP/IP",
-    "synonyms": [
-      "TCP/IP"
-    ]
-  },
-  {
     "id": "skill-51b197a508373975",
     "name": "MQTT",
     "synonyms": [
-      "MQTT"
+      "MQTT",
+      "MQTT协议"
     ]
   },
   {
@@ -4292,20 +1835,6 @@
     ]
   },
   {
-    "id": "skill-cc52d03280b7034c",
-    "name": "PostgreSQL",
-    "synonyms": [
-      "PostgreSQL"
-    ]
-  },
-  {
-    "id": "skill-95e9712c17a3acd8",
-    "name": "嵌入式系统开发",
-    "synonyms": [
-      "嵌入式系统开发"
-    ]
-  },
-  {
     "id": "skill-1a7fc37899dc8765",
     "name": "RTOS",
     "synonyms": [
@@ -4320,52 +1849,12 @@
     ]
   },
   {
-    "id": "skill-2a8574cf819b5978",
-    "name": "视觉处理",
-    "synonyms": [
-      "视觉处理"
-    ]
-  },
-  {
     "id": "skill-4ccb4479de0219a6",
     "name": "物联网平台对接",
     "synonyms": [
-      "物联网平台对接"
-    ]
-  },
-  {
-    "id": "skill-79b537ce9e99199e",
-    "name": "代码调试与优化",
-    "synonyms": [
-      "代码调试与优化"
-    ]
-  },
-  {
-    "id": "skill-6a7596cd4c287c8b",
-    "name": "嵌入式Linux",
-    "synonyms": [
-      "嵌入式Linux"
-    ]
-  },
-  {
-    "id": "skill-5b01889e9b6285de",
-    "name": "GUI开发",
-    "synonyms": [
-      "GUI开发"
-    ]
-  },
-  {
-    "id": "skill-fecb99eb44f320a2",
-    "name": "网络通信",
-    "synonyms": [
-      "网络通信"
-    ]
-  },
-  {
-    "id": "skill-a3ba53fadbaed9d7",
-    "name": "调试",
-    "synonyms": [
-      "调试"
+      "物联网平台对接",
+      "物联网基础架构",
+      "物联网技术"
     ]
   },
   {
@@ -4383,66 +1872,10 @@
     ]
   },
   {
-    "id": "skill-58c4ba867ca0da92",
-    "name": "机器人编程语言",
-    "synonyms": [
-      "机器人编程语言"
-    ]
-  },
-  {
-    "id": "skill-a7c51de942b25fe4",
-    "name": "焊接传感器",
-    "synonyms": [
-      "焊接传感器"
-    ]
-  },
-  {
     "id": "skill-020c785dd37e715a",
     "name": "焊缝寻位跟踪技术",
     "synonyms": [
       "焊缝寻位跟踪技术"
-    ]
-  },
-  {
-    "id": "skill-df1eb479de3ed89c",
-    "name": "机械臂控制或规划",
-    "synonyms": [
-      "机械臂控制或规划"
-    ]
-  },
-  {
-    "id": "skill-b4090b3a3fa24ae4",
-    "name": "控制理论",
-    "synonyms": [
-      "控制理论"
-    ]
-  },
-  {
-    "id": "skill-2662d175e803ec41",
-    "name": "实时嵌入式系统",
-    "synonyms": [
-      "实时嵌入式系统"
-    ]
-  },
-  {
-    "id": "skill-20a2e2ec887d45f3",
-    "name": "传感器融合",
-    "synonyms": [
-      "传感器融合"
-    ]
-  },
-  {
-    "id": "skill-9b4558b47c01c11d",
-    "name": "自动控制理论",
-    "synonyms": [
-      "自动控制理论"
-    ]
-  },
-  {
-    "id": "skill-480b331e76d48531",
-    "name": "机器人相关技术",
-    "synonyms": [
-      "机器人相关技术"
     ]
   },
   {
@@ -4453,24 +1886,11 @@
     ]
   },
   {
-    "id": "skill-710eb4f4d7f72b0e",
-    "name": "Ubuntu",
-    "synonyms": [
-      "Ubuntu"
-    ]
-  },
-  {
     "id": "skill-50f3753c29d3c8be",
     "name": "MoveIt!",
     "synonyms": [
-      "MoveIt!"
-    ]
-  },
-  {
-    "id": "skill-a5e79b390dacec17",
-    "name": "仿真环境",
-    "synonyms": [
-      "仿真环境"
+      "MoveIt!",
+      "MoveIt"
     ]
   },
   {
@@ -4481,17 +1901,11 @@
     ]
   },
   {
-    "id": "skill-d1acfaeabba4f4d5",
-    "name": "IsaacSim",
+    "id": "skill-fb9d291afdfa8d1e",
+    "name": "NVIDIA Isaac Sim",
     "synonyms": [
-      "IsaacSim"
-    ]
-  },
-  {
-    "id": "skill-4a47a7f883286d92",
-    "name": "软件工程",
-    "synonyms": [
-      "软件工程"
+      "IsaacSim",
+      "NVIDIA Isaac Sim"
     ]
   },
   {
@@ -4502,45 +1916,10 @@
     ]
   },
   {
-    "id": "skill-82e38381b91e9345",
-    "name": "嵌入式编程",
-    "synonyms": [
-      "嵌入式编程"
-    ]
-  },
-  {
     "id": "skill-f389c007c430285e",
     "name": "感知",
     "synonyms": [
       "感知"
-    ]
-  },
-  {
-    "id": "skill-29d38fc5d43c11f4",
-    "name": "规划",
-    "synonyms": [
-      "规划"
-    ]
-  },
-  {
-    "id": "skill-4f51d0285e88c4c9",
-    "name": "控制",
-    "synonyms": [
-      "控制"
-    ]
-  },
-  {
-    "id": "skill-fc9af6836017da15",
-    "name": "仿真",
-    "synonyms": [
-      "仿真"
-    ]
-  },
-  {
-    "id": "skill-a835f7356d944adb",
-    "name": "Python编程",
-    "synonyms": [
-      "Python编程"
     ]
   },
   {
@@ -4551,48 +1930,6 @@
     ]
   },
   {
-    "id": "skill-d23252db8198ad14",
-    "name": "ROS功能包开发",
-    "synonyms": [
-      "ROS功能包开发"
-    ]
-  },
-  {
-    "id": "skill-12ee0ec132185928",
-    "name": "路径规划与控制算法",
-    "synonyms": [
-      "路径规划与控制算法"
-    ]
-  },
-  {
-    "id": "skill-f46a8f205e5a2f45",
-    "name": "视觉识别",
-    "synonyms": [
-      "视觉识别"
-    ]
-  },
-  {
-    "id": "skill-630a73668b990d0e",
-    "name": "模块化设计",
-    "synonyms": [
-      "模块化设计"
-    ]
-  },
-  {
-    "id": "skill-a9124cc745c81dd4",
-    "name": "ROS 2",
-    "synonyms": [
-      "ROS 2"
-    ]
-  },
-  {
-    "id": "skill-fa2045ae6238eeba",
-    "name": "软件测试",
-    "synonyms": [
-      "软件测试"
-    ]
-  },
-  {
     "id": "skill-327fba27231bb5f1",
     "name": "DDS",
     "synonyms": [
@@ -4600,52 +1937,12 @@
     ]
   },
   {
-    "id": "skill-73359b7e1c319ca1",
-    "name": "机器人运动控制算法",
-    "synonyms": [
-      "机器人运动控制算法"
-    ]
-  },
-  {
-    "id": "skill-bd528b02b5a444e7",
-    "name": "机器人导航算法",
-    "synonyms": [
-      "机器人导航算法"
-    ]
-  },
-  {
-    "id": "skill-c515e9fbe75f8829",
-    "name": "定位模块算法",
-    "synonyms": [
-      "定位模块算法"
-    ]
-  },
-  {
-    "id": "skill-850fd9a5ebbac894",
-    "name": "ROS驱动",
-    "synonyms": [
-      "ROS驱动"
-    ]
-  },
-  {
-    "id": "skill-c0405972b4ca4c3e",
-    "name": "激光SLAM导航",
-    "synonyms": [
-      "激光SLAM导航"
-    ]
-  },
-  {
     "id": "skill-0140b5f11d58c83b",
     "name": "YOLO模型",
     "synonyms": [
-      "YOLO模型"
-    ]
-  },
-  {
-    "id": "skill-2054efadd89124c0",
-    "name": "激光雷达",
-    "synonyms": [
-      "激光雷达"
+      "YOLO模型",
+      "YOLO",
+      "Yolo"
     ]
   },
   {
@@ -4663,31 +1960,10 @@
     ]
   },
   {
-    "id": "skill-7fd6f7d7a456b5b0",
-    "name": "复合机器人项目",
-    "synonyms": [
-      "复合机器人项目"
-    ]
-  },
-  {
-    "id": "skill-cf71dfdbd43feb15",
-    "name": "多线程",
-    "synonyms": [
-      "多线程"
-    ]
-  },
-  {
     "id": "skill-435d13a839dc3e10",
     "name": "网络编程",
     "synonyms": [
       "网络编程"
-    ]
-  },
-  {
-    "id": "skill-ef475d1e64a0d32e",
-    "name": "TCP/UDP/HTTP",
-    "synonyms": [
-      "TCP/UDP/HTTP"
     ]
   },
   {
@@ -4705,20 +1981,6 @@
     ]
   },
   {
-    "id": "skill-73b272de5f8d9d6d",
-    "name": "嵌入式开发",
-    "synonyms": [
-      "嵌入式开发"
-    ]
-  },
-  {
-    "id": "skill-5707fb108b7223fd",
-    "name": "I2C",
-    "synonyms": [
-      "I2C"
-    ]
-  },
-  {
     "id": "skill-474e9bf800d5577f",
     "name": "RK3588",
     "synonyms": [
@@ -4733,13 +1995,6 @@
     ]
   },
   {
-    "id": "skill-fb9d291afdfa8d1e",
-    "name": "NVIDIA Isaac Sim",
-    "synonyms": [
-      "NVIDIA Isaac Sim"
-    ]
-  },
-  {
     "id": "skill-eed814896836b6e9",
     "name": "MuJoCo",
     "synonyms": [
@@ -4747,45 +2002,20 @@
     ]
   },
   {
-    "id": "skill-114447878423d3a7",
-    "name": "软件框架",
+    "id": "skill-61bb13a898710b5d",
+    "name": "GUI设计框架",
     "synonyms": [
-      "软件框架"
-    ]
-  },
-  {
-    "id": "skill-a415ef09a65d50db",
-    "name": "通信协议",
-    "synonyms": [
-      "通信协议"
-    ]
-  },
-  {
-    "id": "skill-803c7d67f8ee4324",
-    "name": "机器人软件开发",
-    "synonyms": [
-      "机器人软件开发"
-    ]
-  },
-  {
-    "id": "skill-8675835e95fbbba2",
-    "name": "主流机器人软件产品/功能",
-    "synonyms": [
-      "主流机器人软件产品/功能"
+      "软件框架",
+      "GUI设计框架"
     ]
   },
   {
     "id": "skill-c5d82bb936377c5d",
     "name": "产品定义和原型设计",
     "synonyms": [
-      "产品定义和原型设计"
-    ]
-  },
-  {
-    "id": "skill-9e469480d057de41",
-    "name": "工业机器人应用技术",
-    "synonyms": [
-      "工业机器人应用技术"
+      "产品定义和原型设计",
+      "原型开发",
+      "编程开发"
     ]
   },
   {
@@ -4803,13 +2033,6 @@
     ]
   },
   {
-    "id": "skill-7e8e08eab306e5bb",
-    "name": "多线程/多进程编程",
-    "synonyms": [
-      "多线程/多进程编程"
-    ]
-  },
-  {
     "id": "skill-8b342f62395e0e80",
     "name": "STL/boost",
     "synonyms": [
@@ -4824,13 +2047,6 @@
     ]
   },
   {
-    "id": "skill-a657a714cba66b6e",
-    "name": "机器人控制理论",
-    "synonyms": [
-      "机器人控制理论"
-    ]
-  },
-  {
     "id": "skill-0be2898b9c6d597d",
     "name": "URDF",
     "synonyms": [
@@ -4838,52 +2054,10 @@
     ]
   },
   {
-    "id": "skill-b9065d3f0e35e17e",
-    "name": "MoveIt",
-    "synonyms": [
-      "MoveIt"
-    ]
-  },
-  {
-    "id": "skill-61bb13a898710b5d",
-    "name": "GUI设计框架",
-    "synonyms": [
-      "GUI设计框架"
-    ]
-  },
-  {
     "id": "skill-d598026a9cbc6050",
     "name": "Windows",
     "synonyms": [
       "Windows"
-    ]
-  },
-  {
-    "id": "skill-f7d98d52630edc72",
-    "name": "机器人学",
-    "synonyms": [
-      "机器人学"
-    ]
-  },
-  {
-    "id": "skill-5e5d639e3587ea38",
-    "name": "控制工程",
-    "synonyms": [
-      "控制工程"
-    ]
-  },
-  {
-    "id": "skill-4b61310cda9fb002",
-    "name": "机器人SDK",
-    "synonyms": [
-      "机器人SDK"
-    ]
-  },
-  {
-    "id": "skill-f5d501710bab22bc",
-    "name": "力控",
-    "synonyms": [
-      "力控"
     ]
   },
   {
@@ -4901,38 +2075,11 @@
     ]
   },
   {
-    "id": "skill-951d3cf80f67287e",
-    "name": "集成测试",
-    "synonyms": [
-      "集成测试"
-    ]
-  },
-  {
-    "id": "skill-b418963931d4561a",
-    "name": "软件BUG解决",
-    "synonyms": [
-      "软件BUG解决"
-    ]
-  },
-  {
-    "id": "skill-b1cf3506410360d9",
-    "name": "软件开发文档",
-    "synonyms": [
-      "软件开发文档"
-    ]
-  },
-  {
     "id": "skill-6d612a86bee4b0a6",
     "name": "Android",
     "synonyms": [
-      "Android"
-    ]
-  },
-  {
-    "id": "skill-316dddc5a44e6bf7",
-    "name": "ARM",
-    "synonyms": [
-      "ARM"
+      "Android",
+      "Android开发"
     ]
   },
   {
@@ -4950,66 +2097,10 @@
     ]
   },
   {
-    "id": "skill-697d670757036e42",
-    "name": "通信系统协议",
-    "synonyms": [
-      "通信系统协议"
-    ]
-  },
-  {
-    "id": "skill-212a40c759d79022",
-    "name": "嵌入式系统",
-    "synonyms": [
-      "嵌入式系统"
-    ]
-  },
-  {
-    "id": "skill-f2edd2038d9d27d3",
-    "name": "工业自动化",
-    "synonyms": [
-      "工业自动化"
-    ]
-  },
-  {
     "id": "skill-3394eada778d68bb",
     "name": "执行器控制",
     "synonyms": [
       "执行器控制"
-    ]
-  },
-  {
-    "id": "skill-91b63479410cb908",
-    "name": "传感器集成",
-    "synonyms": [
-      "传感器集成"
-    ]
-  },
-  {
-    "id": "skill-209c47b5910f631d",
-    "name": "视觉",
-    "synonyms": [
-      "视觉"
-    ]
-  },
-  {
-    "id": "skill-fa8bf89eb5c3ca10",
-    "name": "设备驱动开发",
-    "synonyms": [
-      "设备驱动开发"
-    ]
-  },
-  {
-    "id": "skill-ed981fda9ffd792e",
-    "name": "多机器人协同",
-    "synonyms": [
-      "多机器人协同"
-    ]
-  },
-  {
-    "id": "skill-d94e90d28cc1992d",
-    "name": "感知系统",
-    "synonyms": [
-      "感知系统"
     ]
   },
   {
@@ -5034,73 +2125,10 @@
     ]
   },
   {
-    "id": "skill-dd6851bcbb274fbb",
-    "name": "MLLM",
-    "synonyms": [
-      "MLLM"
-    ]
-  },
-  {
-    "id": "skill-15954a47a3c199ed",
-    "name": "VLM",
-    "synonyms": [
-      "VLM"
-    ]
-  },
-  {
-    "id": "skill-58ae42308ac654f8",
-    "name": "多模态内容理解",
-    "synonyms": [
-      "多模态内容理解"
-    ]
-  },
-  {
-    "id": "skill-317c0ba8e09580dc",
-    "name": "个性化推荐",
-    "synonyms": [
-      "个性化推荐"
-    ]
-  },
-  {
-    "id": "skill-0ffc13f9be65b366",
-    "name": "神经网络架构",
-    "synonyms": [
-      "神经网络架构"
-    ]
-  },
-  {
     "id": "skill-1f3d47dacc1a19a5",
     "name": "CNN",
     "synonyms": [
       "CNN"
-    ]
-  },
-  {
-    "id": "skill-393edc4ce5904c3c",
-    "name": "多模态算法",
-    "synonyms": [
-      "多模态算法"
-    ]
-  },
-  {
-    "id": "skill-7102145d5d755088",
-    "name": "大模型工程化",
-    "synonyms": [
-      "大模型工程化"
-    ]
-  },
-  {
-    "id": "skill-18f6de94f396f93e",
-    "name": "沟通技巧",
-    "synonyms": [
-      "沟通技巧"
-    ]
-  },
-  {
-    "id": "skill-5df2ab33364453c2",
-    "name": "预训练和微调",
-    "synonyms": [
-      "预训练和微调"
     ]
   },
   {
@@ -5111,30 +2139,10 @@
     ]
   },
   {
-    "id": "skill-a9f6f89c54bd534f",
-    "name": "语言理解",
-    "synonyms": [
-      "语言理解"
-    ]
-  },
-  {
-    "id": "skill-cf7a7fca2e377ecc",
-    "name": "算法落地",
-    "synonyms": [
-      "算法落地"
-    ]
-  },
-  {
-    "id": "skill-ee71241ebf18aa7e",
-    "name": "ACT",
-    "synonyms": [
-      "ACT"
-    ]
-  },
-  {
     "id": "skill-6c29cc5bff6d0ee3",
     "name": "MT-ACT",
     "synonyms": [
+      "ACT",
       "MT-ACT"
     ]
   },
@@ -5142,13 +2150,7 @@
     "id": "skill-89e0c5df6f7582ec",
     "name": "RT1",
     "synonyms": [
-      "RT1"
-    ]
-  },
-  {
-    "id": "skill-466a5a29cfdf535e",
-    "name": "RT2",
-    "synonyms": [
+      "RT1",
       "RT2"
     ]
   },
@@ -5156,7 +2158,8 @@
     "id": "skill-80be11f2086a7239",
     "name": "Diffusion Policy",
     "synonyms": [
-      "Diffusion Policy"
+      "Diffusion Policy",
+      "Diffusion model"
     ]
   },
   {
@@ -5181,20 +2184,6 @@
     ]
   },
   {
-    "id": "skill-db7a06b9053b2caa",
-    "name": "模型设计",
-    "synonyms": [
-      "模型设计"
-    ]
-  },
-  {
-    "id": "skill-3ccb1ba01a374bf1",
-    "name": "图像理解",
-    "synonyms": [
-      "图像理解"
-    ]
-  },
-  {
     "id": "skill-caa40cff511c4bad",
     "name": "ViT",
     "synonyms": [
@@ -5207,28 +2196,16 @@
     "synonyms": [
       "LayoutLM",
       "LayoutLLM",
-      "LayoutXLM"
+      "LayoutXLM",
+      "LiteLLM"
     ]
   },
   {
     "id": "skill-8802da11a1e1a532",
     "name": "BLIP2",
     "synonyms": [
-      "BLIP2"
-    ]
-  },
-  {
-    "id": "skill-fa585e98d10d3d20",
-    "name": "数学功底",
-    "synonyms": [
-      "数学功底"
-    ]
-  },
-  {
-    "id": "skill-6f61eba1083a3435",
-    "name": "嵌入式平台模型开发",
-    "synonyms": [
-      "嵌入式平台模型开发"
+      "BLIP2",
+      "BLIP"
     ]
   },
   {
@@ -5246,24 +2223,12 @@
     ]
   },
   {
-    "id": "skill-a2639f3fd0b1a329",
-    "name": "计算机视觉模型设计",
-    "synonyms": [
-      "计算机视觉模型设计"
-    ]
-  },
-  {
-    "id": "skill-6a4183b7e8e5f81a",
-    "name": "大规模语言模型",
-    "synonyms": [
-      "大规模语言模型"
-    ]
-  },
-  {
     "id": "skill-f9e8324210dfbcad",
     "name": "GNN",
     "synonyms": [
-      "GNN"
+      "GNN",
+      "DNN",
+      "RNN"
     ]
   },
   {
@@ -5281,13 +2246,6 @@
     ]
   },
   {
-    "id": "skill-716cb7f84ec22d14",
-    "name": "Megatron-deepspeed",
-    "synonyms": [
-      "Megatron-deepspeed"
-    ]
-  },
-  {
     "id": "skill-46232db8e1b045fd",
     "name": "Megatron-LM",
     "synonyms": [
@@ -5295,45 +2253,20 @@
     ]
   },
   {
-    "id": "skill-26adf35551b94c04",
-    "name": "目标跟踪",
-    "synonyms": [
-      "目标跟踪"
-    ]
-  },
-  {
-    "id": "skill-7bf36219fdf8d337",
-    "name": "行为识别",
-    "synonyms": [
-      "行为识别"
-    ]
-  },
-  {
-    "id": "skill-2d7051c5ee8af83a",
-    "name": "异常检测",
-    "synonyms": [
-      "异常检测"
-    ]
-  },
-  {
     "id": "skill-bc734561cd34b853",
     "name": "3D重建",
     "synonyms": [
-      "3D重建"
-    ]
-  },
-  {
-    "id": "skill-0c4a0fb69dfcbf5c",
-    "name": "多视几何",
-    "synonyms": [
-      "多视几何"
+      "3D重建",
+      "3Dmax",
+      "3D Vision"
     ]
   },
   {
     "id": "skill-5a3799a83022d711",
     "name": "立体匹配",
     "synonyms": [
-      "立体匹配"
+      "立体匹配",
+      "实体匹配"
     ]
   },
   {
@@ -5344,13 +2277,6 @@
     ]
   },
   {
-    "id": "skill-2764aaafc1cb8569",
-    "name": "Python/C++",
-    "synonyms": [
-      "Python/C++"
-    ]
-  },
-  {
     "id": "skill-0ac31baf895a30d1",
     "name": "LLaVA",
     "synonyms": [
@@ -5358,38 +2284,11 @@
     ]
   },
   {
-    "id": "skill-16bda03c8f98a139",
-    "name": "QWenVL",
-    "synonyms": [
-      "QWenVL"
-    ]
-  },
-  {
     "id": "skill-ad37eafbdee5556f",
     "name": "InternVL",
     "synonyms": [
+      "QWenVL",
       "InternVL"
-    ]
-  },
-  {
-    "id": "skill-b22b86f584b290e2",
-    "name": "学术论文发表",
-    "synonyms": [
-      "学术论文发表"
-    ]
-  },
-  {
-    "id": "skill-204f50a45d6ef992",
-    "name": "多模态模型预训练",
-    "synonyms": [
-      "多模态模型预训练"
-    ]
-  },
-  {
-    "id": "skill-b97b9e22e31050b3",
-    "name": "图像处理算法",
-    "synonyms": [
-      "图像处理算法"
     ]
   },
   {
@@ -5400,59 +2299,20 @@
     ]
   },
   {
-    "id": "skill-a733285486d54383",
-    "name": "Shell",
-    "synonyms": [
-      "Shell"
-    ]
-  },
-  {
-    "id": "skill-8f221ef971f18695",
-    "name": "跨模态理解与生成",
-    "synonyms": [
-      "跨模态理解与生成"
-    ]
-  },
-  {
-    "id": "skill-c2036d54b53773f4",
-    "name": "多模态建模",
-    "synonyms": [
-      "多模态建模"
-    ]
-  },
-  {
-    "id": "skill-a60b1eb9780b7a35",
-    "name": "自监督/多模态弱监督",
-    "synonyms": [
-      "自监督/多模态弱监督"
-    ]
-  },
-  {
-    "id": "skill-58f379e5ac398d62",
-    "name": "基础大模型预训练",
-    "synonyms": [
-      "基础大模型预训练"
-    ]
-  },
-  {
-    "id": "skill-e43494addaed9861",
-    "name": "跨模态检索与生成",
-    "synonyms": [
-      "跨模态检索与生成"
-    ]
-  },
-  {
     "id": "skill-a75f3db4d2bed55f",
     "name": "视频分析理解",
     "synonyms": [
-      "视频分析理解"
+      "视频分析理解",
+      "视频内容理解"
     ]
   },
   {
     "id": "skill-c0849221b6de1ade",
     "name": "性能评测",
     "synonyms": [
-      "性能评测"
+      "性能评测",
+      "性能评估",
+      "性能优化"
     ]
   },
   {
@@ -5470,10 +2330,12 @@
     ]
   },
   {
-    "id": "skill-8e56ed3e2bf3043c",
-    "name": "PaddleOCR",
+    "id": "skill-ccf332ad60a2b57b",
+    "name": "Paddlepaddle",
     "synonyms": [
-      "PaddleOCR"
+      "PaddleOCR",
+      "Paddlepaddle",
+      "PaddlePaddle"
     ]
   },
   {
@@ -5491,34 +2353,6 @@
     ]
   },
   {
-    "id": "skill-08b5faea8b463ffe",
-    "name": "OCR系统开发",
-    "synonyms": [
-      "OCR系统开发"
-    ]
-  },
-  {
-    "id": "skill-038d766f4f6028df",
-    "name": "文档智能理解",
-    "synonyms": [
-      "文档智能理解"
-    ]
-  },
-  {
-    "id": "skill-9ffe495d9b3ca97d",
-    "name": "分布式文档处理",
-    "synonyms": [
-      "分布式文档处理"
-    ]
-  },
-  {
-    "id": "skill-78bf02b447f0543a",
-    "name": "多模态大模型应用",
-    "synonyms": [
-      "多模态大模型应用"
-    ]
-  },
-  {
     "id": "skill-bfa8070bd95ecf82",
     "name": "ASR",
     "synonyms": [
@@ -5530,28 +2364,6 @@
     "name": "TTS",
     "synonyms": [
       "TTS"
-    ]
-  },
-  {
-    "id": "skill-a934930f682b69a9",
-    "name": "数据工程",
-    "synonyms": [
-      "数据工程"
-    ]
-  },
-  {
-    "id": "skill-c6780cad65e2d035",
-    "name": "算法训练",
-    "synonyms": [
-      "算法训练"
-    ]
-  },
-  {
-    "id": "skill-99f26510712ec61b",
-    "name": "YOLO",
-    "synonyms": [
-      "YOLO",
-      "Yolo"
     ]
   },
   {
@@ -5590,49 +2402,6 @@
     ]
   },
   {
-    "id": "skill-29579b36a547f274",
-    "name": "多模态模型微调",
-    "synonyms": [
-      "多模态模型微调"
-    ]
-  },
-  {
-    "id": "skill-1c845df35c01f5a9",
-    "name": "BLIP",
-    "synonyms": [
-      "BLIP"
-    ]
-  },
-  {
-    "id": "skill-654a661d749296d9",
-    "name": "语音识别",
-    "synonyms": [
-      "语音识别"
-    ]
-  },
-  {
-    "id": "skill-12e4807b22e61ed8",
-    "name": "语音合成",
-    "synonyms": [
-      "语音合成"
-    ]
-  },
-  {
-    "id": "skill-16bda4ff63bf2a75",
-    "name": "语音大模型",
-    "synonyms": [
-      "语音大模型"
-    ]
-  },
-  {
-    "id": "skill-9bb882c6229ac143",
-    "name": "数据管理",
-    "synonyms": [
-      "数据管理",
-      "数据库管理"
-    ]
-  },
-  {
     "id": "skill-d9ab83d96d69d788",
     "name": "多语种语音生成",
     "synonyms": [
@@ -5647,17 +2416,11 @@
     ]
   },
   {
-    "id": "skill-c31dd002ca1b70c5",
-    "name": "多模态融合",
-    "synonyms": [
-      "多模态融合"
-    ]
-  },
-  {
     "id": "skill-6da9cf2abd076071",
     "name": "医学影像处理",
     "synonyms": [
-      "医学影像处理"
+      "医学影像处理",
+      "信号处理"
     ]
   },
   {
@@ -5678,77 +2441,15 @@
     "id": "skill-a98f20d17bdb4764",
     "name": "跟踪研究进展",
     "synonyms": [
-      "跟踪研究进展"
+      "跟踪研究进展",
+      "学术研究与技术跟踪"
     ]
   },
   {
-    "id": "skill-c90505e05a6d6496",
-    "name": "图像生成模型",
+    "id": "skill-148e575dbb9509ad",
+    "name": "迁移学习",
     "synonyms": [
-      "图像生成模型"
-    ]
-  },
-  {
-    "id": "skill-020d01e5b92677a3",
-    "name": "T5",
-    "synonyms": [
-      "T5"
-    ]
-  },
-  {
-    "id": "skill-4359eb4e9500203a",
-    "name": "情感分析",
-    "synonyms": [
-      "情感分析"
-    ]
-  },
-  {
-    "id": "skill-c5588a4a82353591",
-    "name": "信号处理",
-    "synonyms": [
-      "信号处理"
-    ]
-  },
-  {
-    "id": "skill-c51ec42eff765e3c",
-    "name": "嵌入式部署",
-    "synonyms": [
-      "嵌入式部署"
-    ]
-  },
-  {
-    "id": "skill-f28fa264821d1d00",
-    "name": "跨团队协作",
-    "synonyms": [
-      "跨团队协作"
-    ]
-  },
-  {
-    "id": "skill-0568f4824ab9ee82",
-    "name": "视频内容理解",
-    "synonyms": [
-      "视频内容理解"
-    ]
-  },
-  {
-    "id": "skill-ee77feeecb15a45c",
-    "name": "多模态数据理解",
-    "synonyms": [
-      "多模态数据理解"
-    ]
-  },
-  {
-    "id": "skill-28093d803e7f1edb",
-    "name": "图文模态生成",
-    "synonyms": [
-      "图文模态生成"
-    ]
-  },
-  {
-    "id": "skill-93a08b030ef17032",
-    "name": "三维模型生成",
-    "synonyms": [
-      "三维模型生成"
+      "迁移学习"
     ]
   },
   {
@@ -5763,22 +2464,6 @@
     "name": "点云重建",
     "synonyms": [
       "点云重建"
-    ]
-  },
-  {
-    "id": "skill-ccf332ad60a2b57b",
-    "name": "Paddlepaddle",
-    "synonyms": [
-      "Paddlepaddle",
-      "PaddlePaddle"
-    ]
-  },
-  {
-    "id": "skill-dc5e91618b3f4d6e",
-    "name": "Diffusion model",
-    "synonyms": [
-      "Diffusion model",
-      "Diffusion Models"
     ]
   },
   {
@@ -5824,13 +2509,6 @@
     ]
   },
   {
-    "id": "skill-e2ebc59779f012ed",
-    "name": "生成模型",
-    "synonyms": [
-      "生成模型"
-    ]
-  },
-  {
     "id": "skill-6e4631bd2c778110",
     "name": "VAE",
     "synonyms": [
@@ -5841,7 +2519,8 @@
     "id": "skill-dff51337d5f82ad2",
     "name": "扩散模型",
     "synonyms": [
-      "扩散模型"
+      "扩散模型",
+      "Diffusion Models"
     ]
   },
   {
@@ -5852,53 +2531,10 @@
     ]
   },
   {
-    "id": "skill-0835ddf78fdd8e94",
-    "name": "AIGC视觉算法",
-    "synonyms": [
-      "AIGC视觉算法"
-    ]
-  },
-  {
-    "id": "skill-0049d6ff3b27b4fe",
-    "name": "聊天机器人",
-    "synonyms": [
-      "聊天机器人"
-    ]
-  },
-  {
-    "id": "skill-9b816f4a6295f2b5",
-    "name": "GPT-4o",
-    "synonyms": [
-      "GPT-4o"
-    ]
-  },
-  {
     "id": "skill-f6ece80b88d6dfbd",
     "name": "Gemini",
     "synonyms": [
       "Gemini"
-    ]
-  },
-  {
-    "id": "skill-837a9dcdd690129b",
-    "name": "LLM 理解与应用",
-    "synonyms": [
-      "LLM 理解与应用"
-    ]
-  },
-  {
-    "id": "skill-928e293330a93461",
-    "name": "Agent 开发框架",
-    "synonyms": [
-      "Agent 开发框架"
-    ]
-  },
-  {
-    "id": "skill-8d9a80fb1dc30a46",
-    "name": "Spring Boot",
-    "synonyms": [
-      "Spring Boot",
-      "SpringBoot"
     ]
   },
   {
@@ -5923,59 +2559,11 @@
     ]
   },
   {
-    "id": "skill-0a4ff41cb546248f",
-    "name": "Tool Calling",
-    "synonyms": [
-      "Tool Calling"
-    ]
-  },
-  {
-    "id": "skill-47ea400dcb2c4874",
-    "name": "向量数据库",
-    "synonyms": [
-      "向量数据库"
-    ]
-  },
-  {
-    "id": "skill-177c6518bff16e6f",
-    "name": "检索引擎",
-    "synonyms": [
-      "检索引擎"
-    ]
-  },
-  {
-    "id": "skill-d2c3bbe5366acef7",
-    "name": "后端服务",
-    "synonyms": [
-      "后端服务"
-    ]
-  },
-  {
-    "id": "skill-70a47f8d21a9f633",
-    "name": "Multi-Agent",
-    "synonyms": [
-      "Multi-Agent"
-    ]
-  },
-  {
     "id": "skill-c49fcee408958884",
     "name": "Function Calling",
     "synonyms": [
+      "Tool Calling",
       "Function Calling"
-    ]
-  },
-  {
-    "id": "skill-6463a8c0aa82df21",
-    "name": "LLM原理",
-    "synonyms": [
-      "LLM原理"
-    ]
-  },
-  {
-    "id": "skill-84f70b3e4fa67053",
-    "name": "Agent框架",
-    "synonyms": [
-      "Agent框架"
     ]
   },
   {
@@ -5996,14 +2584,15 @@
     "id": "skill-e8ddf1b78c8cd18a",
     "name": "低代码/零代码Agent开发平台",
     "synonyms": [
-      "低代码/零代码Agent开发平台"
+      "低代码/零代码Agent开发平台",
+      "低代码工具"
     ]
   },
   {
-    "id": "skill-ec11b86e1ee69593",
-    "name": "编程习惯",
+    "id": "skill-c9b1ce47b2aaedec",
+    "name": "OpenAI API",
     "synonyms": [
-      "编程习惯"
+      "OpenAI API"
     ]
   },
   {
@@ -6011,13 +2600,6 @@
     "name": "Claude API",
     "synonyms": [
       "Claude API"
-    ]
-  },
-  {
-    "id": "skill-3d7d5271cbdb1a64",
-    "name": "LiteLLM",
-    "synonyms": [
-      "LiteLLM"
     ]
   },
   {
@@ -6042,13 +2624,6 @@
     ]
   },
   {
-    "id": "skill-95f550568cfa63b4",
-    "name": "AutoGPT",
-    "synonyms": [
-      "AutoGPT"
-    ]
-  },
-  {
     "id": "skill-ccdd25d4230fb997",
     "name": "Make",
     "synonyms": [
@@ -6060,20 +2635,6 @@
     "name": "Zapier",
     "synonyms": [
       "Zapier"
-    ]
-  },
-  {
-    "id": "skill-d12b4a27a9682868",
-    "name": "大语言模型微调",
-    "synonyms": [
-      "大语言模型微调"
-    ]
-  },
-  {
-    "id": "skill-434caf0c0e23e9d2",
-    "name": "LLM集成",
-    "synonyms": [
-      "LLM集成"
     ]
   },
   {
@@ -6098,27 +2659,6 @@
     ]
   },
   {
-    "id": "skill-5b798697f18fe85d",
-    "name": "大模型原理",
-    "synonyms": [
-      "大模型原理"
-    ]
-  },
-  {
-    "id": "skill-f86315eb2e7cc029",
-    "name": "Fine-tune",
-    "synonyms": [
-      "Fine-tune"
-    ]
-  },
-  {
-    "id": "skill-5cd8b46962fcfc23",
-    "name": "AI Agent平台",
-    "synonyms": [
-      "AI Agent平台"
-    ]
-  },
-  {
     "id": "skill-e6dc3605f3022bff",
     "name": "检索增强生成（RAG）",
     "synonyms": [
@@ -6140,13 +2680,6 @@
     ]
   },
   {
-    "id": "skill-a9ce09494c62b7dc",
-    "name": "复杂Agent协作",
-    "synonyms": [
-      "复杂Agent协作"
-    ]
-  },
-  {
     "id": "skill-38ef555f4f11f1b1",
     "name": "知识库调优",
     "synonyms": [
@@ -6161,31 +2694,10 @@
     ]
   },
   {
-    "id": "skill-a1a3e71b19bea31b",
-    "name": "低代码工具",
-    "synonyms": [
-      "低代码工具"
-    ]
-  },
-  {
     "id": "skill-130f70ae5b44ed4c",
     "name": "CRM",
     "synonyms": [
       "CRM"
-    ]
-  },
-  {
-    "id": "skill-3b66e32129d326fe",
-    "name": "智能客服",
-    "synonyms": [
-      "智能客服"
-    ]
-  },
-  {
-    "id": "skill-753158aad9f60a60",
-    "name": "流程自动化",
-    "synonyms": [
-      "流程自动化"
     ]
   },
   {
@@ -6220,14 +2732,9 @@
     "id": "skill-402fcbb16c5ad776",
     "name": "自训练算法模型",
     "synonyms": [
-      "自训练算法模型"
-    ]
-  },
-  {
-    "id": "skill-340a4f9f30423f33",
-    "name": "NLP模型",
-    "synonyms": [
-      "NLP模型"
+      "自训练算法模型",
+      "个人化算法",
+      "最优化算法"
     ]
   },
   {
@@ -6266,38 +2773,12 @@
     ]
   },
   {
-    "id": "skill-adf2765c61a6fc59",
-    "name": "数据处理与清洗",
-    "synonyms": [
-      "数据处理与清洗"
-    ]
-  },
-  {
-    "id": "skill-fdec0bfa6732e49f",
-    "name": "文本分类",
-    "synonyms": [
-      "文本分类"
-    ]
-  },
-  {
     "id": "skill-48397d91e2b03e11",
     "name": "关键词提取",
     "synonyms": [
-      "关键词提取"
-    ]
-  },
-  {
-    "id": "skill-5db23abc28dbdd32",
-    "name": "智能提示系统开发",
-    "synonyms": [
-      "智能提示系统开发"
-    ]
-  },
-  {
-    "id": "skill-047aa4a0ee673f15",
-    "name": "用户行为分析",
-    "synonyms": [
-      "用户行为分析"
+      "关键词提取",
+      "信息提取",
+      "信息检索"
     ]
   },
   {
@@ -6308,67 +2789,11 @@
     ]
   },
   {
-    "id": "skill-09638d706df9bf2d",
-    "name": "学术研究与技术跟踪",
-    "synonyms": [
-      "学术研究与技术跟踪"
-    ]
-  },
-  {
-    "id": "skill-a53d337f508fde4c",
-    "name": "人机交互",
-    "synonyms": [
-      "人机交互"
-    ]
-  },
-  {
     "id": "skill-cc8774b35d91918c",
     "name": "AI项目经验",
     "synonyms": [
-      "AI项目经验"
-    ]
-  },
-  {
-    "id": "skill-b820e6010d85d433",
-    "name": "提示词设计",
-    "synonyms": [
-      "提示词设计"
-    ]
-  },
-  {
-    "id": "skill-bc58174bb32fa236",
-    "name": "文案撰写",
-    "synonyms": [
-      "文案撰写"
-    ]
-  },
-  {
-    "id": "skill-5ae7da144f07e5d9",
-    "name": "产品需求分析",
-    "synonyms": [
-      "产品需求分析"
-    ]
-  },
-  {
-    "id": "skill-034bcca0378db198",
-    "name": "协作能力",
-    "synonyms": [
-      "协作能力"
-    ]
-  },
-  {
-    "id": "skill-95b0287904ccafd9",
-    "name": "趋势分析",
-    "synonyms": [
-      "趋势分析"
-    ]
-  },
-  {
-    "id": "skill-ecb457c62f80c3e3",
-    "name": "Spring Cloud",
-    "synonyms": [
-      "SpringCloud",
-      "Spring Cloud"
+      "AI项目经验",
+      "信息化项目经验"
     ]
   },
   {
@@ -6376,13 +2801,6 @@
     "name": "Elasticsearch",
     "synonyms": [
       "Elasticsearch"
-    ]
-  },
-  {
-    "id": "skill-dc7620ebfc35d54e",
-    "name": "Oracle",
-    "synonyms": [
-      "Oracle"
     ]
   },
   {
@@ -6396,14 +2814,17 @@
     "id": "skill-903faf99ad1ec289",
     "name": "SQL优化",
     "synonyms": [
-      "SQL优化"
+      "SQL优化",
+      "效果优化",
+      "渠道优化"
     ]
   },
   {
     "id": "skill-b111a2a2185caed7",
     "name": "Vue",
     "synonyms": [
-      "Vue"
+      "Vue",
+      "Vue.js"
     ]
   },
   {
@@ -6411,20 +2832,6 @@
     "name": "Canal",
     "synonyms": [
       "Canal"
-    ]
-  },
-  {
-    "id": "skill-795e0bd4e05a33cd",
-    "name": "Flink CDC",
-    "synonyms": [
-      "Flink CDC"
-    ]
-  },
-  {
-    "id": "skill-55a43b9d12b7293b",
-    "name": "Transformer架构",
-    "synonyms": [
-      "Transformer架构"
     ]
   },
   {
@@ -6438,35 +2845,9 @@
     "id": "skill-f43bac0b09de542c",
     "name": "工程化思维",
     "synonyms": [
-      "工程化思维"
-    ]
-  },
-  {
-    "id": "skill-d96a5a86f34704c7",
-    "name": "测试设计",
-    "synonyms": [
-      "测试设计"
-    ]
-  },
-  {
-    "id": "skill-8059e25341ae690e",
-    "name": "自动化测试工具开发",
-    "synonyms": [
-      "自动化测试工具开发"
-    ]
-  },
-  {
-    "id": "skill-ada92a2d133f1b25",
-    "name": "提示词管理系统搭建",
-    "synonyms": [
-      "提示词管理系统搭建"
-    ]
-  },
-  {
-    "id": "skill-06b5b92ce9c3ae41",
-    "name": "创造性思维",
-    "synonyms": [
-      "创造性思维"
+      "工程化思维",
+      "结构化思维",
+      "逻辑思维"
     ]
   },
   {
@@ -6484,24 +2865,11 @@
     ]
   },
   {
-    "id": "skill-c20162bbbdeb005b",
-    "name": "需求分析与产品设计",
-    "synonyms": [
-      "需求分析与产品设计"
-    ]
-  },
-  {
-    "id": "skill-0e7e9e8b162077f9",
-    "name": "大模型API",
-    "synonyms": [
-      "大模型API"
-    ]
-  },
-  {
     "id": "skill-cdbd4d56cbd75f6d",
     "name": "A/B测试",
     "synonyms": [
-      "A/B测试"
+      "A/B测试",
+      "AB测试"
     ]
   },
   {
@@ -6509,41 +2877,6 @@
     "name": "Message Queue",
     "synonyms": [
       "Message Queue"
-    ]
-  },
-  {
-    "id": "skill-0340bfb383fca6f2",
-    "name": "Large Language Models",
-    "synonyms": [
-      "Large Language Models"
-    ]
-  },
-  {
-    "id": "skill-cb3aee4f7dd619a0",
-    "name": "System Design",
-    "synonyms": [
-      "System Design"
-    ]
-  },
-  {
-    "id": "skill-a18b4be8e3181ff4",
-    "name": "Coding",
-    "synonyms": [
-      "Coding"
-    ]
-  },
-  {
-    "id": "skill-f77a7f41feed4b0f",
-    "name": "计算机办公软件自动化",
-    "synonyms": [
-      "计算机办公软件自动化"
-    ]
-  },
-  {
-    "id": "skill-8c8cbc79656dd3ea",
-    "name": "ETL开发",
-    "synonyms": [
-      "ETL开发"
     ]
   },
   {
@@ -6582,45 +2915,12 @@
     ]
   },
   {
-    "id": "skill-1f43d19d8f19de58",
-    "name": "数据仓库",
-    "synonyms": [
-      "数据仓库"
-    ]
-  },
-  {
     "id": "skill-71cc64c4f0fb1947",
     "name": "office办公软件",
     "synonyms": [
-      "office办公软件"
-    ]
-  },
-  {
-    "id": "skill-ff3ded2cc3c2adc0",
-    "name": "数据整理",
-    "synonyms": [
-      "数据整理"
-    ]
-  },
-  {
-    "id": "skill-03e4b5b683cff87d",
-    "name": "测绘",
-    "synonyms": [
-      "测绘"
-    ]
-  },
-  {
-    "id": "skill-2c75efff08211420",
-    "name": "计算机",
-    "synonyms": [
-      "计算机"
-    ]
-  },
-  {
-    "id": "skill-c086896c7fd7d6a6",
-    "name": "信息化项目经验",
-    "synonyms": [
-      "信息化项目经验"
+      "office办公软件",
+      "办公软件",
+      "Office软件"
     ]
   },
   {
@@ -6631,13 +2931,6 @@
     ]
   },
   {
-    "id": "skill-3ea27eeef12bf125",
-    "name": "数据库运维工具开发",
-    "synonyms": [
-      "数据库运维工具开发"
-    ]
-  },
-  {
     "id": "skill-469da778bedde2f0",
     "name": "导航电子地图数据规格",
     "synonyms": [
@@ -6645,23 +2938,10 @@
     ]
   },
   {
-    "id": "skill-9916605dcc63863f",
-    "name": "大数据分析",
-    "synonyms": [
-      "大数据分析"
-    ]
-  },
-  {
     "id": "skill-64cb6318f0bab915",
     "name": "地图制作工艺全流程",
     "synonyms": [
-      "地图制作工艺全流程"
-    ]
-  },
-  {
-    "id": "skill-a1a18e185ad70968",
-    "name": "地图生产技术",
-    "synonyms": [
+      "地图制作工艺全流程",
       "地图生产技术"
     ]
   },
@@ -6669,35 +2949,8 @@
     "id": "skill-1b9929ddd5bf0ceb",
     "name": "品质管理方法",
     "synonyms": [
-      "品质管理方法"
-    ]
-  },
-  {
-    "id": "skill-1477a5b1b41d30ff",
-    "name": "办公软件",
-    "synonyms": [
-      "办公软件"
-    ]
-  },
-  {
-    "id": "skill-e0bccb24fbafbde2",
-    "name": "逻辑思维",
-    "synonyms": [
-      "逻辑思维"
-    ]
-  },
-  {
-    "id": "skill-daed5a1d228e09b7",
-    "name": "测绘数据处理",
-    "synonyms": [
-      "测绘数据处理"
-    ]
-  },
-  {
-    "id": "skill-b61ae60c7b3906b8",
-    "name": "数据库建库",
-    "synonyms": [
-      "数据库建库"
+      "品质管理方法",
+      "数据质量管理"
     ]
   },
   {
@@ -6708,27 +2961,6 @@
     ]
   },
   {
-    "id": "skill-c9c672ccb099cb1b",
-    "name": "数据敏感度",
-    "synonyms": [
-      "数据敏感度"
-    ]
-  },
-  {
-    "id": "skill-2313a5873059b552",
-    "name": "逻辑分析能力",
-    "synonyms": [
-      "逻辑分析能力"
-    ]
-  },
-  {
-    "id": "skill-994f05269f475715",
-    "name": "文档写作能力",
-    "synonyms": [
-      "文档写作能力"
-    ]
-  },
-  {
     "id": "skill-1af758a6b982a620",
     "name": "组织管理能力",
     "synonyms": [
@@ -6736,24 +2968,16 @@
     ]
   },
   {
-    "id": "skill-2e6c71d563c47a49",
-    "name": "大数据治理",
+    "id": "skill-244822c0852668fd",
+    "name": "大数据解决方案",
     "synonyms": [
-      "大数据治理"
-    ]
-  },
-  {
-    "id": "skill-8c767891bde49053",
-    "name": "云平台",
-    "synonyms": [
-      "云平台"
-    ]
-  },
-  {
-    "id": "skill-337209c0ca131ff8",
-    "name": "大数据处理流程",
-    "synonyms": [
-      "大数据处理流程"
+      "大数据治理",
+      "大数据解决方案",
+      "大数据处理流程",
+      "数据建模",
+      "数据自动化",
+      "数据产品解决方案",
+      "多维解决方案设计"
     ]
   },
   {
@@ -6764,10 +2988,26 @@
     ]
   },
   {
-    "id": "skill-aaaeb8d7872b0c49",
-    "name": "MSSQL",
+    "id": "skill-5d4c777fd840b319",
+    "name": "Sqoop",
     "synonyms": [
-      "MSSQL"
+      "Sqoop",
+      "sqoop"
+    ]
+  },
+  {
+    "id": "skill-69243f2eec872aed",
+    "name": "Pig",
+    "synonyms": [
+      "Pig"
+    ]
+  },
+  {
+    "id": "skill-141298e7d4d62b18",
+    "name": "MapReduce",
+    "synonyms": [
+      "MapReduce",
+      "Map/Reduce"
     ]
   },
   {
@@ -6788,7 +3028,13 @@
     "id": "skill-cab1fd148d75f05b",
     "name": "BI工具",
     "synonyms": [
-      "BI工具"
+      "BI工具",
+      "BI分析",
+      "BI",
+      "AI工具",
+      "BI分析工具",
+      "BI报表",
+      "可视化工具"
     ]
   },
   {
@@ -6806,17 +3052,18 @@
     ]
   },
   {
-    "id": "skill-9ab6eff5a41f7b24",
-    "name": "Oracle开发",
-    "synonyms": [
-      "Oracle开发"
-    ]
-  },
-  {
     "id": "skill-90ae433228e1fb82",
     "name": "数据仓库知识",
     "synonyms": [
-      "数据仓库知识"
+      "数据仓库",
+      "数据分析",
+      "数据整理",
+      "数据仓库知识",
+      "数据挖掘",
+      "数据仓库建设",
+      "数据仓库经验",
+      "统计知识",
+      "统计学"
     ]
   },
   {
@@ -6834,13 +3081,6 @@
     ]
   },
   {
-    "id": "skill-54d0132f7f12da7a",
-    "name": "sqoop",
-    "synonyms": [
-      "sqoop"
-    ]
-  },
-  {
     "id": "skill-42c31ef8ef857bb7",
     "name": "kylin",
     "synonyms": [
@@ -6855,24 +3095,48 @@
     ]
   },
   {
-    "id": "skill-7ffc92e8df43bb28",
-    "name": "数据自动化",
+    "id": "skill-f090ed3f24ade1ff",
+    "name": "HTML5",
     "synonyms": [
-      "数据自动化"
+      "HTML5",
+      "HTML"
     ]
   },
   {
-    "id": "skill-244822c0852668fd",
-    "name": "大数据解决方案",
+    "id": "skill-2532e0b11a121cd3",
+    "name": "CSS3",
     "synonyms": [
-      "大数据解决方案"
+      "CSS3",
+      "CSS"
     ]
   },
   {
-    "id": "skill-dca3d97d603729dc",
-    "name": "数据仓库建设",
+    "id": "skill-b27ad06d123c6145",
+    "name": "JavaScript",
     "synonyms": [
-      "数据仓库建设"
+      "JavaScript",
+      "Javascript"
+    ]
+  },
+  {
+    "id": "skill-6654cc5402edad10",
+    "name": "WebGL",
+    "synonyms": [
+      "WebGL"
+    ]
+  },
+  {
+    "id": "skill-86f64e11e07c9d95",
+    "name": "Three.js",
+    "synonyms": [
+      "Three.js"
+    ]
+  },
+  {
+    "id": "skill-c903759742b75021",
+    "name": "Flutter",
+    "synonyms": [
+      "Flutter"
     ]
   },
   {
@@ -6883,34 +3147,6 @@
     ]
   },
   {
-    "id": "skill-b3d1384a7eb29066",
-    "name": "BI分析",
-    "synonyms": [
-      "BI分析"
-    ]
-  },
-  {
-    "id": "skill-2256a5ec46db0603",
-    "name": "数据产品开发",
-    "synonyms": [
-      "数据产品开发"
-    ]
-  },
-  {
-    "id": "skill-713a1ff0429516ff",
-    "name": "算法开发支持",
-    "synonyms": [
-      "算法开发支持"
-    ]
-  },
-  {
-    "id": "skill-55ad6ab2afbaf2e0",
-    "name": "数据挖掘建模",
-    "synonyms": [
-      "数据挖掘建模"
-    ]
-  },
-  {
     "id": "skill-5870f9bfd157bd7e",
     "name": "Storm",
     "synonyms": [
@@ -6918,74 +3154,11 @@
     ]
   },
   {
-    "id": "skill-ec6b02dc729f7647",
-    "name": "ETL技术",
-    "synonyms": [
-      "ETL技术"
-    ]
-  },
-  {
     "id": "skill-880d17d5685dc1a7",
     "name": "非关系型数据库",
     "synonyms": [
-      "关系型数据库",
-      "非关系型数据库"
-    ]
-  },
-  {
-    "id": "skill-498bab4136293b61",
-    "name": "数据结构设计",
-    "synonyms": [
-      "数据结构设计"
-    ]
-  },
-  {
-    "id": "skill-d7709906ad4b3780",
-    "name": "数据仓库经验",
-    "synonyms": [
-      "数据仓库经验"
-    ]
-  },
-  {
-    "id": "skill-3a0588ffecd77cc7",
-    "name": "ArcGIS",
-    "synonyms": [
-      "ArcGIS"
-    ]
-  },
-  {
-    "id": "skill-3899f6d327d5f359",
-    "name": "地理信息系统",
-    "synonyms": [
-      "地理信息系统"
-    ]
-  },
-  {
-    "id": "skill-1627873803c77da3",
-    "name": "自学能力",
-    "synonyms": [
-      "自学能力"
-    ]
-  },
-  {
-    "id": "skill-90f3b8c1cecc3e5e",
-    "name": "数据监控",
-    "synonyms": [
-      "数据监控"
-    ]
-  },
-  {
-    "id": "skill-be4b635bafded4ec",
-    "name": "报告撰写",
-    "synonyms": [
-      "报告撰写"
-    ]
-  },
-  {
-    "id": "skill-a3cb4e598337e014",
-    "name": "风险监控",
-    "synonyms": [
-      "风险监控"
+      "非关系型数据库",
+      "非结构化数据处理"
     ]
   },
   {
@@ -7005,24 +3178,10 @@
     ]
   },
   {
-    "id": "skill-25813f5afad2f8ab",
-    "name": "数据模型",
-    "synonyms": [
-      "数据模型"
-    ]
-  },
-  {
     "id": "skill-9dbd298afbf4c979",
     "name": "PPT",
     "synonyms": [
       "PPT"
-    ]
-  },
-  {
-    "id": "skill-77c21d88a797ba91",
-    "name": "结构化思维",
-    "synonyms": [
-      "结构化思维"
     ]
   },
   {
@@ -7033,66 +3192,10 @@
     ]
   },
   {
-    "id": "skill-4b46e47584a7b863",
-    "name": "BI",
-    "synonyms": [
-      "BI"
-    ]
-  },
-  {
-    "id": "skill-f8aa1602bffd3f0c",
-    "name": "需求调研",
-    "synonyms": [
-      "需求调研"
-    ]
-  },
-  {
-    "id": "skill-55f89c6ed1d4d558",
-    "name": "方案编制",
-    "synonyms": [
-      "方案编制"
-    ]
-  },
-  {
-    "id": "skill-43321cb8f30e8d2d",
-    "name": "方案宣讲",
-    "synonyms": [
-      "方案宣讲"
-    ]
-  },
-  {
-    "id": "skill-4a87a604e7cb1fe8",
-    "name": "大数据",
-    "synonyms": [
-      "大数据"
-    ]
-  },
-  {
-    "id": "skill-3d531b4eb15ed67f",
-    "name": "风险预测",
-    "synonyms": [
-      "风险预测"
-    ]
-  },
-  {
-    "id": "skill-a96bd16c8cdc0ddf",
-    "name": "平台分析",
-    "synonyms": [
-      "平台分析"
-    ]
-  },
-  {
     "id": "skill-d49e09587c9f2b7c",
     "name": "社交媒体运营认知",
     "synonyms": [
       "社交媒体运营认知"
-    ]
-  },
-  {
-    "id": "skill-b361025bae3d2267",
-    "name": "数据银行",
-    "synonyms": [
-      "数据银行"
     ]
   },
   {
@@ -7103,27 +3206,6 @@
     ]
   },
   {
-    "id": "skill-5ae55035d499fbd1",
-    "name": "数据分析报告",
-    "synonyms": [
-      "数据分析报告"
-    ]
-  },
-  {
-    "id": "skill-aaaa54b56f75e8d5",
-    "name": "Office软件",
-    "synonyms": [
-      "Office软件"
-    ]
-  },
-  {
-    "id": "skill-fa3cd1c4c8fd49d8",
-    "name": "数据透视表",
-    "synonyms": [
-      "数据透视表"
-    ]
-  },
-  {
     "id": "skill-ec5ba0abb717da87",
     "name": "Access",
     "synonyms": [
@@ -7131,38 +3213,12 @@
     ]
   },
   {
-    "id": "skill-51a34e65375f138d",
-    "name": "报表制作",
-    "synonyms": [
-      "报表制作"
-    ]
-  },
-  {
-    "id": "skill-b0b97bc921d7b78a",
-    "name": "数据分析系统",
-    "synonyms": [
-      "数据分析系统"
-    ]
-  },
-  {
-    "id": "skill-8ff2270e1d1e0ad1",
-    "name": "AI工具",
-    "synonyms": [
-      "AI工具"
-    ]
-  },
-  {
-    "id": "skill-d370d5da9770f5c8",
-    "name": "数据质量管理",
-    "synonyms": [
-      "数据质量管理"
-    ]
-  },
-  {
     "id": "skill-5b7aee0d25e0a3ad",
     "name": "销售预测",
     "synonyms": [
-      "销售预测"
+      "销售预测",
+      "钱包预测",
+      "趋势预测"
     ]
   },
   {
@@ -7180,20 +3236,6 @@
     ]
   },
   {
-    "id": "skill-6e4fb8a5ed7476a4",
-    "name": "大数据建模",
-    "synonyms": [
-      "大数据建模"
-    ]
-  },
-  {
-    "id": "skill-dfd173ed3eda47ff",
-    "name": "现场调试",
-    "synonyms": [
-      "现场调试"
-    ]
-  },
-  {
     "id": "skill-38e29eef234f37f4",
     "name": "产品推广",
     "synonyms": [
@@ -7205,20 +3247,6 @@
     "name": "冶金或机械专业背景",
     "synonyms": [
       "冶金或机械专业背景"
-    ]
-  },
-  {
-    "id": "skill-8d4cb3e0bb2dec04",
-    "name": "数据问题追踪",
-    "synonyms": [
-      "数据问题追踪"
-    ]
-  },
-  {
-    "id": "skill-c9643f58a6901029",
-    "name": "撰写数据分析报告",
-    "synonyms": [
-      "撰写数据分析报告"
     ]
   },
   {
@@ -7243,13 +3271,6 @@
     ]
   },
   {
-    "id": "skill-71eed99087b8967d",
-    "name": "小波分析",
-    "synonyms": [
-      "小波分析"
-    ]
-  },
-  {
     "id": "skill-5c20eba7be522e7c",
     "name": "AutoML",
     "synonyms": [
@@ -7264,17 +3285,11 @@
     ]
   },
   {
-    "id": "skill-5467b4933b657c68",
-    "name": "统计知识",
+    "id": "skill-b7a5dea23dc365f7",
+    "name": "指标量化方法",
     "synonyms": [
-      "统计知识"
-    ]
-  },
-  {
-    "id": "skill-6838a8b562eff7f1",
-    "name": "期货量化",
-    "synonyms": [
-      "期货量化"
+      "期货量化",
+      "指标量化方法"
     ]
   },
   {
@@ -7285,66 +3300,10 @@
     ]
   },
   {
-    "id": "skill-ce3beaadd9752452",
-    "name": "机器学习框架",
-    "synonyms": [
-      "机器学习框架"
-    ]
-  },
-  {
-    "id": "skill-a0ce4957faa2f37d",
-    "name": "统计学",
-    "synonyms": [
-      "统计学"
-    ]
-  },
-  {
-    "id": "skill-479db9b0e761d7bd",
-    "name": "项目规划与管理",
-    "synonyms": [
-      "项目规划与管理"
-    ]
-  },
-  {
     "id": "skill-e89fe62ec86347c2",
     "name": "Julia",
     "synonyms": [
       "Julia"
-    ]
-  },
-  {
-    "id": "skill-29b99f8b23262c9b",
-    "name": "BI分析工具",
-    "synonyms": [
-      "BI分析工具"
-    ]
-  },
-  {
-    "id": "skill-bcc48062a324617b",
-    "name": "多元时间序列分析",
-    "synonyms": [
-      "多元时间序列分析"
-    ]
-  },
-  {
-    "id": "skill-e43286c0971e599a",
-    "name": "英文听说读写",
-    "synonyms": [
-      "英文听说读写"
-    ]
-  },
-  {
-    "id": "skill-8f7390d0d22719de",
-    "name": "三维建模",
-    "synonyms": [
-      "三维建模"
-    ]
-  },
-  {
-    "id": "skill-feca1daedb4db33d",
-    "name": "运动仿真",
-    "synonyms": [
-      "运动仿真"
     ]
   },
   {
@@ -7362,13 +3321,6 @@
     ]
   },
   {
-    "id": "skill-8c84bc0202942a0e",
-    "name": "3Dmax",
-    "synonyms": [
-      "3Dmax"
-    ]
-  },
-  {
     "id": "skill-3062f5c487a94343",
     "name": "物理引擎",
     "synonyms": [
@@ -7376,26 +3328,21 @@
     ]
   },
   {
-    "id": "skill-a5790b06f63b7c16",
-    "name": "unity",
-    "synonyms": [
-      "unity",
-      "Unity"
-    ]
-  },
-  {
     "id": "skill-28c9483d0805aa42",
     "name": "unreal",
     "synonyms": [
+      "unity",
       "unreal",
+      "Unity",
       "Unreal"
     ]
   },
   {
-    "id": "skill-b1aeb68f682253bb",
-    "name": "多传感融合",
+    "id": "skill-6efbd592613a7f07",
+    "name": "多模态数据融合",
     "synonyms": [
-      "多传感融合"
+      "多传感融合",
+      "多模态数据融合"
     ]
   },
   {
@@ -7403,13 +3350,6 @@
     "name": "物理孪生虚拟仿真环境建模",
     "synonyms": [
       "物理孪生虚拟仿真环境建模"
-    ]
-  },
-  {
-    "id": "skill-d960119227cbc6d3",
-    "name": "3D Vision",
-    "synonyms": [
-      "3D Vision"
     ]
   },
   {
@@ -7423,7 +3363,8 @@
     "id": "skill-3d6d5c074c549320",
     "name": "NGS数据分析",
     "synonyms": [
-      "NGS数据分析"
+      "NGS数据分析",
+      "NGS工具"
     ]
   },
   {
@@ -7434,31 +3375,10 @@
     ]
   },
   {
-    "id": "skill-e856256cda7d996e",
-    "name": "NGS工具",
-    "synonyms": [
-      "NGS工具"
-    ]
-  },
-  {
     "id": "skill-d1e9567da9a8a4b0",
     "name": "Bash",
     "synonyms": [
       "Bash"
-    ]
-  },
-  {
-    "id": "skill-be0cc94f44c106d2",
-    "name": "云计算",
-    "synonyms": [
-      "云计算"
-    ]
-  },
-  {
-    "id": "skill-60050cf4831e43cb",
-    "name": "软件工程管理",
-    "synonyms": [
-      "软件工程管理"
     ]
   },
   {
@@ -7479,28 +3399,14 @@
     "id": "skill-ed9a41e594062b1d",
     "name": "数据库操作",
     "synonyms": [
-      "数据库操作"
-    ]
-  },
-  {
-    "id": "skill-c49f900ce70ebc8e",
-    "name": "AB测试",
-    "synonyms": [
-      "AB测试"
-    ]
-  },
-  {
-    "id": "skill-2a17bc51b11cf69d",
-    "name": "BI报表",
-    "synonyms": [
-      "BI报表"
-    ]
-  },
-  {
-    "id": "skill-9c60e5911b411a3b",
-    "name": "个人化算法",
-    "synonyms": [
-      "个人化算法"
+      "数据库操作",
+      "数据库管理",
+      "统计学",
+      "统计方法",
+      "数据库知识",
+      "后台服务开发",
+      "数据库后台管理",
+      "业务后台开发"
     ]
   },
   {
@@ -7525,13 +3431,6 @@
     ]
   },
   {
-    "id": "skill-ba45b1044098e63d",
-    "name": "英文读写",
-    "synonyms": [
-      "英文读写"
-    ]
-  },
-  {
     "id": "skill-148cd0a93205678c",
     "name": "简报制作",
     "synonyms": [
@@ -7549,28 +3448,22 @@
     "id": "skill-6cf3495b90980b41",
     "name": "Machine Learning Frameworks",
     "synonyms": [
+      "机器学习框架",
       "Machine Learning Frameworks"
     ]
   },
   {
-    "id": "skill-cadaf796fc7c3dc0",
-    "name": "Statistical Modeling",
+    "id": "skill-afcbeb75b733eae0",
+    "name": "Analytics Modelling and Techniques",
     "synonyms": [
-      "Statistical Modeling"
-    ]
-  },
-  {
-    "id": "skill-ded69af8e15f032b",
-    "name": "Time Series Analysis",
-    "synonyms": [
-      "Time Series Analysis"
-    ]
-  },
-  {
-    "id": "skill-0a5ab4b2bb32c931",
-    "name": "Forecasting",
-    "synonyms": [
-      "Forecasting"
+      "Statistical Modeling",
+      "Time Series Analysis",
+      "Forecasting",
+      "Model Evaluation",
+      "Model Monitoring",
+      "Data Mining",
+      "Analytics Modelling and Techniques",
+      "Predictive Modeling"
     ]
   },
   {
@@ -7578,20 +3471,6 @@
     "name": "Feature Engineering",
     "synonyms": [
       "Feature Engineering"
-    ]
-  },
-  {
-    "id": "skill-94a75ec7ced46df3",
-    "name": "Model Evaluation",
-    "synonyms": [
-      "Model Evaluation"
-    ]
-  },
-  {
-    "id": "skill-27c62ab1ea4ca145",
-    "name": "Data Preprocessing",
-    "synonyms": [
-      "Data Preprocessing"
     ]
   },
   {
@@ -7616,13 +3495,6 @@
     ]
   },
   {
-    "id": "skill-3981a2b9c1ef7fce",
-    "name": "Communication",
-    "synonyms": [
-      "Communication"
-    ]
-  },
-  {
     "id": "skill-64b280065fd4bc21",
     "name": "计算广告",
     "synonyms": [
@@ -7630,38 +3502,12 @@
     ]
   },
   {
-    "id": "skill-58b71818617ac64b",
-    "name": "推荐策略",
+    "id": "skill-a7797298f1648fbc",
+    "name": "Experiment Design",
     "synonyms": [
-      "推荐策略"
-    ]
-  },
-  {
-    "id": "skill-15a82b77de87e2dc",
-    "name": "SparkML",
-    "synonyms": [
-      "SparkML"
-    ]
-  },
-  {
-    "id": "skill-5e1340b55d9c44f1",
-    "name": "模型构建",
-    "synonyms": [
-      "模型构建"
-    ]
-  },
-  {
-    "id": "skill-b844ff591d8c1fb5",
-    "name": "实验设计",
-    "synonyms": [
-      "实验设计"
-    ]
-  },
-  {
-    "id": "skill-f5f5911eac30dc03",
-    "name": "效果优化",
-    "synonyms": [
-      "效果优化"
+      "实验设计",
+      "Experiment Design",
+      "Algorithm Design"
     ]
   },
   {
@@ -7672,31 +3518,55 @@
     ]
   },
   {
-    "id": "skill-348ea84c60466c77",
-    "name": "英文",
-    "synonyms": [
-      "英文"
-    ]
-  },
-  {
-    "id": "skill-812aa67f9ec68cfb",
-    "name": "大数据技术",
-    "synonyms": [
-      "大数据技术"
-    ]
-  },
-  {
-    "id": "skill-f244f474f752821a",
-    "name": "数据抽取",
-    "synonyms": [
-      "数据抽取"
-    ]
-  },
-  {
     "id": "skill-ea691fcc8bd78a15",
     "name": "工业大数据",
     "synonyms": [
       "工业大数据"
+    ]
+  },
+  {
+    "id": "skill-8929c9798e94aef8",
+    "name": "计量经济学",
+    "synonyms": [
+      "计量经济学"
+    ]
+  },
+  {
+    "id": "skill-caff98e624a93ab8",
+    "name": "建立商业化洞察模型",
+    "synonyms": [
+      "建立商业化洞察模型"
+    ]
+  },
+  {
+    "id": "skill-6affd4d08817ea53",
+    "name": "业务问题转化为数据科学问题",
+    "synonyms": [
+      "业务问题转化为数据科学问题"
+    ]
+  },
+  {
+    "id": "skill-08663b25e71218d2",
+    "name": "策略优化建议",
+    "synonyms": [
+      "效果优化",
+      "策略优化建议",
+      "最优化",
+      "运筹优化"
+    ]
+  },
+  {
+    "id": "skill-8b5296770ba4059e",
+    "name": "增强分析体系",
+    "synonyms": [
+      "增强分析体系"
+    ]
+  },
+  {
+    "id": "skill-66c6bf1692238789",
+    "name": "归因体系",
+    "synonyms": [
+      "归因体系"
     ]
   },
   {
@@ -7710,7 +3580,8 @@
     "id": "skill-02aa05c666aa3f63",
     "name": "欺诈分析",
     "synonyms": [
-      "欺诈分析"
+      "欺诈分析",
+      "反欺诈"
     ]
   },
   {
@@ -7721,31 +3592,10 @@
     ]
   },
   {
-    "id": "skill-21068930e3932a2f",
-    "name": "云技术",
-    "synonyms": [
-      "云技术"
-    ]
-  },
-  {
     "id": "skill-0a82c33982b9db1b",
     "name": "因果推断",
     "synonyms": [
       "因果推断"
-    ]
-  },
-  {
-    "id": "skill-a2349f9431b1b12e",
-    "name": "最优化",
-    "synonyms": [
-      "最优化"
-    ]
-  },
-  {
-    "id": "skill-5ab5c9504b5e01ce",
-    "name": "SciPy",
-    "synonyms": [
-      "SciPy"
     ]
   },
   {
@@ -7756,17 +3606,14 @@
     ]
   },
   {
-    "id": "skill-e732bebdf2d62232",
-    "name": "业务数据分析",
+    "id": "skill-78320a6e2e09750c",
+    "name": "Microsoft PowerBI",
     "synonyms": [
-      "业务数据分析"
-    ]
-  },
-  {
-    "id": "skill-6c0ce518280812db",
-    "name": "PowerBI",
-    "synonyms": [
-      "PowerBI"
+      "PowerBI",
+      "FineBI",
+      "Microsoft PowerBI",
+      "BI可视化",
+      "Power BI"
     ]
   },
   {
@@ -7774,41 +3621,6 @@
     "name": "数据湖仓一体",
     "synonyms": [
       "数据湖仓一体"
-    ]
-  },
-  {
-    "id": "skill-47cbc8c48b5d5519",
-    "name": "数据质量控制",
-    "synonyms": [
-      "数据质量控制"
-    ]
-  },
-  {
-    "id": "skill-e9e15d0275bd7bcb",
-    "name": "时序数据算法",
-    "synonyms": [
-      "时序数据算法"
-    ]
-  },
-  {
-    "id": "skill-57d487673b3cfc5f",
-    "name": "原型开发",
-    "synonyms": [
-      "原型开发"
-    ]
-  },
-  {
-    "id": "skill-e80586e19b8825e8",
-    "name": "数学基础",
-    "synonyms": [
-      "数学基础"
-    ]
-  },
-  {
-    "id": "skill-73774eeb0101e668",
-    "name": "物理基础",
-    "synonyms": [
-      "物理基础"
     ]
   },
   {
@@ -7840,41 +3652,6 @@
     ]
   },
   {
-    "id": "skill-46abca240607829f",
-    "name": "运筹优化",
-    "synonyms": [
-      "运筹优化"
-    ]
-  },
-  {
-    "id": "skill-9b39b80060cea91c",
-    "name": "特征提取",
-    "synonyms": [
-      "特征提取"
-    ]
-  },
-  {
-    "id": "skill-00b07c37c1fdda88",
-    "name": "BI可视化",
-    "synonyms": [
-      "BI可视化"
-    ]
-  },
-  {
-    "id": "skill-78fb962eeb501be1",
-    "name": "逻辑回归",
-    "synonyms": [
-      "逻辑回归"
-    ]
-  },
-  {
-    "id": "skill-1bff260665c2021c",
-    "name": "聚类分析",
-    "synonyms": [
-      "聚类分析"
-    ]
-  },
-  {
     "id": "skill-99909a758136a6f8",
     "name": "GBDT",
     "synonyms": [
@@ -7882,9 +3659,10 @@
     ]
   },
   {
-    "id": "skill-54ec898bebec17b2",
-    "name": "内容过滤",
+    "id": "skill-0e675cbcc42035f5",
+    "name": "协同过滤",
     "synonyms": [
+      "协同过滤",
       "内容过滤"
     ]
   },
@@ -7892,28 +3670,8 @@
     "id": "skill-cdd165a1ea7df25a",
     "name": "矩阵分解",
     "synonyms": [
-      "矩阵分解"
-    ]
-  },
-  {
-    "id": "skill-7ba419fd750b46c0",
-    "name": "深度神经网络",
-    "synonyms": [
-      "深度神经网络"
-    ]
-  },
-  {
-    "id": "skill-2d0b6d6c2046bc4f",
-    "name": "循环神经网络",
-    "synonyms": [
-      "循环神经网络"
-    ]
-  },
-  {
-    "id": "skill-c0e55a016ca80233",
-    "name": "数据敏感",
-    "synonyms": [
-      "数据敏感"
+      "矩阵分解",
+      "矩阵计算"
     ]
   },
   {
@@ -7924,82 +3682,10 @@
     ]
   },
   {
-    "id": "skill-9d9b9bc625b30ff8",
-    "name": "量化建模",
-    "synonyms": [
-      "量化建模"
-    ]
-  },
-  {
-    "id": "skill-5466ad947f5c27fc",
-    "name": "市场调研",
-    "synonyms": [
-      "市场调研"
-    ]
-  },
-  {
-    "id": "skill-75712c3ea4c91a3c",
-    "name": "Javascript",
-    "synonyms": [
-      "Javascript",
-      "JavaScript"
-    ]
-  },
-  {
-    "id": "skill-d4347223667fdf00",
-    "name": "Power BI",
-    "synonyms": [
-      "Power BI"
-    ]
-  },
-  {
-    "id": "skill-bf99176df423a4cf",
-    "name": "自然语言处理 (NLP)",
-    "synonyms": [
-      "自然语言处理 (NLP)"
-    ]
-  },
-  {
-    "id": "skill-9f8119ab389bd98b",
-    "name": "大语言模型 (LLMs)",
-    "synonyms": [
-      "大语言模型 (LLM)",
-      "大语言模型 (LLMs)"
-    ]
-  },
-  {
-    "id": "skill-db38f162cf5e295d",
-    "name": "数据质量评估",
-    "synonyms": [
-      "数据质量评估"
-    ]
-  },
-  {
-    "id": "skill-2d753138038e9551",
-    "name": "实体匹配",
-    "synonyms": [
-      "实体匹配"
-    ]
-  },
-  {
-    "id": "skill-6cf32fcce016ef88",
-    "name": "信息提取",
-    "synonyms": [
-      "信息提取"
-    ]
-  },
-  {
     "id": "skill-7db5ce2277e9d7f2",
     "name": "NER技术",
     "synonyms": [
       "NER技术"
-    ]
-  },
-  {
-    "id": "skill-1b82a501bd3f2b6d",
-    "name": "预测分析",
-    "synonyms": [
-      "预测分析"
     ]
   },
   {
@@ -8010,38 +3696,10 @@
     ]
   },
   {
-    "id": "skill-2e15b5ce5563db7a",
-    "name": "AI模型开发",
-    "synonyms": [
-      "AI模型开发"
-    ]
-  },
-  {
-    "id": "skill-8d61c755a12da24f",
-    "name": "生成式AI解决方案",
-    "synonyms": [
-      "生成式AI解决方案"
-    ]
-  },
-  {
-    "id": "skill-27b265e85d3aa9f8",
-    "name": "推荐引擎开发",
-    "synonyms": [
-      "推荐引擎开发"
-    ]
-  },
-  {
     "id": "skill-aeb5db879d402dbc",
     "name": "定价分析与优化",
     "synonyms": [
       "定价分析与优化"
-    ]
-  },
-  {
-    "id": "skill-c1016f3f3a775175",
-    "name": "数字分析",
-    "synonyms": [
-      "数字分析"
     ]
   },
   {
@@ -8059,48 +3717,6 @@
     ]
   },
   {
-    "id": "skill-d9a5c3b258d3a9fc",
-    "name": "渠道优化",
-    "synonyms": [
-      "渠道优化"
-    ]
-  },
-  {
-    "id": "skill-0c11a8310a1cc164",
-    "name": "钱包预测",
-    "synonyms": [
-      "钱包预测"
-    ]
-  },
-  {
-    "id": "skill-157b9ab49f3a8d95",
-    "name": "数据安全",
-    "synonyms": [
-      "数据安全"
-    ]
-  },
-  {
-    "id": "skill-203aee8bce316a37",
-    "name": "时间序列预测",
-    "synonyms": [
-      "时间序列预测"
-    ]
-  },
-  {
-    "id": "skill-c0c8959817661c57",
-    "name": "预测建模",
-    "synonyms": [
-      "预测建模"
-    ]
-  },
-  {
-    "id": "skill-00903907562ac07f",
-    "name": "故障检测",
-    "synonyms": [
-      "故障检测"
-    ]
-  },
-  {
     "id": "skill-a4f8ac735a602750",
     "name": "预测性维护",
     "synonyms": [
@@ -8115,31 +3731,10 @@
     ]
   },
   {
-    "id": "skill-69dbf44b3d90e7fa",
-    "name": "Computer Vision",
-    "synonyms": [
-      "Computer Vision"
-    ]
-  },
-  {
     "id": "skill-1936bc968537f643",
     "name": "Data Quality",
     "synonyms": [
       "Data Quality"
-    ]
-  },
-  {
-    "id": "skill-5c857ee45204b83f",
-    "name": "Model Monitoring",
-    "synonyms": [
-      "Model Monitoring"
-    ]
-  },
-  {
-    "id": "skill-650314e6ff90d90c",
-    "name": "Data Analytics",
-    "synonyms": [
-      "Data Analytics"
     ]
   },
   {
@@ -8150,24 +3745,10 @@
     ]
   },
   {
-    "id": "skill-e6aba2bd5a6b0b7e",
-    "name": "Programming",
-    "synonyms": [
-      "Programming"
-    ]
-  },
-  {
     "id": "skill-4c1462cda5c105b0",
     "name": "DAMA数据治理体系",
     "synonyms": [
       "DAMA数据治理体系"
-    ]
-  },
-  {
-    "id": "skill-6d7b9c4d4f35331a",
-    "name": "FineBI",
-    "synonyms": [
-      "FineBI"
     ]
   },
   {
@@ -8185,25 +3766,11 @@
     ]
   },
   {
-    "id": "skill-3ad64aa8f585d415",
-    "name": "趋势预测",
-    "synonyms": [
-      "趋势预测"
-    ]
-  },
-  {
     "id": "skill-4287d388fbec1212",
     "name": "Boosting算法",
     "synonyms": [
       "Boosting算法",
       "boosting算法"
-    ]
-  },
-  {
-    "id": "skill-d3e0d079ad06e2b9",
-    "name": "编程开发",
-    "synonyms": [
-      "编程开发"
     ]
   },
   {
@@ -8221,128 +3788,10 @@
     ]
   },
   {
-    "id": "skill-6d710586d0e5e4c7",
-    "name": "风控建模",
-    "synonyms": [
-      "风控建模"
-    ]
-  },
-  {
-    "id": "skill-7d475cdcebe3775d",
-    "name": "反欺诈",
-    "synonyms": [
-      "反欺诈"
-    ]
-  },
-  {
-    "id": "skill-07d83bff1aa1f3c1",
-    "name": "支付数据分析",
-    "synonyms": [
-      "支付数据分析"
-    ]
-  },
-  {
-    "id": "skill-b7eca347a436c1af",
-    "name": "数据库知识",
-    "synonyms": [
-      "数据库知识"
-    ]
-  },
-  {
-    "id": "skill-fcac6393996e7829",
-    "name": "大数据技术架构",
-    "synonyms": [
-      "大数据技术架构"
-    ]
-  },
-  {
-    "id": "skill-cf95352b1aeca43e",
-    "name": "数据可视化工具",
-    "synonyms": [
-      "数据可视化工具"
-    ]
-  },
-  {
-    "id": "skill-ec235eba4a6226c8",
-    "name": "数学和统计学",
-    "synonyms": [
-      "数学和统计学"
-    ]
-  },
-  {
-    "id": "skill-dddb7b5ba82f99de",
-    "name": "矩阵计算",
-    "synonyms": [
-      "矩阵计算"
-    ]
-  },
-  {
-    "id": "skill-4dee87636b4eb241",
-    "name": "深度神经网络构建",
-    "synonyms": [
-      "深度神经网络构建"
-    ]
-  },
-  {
-    "id": "skill-7f1530d5d871bb1f",
-    "name": "非结构化数据处理",
-    "synonyms": [
-      "非结构化数据处理"
-    ]
-  },
-  {
-    "id": "skill-6efbd592613a7f07",
-    "name": "多模态数据融合",
-    "synonyms": [
-      "多模态数据融合"
-    ]
-  },
-  {
-    "id": "skill-6807bb61d40899a0",
-    "name": "数据合成",
-    "synonyms": [
-      "数据合成"
-    ]
-  },
-  {
-    "id": "skill-0c9e0aa9edcac58e",
-    "name": "大语言模型方法",
-    "synonyms": [
-      "大语言模型方法"
-    ]
-  },
-  {
-    "id": "skill-4364e3267f80c25a",
-    "name": "业务指标体系优化",
-    "synonyms": [
-      "业务指标体系优化"
-    ]
-  },
-  {
-    "id": "skill-eff159acf0602fcb",
-    "name": "数据分析方法论",
-    "synonyms": [
-      "数据分析方法论"
-    ]
-  },
-  {
-    "id": "skill-9f880c0c3bec2154",
-    "name": "数据产品解决方案",
-    "synonyms": [
-      "数据产品解决方案"
-    ]
-  },
-  {
     "id": "skill-0a142fdbb4e5aae7",
     "name": "数仓管理",
     "synonyms": [
-      "数仓管理"
-    ]
-  },
-  {
-    "id": "skill-3e6aae10e1e5100e",
-    "name": "数湖管理",
-    "synonyms": [
+      "数仓管理",
       "数湖管理"
     ]
   },
@@ -8378,21 +3827,8 @@
     "id": "skill-ed3880138294cce3",
     "name": "数据运营战略规划",
     "synonyms": [
-      "数据运营战略规划"
-    ]
-  },
-  {
-    "id": "skill-916fba9ecc338993",
-    "name": "数据安全业务规划",
-    "synonyms": [
+      "数据运营战略规划",
       "数据安全业务规划"
-    ]
-  },
-  {
-    "id": "skill-4df33b1411e0ece4",
-    "name": "数据评价",
-    "synonyms": [
-      "数据评价"
     ]
   },
   {
@@ -8403,31 +3839,10 @@
     ]
   },
   {
-    "id": "skill-31f831d3f5e7f543",
-    "name": "多维解决方案设计",
-    "synonyms": [
-      "多维解决方案设计"
-    ]
-  },
-  {
-    "id": "skill-47ffbac2d4300c7e",
-    "name": "数据解释",
-    "synonyms": [
-      "数据解释"
-    ]
-  },
-  {
     "id": "skill-a6967c1e39f88a01",
     "name": "数据质疑能力",
     "synonyms": [
       "数据质疑能力"
-    ]
-  },
-  {
-    "id": "skill-89fa1426e77ab856",
-    "name": "持续学习能力",
-    "synonyms": [
-      "持续学习能力"
     ]
   },
   {
@@ -8438,45 +3853,10 @@
     ]
   },
   {
-    "id": "skill-42735da6b097c42f",
-    "name": "数据科学",
-    "synonyms": [
-      "数据科学"
-    ]
-  },
-  {
-    "id": "skill-dc41121861413bce",
-    "name": "团队管理经验",
-    "synonyms": [
-      "团队管理经验"
-    ]
-  },
-  {
     "id": "skill-e952547af2ea3444",
     "name": "数据科学从业经验",
     "synonyms": [
       "数据科学从业经验"
-    ]
-  },
-  {
-    "id": "skill-6acec22fc72dd2a6",
-    "name": "神经网络设计",
-    "synonyms": [
-      "神经网络设计"
-    ]
-  },
-  {
-    "id": "skill-e6707ebb3cec2c52",
-    "name": "大数据处理",
-    "synonyms": [
-      "大数据处理"
-    ]
-  },
-  {
-    "id": "skill-1458ee10307dd0ad",
-    "name": "生成式AI",
-    "synonyms": [
-      "生成式AI"
     ]
   },
   {
@@ -8487,38 +3867,11 @@
     ]
   },
   {
-    "id": "skill-d21cc21e590dd835",
-    "name": "Data Architecture",
-    "synonyms": [
-      "Data Architecture"
-    ]
-  },
-  {
-    "id": "skill-d909750b1bbb71a3",
-    "name": "Automation",
-    "synonyms": [
-      "Automation"
-    ]
-  },
-  {
     "id": "skill-ba118bf7fc9c1aed",
     "name": "English",
     "synonyms": [
+      "英文",
       "English"
-    ]
-  },
-  {
-    "id": "skill-afcbeb75b733eae0",
-    "name": "Analytics Modelling and Techniques",
-    "synonyms": [
-      "Analytics Modelling and Techniques"
-    ]
-  },
-  {
-    "id": "skill-bc6122963402c9a9",
-    "name": "Microsoft Azure Machine Learning",
-    "synonyms": [
-      "Microsoft Azure Machine Learning"
     ]
   },
   {
@@ -8536,88 +3889,10 @@
     ]
   },
   {
-    "id": "skill-78320a6e2e09750c",
-    "name": "Microsoft PowerBI",
-    "synonyms": [
-      "Microsoft PowerBI"
-    ]
-  },
-  {
-    "id": "skill-a656107e99c71dea",
-    "name": "Statistics",
-    "synonyms": [
-      "Statistics"
-    ]
-  },
-  {
-    "id": "skill-c5dcff31bd98855f",
-    "name": "Data Exploration",
-    "synonyms": [
-      "Data Exploration"
-    ]
-  },
-  {
-    "id": "skill-77099be87e56c762",
-    "name": "Data Visualisation",
-    "synonyms": [
-      "Data Visualisation",
-      "Data Visualization"
-    ]
-  },
-  {
-    "id": "skill-f0c23f3c5c3197a0",
-    "name": "Map/Reduce",
-    "synonyms": [
-      "Map/Reduce"
-    ]
-  },
-  {
-    "id": "skill-9b480cc1f9f0e31c",
-    "name": "Microsoft Azure",
-    "synonyms": [
-      "Microsoft Azure"
-    ]
-  },
-  {
     "id": "skill-fbf05568668d87e5",
     "name": "Cortana",
     "synonyms": [
       "Cortana"
-    ]
-  },
-  {
-    "id": "skill-d7668aff4d1bc1ad",
-    "name": "数据应用产品研发",
-    "synonyms": [
-      "数据应用产品研发"
-    ]
-  },
-  {
-    "id": "skill-abbc61d11c76a327",
-    "name": "指导培训",
-    "synonyms": [
-      "指导培训"
-    ]
-  },
-  {
-    "id": "skill-967b81752040e67d",
-    "name": "机器学习编程语言",
-    "synonyms": [
-      "机器学习编程语言"
-    ]
-  },
-  {
-    "id": "skill-057cb27761f5c2c8",
-    "name": "问题分析与逻辑思维",
-    "synonyms": [
-      "问题分析与逻辑思维"
-    ]
-  },
-  {
-    "id": "skill-12c3f048f92143d7",
-    "name": "最优化算法",
-    "synonyms": [
-      "最优化算法"
     ]
   },
   {
@@ -8635,13 +3910,6 @@
     ]
   },
   {
-    "id": "skill-1832152a3c4010d9",
-    "name": "CRF",
-    "synonyms": [
-      "CRF"
-    ]
-  },
-  {
     "id": "skill-a16f8803e5c21cc5",
     "name": "HMM",
     "synonyms": [
@@ -8649,73 +3917,10 @@
     ]
   },
   {
-    "id": "skill-5604da7cd3de8e88",
-    "name": "DNN",
-    "synonyms": [
-      "DNN"
-    ]
-  },
-  {
-    "id": "skill-4c15ec55d7819654",
-    "name": "RNN",
-    "synonyms": [
-      "RNN"
-    ]
-  },
-  {
-    "id": "skill-ac585b181d10ea0c",
-    "name": "Predictive Modeling",
-    "synonyms": [
-      "Predictive Modeling"
-    ]
-  },
-  {
-    "id": "skill-4b4db8cc2fceb9ed",
-    "name": "Algorithm Design",
-    "synonyms": [
-      "Algorithm Design"
-    ]
-  },
-  {
-    "id": "skill-b11715562f26ff15",
-    "name": "Natural Language Processing",
-    "synonyms": [
-      "Natural Language Processing"
-    ]
-  },
-  {
-    "id": "skill-a7797298f1648fbc",
-    "name": "Experiment Design",
-    "synonyms": [
-      "Experiment Design"
-    ]
-  },
-  {
-    "id": "skill-cdba6dc33e22fb46",
-    "name": "Mathematics",
-    "synonyms": [
-      "Mathematics"
-    ]
-  },
-  {
-    "id": "skill-403b15acce9b8cf1",
-    "name": "机器学习系统部署",
-    "synonyms": [
-      "机器学习系统部署"
-    ]
-  },
-  {
     "id": "skill-db9cb8f77a36a8e4",
     "name": "算法实现",
     "synonyms": [
       "算法实现"
-    ]
-  },
-  {
-    "id": "skill-bc01dce813bd1768",
-    "name": "脚本语言",
-    "synonyms": [
-      "脚本语言"
     ]
   },
   {
@@ -8740,24 +3945,10 @@
     ]
   },
   {
-    "id": "skill-8547ef1ab54efd16",
-    "name": "OpenCL",
+    "id": "skill-550bda712167a79d",
+    "name": "GPGPU",
     "synonyms": [
-      "OpenCL"
-    ]
-  },
-  {
-    "id": "skill-c1d37d02c1b6be2f",
-    "name": "高精度定位",
-    "synonyms": [
-      "高精度定位"
-    ]
-  },
-  {
-    "id": "skill-f090ed3f24ade1ff",
-    "name": "HTML5",
-    "synonyms": [
-      "HTML5"
+      "GPGPU"
     ]
   },
   {
@@ -8768,10 +3959,10 @@
     ]
   },
   {
-    "id": "skill-ac0ddf8d6eed2ea4",
-    "name": "Android开发",
+    "id": "skill-357e7188a643a3f1",
+    "name": ".NET",
     "synonyms": [
-      "Android开发"
+      ".NET"
     ]
   },
   {
@@ -8782,20 +3973,6 @@
     ]
   },
   {
-    "id": "skill-dc4030f9688d6e67",
-    "name": "UDP",
-    "synonyms": [
-      "UDP"
-    ]
-  },
-  {
-    "id": "skill-ca04248e5bd9cbf5",
-    "name": "MQTT协议",
-    "synonyms": [
-      "MQTT协议"
-    ]
-  },
-  {
     "id": "skill-e37df8128fe0e63f",
     "name": "多客户端设计",
     "synonyms": [
@@ -8803,31 +3980,12 @@
     ]
   },
   {
-    "id": "skill-5eac64b49ae095cf",
-    "name": "HTTP协议",
-    "synonyms": [
-      "HTTP协议"
-    ]
-  },
-  {
     "id": "skill-3935413b450ab677",
     "name": "WebSocket协议",
     "synonyms": [
-      "WebSocket协议"
-    ]
-  },
-  {
-    "id": "skill-07239dbd2a1a1dd7",
-    "name": "HTML",
-    "synonyms": [
-      "HTML"
-    ]
-  },
-  {
-    "id": "skill-b581e46042cbfbb0",
-    "name": "CSS",
-    "synonyms": [
-      "CSS"
+      "HTTP协议",
+      "WebSocket协议",
+      "WebSocket"
     ]
   },
   {
@@ -8863,55 +4021,6 @@
     "name": "stylus",
     "synonyms": [
       "stylus"
-    ]
-  },
-  {
-    "id": "skill-9d5e2aaf3d393def",
-    "name": "物联网基础架构",
-    "synonyms": [
-      "物联网基础架构"
-    ]
-  },
-  {
-    "id": "skill-ba6d69c7bda06eaf",
-    "name": "后台服务开发",
-    "synonyms": [
-      "后台服务开发"
-    ]
-  },
-  {
-    "id": "skill-1d61b59bb68a4ba4",
-    "name": "数据库后台管理",
-    "synonyms": [
-      "数据库后台管理"
-    ]
-  },
-  {
-    "id": "skill-fa478445f5778e11",
-    "name": "业务后台开发",
-    "synonyms": [
-      "业务后台开发"
-    ]
-  },
-  {
-    "id": "skill-169d718cf391b3a1",
-    "name": "前后端接口定义",
-    "synonyms": [
-      "前后端接口定义"
-    ]
-  },
-  {
-    "id": "skill-4435578759291b55",
-    "name": "分布式系统设计",
-    "synonyms": [
-      "分布式系统设计"
-    ]
-  },
-  {
-    "id": "skill-e21371b9007304c8",
-    "name": "物联网技术",
-    "synonyms": [
-      "物联网技术"
     ]
   },
   {
@@ -8975,13 +4084,6 @@
     "name": "传感器应用",
     "synonyms": [
       "传感器应用"
-    ]
-  },
-  {
-    "id": "skill-2adc1280d346d502",
-    "name": "WebSocket",
-    "synonyms": [
-      "WebSocket"
     ]
   },
   {
@@ -9055,10 +4157,1135 @@
     ]
   },
   {
-    "id": "skill-0157452d1192831c",
-    "name": "边缘计算",
+    "id": "skill-3c02ce57a04850de",
+    "name": "LLaMA2",
     "synonyms": [
-      "边缘计算"
+      "LLaMA2",
+      "LLaMA"
+    ]
+  },
+  {
+    "id": "skill-e8373362b0e8e772",
+    "name": "Mixtral-7B",
+    "synonyms": [
+      "Mixtral-7B"
+    ]
+  },
+  {
+    "id": "skill-f45041366fea4337",
+    "name": "Rerank",
+    "synonyms": [
+      "Rerank"
+    ]
+  },
+  {
+    "id": "skill-18885f27b5af9012",
+    "name": "Python",
+    "synonyms": [
+      "Python",
+      "Python编程"
+    ]
+  },
+  {
+    "id": "skill-c5253ae0d0d25563",
+    "name": "深度学习平台开发",
+    "synonyms": [
+      "深度学习框架",
+      "深度学习",
+      "Web开发框架",
+      "深度学习平台开发",
+      "嵌入式平台模型开发",
+      "嵌入式开发",
+      "嵌入式部署"
+    ]
+  },
+  {
+    "id": "skill-9513c60ab00ff4e3",
+    "name": "大语言模型应用开发",
+    "synonyms": [
+      "大模型应用开发",
+      "模型集成与部署",
+      "大模型训练框架",
+      "大语言模型应用开发",
+      "大模型训练",
+      "大模型调优",
+      "大模型微调",
+      "大模型应用开发框架",
+      "大模型微调技术",
+      "大模型落地经验",
+      "大语言模型",
+      "本地大模型部署",
+      "模型训练",
+      "大语言模型应用",
+      "大模型评测",
+      "大模型应用算法",
+      "多模态大模型",
+      "模型集成",
+      "大模型开发",
+      "大模型",
+      "模型开发",
+      "大模型部署",
+      "大模型应用",
+      "大模型工程化",
+      "基础大模型预训练",
+      "语音大模型",
+      "大语言模型微调",
+      "模型调优",
+      "模型优化",
+      "大模型API",
+      "Large Language Models",
+      "大语言模型 (LLM)",
+      "大语言模型方法",
+      "大语言模型 (LLMs)",
+      "大语言模型应用开发框架",
+      "模型推理",
+      "模型量化"
+    ]
+  },
+  {
+    "id": "skill-eb8849f239ce6dcb",
+    "name": "自然语言处理",
+    "synonyms": [
+      "自然语言处理",
+      "数据处理",
+      "图像处理",
+      "自然语言处理 (NLP)",
+      "Natural Language Processing"
+    ]
+  },
+  {
+    "id": "skill-83644c34322891ab",
+    "name": "数据处理与分析",
+    "synonyms": [
+      "数据处理与分析",
+      "商业数据分析",
+      "数据预处理",
+      "海量数据处理",
+      "数据采集",
+      "传感器",
+      "多传感器融合",
+      "传感器数据处理",
+      "焊接传感器",
+      "传感器融合",
+      "传感器集成",
+      "感知系统",
+      "测绘",
+      "大数据分析",
+      "测绘数据处理",
+      "数据分析",
+      "数据建模",
+      "统计分析",
+      "数据监控",
+      "数据处理",
+      "数据模型",
+      "数据可视化",
+      "数据清洗",
+      "数据挖掘",
+      "数据挖掘算法",
+      "大数据",
+      "平台分析",
+      "数据库",
+      "数据银行",
+      "数据分析报告",
+      "数据透视表",
+      "机器学习",
+      "数据分析系统",
+      "需求分析",
+      "大数据建模",
+      "数据问题追踪",
+      "撰写数据分析报告",
+      "逻辑思维",
+      "逻辑回归",
+      "问题分析与逻辑思维",
+      "深度学习"
+    ]
+  },
+  {
+    "id": "skill-d7372245770c8f05",
+    "name": "RAG性能优化",
+    "synonyms": [
+      "性能优化",
+      "RAG性能优化",
+      "模型优化",
+      "RAG",
+      "RAG技术",
+      "RAG部署与调优",
+      "RAG准确率优化",
+      "RAG准确率提升经验"
+    ]
+  },
+  {
+    "id": "skill-4ce266d144fe9254",
+    "name": "团队协作",
+    "synonyms": [
+      "团队协作",
+      "团队合作",
+      "团队管理",
+      "团队领导",
+      "项目管理",
+      "团队精神",
+      "跨团队协作",
+      "协作能力",
+      "沟通能力",
+      "团队管理经验"
+    ]
+  },
+  {
+    "id": "skill-fa1bd127be6dc95e",
+    "name": "LLM微调和训练",
+    "synonyms": [
+      "LLM微调和训练",
+      "LLM模型训练",
+      "LLM模型调优",
+      "模型微调",
+      "微调",
+      "LLM微调",
+      "LLM Pre-training",
+      "LLM",
+      "预训练和微调"
+    ]
+  },
+  {
+    "id": "skill-85f99197bc6f8829",
+    "name": "技术调研",
+    "synonyms": [
+      "技术调研",
+      "市场调研"
+    ]
+  },
+  {
+    "id": "skill-b4a06b2bf2034993",
+    "name": "模型评估",
+    "synonyms": [
+      "模型评估",
+      "模型调优",
+      "效果评估",
+      "模型部署",
+      "模型量化",
+      "模型加速",
+      "模型优化",
+      "推理优化",
+      "模型训练",
+      "优化算法",
+      "算法优化",
+      "模型压缩",
+      "大模型微调",
+      "预测模型",
+      "数学优化",
+      "模型验证",
+      "模型开发与优化",
+      "模型监控",
+      "大模型开发",
+      "模型开发",
+      "模型轻量化",
+      "数学模型构建",
+      "模型微调"
+    ]
+  },
+  {
+    "id": "skill-806f88fc0e700c25",
+    "name": "PyTorch/TensorFlow/Keras",
+    "synonyms": [
+      "PyTorch/TensorFlow/Keras",
+      "TensorFlow",
+      "PyTorch",
+      "Pytorch",
+      "TensorRT",
+      "Tensorflow",
+      "PyTorch/TensorFlow"
+    ]
+  },
+  {
+    "id": "skill-0ebe1d66f5a67dc0",
+    "name": "机器学习基础",
+    "synonyms": [
+      "机器学习基础",
+      "机器学习",
+      "编程基础",
+      "深度学习",
+      "机器视觉",
+      "统计学习",
+      "算法分析",
+      "数据分析",
+      "算法训练",
+      "机器学习框架",
+      "模型部署",
+      "数学基础",
+      "物理基础",
+      "AI模型开发",
+      "模型优化",
+      "机器学习系统部署"
+    ]
+  },
+  {
+    "id": "skill-0002ac79318121b8",
+    "name": "LLM技术理解",
+    "synonyms": [
+      "LLM技术理解",
+      "LLM",
+      "LLM 理解与应用",
+      "LLM原理",
+      "LLM集成"
+    ]
+  },
+  {
+    "id": "skill-260f3d5b40647ffe",
+    "name": "LangChain/LangGraph",
+    "synonyms": [
+      "LangChain",
+      "LangChain/LangGraph",
+      "LangGraph",
+      "Langchain"
+    ]
+  },
+  {
+    "id": "skill-053c22fb733f24bd",
+    "name": "AutoGen",
+    "synonyms": [
+      "AutoGen"
+    ]
+  },
+  {
+    "id": "skill-5e360ac275cfcd4e",
+    "name": "PromptAppGPT",
+    "synonyms": [
+      "PromptAppGPT",
+      "FastGPT",
+      "Prompt工程",
+      "Prompt调试",
+      "AutoGPT"
+    ]
+  },
+  {
+    "id": "skill-c0955f7ef40c5d7a",
+    "name": "Agent流程编排",
+    "synonyms": [
+      "Agent开发",
+      "Agent",
+      "Agent流程编排",
+      "Agent调试",
+      "AI Agent",
+      "AI agent",
+      "AGENT",
+      "Agent 开发框架",
+      "Agent框架",
+      "AI Agent平台"
+    ]
+  },
+  {
+    "id": "skill-81199a2347fd2e4a",
+    "name": "技术架构设计",
+    "synonyms": [
+      "软件架构",
+      "技术架构设计",
+      "技术方案设计",
+      "算法设计",
+      "系统设计",
+      "AI系统架构设计",
+      "架构设计",
+      "软件架构设计",
+      "自动控制架构设计",
+      "结构件设计",
+      "大数据技术",
+      "大数据技术架构"
+    ]
+  },
+  {
+    "id": "skill-ed249d417dcd38db",
+    "name": "GitHub Copilot",
+    "synonyms": [
+      "GitHub Copilot"
+    ]
+  },
+  {
+    "id": "skill-54920e2565489045",
+    "name": "CodeGeeX",
+    "synonyms": [
+      "CodeGeeX"
+    ]
+  },
+  {
+    "id": "skill-3c48d8ed41371f37",
+    "name": "数据结构",
+    "synonyms": [
+      "数据库",
+      "数据结构",
+      "数据挖掘",
+      "数据集构建",
+      "数据爬取",
+      "数据仓库建模",
+      "数据处理",
+      "数据建模",
+      "数据仓库设计",
+      "数据结构与算法",
+      "算法仿真与开发",
+      "数据工程",
+      "数据管理",
+      "数据仓库",
+      "机器学习算法",
+      "深度学习算法",
+      "深度学习"
+    ]
+  },
+  {
+    "id": "skill-266e9979b143c56b",
+    "name": "H5",
+    "synonyms": [
+      "H5",
+      "T5"
+    ]
+  },
+  {
+    "id": "skill-c1ba60ce13586503",
+    "name": "Java",
+    "synonyms": [
+      "Java",
+      "JAVA"
+    ]
+  },
+  {
+    "id": "skill-b602ebce988c0bea",
+    "name": "前后端开发",
+    "synonyms": [
+      "前后端开发",
+      "后端开发",
+      "后端服务",
+      "前后端接口定义"
+    ]
+  },
+  {
+    "id": "skill-a049dca9d8f1e021",
+    "name": "项目管理",
+    "synonyms": [
+      "项目管理",
+      "项目总体规划",
+      "项目规划与管理",
+      "软件工程管理"
+    ]
+  },
+  {
+    "id": "skill-47f741ba6105ccce",
+    "name": "文档编写",
+    "synonyms": [
+      "文档编写",
+      "算法文档编写",
+      "程序编制",
+      "技术文档编写",
+      "软件开发文档",
+      "语言理解",
+      "图像理解",
+      "文档智能理解",
+      "文案撰写",
+      "文档写作能力",
+      "报告撰写",
+      "报表制作"
+    ]
+  },
+  {
+    "id": "skill-e6169e958b37ce86",
+    "name": "Docker",
+    "synonyms": [
+      "Docker"
+    ]
+  },
+  {
+    "id": "skill-943ad8db4c33ab4a",
+    "name": "云计算平台",
+    "synonyms": [
+      "云计算平台",
+      "云计算认证",
+      "云平台",
+      "云计算",
+      "云技术"
+    ]
+  },
+  {
+    "id": "skill-32fd72a0e0746043",
+    "name": "AWS",
+    "synonyms": [
+      "AWS"
+    ]
+  },
+  {
+    "id": "skill-3140d22d8cb307e2",
+    "name": "Azure",
+    "synonyms": [
+      "Azure",
+      "Microsoft Azure Machine Learning",
+      "Microsoft Azure"
+    ]
+  },
+  {
+    "id": "skill-e16fc821f34228d1",
+    "name": "阿里云",
+    "synonyms": [
+      "阿里云"
+    ]
+  },
+  {
+    "id": "skill-7f0188692116ad26",
+    "name": "英语阅读",
+    "synonyms": [
+      "英语阅读",
+      "英文文献阅读",
+      "英语读写",
+      "英语科技文档阅读",
+      "英语",
+      "英文文献检索和阅读",
+      "英语文献阅读",
+      "英文听说读写",
+      "英文读写",
+      "英文",
+      "英文文档阅读"
+    ]
+  },
+  {
+    "id": "skill-e4ef33ad78616b7e",
+    "name": "AI chatbot开发",
+    "synonyms": [
+      "AI chatbot开发",
+      "AI编程",
+      "AI开发工具",
+      "AI开发经验"
+    ]
+  },
+  {
+    "id": "skill-c75018bfd167c234",
+    "name": "知识库/智能体平台",
+    "synonyms": [
+      "智能体技术",
+      "知识库/智能体平台",
+      "智能体"
+    ]
+  },
+  {
+    "id": "skill-6dc38fda45c9340e",
+    "name": "Linux开发",
+    "synonyms": [
+      "Linux开发",
+      "系统开发",
+      "Linux",
+      "iOS开发",
+      "Mac OS X开发",
+      "API开发",
+      "安卓开发",
+      "代码开发",
+      "Windows软件开发",
+      "GUI开发",
+      "Linux操作系统",
+      "Web开发",
+      "APP开发"
+    ]
+  },
+  {
+    "id": "skill-0f6059b2d9e48cbb",
+    "name": "智能问答",
+    "synonyms": [
+      "智能问答",
+      "智能客服"
+    ]
+  },
+  {
+    "id": "skill-82fc92acfd34a7f6",
+    "name": "语义理解",
+    "synonyms": [
+      "语义理解"
+    ]
+  },
+  {
+    "id": "skill-893ec5802b402647",
+    "name": "大规模分布式算法",
+    "synonyms": [
+      "算法",
+      "分布式算法",
+      "大规模分布式算法",
+      "检索算法",
+      "融合算法",
+      "分布式训练",
+      "分布式部署",
+      "分布式计算",
+      "分布式系统开发",
+      "广告算法",
+      "搜索算法",
+      "推荐算法",
+      "数据挖掘算法",
+      "开源算法",
+      "算法设计",
+      "神经网络算法",
+      "图算法",
+      "遗传算法",
+      "分布式系统",
+      "分布式",
+      "分布式文档处理",
+      "分布式系统设计"
+    ]
+  },
+  {
+    "id": "skill-c7b9fb670dbb0d72",
+    "name": "代码调试",
+    "synonyms": [
+      "代码调试",
+      "调度系统开发",
+      "软件测试与调试",
+      "代码调试与优化",
+      "调试",
+      "软件工程",
+      "软件测试",
+      "现场调试"
+    ]
+  },
+  {
+    "id": "skill-dbb07e6b126f72d6",
+    "name": "LoRA/Adapter",
+    "synonyms": [
+      "LoRA/Adapter"
+    ]
+  },
+  {
+    "id": "skill-732251014dc9fd93",
+    "name": "FAISS",
+    "synonyms": [
+      "FAISS"
+    ]
+  },
+  {
+    "id": "skill-bc82e5665a1c182a",
+    "name": "DeepSpeed",
+    "synonyms": [
+      "DeepSeek",
+      "DeepSpeed",
+      "DeepConvNet",
+      "Deepchecks",
+      "Megatron-deepspeed"
+    ]
+  },
+  {
+    "id": "skill-aa77889c8c35bd45",
+    "name": "ChatGLM",
+    "synonyms": [
+      "ChatGLM",
+      "ChatGPT"
+    ]
+  },
+  {
+    "id": "skill-fed5301c150ef0a4",
+    "name": "Multi-modal models",
+    "synonyms": [
+      "多模态数据处理",
+      "多模态模型",
+      "Multi-modal models",
+      "多模态",
+      "多模态学习",
+      "多模态感知",
+      "多模态内容理解",
+      "多模态算法",
+      "多模态大模型",
+      "模型设计",
+      "大规模语言模型",
+      "多视几何",
+      "多模态模型预训练",
+      "模型训练",
+      "跨模态理解与生成",
+      "多模态建模",
+      "跨模态检索与生成",
+      "多模态大模型应用",
+      "模型量化",
+      "多模态模型微调",
+      "多模态融合",
+      "多模态数据理解",
+      "图文模态生成",
+      "生成模型"
+    ]
+  },
+  {
+    "id": "skill-0e159f7ab2835418",
+    "name": "HEC-RAS",
+    "synonyms": [
+      "HEC-RAS"
+    ]
+  },
+  {
+    "id": "skill-bff70485135c5473",
+    "name": "MIKE",
+    "synonyms": [
+      "MIKE"
+    ]
+  },
+  {
+    "id": "skill-aeb3fd4f17162e9b",
+    "name": "GIS",
+    "synonyms": [
+      "GIS",
+      "ArcGIS",
+      "地理信息系统"
+    ]
+  },
+  {
+    "id": "skill-3780bdc0ede6ede2",
+    "name": "LLM应用平台搭建",
+    "synonyms": [
+      "LLM应用平台搭建",
+      "LLM部署"
+    ]
+  },
+  {
+    "id": "skill-0962ad68a9646edd",
+    "name": "提示词工程",
+    "synonyms": [
+      "提示词工程",
+      "提示工程",
+      "智能提示系统开发",
+      "提示词设计",
+      "提示词管理系统搭建"
+    ]
+  },
+  {
+    "id": "skill-52ebb748d5b8963e",
+    "name": "AIGC场景调研与落地",
+    "synonyms": [
+      "AIGC场景调研与落地",
+      "AIGC企业级应用落地",
+      "AIGC落地"
+    ]
+  },
+  {
+    "id": "skill-084613987a2b30a7",
+    "name": "主流大模型特性了解",
+    "synonyms": [
+      "主流大模型特性了解",
+      "大模型原理"
+    ]
+  },
+  {
+    "id": "skill-77b7bfb167eb7dc1",
+    "name": "系统整合与改造",
+    "synonyms": [
+      "系统整合与改造",
+      "系统集成"
+    ]
+  },
+  {
+    "id": "skill-27a711e6a1e67912",
+    "name": "智能办公AI场景落地",
+    "synonyms": [
+      "智能办公平台开发",
+      "智能办公AI场景落地"
+    ]
+  },
+  {
+    "id": "skill-b81924b916fa91e0",
+    "name": "并发推理性能调优",
+    "synonyms": [
+      "并发推理性能调优"
+    ]
+  },
+  {
+    "id": "skill-7dd873dfe52acf22",
+    "name": "AI编程推动",
+    "synonyms": [
+      "AI编程推动"
+    ]
+  },
+  {
+    "id": "skill-909d0528d0eaa209",
+    "name": "半导体或智能制造行业经验",
+    "synonyms": [
+      "半导体或智能制造行业经验",
+      "金融行业项目经验"
+    ]
+  },
+  {
+    "id": "skill-d25a85f112658069",
+    "name": "计算机视觉",
+    "synonyms": [
+      "计算机视觉",
+      "图像识别",
+      "计算机科学",
+      "3D视觉",
+      "视觉系统软件设计",
+      "运动控制软件设计",
+      "视觉处理",
+      "视觉",
+      "计算机视觉模型设计",
+      "AIGC视觉算法",
+      "机器视觉",
+      "Computer Vision",
+      "计算机",
+      "机器学习编程语言"
+    ]
+  },
+  {
+    "id": "skill-f5d2a4c68a7578b5",
+    "name": "AIGC",
+    "synonyms": [
+      "AIGC"
+    ]
+  },
+  {
+    "id": "skill-644378336ad3ca24",
+    "name": "客户交流",
+    "synonyms": [
+      "客户交流"
+    ]
+  },
+  {
+    "id": "skill-d18aca33a335a81c",
+    "name": "Dify",
+    "synonyms": [
+      "Dify",
+      "dify"
+    ]
+  },
+  {
+    "id": "skill-8411c36688aa6984",
+    "name": "Coze",
+    "synonyms": [
+      "Coze"
+    ]
+  },
+  {
+    "id": "skill-fc4df3c7c8a7e0e3",
+    "name": "信息检索",
+    "synonyms": [
+      "信息检索",
+      "检索",
+      "检索引擎"
+    ]
+  },
+  {
+    "id": "skill-60dd357bbdf2d54d",
+    "name": "知识图谱",
+    "synonyms": [
+      "知识图谱"
+    ]
+  },
+  {
+    "id": "skill-0b3830053cfc0e4b",
+    "name": "应用落地",
+    "synonyms": [
+      "应用落地"
+    ]
+  },
+  {
+    "id": "skill-7151470ffb9910df",
+    "name": "Transformer",
+    "synonyms": [
+      "Transformer",
+      "Transformers",
+      "Transformer架构"
+    ]
+  },
+  {
+    "id": "skill-2c4e6f6c46954cd6",
+    "name": "GPT",
+    "synonyms": [
+      "GPT",
+      "GPT-4",
+      "GPT-4o"
+    ]
+  },
+  {
+    "id": "skill-2e3023678e5977e8",
+    "name": "Bert",
+    "synonyms": [
+      "Bert",
+      "BERT"
+    ]
+  },
+  {
+    "id": "skill-d0a1babe92a2e063",
+    "name": "LSTM",
+    "synonyms": [
+      "LSTM"
+    ]
+  },
+  {
+    "id": "skill-f1deb75fa21d3c47",
+    "name": "C++",
+    "synonyms": [
+      "C++",
+      "C/C++",
+      "C#",
+      "C++11",
+      "Python",
+      "Python/C++"
+    ]
+  },
+  {
+    "id": "skill-076030a19a15986c",
+    "name": "数据清洗",
+    "synonyms": [
+      "数据清洗",
+      "数据处理与清洗",
+      "数据分析",
+      "数据整理"
+    ]
+  },
+  {
+    "id": "skill-400f80f7690d9950",
+    "name": "数据标注",
+    "synonyms": [
+      "数据标注",
+      "相机标定"
+    ]
+  },
+  {
+    "id": "skill-fab6880784313bb8",
+    "name": "NLP技术",
+    "synonyms": [
+      "NLP技术",
+      "NLP",
+      "NLP模型",
+      "LLM"
+    ]
+  },
+  {
+    "id": "skill-e496901261121286",
+    "name": "MCP架构",
+    "synonyms": [
+      "MCP架构",
+      "MCP"
+    ]
+  },
+  {
+    "id": "skill-70958db5cbcf91f8",
+    "name": "模块接口规范设计",
+    "synonyms": [
+      "模块接口规范设计",
+      "模块化设计"
+    ]
+  },
+  {
+    "id": "skill-02f7b02d6ca729d2",
+    "name": "工作流编排",
+    "synonyms": [
+      "工作流编排",
+      "工作流搭建"
+    ]
+  },
+  {
+    "id": "skill-fbfa7bc09e9ba73e",
+    "name": "API集成",
+    "synonyms": [
+      "API集成",
+      "API Design",
+      "集成测试"
+    ]
+  },
+  {
+    "id": "skill-401d59551643e265",
+    "name": "自动化工具开发",
+    "synonyms": [
+      "工具学习",
+      "自动化工具开发",
+      "自动化平台软件开发",
+      "软件开发",
+      "自动化集成",
+      "流程自动化",
+      "计算机办公软件自动化",
+      "数据库管理",
+      "数据库运维工具开发",
+      "数据库建库",
+      "关系型数据库"
+    ]
+  },
+  {
+    "id": "skill-c7bdea3142254923",
+    "name": "提示词工程",
+    "synonyms": [
+      "Prompt Engineering"
+    ]
+  },
+  {
+    "id": "skill-783095dae27b6318",
+    "name": "Fine-tuning",
+    "synonyms": [
+      "Fine-tuning",
+      "Instruction Tuning",
+      "Fine-tune"
+    ]
+  },
+  {
+    "id": "skill-bbef28c9ea693db8",
+    "name": "LlamaIndex",
+    "synonyms": [
+      "LlamaIndex"
+    ]
+  },
+  {
+    "id": "skill-eae0788c45723861",
+    "name": "vLLM",
+    "synonyms": [
+      "vLLM",
+      "vllm",
+      "MLLM",
+      "LLM",
+      "VLM",
+      "VLLM"
+    ]
+  },
+  {
+    "id": "skill-a37d07fe30048d3a",
+    "name": "Kubernetes",
+    "synonyms": [
+      "Kubernetes",
+      "机器学习",
+      "数据挖掘",
+      "深度学习",
+      "算法",
+      "数据分析",
+      "机器学习算法",
+      "机器/深度学习建模",
+      "机器学习建模",
+      "机器学习模型",
+      "机器学习理论",
+      "人工智能"
+    ]
+  },
+  {
+    "id": "skill-fc5aaffbb5fc53ad",
+    "name": "TensorRT-LLM",
+    "synonyms": [
+      "TensorRT-LLM",
+      "TensorRTLLM"
+    ]
+  },
+  {
+    "id": "skill-4c35576f2c588737",
+    "name": "Triton",
+    "synonyms": [
+      "Triton"
+    ]
+  },
+  {
+    "id": "skill-78437560ec1796eb",
+    "name": "RLHF",
+    "synonyms": [
+      "RLHF"
+    ]
+  },
+  {
+    "id": "skill-0290ca203f6764e1",
+    "name": "MindSpore",
+    "synonyms": [
+      "MindSpore",
+      "Mindspore"
+    ]
+  },
+  {
+    "id": "skill-d203a277f19a8f7d",
+    "name": "huggingface",
+    "synonyms": [
+      "huggingface"
+    ]
+  },
+  {
+    "id": "skill-636396f02b6571e4",
+    "name": "n8n",
+    "synonyms": [
+      "n8n"
+    ]
+  },
+  {
+    "id": "skill-e771f54a91e29ddc",
+    "name": "chatflow",
+    "synonyms": [
+      "chatflow"
+    ]
+  },
+  {
+    "id": "skill-d5edfed2ce8ebf2e",
+    "name": "需求分析",
+    "synonyms": [
+      "需求分析",
+      "情感分析",
+      "用户行为分析",
+      "产品需求分析",
+      "趋势分析",
+      "需求分析与产品设计",
+      "需求调研"
+    ]
+  },
+  {
+    "id": "skill-a7a9f796e583a30e",
+    "name": "问题解决",
+    "synonyms": [
+      "问题解决",
+      "Bug修复",
+      "软件BUG解决"
+    ]
+  },
+  {
+    "id": "skill-8eabc876dfb9b72a",
+    "name": "学习能力",
+    "synonyms": [
+      "学习能力",
+      "编程",
+      "代码开发能力",
+      "强化学习",
+      "持续学习",
+      "探索能力",
+      "沟通能力",
+      "逻辑思维",
+      "逻辑分析能力",
+      "数据分析能力",
+      "统计分析",
+      "自学能力",
+      "持续学习能力"
+    ]
+  },
+  {
+    "id": "skill-eeed14fad8af23d2",
+    "name": "神经网络",
+    "synonyms": [
+      "神经网络",
+      "神经科学",
+      "神经网络架构",
+      "循环神经网络",
+      "神经网络设计"
+    ]
+  },
+  {
+    "id": "skill-6cc8519b91584e8b",
+    "name": "Go",
+    "synonyms": [
+      "Go"
+    ]
+  },
+  {
+    "id": "skill-05e5761575c48080",
+    "name": "ModelScope",
+    "synonyms": [
+      "ModelScope"
+    ]
+  },
+  {
+    "id": "skill-25aa0e7e5877b4b6",
+    "name": "模型蒸馏",
+    "synonyms": [
+      "模型蒸馏"
+    ]
+  },
+  {
+    "id": "skill-6e272254514f9708",
+    "name": "容器化部署",
+    "synonyms": [
+      "容器化部署",
+      "容器化技术",
+      "系统部署"
+    ]
+  },
+  {
+    "id": "skill-19ec3528b7f82f6d",
+    "name": "监控运维",
+    "synonyms": [
+      "监控运维",
+      "网络运维",
+      "服务器运维",
+      "风险监控",
+      "风险预测",
+      "数据监控指标体系",
+      "业务指标体系优化"
     ]
   }
 ]

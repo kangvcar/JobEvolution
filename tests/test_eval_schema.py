@@ -130,3 +130,19 @@ def test_gold_build_does_not_call_compare_job(monkeypatch, tmp_path):
     )
     rows = read_jsonl(tmp_path / "match_pairs.jsonl")
     assert len(rows) == 100
+
+
+def test_gold_mention_scan_excludes_non_formal_candidates():
+    from app.eval.scan import mention_skill_ids
+
+    rows = mention_skill_ids(
+        "熟悉 Python、GPT，具备良好的沟通能力和问题解决能力",
+        [
+            {"id": "python", "name": "Python", "synonyms": []},
+            {"id": "gpt", "name": "GPT", "synonyms": []},
+            {"id": "talk", "name": "沟通能力", "synonyms": []},
+            {"id": "solve", "name": "问题解决", "synonyms": []},
+        ],
+        threshold=0.7,
+    )
+    assert [row["id"] for row in rows] == ["python"]

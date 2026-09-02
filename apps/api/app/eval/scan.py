@@ -4,6 +4,7 @@ from app.eval.freeze import align_threshold
 from app.matching.resume import _name_in_text
 from app.pipeline.align import align_skill
 from app.pipeline.sections import split_sections
+from app.pipeline.extract import classify_skill_candidate
 
 
 def duty_text(body: str) -> str:
@@ -19,6 +20,8 @@ def mention_skill_ids(text: str, index: list[dict], threshold: float | None = No
     found = []
     seen: set[str] = set()
     for skill in index:
+        if classify_skill_candidate(skill.get("name") or "") in {"generic", "brand"}:
+            continue
         names = [skill.get("name") or "", *(skill.get("synonyms") or [])]
         hit_name = next((n for n in names if n and _name_in_text(n, blob)), None)
         if not hit_name:

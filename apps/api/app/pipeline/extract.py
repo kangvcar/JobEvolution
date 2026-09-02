@@ -139,8 +139,9 @@ _TARGETS = {name.casefold(): name for name in JOB_TARGET_NAMES}
 # type, but these names win at the trust boundary before a graph fact is made.
 GENERIC_SKILL_NAMES = frozenset(
     {
-        "沟通能力", "沟通", "团队协作", "团队合作", "团队合作精神", "学习能力",
-        "责任心", "抗压能力", "数学", "计算机", "算法", "computer science",
+        "沟通能力", "沟通", "团队协作", "团队合作", "团队合作精神", "跨团队协作",
+        "学习能力", "责任心", "抗压能力", "问题解决", "表达能力", "自我驱动",
+        "编程习惯", "数学", "计算机", "算法", "computer science",
     }
 )
 BRAND_NAMES = frozenset({"gpt", "gemini", "chatglm", "mixtral-7b", "llama2", "llama 2"})
