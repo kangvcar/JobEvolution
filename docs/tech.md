@@ -217,7 +217,7 @@ JSON，UTF-8。错误体 `{ "error": str, "detail": str | null }`。管理口令
 | PUT | `/admin/passthrough` | `{enabled: bool}` |
 | GET | `/events/stream` | SSE，管理可选。`Last-Event-ID` 从 Redis Stream 续 |
 
-`/diagnose` 同步返回完整报告，前端 run 态自己播等待动画。报告字段与产品篇四组一一对应：判断、定位、行动、解释。学习路径按换档条件排序。匹配分可放在 payload 里给档位函数用，UI 不直接渲染该数字。
+`/diagnose` 同步返回完整报告，前端 run 态自己播等待动画。报告字段覆盖方向结论、简历定位判断、优势与风险、简历内容状态、岗位关键词对照、双轨行动清单、项目证据提示、求职叙事稿和判断依据。引用已有事实的模型判断携带简历证据片段 ID；缺失判断携带被检查的简历部分,原文没有的事实只进入待补字段。学习路径按换档条件排序。匹配分可放在 payload 里给档位函数用，UI 不直接渲染该数字。
 
 图谱前端用 AntV G6 画这一岗的切片，默认 Canvas。切 WebGL 仅当单岗节点明显卡顿。不用 Timebar，不在边上发采集粒子。
 
