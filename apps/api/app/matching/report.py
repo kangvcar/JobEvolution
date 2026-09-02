@@ -189,6 +189,61 @@ def direction_report(jobs: list[dict], resume: dict) -> dict:
     return {"direction": direction, "jobs": results}
 
 
+def resume_analysis(*, job: dict, requires: list[dict], resume: dict, core: dict | None = None) -> dict:
+    core = core or compare_job(requires, resume.get("skills") or [])
+    fragments = resume.get("evidence_fragments") or []
+    evidence_by_skill = {row.get("skill_id"): row for row in fragments if row.get("skill_id")}
+    strengths = []
+    for row in core.get("covered") or []:
+        fragment = evidence_by_skill.get(row.get("skill_id"))
+        if fragment:
+            strengths.append({"text": f"有{row.get('name') or row.get('skill_id')}的简历证据", "evidence_fragment_id": fragment.get("id") or fragment.get("skill_id"), "quote": fragment.get("text")})
+        if len(strengths) == 3:
+            break
+    risks = [
+        {"text": f"缺少{row.get('name') or row.get('skill_id')}的可核对证据", "check_scope": "经历、项目和技能栏", "requirement_id": row.get("skill_id")}
+        for row in (core.get("gaps") or [])[:3]
+    ]
+    states = []
+    for row in requires:
+        fragment = evidence_by_skill.get(row.get("skill_id"))
+        states.append({"skill_id": row.get("skill_id"), "name": row.get("name"), "state": "证据充分" if fragment and fragment.get("evidence_level") == "result" else "已提及但证据较弱" if fragment else "简历中未找到"})
+    rewrites = []
+    for fragment in fragments:
+        rewrites.append({"original": fragment.get("text"), "problem": "缺少职责或可核对结果" if fragment.get("evidence_level") != "result" else "可保留并补充上下文", "suggestion": fragment.get("text"), "facts_used": [fragment.get("text")], "facts_to_add": ["规模、延迟、成本或业务结果中的一项"] if fragment.get("evidence_level") != "result" else []})
+    capability = [{"skill_id": row.get("skill_id"), "name": row.get("name"), "why": "补齐下一档必备缺口"} for row in (core.get("gaps") or [])[:3]]
+    job_name = job.get("name") or "目标岗位"
+    strength_text = "、".join(item.get("quote") or "已有项目经历" for item in strengths[:2]) or "当前简历证据仍需补充"
+    band = core.get("band") or "不匹配"
+    return {
+        "one_sentence": f"你目前处于{band}，简历已呈现部分{job_name}相关能力，但还缺少可核对的关键证据。",
+        "core_judgments": {
+            "fit_band": band,
+            "advantage": strengths[0]["text"] if strengths else "尚未找到可引用的优势证据",
+            "blocker": risks[0]["text"] if risks else "暂无明确阻碍",
+        },
+        "positioning": {"text": f"当前简历更接近{job_name}，主要阻碍是可核对证据不足。", "evidence_fragment_ids": [item.get("evidence_fragment_id") for item in strengths], "check_scope": "简历全文与当前可诊断岗位集合"},
+        "strengths": strengths,
+        "risks": risks,
+        "content_states": states,
+        "keywords": {
+            "已有证据": [item["name"] for item in states if item["state"] == "证据充分"],
+            "只有提及": [item["name"] for item in states if item["state"] == "已提及但证据较弱"],
+            "简历未找到证据": [item["name"] for item in states if item["state"] == "简历中未找到"],
+        },
+        "rewrites": rewrites,
+        "project_evidence_prompts": [
+            {"project": project.get("name") or "项目", "dimensions": ["数据规模", "延迟", "评测结果"][:2]}
+            for project in (resume.get("projects") or [])
+        ] or [
+            {"evidence_fragment_id": fragment.get("id") or fragment.get("skill_id"), "dimensions": ["数据规模", "延迟"]}
+            for fragment in fragments if fragment.get("section") == "project"
+        ][:2],
+        "actions": {"rewrite": rewrites[:5], "capability": capability},
+        "narrative": f"我有{strength_text}的实践基础，正在申请{job_name}。下一步会补充可核对的项目结果，说明自己承担的职责、规模和影响。",
+    }
+
+
 def attach_urls(path: list[dict]) -> list[dict]:
     if not path:
         return []
@@ -216,6 +271,7 @@ def wrap_report(
 ) -> dict:
     core = compare_job(requires, resume.get("skills") or [])
     core["path"] = attach_urls(core["path"])
+    analysis = resume_analysis(job=job, requires=requires, resume=resume, core=core)
     summary = (
         f"对照{job.get('name') or '目标岗'}，档位「{core['band']}」。"
         f"必备覆盖 {core['req_cover']:g}/{core['req_full']:g}。"
@@ -281,6 +337,7 @@ def wrap_report(
                 "extra": core["extra"],
                 "covered": core["covered"],
                 "notes": "半档记 0.5；加分权重 0.3。匹配分只在载荷里，页面不渲染成 0–100。",
+                "analysis": analysis,
             },
         },
     }

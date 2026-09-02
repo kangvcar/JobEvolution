@@ -1,6 +1,6 @@
 from app.matching.bands import band_of, cover_required, match_score, shift_set
 from app.matching.score import WATCHING_COPY, compare_job
-from app.matching.report import direction_report, recommend_jobs
+from app.matching.report import direction_report, recommend_jobs, resume_analysis
 
 
 def test_band_thresholds():
@@ -159,3 +159,28 @@ def test_recommendation_is_structured_and_direction_can_be_indistinguishable():
     report = direction_report(jobs, resume)
     assert report["direction"] == "无法区分方向"
     assert len(report["jobs"][0]["shift_set"]) <= 5
+
+
+def test_resume_analysis_cites_only_resume_evidence_and_limits_actions():
+    resume = {
+        "skills": [{"skill_id": "python", "name": "Python"}],
+        "evidence_fragments": [
+            {"id": "ev-python", "skill_id": "python", "text": "使用 Python 构建服务", "evidence_level": "use", "section": "project"},
+        ],
+        "projects": [],
+    }
+    requires = [
+        {"skill_id": "python", "name": "Python", "kind": "required", "proficiency": "able"},
+        *[
+            {"skill_id": f"s{i}", "name": f"S{i}", "kind": "required", "proficiency": "able"}
+            for i in range(6)
+        ],
+    ]
+    analysis = resume_analysis(job={"name": "大模型应用工程师"}, requires=requires, resume=resume)
+    assert analysis["one_sentence"]
+    assert analysis["strengths"][0]["evidence_fragment_id"] == "ev-python"
+    assert len(analysis["risks"]) == 3
+    assert len(analysis["actions"]["capability"]) == 3
+    assert len(analysis["actions"]["rewrite"]) <= 5
+    assert analysis["project_evidence_prompts"][0]["evidence_fragment_id"] == "ev-python"
+    assert "87" not in str(analysis)

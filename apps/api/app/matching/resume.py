@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import hashlib
 import re
 from concurrent.futures import ThreadPoolExecutor
 
@@ -96,6 +97,7 @@ def _evidence_fragments(text: str, skills: list[dict], index: list[dict]) -> lis
             continue
         fragments.append(
             {
+                "id": "resume-evidence-" + hashlib.sha256(f"{skill['skill_id']}:{excerpt}".encode()).hexdigest()[:16],
                 "skill_id": skill["skill_id"],
                 "text": excerpt,
                 "section": "project" if re.search(r"项目|project", excerpt, re.I) else "experience",
