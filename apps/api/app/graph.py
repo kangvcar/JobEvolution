@@ -815,7 +815,12 @@ def diagnostic_release(job_id: str, *, override_reason: str = "") -> dict:
     from app.pipeline.diagnostic_release import validate_diagnostic_release
 
     history = list_requires_history(job_id)
-    previous = [row for row in history if row.get("valid_to")]
+    # Curated rows are a replacement baseline, not a new market cycle. Counting
+    # them as a delta would re-trigger the anomaly gate on every release.
+    previous = [
+        row for row in history
+        if row.get("valid_to") and not row.get("curation_version")
+    ]
     job = get_any_job(job_id) or {}
     return validate_diagnostic_release(
         job_id=job_id,
@@ -866,7 +871,8 @@ def list_requires_history(job_id: str) -> list[dict]:
                    c.id AS category_id, c.name AS category,
                    toString(r.valid_from) AS valid_from,
                    toString(r.valid_to) AS valid_to,
-                   r.layer AS layer, coalesce(r.retracted, false) AS retracted
+                   r.layer AS layer, coalesce(r.retracted, false) AS retracted,
+                   coalesce(r.curation_version, '') AS curation_version
             """,
             id=job_id,
         )
