@@ -976,6 +976,12 @@ button:active,
   align-items: start;
 }
 
+.market-filters { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin-top: var(--space-lg); }
+.market-filters button { border: 1px solid var(--color-rule); background: var(--color-paper); color: var(--color-muted); padding: var(--space-xs) var(--space-sm); font: inherit; }
+.market-filters button[aria-pressed="true"] { color: var(--color-ink); border-color: var(--color-ink); }
+.job-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: var(--space-xs); align-content: start; }
+.dossier-question { font-size: var(--text-sm) !important; margin-top: var(--space-lg) !important; }
+
 .disc-lower {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));

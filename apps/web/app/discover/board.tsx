@@ -76,6 +76,7 @@ export function DiscoverBoard() {
   const [feed, setFeed] = useState<Feed | null>(null);
   const [pick, setPick] = useState("");
   const [dossier, setDossier] = useState<Dossier | null>(null);
+  const [stageFilter, setStageFilter] = useState<"all" | "candidate" | "emerging" | "formed">("all");
 
   useEffect(() => {
     fetch(`${API}/discover`)
@@ -100,7 +101,7 @@ export function DiscoverBoard() {
       .catch(() => setDossier(null));
   }, [pick]);
 
-  const order = [...board.candidate, ...board.emerging, ...board.formed];
+  const order = [...board.candidate, ...board.emerging, ...board.formed].filter((card) => stageFilter === "all" || card.status === stageFilter);
 
   function onCardKey(event: KeyboardEvent<HTMLButtonElement>, id: string) {
     if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
@@ -118,9 +119,9 @@ export function DiscoverBoard() {
 
   return (
     <main id="main" className="page discover-page">
-      <h1>发现</h1>
+      <h1>市场变化</h1>
       <p className="hint">
-        三列是漏斗。候选未入谱，只开卷宗，不能对照简历。别名不占候选列。管线、热度、流水在本页。
+        先看岗位卷宗，再决定是否值得关注。状态只是筛选标签，不是结论。
       </p>
       {feed ? (
         <dl className="readout">
@@ -146,18 +147,13 @@ export function DiscoverBoard() {
           </div>
         </dl>
       ) : null}
+      <div className="market-filters" role="group" aria-label="岗位状态筛选">
+        <button type="button" aria-pressed={stageFilter === "all"} onClick={() => setStageFilter("all")}>全部岗位</button>
+        {STAGES.map((stage) => <button key={stage.key} type="button" aria-pressed={stageFilter === stage.key} onClick={() => setStageFilter(stage.key)}>{stage.label} · {board[stage.key].length}</button>)}
+      </div>
       <div className="disc-board">
-        <div className="kanban">
-          {STAGES.map((stage) => {
-            const items = board[stage.key];
-            const title =
-              stage.key === "formed"
-                ? `成型（切片） · ${items.length}/${board.formed_total ?? items.length}`
-                : `${stage.label} · ${items.length}`;
-            return (
-              <div className="col" key={stage.key}>
-                <h2>{title}</h2>
-                {items.map((card) => (
+        <div className="job-cards">
+          {order.map((card) => (
                   <button
                     key={card.id}
                     className={`kitem${card.id === pick ? " on" : ""}`}
@@ -175,10 +171,8 @@ export function DiscoverBoard() {
                       {DOMAIN[card.domain] || card.domain} · 独立源 {card.n_sources ?? 0}
                     </span>
                   </button>
-                ))}
-              </div>
-            );
-          })}
+          ))}
+          {!order.length && <p className="empty">当前筛选没有岗位卷宗。</p>}
         </div>
         <aside className="story dossier">
           {dossier ? (
@@ -186,7 +180,7 @@ export function DiscoverBoard() {
               <span className={`pill ${pill(dossier.status)}`}>{statusLabel(dossier.status)}</span>
               <h2>{dossier.name}</h2>
               <p className="src">
-                {DOMAIN[dossier.domain] || dossier.domain} · 独立源 {dossier.n_sources}
+                {DOMAIN[dossier.domain] || dossier.domain} · 去重招聘公司 {dossier.n_sources}
                 {dossier.sources.length ? ` · ${dossier.sources.join(" · ")}` : ""}
               </p>
               {dossier.alias_of ? (
@@ -197,10 +191,14 @@ export function DiscoverBoard() {
                   别名已并入：{dossier.aliases_in.map((row) => row.name).join("、")}
                 </p>
               ) : null}
-              <p className="mono">
-                簇 {dossier.cluster?.n ?? dossier.evidence.length} 条 · 独立源 {dossier.n_sources} ·
-                演化事件 {dossier.events.length}
-              </p>
+              <h2 className="dossier-question">为什么系统认为这个岗位正在形成？</h2>
+              <p className="hint">{dossier.events.length ? `已有 ${dossier.events.length} 次岗位变化记录，状态为${statusLabel(dossier.status)}。` : "暂无足够的岗位变化记录。"}</p>
+              <h2 className="dossier-question">哪些公司最近开始招聘？</h2>
+              <p className="hint">{dossier.sources.length ? dossier.sources.slice(0, 5).join("、") : "暂无公司证据。"}{dossier.n_sources > 5 ? ` 等 ${dossier.n_sources} 家` : ""}</p>
+              <h2 className="dossier-question">现在值得关注吗？</h2>
+              <p className="hint">{dossier.status === "formed" ? "可以开始比较，岗位定义和证据已通过发布校验。" : dossier.status === "emerging" ? "继续观察近期招聘变化，再决定是否比较。" : "证据仍在审核，先阅读卷宗。"}</p>
+              <h2 className="dossier-question">它和已有岗位有什么区别？</h2>
+              <p className="hint">{dossier.alias_of ? `它是${dossier.alias_of.name}的别名，不重复计入结果。` : "暂无已确认的相近岗位差异摘要。"}</p>
               {dossier.status === "candidate" ? (
                 <p className="hint">未入谱。不能对照简历，不能进工作台。</p>
               ) : (
@@ -210,13 +208,13 @@ export function DiscoverBoard() {
                   </Link>
                 </div>
               )}
-              <h2 className="block-title">独立源</h2>
+              <h2 className="block-title">招聘公司与来源</h2>
               <ul className="plain">
                 {(dossier.sources.length ? dossier.sources : ["无"]).map((name) => (
                   <li key={name}>{name}</li>
                 ))}
               </ul>
-              <h2 className="block-title">证据</h2>
+              <h2 className="block-title">最短证据摘录</h2>
               <ul className="plain">
                 {dossier.evidence.map((row) => (
                   <li key={row.id}>
