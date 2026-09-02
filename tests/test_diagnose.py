@@ -223,6 +223,23 @@ def test_two_job_diagnosis_returns_direction_payload(client):
     assert all("shift_set" in item for item in body["jobs"])
 
 
+def test_simulation_is_stateless_and_rejects_unknown_skill(client):
+    from app.matching.session import load, save
+    from app import graph
+
+    sid = save({"preview_text": "Python FastAPI", "skills": [{"skill_id": "python", "name": "Python"}], "experience": "3年", "education": "本科"})
+    target = next((job for job in client.get("/jobs").json() if graph.diagnostic_release(job["id"])["ok"]), None)
+    if target is None:
+        return
+    before = load(sid)
+    response = client.post("/diagnose/simulate", json={"session_id": sid, "job_id": target["id"], "assumed_skill_ids": [], "watching_skill_ids": ["watch-only"]})
+    assert response.status_code == 200
+    assert response.json()["watching_skill_ids"] == ["watch-only"]
+    assert load(sid) == before
+    rejected = client.post("/diagnose/simulate", json={"session_id": sid, "job_id": target["id"], "assumed_skill_ids": ["not-a-gap"]})
+    assert rejected.status_code == 400
+
+
 def test_session_correction_cannot_promote_unproven_result(client):
     from app.matching.session import save
 
