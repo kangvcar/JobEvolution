@@ -1,5 +1,7 @@
-三项 F1  JD 未得真数  简历 1.000  匹配 1.000  n=0/100/100  mock=False
+三项 F1  JD 0.814  简历 1.000  匹配 1.000  n=100/100/100  mock=False
 覆盖率  见 pytest --cov
-学习路径抽检  未完成（JD 评测因模型余额不足中止）
+学习路径抽检  3/20 条有可打开链接
 freeze.json sha256  5194b7b806d8fb48714ad3b9f91fe1556a737d36750fe41ab7946a4aadcec438
-JD 未得真数  APIStatusError: Error code: 402 - Insufficient Balance
+JD 低于线  F1 0.814 < 0.90
+JD 差距样本  jd-0001、jd-0002、jd-0003
+JD 下一修复方向 先用冻结词表做候选召回，再让模型判断职责/要求和必备/加分，最后处理别名与复合技能对齐。

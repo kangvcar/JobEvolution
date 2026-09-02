@@ -11,7 +11,7 @@ from app.eval.scan import mention_skill_ids, skill_ids
 from app.matching.resume import parse_resume
 from app.matching.score import compare_job
 from app.pipeline.align import align_skill, split_composite
-from app.pipeline.extract import parse_extracted
+from app.pipeline.extract import augment_extracted_skills, parse_extracted
 
 PASS = 0.90
 JD_WORKERS = 8
@@ -65,6 +65,7 @@ def eval_jd(*, mock: bool = False) -> dict:
                 "body": item.get("text") or "",
             }
             parsed = parse_extracted(complete_json, snapshot=snapshot)
+            parsed = augment_extracted_skills(parsed, snapshot["body"], index, threshold=cut)
             pred = set()
             # 只允许回指 JD 原文的词表命中，阻止语义嵌入把模型臆测变成技能事实。
             mentioned_ids = {row["id"] for row in mention_skill_ids(snapshot["body"], index, threshold=cut)}

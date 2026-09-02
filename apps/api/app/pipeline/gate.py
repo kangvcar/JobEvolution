@@ -26,6 +26,7 @@ from app.pipeline.constants import (
 from app.pipeline.discover import classify_cluster
 from app.pipeline.extract import (
     ExtractedJd,
+    augment_extracted_skills,
     brand_action_skill,
     classify_skill_candidate,
     parse_extracted,
@@ -263,6 +264,8 @@ def run_extract_and_gate(
     graph.init_graph()
     graph.upsert_evidence_many(snapshots)
     complete = complete_json or default_complete
+    index: list[dict] = graph.list_skills()
+    source_recall = complete_json is None
     n_workers = workers if workers is not None else (1 if complete_json else EXTRACT_WORKERS)
     n_workers = max(1, min(n_workers, max(1, len(snapshots))))
 
@@ -273,6 +276,8 @@ def run_extract_and_gate(
                 return ("ok", snap, cached)
         try:
             parsed = parse_extracted(complete, snapshot=snap)
+            if source_recall:
+                parsed = augment_extracted_skills(parsed, snap.get("body") or "", index)
         except ValueError as exc:
             return ("fail", snap, str(exc))
         if cache:
@@ -305,7 +310,6 @@ def run_extract_and_gate(
         else:
             unmatched[parsed.job_name].append((snap, parsed, parsed.job_name))
 
-    index: list[dict] = graph.list_skills()
     for job_name, rows in aligned.items():
         events.extend(_gate_job(job_name, rows, index, judged="target"))
     events.extend(_discover_unmatched(unmatched, index, complete))

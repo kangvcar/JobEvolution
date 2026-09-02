@@ -11,7 +11,7 @@ from app import graph
 from app.llm.embed import embed
 from app.pipeline.align import align_skill
 from app.pipeline.constants import COVERAGE_THRESHOLD, FAT_SLICE_CAP
-from app.pipeline.extract import ExtractedJd, coerce_extracted, parse_extracted
+from app.pipeline.extract import ExtractedJd, augment_extracted_skills, coerce_extracted, parse_extracted
 from app.pipeline.__main__ import match_target, select_snapshots
 from app.pipeline.gate import (
     apply_event,
@@ -88,6 +88,35 @@ def test_extract_bad_payload_fails():
     with pytest.raises(ValueError):
         parse_extracted(bad)
     assert calls["n"] == 1
+
+
+def test_vocab_candidate_recall_keeps_source_trace():
+    parsed = ExtractedJd.model_validate(
+        {
+            "job_name": "测试岗",
+            "skills": [
+                {
+                    "name": "Python",
+                    "kind": "required",
+                    "proficiency": "able",
+                    "confidence": 0.9,
+                    "excerpt": "熟悉 Python",
+                }
+            ],
+        }
+    )
+    augmented = augment_extracted_skills(
+        parsed,
+        "任职要求：熟悉 Python、FastAPI，具备 GPT 使用经验。",
+        [
+            {"id": "python", "name": "Python", "synonyms": []},
+            {"id": "fastapi", "name": "FastAPI", "synonyms": []},
+            {"id": "gpt", "name": "GPT", "synonyms": []},
+        ],
+        threshold=0.7,
+    )
+    assert [skill.name for skill in augmented.skills] == ["Python", "FastAPI"]
+    assert augmented.skills[-1].excerpt == "FastAPI"
 
 
 def test_match_target_prefers_longer_names():

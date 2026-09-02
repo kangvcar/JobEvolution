@@ -167,6 +167,62 @@ def classify_skill_candidate(name: str, *, action: str = "", context: str = "", 
     return "skill"
 
 
+def vocab_mention_skills(text: str, index: list[dict], threshold: float | None = None) -> list[dict]:
+    """Return source-traceable vocabulary hits for candidate recall."""
+    from app.matching.resume import _name_in_text
+    from app.pipeline.align import align_skill
+    from app.pipeline.sections import split_sections
+
+    parts = split_sections(text or "")
+    blob = "\n".join((parts.get("duty") or "", parts.get("requirement") or "")).casefold()
+    found: list[dict] = []
+    seen: set[str] = set()
+    for skill in index:
+        if classify_skill_candidate(skill.get("name") or "") in {"generic", "brand"}:
+            continue
+        names = [skill.get("name") or "", *(skill.get("synonyms") or [])]
+        surface = next((name for name in names if name and _name_in_text(name, blob)), None)
+        if not surface:
+            continue
+        hit = align_skill(surface, index, threshold=threshold, allow_embedding=False)
+        if hit is None or hit["id"] in seen:
+            continue
+        seen.add(hit["id"])
+        source = parts.get("duty") or ""
+        section = "duty" if _name_in_text(surface, source.casefold()) else "requirement"
+        found.append({"id": hit["id"], "name": hit.get("name") or surface, "surface": surface, "section": section})
+    return found
+
+
+def augment_extracted_skills(parsed: ExtractedJd, text: str, index: list[dict], threshold: float | None = None) -> ExtractedJd:
+    """Add only exact source vocabulary misses; the model remains authoritative for fields."""
+    from app.pipeline.align import align_skill
+
+    existing = {
+        hit["id"]
+        for skill in parsed.skills
+        if (hit := align_skill(skill.name, index, threshold=threshold, allow_embedding=False))
+    }
+    additions: list[ExtractedSkill] = []
+    for hit in vocab_mention_skills(text, index, threshold):
+        if hit["id"] in existing:
+            continue
+        additions.append(
+            ExtractedSkill(
+                name=hit["name"],
+                kind="required",
+                proficiency="able",
+                confidence=0.65,
+                excerpt=hit["surface"],
+                section=hit["section"],
+                candidate_type=classify_skill_candidate(hit["name"]),
+                vote="required_explicit" if hit["section"] == "requirement" else "unmarked",
+            )
+        )
+        existing.add(hit["id"])
+    return parsed.model_copy(update={"skills": [*parsed.skills, *additions]}) if additions else parsed
+
+
 def brand_action_skill(name: str, action: str, context: str = "") -> str | None:
     if classify_skill_candidate(name, candidate_type="brand") != "brand":
         return None

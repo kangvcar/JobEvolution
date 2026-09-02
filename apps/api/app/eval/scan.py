@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 from app.eval.freeze import align_threshold
-from app.matching.resume import _name_in_text
-from app.pipeline.align import align_skill
 from app.pipeline.sections import split_sections
-from app.pipeline.extract import classify_skill_candidate
+from app.pipeline.extract import vocab_mention_skills
 
 
 def duty_text(body: str) -> str:
@@ -13,32 +11,12 @@ def duty_text(body: str) -> str:
 
 
 def mention_skill_ids(text: str, index: list[dict], threshold: float | None = None) -> list[dict]:
-    # ponytail: vocab scan is the annotator stand-in; swap for LLM extract if contest F1 is vs 管线抽出
-    """Graph vocab names/synonyms found in text, then align_skill at freeze threshold."""
+    # ponytail: vocab scan is the annotator stand-in; production uses the same recall pass.
     cut = align_threshold() if threshold is None else float(threshold)
-    blob = (text or "").casefold()
-    found = []
-    seen: set[str] = set()
-    for skill in index:
-        if classify_skill_candidate(skill.get("name") or "") in {"generic", "brand"}:
-            continue
-        names = [skill.get("name") or "", *(skill.get("synonyms") or [])]
-        hit_name = next((n for n in names if n and _name_in_text(n, blob)), None)
-        if not hit_name:
-            continue
-        hit = align_skill(hit_name, index, threshold=cut)
-        if hit is None or hit["id"] in seen:
-            continue
-        seen.add(hit["id"])
-        found.append(
-            {
-                "id": hit["id"],
-                "name": hit.get("name") or hit_name,
-                "kind": "required",
-                "proficiency": None,
-            }
-        )
-    return found
+    return [
+        {"id": row["id"], "name": row["name"], "kind": "required", "proficiency": None}
+        for row in vocab_mention_skills(text, index, cut)
+    ]
 
 
 def skill_ids(rows: list[dict]) -> set[str]:
