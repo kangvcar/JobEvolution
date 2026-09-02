@@ -95,6 +95,39 @@ def pool_skill(*, section: str, coverage_rate: float) -> bool:
     return coverage_rate >= COVERAGE_THRESHOLD
 
 
+_VOTE_RANK = {"unmarked": 0, "bonus_explicit": 1, "required_explicit": 2}
+
+
+def summarize_requirement_votes(votes: dict[str, str], companies: dict[str, str]) -> dict:
+    """Collapse one vote per de-duplicated JD and decide the formal kind."""
+    clean = {eid: vote for eid, vote in votes.items() if vote in _VOTE_RANK}
+    counts = Counter(clean.values())
+    classified = counts["required_explicit"] + counts["bonus_explicit"]
+    source_sets = {
+        kind: {normalize_company(companies.get(eid, "")) for eid, vote in clean.items() if vote == kind and companies.get(eid)}
+        for kind in ("required_explicit", "bonus_explicit")
+    }
+    source_sets = {kind: {name for name in names if name and not is_channel_name(name)} for kind, names in source_sets.items()}
+    proposed = None
+    reason = "未达到 60% 明确性质或两个独立源"
+    if classified:
+        for kind, label in (("required_explicit", "required"), ("bonus_explicit", "bonus")):
+            if counts[kind] / classified >= 0.60 and len(source_sets[kind]) >= 2:
+                proposed = label
+                reason = f"{counts[kind]}/{classified} 明确票，{len(source_sets[kind])} 个独立源"
+                break
+    return {
+        "required_votes": counts["required_explicit"],
+        "bonus_votes": counts["bonus_explicit"],
+        "unmarked_votes": counts["unmarked"],
+        "classified_vote_count": classified,
+        "independent_source_count": len(source_sets.get("required_explicit", set()) | source_sets.get("bonus_explicit", set())),
+        "vote_evidence": sorted(clean),
+        "proposed_kind": proposed,
+        "decision_reason": reason,
+    }
+
+
 def _merge_category(members: list[tuple[str, str]]) -> str:
     for name, _ in members:
         iron = SKILL_IRON_CATEGORY.get((name or "").strip().casefold())
@@ -154,7 +187,10 @@ def apply_event(event_id: str, *, review: str, payload: dict | None = None) -> d
     event["review"] = review
     if data.get("kind") == "skill_merge_proposal" and review in ("approved", "auto_passed"):
         graph.apply_skill_merge(data)
-    if data.get("kind") != "extract_failed" and data.get("skill_id") and review in ("approved", "auto_passed"):
+    if data.get("approved_kind") in ("required", "bonus"):
+        data["kind_edge"] = data["approved_kind"]
+    vote_blocked = data.get("kind") == "requires_add" and "proposed_kind" in data and not data.get("proposed_kind") and not data.get("approved_kind")
+    if data.get("kind") != "extract_failed" and data.get("skill_id") and review in ("approved", "auto_passed") and not vote_blocked:
         graph.apply_requires(data)
     if data.get("definition_claims") and review in ("approved", "auto_passed"):
         graph.apply_definition_claims(data.get("job_id") or "", data["definition_claims"], event_id=event_id)
@@ -399,9 +435,13 @@ def _gate_job(job_name: str, rows: list, index: list[dict], judged: str = "targe
                 "category": category_for.get(centroid, ""),
                 "candidate_type": candidate_type,
                 "watch_only": watch_only,
+                "votes": {},
             },
         )
         rec["evidence"].add(snap["id"])
+        previous_vote = rec["votes"].get(snap["id"], "unmarked")
+        if _VOTE_RANK.get(skill.vote, 0) >= _VOTE_RANK.get(previous_vote, 0):
+            rec["votes"][snap["id"]] = skill.vote
         rec["confidence"] = max(rec["confidence"], skill.confidence)
         if skill.excerpt:
             rec["excerpt"] = skill.excerpt
@@ -426,6 +466,8 @@ def _gate_job(job_name: str, rows: list, index: list[dict], judged: str = "targe
             n_sources=len(companies),
             extract_confidence=rec["confidence"],
         )
+        vote_summary = summarize_requirement_votes(rec["votes"], company_by_evidence)
+        proposed_kind = vote_summary["proposed_kind"]
         payload = {
             "kind": "requires_add",
             "job_id": job_id,
@@ -434,7 +476,8 @@ def _gate_job(job_name: str, rows: list, index: list[dict], judged: str = "targe
             "skill_id": skill_id,
             "skill_name": rec["skill"]["name"],
             "category": rec["category"],
-            "kind_edge": rec["kind"],
+            "kind_edge": proposed_kind or rec["kind"],
+            **vote_summary,
             "proficiency": rec["proficiency"],
             "layer": layer,
             "confidence": rec["confidence"],
@@ -456,7 +499,7 @@ def _gate_job(job_name: str, rows: list, index: list[dict], judged: str = "targe
         }
         review = "pending"
         review_meta = {}
-        if passthrough_enabled() and layer == "high":
+        if passthrough_enabled() and layer == "high" and proposed_kind:
             approved, review_meta = automatic_review(payload)
             if approved:
                 review = "auto_passed"

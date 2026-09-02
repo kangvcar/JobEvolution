@@ -19,6 +19,7 @@ from app.pipeline.gate import (
     coverage,
     pool_skill,
     run_extract_and_gate,
+    summarize_requirement_votes,
 )
 from app.pipeline.sections import section_of, split_sections
 from app.pipeline.status import job_id_for
@@ -33,6 +34,22 @@ def test_confidence_layer_priority():
     assert confidence_layer(excerpt="FastAPI", n_sources=3, extract_confidence=0.8) == "high"
     assert confidence_layer(excerpt="FastAPI", n_sources=2, extract_confidence=0.5) == "mid"
     assert confidence_layer(excerpt="FastAPI", n_sources=1, extract_confidence=0.4) == "low"
+
+
+def test_requirement_vote_summary_uses_explicit_ratio_and_independent_sources():
+    votes = {f"r{i}": "required_explicit" for i in range(16)}
+    votes.update({f"b{i}": "bonus_explicit" for i in range(4)})
+    votes.update({f"u{i}": "unmarked" for i in range(5)})
+    companies = {key: ("甲" if key.startswith("r") and int(key[1:]) < 8 else "乙") for key in votes}
+    summary = summarize_requirement_votes(votes, companies)
+    assert summary["proposed_kind"] == "required"
+    assert summary["required_votes"] == 16 and summary["bonus_votes"] == 4 and summary["unmarked_votes"] == 5
+
+    low = summarize_requirement_votes(
+        {"r": "required_explicit", **{f"u{i}": "unmarked" for i in range(8)}},
+        {"r": "甲"},
+    )
+    assert low["proposed_kind"] is None
 
 
 def test_align_skill_synonym_beats_embed():

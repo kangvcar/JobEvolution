@@ -51,7 +51,8 @@ SYSTEM_PROMPT = (
     "每个技能点字段：name、kind、proficiency、confidence、excerpt、section、category、"
     "raw_name、action、context、candidate_type。candidate_type 只能是 skill、brand、generic、"
     "broad_domain、unknown。"
-    "kind 只能 required 或 bonus；proficiency 只能 aware、able、expert；"
+    "vote 只能 required_explicit、bonus_explicit、unmarked；kind 仅为兼容字段，可为 required 或 bonus；"
+    "proficiency 只能 aware、able、expert；"
     "section 只能 duty 或 requirement；category 必须是："
     + ", ".join(SKILL_CATEGORIES)
     + "。confidence 为 0-1。excerpt 是包含该技能点的最短原文片段。"
@@ -189,6 +190,7 @@ class ExtractedSkill(BaseModel):
     action: str = ""
     context: str = ""
     candidate_type: Literal["skill", "brand", "generic", "broad_domain", "unknown"] = "unknown"
+    vote: Literal["required_explicit", "bonus_explicit", "unmarked"] = "unmarked"
 
 
 class ExtractedJd(BaseModel):
@@ -218,6 +220,35 @@ def _confidence(value) -> float:
     if number > 1:
         number = number / 100.0
     return min(1.0, max(0.0, number))
+
+
+_VOTE = {
+    "required_explicit": "required_explicit",
+    "required": "required_explicit",
+    "must": "required_explicit",
+    "必备": "required_explicit",
+    "bonus_explicit": "bonus_explicit",
+    "bonus": "bonus_explicit",
+    "plus": "bonus_explicit",
+    "加分": "bonus_explicit",
+    "unmarked": "unmarked",
+    "未标": "unmarked",
+}
+
+
+def requirement_vote(value, *, excerpt: str = "", section: str = "requirement") -> str:
+    raw = str(value or "").strip().casefold()
+    if raw in _VOTE:
+        vote = _VOTE[raw]
+    elif section == "requirement":
+        vote = "required_explicit"
+    else:
+        vote = "unmarked"
+    if vote == "required_explicit" and section != "requirement":
+        markers = ("必须", "要求", "熟练掌握", "任职资格", "任职要求")
+        if not any(marker in (excerpt or "") for marker in markers):
+            return "unmarked"
+    return vote
 
 
 def coerce_extracted(payload: dict) -> dict:
@@ -255,6 +286,11 @@ def coerce_extracted(payload: dict) -> dict:
                     },
                     raw.get("candidate_type"),
                     "unknown",
+                ),
+                "vote": requirement_vote(
+                    raw.get("vote") or raw.get("kind"),
+                    excerpt=str(raw.get("excerpt") or "").strip(),
+                    section=_alias(_SECTION, raw.get("section"), "requirement"),
                 ),
             }
         )
