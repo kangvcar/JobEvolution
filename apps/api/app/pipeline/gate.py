@@ -13,7 +13,7 @@ from pydantic import ValidationError
 from app.collectors.normalize import is_channel_name, normalize_company
 from app.collectors.sink import STREAM_KEY, connect_redis
 from app.llm.embed import embed
-from app.pipeline.align import align_job, align_skill, cluster_texts, split_composite
+from app.pipeline.align import align_job, align_skill, nearest_skill, normalize_surface, split_composite, surface_clusters
 from app.pipeline.constants import (
     COVERAGE_THRESHOLD,
     DISCOVER_MIN_CLUSTER,
@@ -23,7 +23,12 @@ from app.pipeline.constants import (
     SKILL_IRON_CATEGORY,
 )
 from app.pipeline.discover import classify_cluster
-from app.pipeline.extract import ExtractedJd, parse_extracted
+from app.pipeline.extract import (
+    ExtractedJd,
+    brand_action_skill,
+    classify_skill_candidate,
+    parse_extracted,
+)
 from app.pipeline.sections import section_of
 from app.pipeline.status import is_target_job, job_id_for, refresh_job_status
 from app.targets import JOB_TARGET_NAMES
@@ -147,6 +152,8 @@ def apply_event(event_id: str, *, review: str, payload: dict | None = None) -> d
     if data.get("layer") == "low" and review == "auto_passed":
         review = "pending"
     event["review"] = review
+    if data.get("kind") == "skill_merge_proposal" and review in ("approved", "auto_passed"):
+        graph.apply_skill_merge(data)
     if data.get("kind") != "extract_failed" and data.get("skill_id") and review in ("approved", "auto_passed"):
         graph.apply_requires(data)
     if data.get("definition_claims") and review in ("approved", "auto_passed"):
@@ -313,16 +320,34 @@ def _gate_job(job_name: str, rows: list, index: list[dict], judged: str = "targe
                 section = skill.section
             if section in ("benefit", "intro"):
                 continue
-            pending_names.append((snap, skill, section))
+            candidate_type = classify_skill_candidate(
+                skill.name,
+                action=skill.action,
+                context=skill.context,
+                candidate_type=skill.candidate_type,
+            )
+            if candidate_type == "generic":
+                continue
+            if candidate_type == "broad_domain" and section != "duty" and not (skill.action or skill.context):
+                continue
+            derived = brand_action_skill(skill.name, skill.action, skill.context)
+            if candidate_type == "brand" and not derived:
+                # Keep a market observation, but never let a naked brand become
+                # a formal requirement. It is still useful in the evidence view.
+                pending_names.append((snap, skill, section, True, candidate_type))
+                continue
+            if derived:
+                skill = skill.model_copy(update={"name": derived, "raw_name": skill.raw_name or skill.name})
+            pending_names.append((snap, skill, section, bool(candidate_type == "brand" and not derived), candidate_type))
 
     # 并列串拆到条目级：C/C++ → C、C++ 两条，下游按名聚类/对齐/计覆盖
     expanded: list[tuple] = []
-    for snap, sk, section in pending_names:
+    for snap, sk, section, watch_only, candidate_type in pending_names:
         for piece in split_composite(sk.name, index):
-            expanded.append((snap, sk.model_copy(update={"name": piece}), section))
+            expanded.append((snap, sk.model_copy(update={"name": piece}), section, watch_only, candidate_type))
 
-    names = [sk.name for _, sk, _ in expanded]
-    clustered = cluster_texts(names) if names else []
+    names = [sk.name for _, sk, _, _, _ in expanded]
+    clustered = surface_clusters(names) if names else []
     centroid_for = {}
     for group in clustered:
         centroid = max(group, key=len)
@@ -330,16 +355,21 @@ def _gate_job(job_name: str, rows: list, index: list[dict], judged: str = "targe
             centroid_for[name] = (centroid, group)
 
     members_by_centroid: dict[str, list[tuple[str, str]]] = defaultdict(list)
-    for snap, skill, _ in expanded:
+    for snap, skill, _, _, _ in expanded:
         centroid, _ = centroid_for.get(skill.name, (skill.name, [skill.name]))
         members_by_centroid[centroid].append((skill.name, skill.category or ""))
     category_for = {
         centroid: _merge_category(members) for centroid, members in members_by_centroid.items()
     }
 
-    for snap, skill, section in expanded:
+    merge_proposals: set[tuple[str, str, str]] = set()
+    for snap, skill, section, watch_only, candidate_type in expanded:
         centroid, group = centroid_for.get(skill.name, (skill.name, [skill.name]))
-        hit = align_skill(centroid, index) or align_skill(skill.name, index)
+        # Embeddings may suggest a merge, but cannot silently rewrite a skill ID.
+        hit = align_skill(centroid, index, allow_embedding=False) or align_skill(skill.name, index, allow_embedding=False)
+        semantic_hit, semantic_score = nearest_skill(centroid, index) if hit is None and index else (None, -1.0)
+        if semantic_hit is not None and semantic_score >= 0.70 and semantic_hit["id"] != _stable_id("skill-", centroid):
+            merge_proposals.add((semantic_hit["id"], centroid, _stable_id("skill-", centroid)))
         if hit is None:
             skill_id = _stable_id("skill-", centroid)
             hit = {
@@ -348,10 +378,12 @@ def _gate_job(job_name: str, rows: list, index: list[dict], judged: str = "targe
                 "synonyms": list(dict.fromkeys(group)),
                 "embedding": embed([centroid])[0],
                 "category": category_for.get(centroid, ""),
+                "candidate_type": candidate_type,
+                "watch_only": watch_only,
             }
             graph.upsert_skill(hit)
             index.append(hit)
-        elif skill.name not in (hit.get("synonyms") or []) and skill.name != hit.get("name"):
+        elif normalize_surface(skill.name) == normalize_surface(hit.get("name") or "") and skill.name not in (hit.get("synonyms") or []):
             hit.setdefault("synonyms", []).append(skill.name)
             graph.upsert_skill(hit)
         rec = mentions.setdefault(
@@ -365,6 +397,8 @@ def _gate_job(job_name: str, rows: list, index: list[dict], judged: str = "targe
                 "excerpt": skill.excerpt,
                 "section": section,
                 "category": category_for.get(centroid, ""),
+                "candidate_type": candidate_type,
+                "watch_only": watch_only,
             },
         )
         rec["evidence"].add(snap["id"])
@@ -376,7 +410,7 @@ def _gate_job(job_name: str, rows: list, index: list[dict], judged: str = "targe
     pooled = []
     for skill_id, rec in mentions.items():
         rate = coverage(mentioned_in=len(rec["evidence"]), cluster_size=cluster_size)
-        if not pool_skill(section=rec["section"], coverage_rate=rate):
+        if rec.get("watch_only") or not pool_skill(section=rec["section"], coverage_rate=rate):
             watching.append(skill_id)
         else:
             pooled.append((skill_id, rec))
@@ -406,6 +440,8 @@ def _gate_job(job_name: str, rows: list, index: list[dict], judged: str = "targe
             "confidence": rec["confidence"],
             "sources": sorted(rec["evidence"]),
             "excerpt": rec["excerpt"],
+            "raw_name": rec["skill"].get("raw_name") or rec["skill"]["name"],
+            "candidate_type": rec.get("candidate_type") or "unknown",
             "watching": watching,
             "weight": 1.0,
             "levels": ["junior", "mid", "senior"],
@@ -439,6 +475,26 @@ def _gate_job(job_name: str, rows: list, index: list[dict], judged: str = "targe
         _emit("review_enqueued", event)
         if review == "auto_passed":
             graph.apply_requires(payload)
+        events.append(event)
+    for canonical_id, proposed_name, old_skill_id in sorted(merge_proposals):
+        payload = {
+            "kind": "skill_merge_proposal",
+            "canonical_skill_id": canonical_id,
+            "old_skill_id": old_skill_id,
+            "proposed_name": proposed_name,
+            "reason": "embedding_neighbour_only",
+            "layer": "mid",
+        }
+        event = {
+            "id": _event_id(payload),
+            "kind": "skill_merge_proposal",
+            "at": datetime.now(timezone.utc).isoformat(),
+            "confidence": 0.0,
+            "review": "pending",
+            "payload": payload,
+        }
+        graph.upsert_event(event, job_id=None)
+        _emit("review_enqueued", event)
         events.append(event)
     graph.set_watching(job_id, watching)
     keep = [skill_id for skill_id, _ in pooled]

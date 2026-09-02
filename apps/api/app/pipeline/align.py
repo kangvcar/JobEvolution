@@ -1,17 +1,46 @@
 from __future__ import annotations
 
+import re
+import unicodedata
+
 from app.llm.embed import cosine, embed
 from app.pipeline.constants import ALIGN_THRESHOLD, JOB_ALIGN_THRESHOLD
 from app.targets import JOB_TARGET_NAMES
 
 
+_SPACE = re.compile(r"\s+")
+_PUNCT = str.maketrans({"，": ",", "。": ".", "：": ":", "；": ";", "（": "(", "）": ")", "／": "/"})
+APPROVED_SYNONYMS = {"prompt engineering": "提示词工程", "提示词工程": "prompt engineering"}
+FORBIDDEN_PAIRS = frozenset(
+    frozenset(pair)
+    for pair in (("langchain", "langgraph"), ("gpt", "gemini"), ("rag", "向量数据库"), ("pytorch", "tensorflow"))
+)
+
+
+def normalize_surface(text: str) -> str:
+    value = unicodedata.normalize("NFKC", str(text or "")).translate(_PUNCT)
+    return _SPACE.sub(" ", value.strip()).casefold()
+
+
+def _approved_forms(skill: dict) -> set[str]:
+    names = [skill.get("name") or "", *(skill.get("synonyms") or [])]
+    forms = {normalize_surface(name) for name in names if name}
+    for form, canonical in APPROVED_SYNONYMS.items():
+        if form in forms:
+            forms.add(normalize_surface(canonical))
+    return forms
+
+
+def _pair_forbidden(left: str, right: str) -> bool:
+    return frozenset((normalize_surface(left), normalize_surface(right))) in FORBIDDEN_PAIRS
+
+
 def _exact_hit(text: str, index: list[dict]) -> bool:
-    needle = (text or "").strip().casefold()
+    needle = normalize_surface(text)
     if not needle:
         return False
     for skill in index:
-        names = [skill.get("name") or "", *(skill.get("synonyms") or [])]
-        if needle in {n.strip().casefold() for n in names if n}:
+        if needle in _approved_forms(skill):
             return True
     return False
 
@@ -31,15 +60,17 @@ def align_skill(
     index: list[dict],
     embed_fn=embed,
     threshold: float | None = None,
+    allow_embedding: bool = True,
 ) -> dict | None:
-    needle = (text or "").strip().casefold()
+    needle = normalize_surface(text)
     if not needle:
         return None
     cut = ALIGN_THRESHOLD if threshold is None else float(threshold)
     for skill in index:
-        names = [skill.get("name") or "", *(skill.get("synonyms") or [])]
-        if needle in {n.strip().casefold() for n in names if n}:
+        if needle in _approved_forms(skill):
             return skill
+    if not allow_embedding:
+        return None
     query = embed_fn([text])[0]
     best = None
     best_score = -1.0
@@ -47,12 +78,29 @@ def align_skill(
         vec = skill.get("embedding")
         if not vec:
             continue
+        if _pair_forbidden(text, skill.get("name") or ""):
+            continue
         score = cosine(query, vec)
         if score > best_score:
             best, best_score = skill, score
     if best is not None and best_score >= cut:
         return best
     return None
+
+
+def nearest_skill(text: str, index: list[dict], embed_fn=embed) -> tuple[dict | None, float]:
+    """Return a semantic neighbour for a review proposal, never for auto-alignment."""
+    query = embed_fn([text])[0]
+    best = None
+    best_score = -1.0
+    for skill in index:
+        vec = skill.get("embedding")
+        if not vec or _pair_forbidden(text, skill.get("name") or ""):
+            continue
+        score = cosine(query, vec)
+        if score > best_score:
+            best, best_score = skill, score
+    return best, best_score
 
 
 def align_job(name: str, embed_fn=embed) -> str | None:
@@ -94,3 +142,11 @@ def cluster_texts(texts: list[str], embed_fn=embed) -> list[list[str]]:
                 used[j] = True
         clusters.append(group)
     return clusters
+
+
+def surface_clusters(texts: list[str]) -> list[list[str]]:
+    """Group only spelling variants. Semantic merges require a review proposal."""
+    groups: dict[str, list[str]] = {}
+    for text in texts:
+        groups.setdefault(normalize_surface(text), []).append(text)
+    return list(groups.values())

@@ -24,6 +24,7 @@ _CONSTRAINTS = (
     "CREATE CONSTRAINT evolution_event_id IF NOT EXISTS FOR (n:EvolutionEvent) REQUIRE n.id IS UNIQUE",
     "CREATE CONSTRAINT requirement_version_id IF NOT EXISTS FOR (n:RequirementVersion) REQUIRE n.id IS UNIQUE",
     "CREATE CONSTRAINT review_proposal_id IF NOT EXISTS FOR (n:ReviewProposal) REQUIRE n.id IS UNIQUE",
+    "CREATE CONSTRAINT skill_merge_id IF NOT EXISTS FOR (n:SkillMerge) REQUIRE n.id IS UNIQUE",
     "CREATE CONSTRAINT review_decision_id IF NOT EXISTS FOR (n:ReviewDecision) REQUIRE n.id IS UNIQUE",
     "CREATE CONSTRAINT job_definition_version_id IF NOT EXISTS FOR (n:JobDefinitionVersion) REQUIRE n.id IS UNIQUE",
     "CREATE CONSTRAINT definition_claim_id IF NOT EXISTS FOR (n:DefinitionClaim) REQUIRE n.id IS UNIQUE",
@@ -237,11 +238,43 @@ def upsert_skill(skill: dict) -> None:
         _link_skill_category(session, skill["id"], skill.get("category") or "")
 
 
+def apply_skill_merge(payload: dict) -> None:
+    """Apply a reviewed merge while retaining the old Skill node and its IDs."""
+    if _driver is None:
+        return
+    old_id = str(payload.get("old_skill_id") or "")
+    canonical_id = str(payload.get("canonical_skill_id") or "")
+    proposed_name = str(payload.get("proposed_name") or "").strip()
+    if not old_id or not canonical_id or old_id == canonical_id:
+        return
+    merge_id = f"merge-{old_id}-{canonical_id}"
+    with _driver.session() as session:
+        session.run(
+            """
+            MATCH (old:Skill {id: $old_id}), (canonical:Skill {id: $canonical_id})
+            SET old.merged_into = $canonical_id
+            SET canonical.synonyms = CASE
+                WHEN $proposed_name = '' THEN coalesce(canonical.synonyms, [])
+                WHEN $proposed_name IN coalesce(canonical.synonyms, []) THEN canonical.synonyms
+                ELSE coalesce(canonical.synonyms, []) + $proposed_name
+            END
+            MERGE (m:SkillMerge {id: $merge_id})
+            SET m.old_skill_id = $old_id, m.canonical_skill_id = $canonical_id,
+                m.proposed_name = $proposed_name, m.approved_at = datetime()
+            MERGE (old)-[:MERGED_INTO]->(canonical)
+            """,
+            old_id=old_id,
+            canonical_id=canonical_id,
+            proposed_name=proposed_name,
+            merge_id=merge_id,
+        )
+
+
 def list_skills(*, with_embed: bool = True) -> list[dict]:
     if _driver is None:
         return []
     with _driver.session() as session:
-        rows = list(session.run("MATCH (s:Skill) RETURN s.id AS id, s.name AS name, s.synonyms AS synonyms"))
+        rows = list(session.run("MATCH (s:Skill) RETURN s.id AS id, s.name AS name, s.synonyms AS synonyms, s.merged_into AS merged_into"))
     out = [dict(row) for row in rows]
     for item in out:
         item["synonyms"] = list(item.get("synonyms") or [])
