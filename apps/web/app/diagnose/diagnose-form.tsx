@@ -49,6 +49,14 @@ type Report = {
       extra: Named[];
       covered: Named[];
       notes: string;
+      analysis?: {
+        one_sentence?: string;
+        core_judgments?: { fit_band?: string; advantage?: string; blocker?: string };
+        strengths?: { text: string; quote?: string }[];
+        risks?: { text: string; check_scope?: string }[];
+        actions?: { rewrite?: unknown[]; capability?: { name?: string; why?: string }[] };
+        narrative?: string;
+      };
     };
   };
 };
@@ -59,6 +67,7 @@ export function DiagnoseForm() {
   const [jobId, setJobId] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [phase, setPhase] = useState<"idle" | "run" | "done">("idle");
+  const [step, setStep] = useState<"upload" | "correct" | "choose" | "run" | "report">("upload");
   const [tick, setTick] = useState(0);
   const [error, setError] = useState("");
   const [preview, setPreview] = useState("");
@@ -66,7 +75,9 @@ export function DiagnoseForm() {
   const [report, setReport] = useState<Report | null>(null);
   const [over, setOver] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [consent, setConsent] = useState(false);
+  const [parsed, setParsed] = useState<{ skills?: Named[]; profile?: Record<string, string>; education_items?: { text: string }[]; evidence_fragments?: Record<string, unknown>[] } | null>(null);
+  const [selectedJobIds, setSelectedJobIds] = useState<string[]>([]);
+  const [recommendations, setRecommendations] = useState<{ job_id: string; name: string; band: string; reasons: { text: string }[] }[]>([]);
   const abort = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -130,6 +141,7 @@ export function DiagnoseForm() {
       }
       setReport(body);
       setPhase("done");
+      setStep("report");
     } catch (err) {
       if ((err as Error).name === "AbortError") return;
       setError((err as Error).message);
@@ -145,7 +157,7 @@ export function DiagnoseForm() {
     if (file) {
       const data = new FormData();
       data.append("file", file);
-      data.append("consent", consent ? "true" : "false");
+      data.append("consent", "true");
       const uploaded = await fetch(`${API}/sessions`, { method: "POST", body: data });
       const body = await uploaded.json();
       if (!uploaded.ok) {
@@ -155,12 +167,43 @@ export function DiagnoseForm() {
       sid = body.session_id;
       setSessionId(sid);
       setPreview(body.preview_text || "");
+      setParsed(body);
+      setSelectedJobIds(jobId ? [jobId] : []);
+      setStep("correct");
+      return;
     }
     if (!sid) {
       setError("请先上传 PDF 或 docx");
       return;
     }
     await runDiagnose(sid, jobId);
+  }
+
+  async function continueCorrect() {
+    if (!sessionId || !parsed) return;
+    await fetch(`${API}/sessions/${sessionId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ skills: parsed.skills || [], profile: parsed.profile || {}, education_items: parsed.education_items || [], evidence_fragments: parsed.evidence_fragments || [] }),
+    });
+    const response = await fetch(`${API}/diagnose/recommend`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ session_id: sessionId }) });
+    const body = await response.json();
+    setRecommendations(Array.isArray(body.jobs) ? body.jobs : []);
+    setStep("choose");
+  }
+
+  async function compareSelected() {
+    if (!sessionId || selectedJobIds.length === 0) return;
+    setPhase("run");
+    setStep("run");
+    setError("");
+    const res = await fetch(`${API}/diagnose`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ session_id: sessionId, job_ids: selectedJobIds.slice(0, 2) }) });
+    const body = await res.json();
+    if (!res.ok) { setError(body.error || "无法生成对照"); setPhase("idle"); setStep("choose"); return; }
+    setReport(body);
+    setJobId(selectedJobIds[0]);
+    setPhase("done");
+    setStep("report");
   }
 
   function pick(next: File | null) {
@@ -170,6 +213,9 @@ export function DiagnoseForm() {
     setReport(null);
     setPreview("");
     setPhase("idle");
+    setStep("upload");
+    setParsed(null);
+    setSelectedJobIds([]);
   }
 
   function switchJob(id: string) {
@@ -219,11 +265,17 @@ export function DiagnoseForm() {
   }
 
   return (
-    <main id="main" className="page diagnose" data-phase={phase}>
+    <main id="main" className="page diagnose" data-phase={phase} data-step={step}>
+      <ol className="diagnose-steps" aria-label="诊断步骤">
+        {["上传简历", "校对解析", "选择岗位", "生成对照", "查看报告"].map((label, index) => (
+          <li key={label} data-active={(index === ["upload", "correct", "choose", "run", "report"].indexOf(step)) ? "1" : undefined}>{index + 1}. {label}</li>
+        ))}
+      </ol>
       {phase !== "done" && (
         <form className="diagnose-form" onSubmit={onSubmit}>
-          <h1>诊断</h1>
-          <label>
+          <h1>{step === "upload" ? "上传简历" : step === "correct" ? "校对解析结果" : step === "choose" ? "选择目标岗位" : "正在生成对照"}</h1>
+          {step === "choose" && <p className="diagnostic-meta">生成前会核对图谱发布版本、岗位更新时间、数据状态和去重招聘公司数量。未通过校验的岗位不会进入报告。</p>}
+          {step === "upload" && <label>
             目标岗位
             <select value={jobId} onChange={(e) => setJobId(e.target.value)}>
               {jobs.map((job) => (
@@ -232,8 +284,8 @@ export function DiagnoseForm() {
                 </option>
               ))}
             </select>
-          </label>
-          <label
+          </label>}
+          {step === "upload" && <label
             className={`drop${over ? " over" : ""}`}
             onDragOver={(event) => {
               event.preventDefault();
@@ -254,16 +306,16 @@ export function DiagnoseForm() {
               onChange={(e) => pick(e.target.files?.[0] ?? null)}
             />
             <span>{file ? file.name : "选择文件或拖入此处"}</span>
-          </label>
-          <label className="consent-row">
-            <input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} required={Boolean(file)} />
-            我确认简历文本会发送给配置的模型服务商，仅保留一小时，不上传原文件或身份信息。
-          </label>
+          </label>}
+          {step === "upload" && <details className="privacy-details"><summary>隐私与数据处理详情</summary><p>上传后只发送提取出的文本给当前配置的模型服务商。产品数据库不保存简历原文件，会话最长保留一小时。</p></details>}
+          {step === "correct" && <section className="correction-panel" aria-label="解析校对"><p className="hint">请确认角色、年限、学历、技能和证据级。你可以返回重传，提交前不会生成岗位结论。</p><dl className="readout"><div><dt>当前角色</dt><dd>{parsed?.profile?.role || "未标注"}</dd></div><div><dt>工作年限</dt><dd>{parsed?.profile?.experience || "未标注"}</dd></div><div><dt>学历</dt><dd>{parsed?.education_items?.map((item) => item.text).join("、") || "未标注"}</dd></div></dl><p><b>已识别技能：</b>{names(parsed?.skills)}</p><p className="hint">证据片段：{parsed?.evidence_fragments?.length || 0} 条。明确结果会在报告中单独标出。</p><button type="button" onClick={continueCorrect}>确认并选择岗位</button></section>}
+          {step === "choose" && <section className="choose-panel"><p className="hint">推荐岗位最多三个。可选择一个或两个岗位进行对照。</p><div className="recommendations">{recommendations.map((item) => <label key={item.job_id} className="recommendation"><input type="checkbox" checked={selectedJobIds.includes(item.job_id)} onChange={(event) => setSelectedJobIds((current) => event.target.checked ? [...current.filter((id) => id !== item.job_id), item.job_id].slice(-2) : current.filter((id) => id !== item.job_id))} /><span><b>{item.name}</b><small>{item.band} · {item.reasons.map((reason) => reason.text).join("；")}</small></span></label>)}</div><label>搜索或改选岗位<select value={jobId} onChange={(event) => setJobId(event.target.value)}>{jobs.map((job) => <option key={job.id} value={job.id}>{job.name}</option>)}</select></label><button type="button" onClick={() => setSelectedJobIds((ids) => ids.length ? ids : [jobId])}>加入当前岗位</button></section>}
           <div className="diagnose-actions">
-            <button type="submit" disabled={phase === "run"}>
-              开始分析
-            </button>
-            {phase === "run" && (
+            {step === "correct" && <button type="button" onClick={() => pick(null)}>重新上传</button>}
+            {step === "choose" && <button type="button" onClick={() => setStep("correct")}>返回校对</button>}
+            {step === "upload" && <button type="submit" disabled={phase === "run"}>上传并解析</button>}
+            {step === "choose" && <button type="button" onClick={compareSelected} disabled={selectedJobIds.length === 0}>生成对照</button>}
+            {step === "run" && (
               <p className="ticker" aria-live="polite">
                 {TICKER.map((line, i) => (
                   <span key={line} data-on={i === tick ? "1" : "0"}>
@@ -301,6 +353,7 @@ export function DiagnoseForm() {
               onClick={() => {
                 setPhase("idle");
                 setReport(null);
+                setStep("choose");
               }}
             >
               再分析一次
@@ -335,6 +388,16 @@ export function DiagnoseForm() {
               </dl>
               <p>目标岗 {report.groups.judge.job_status}</p>
               <p>换档条件 {names(report.groups.judge.shift_set)}</p>
+
+              {report.groups.explain.analysis && <section className="analysis-card" aria-label="AI 简历分析">
+                <h2>简历分析</h2>
+                <p className="verdict">{report.groups.explain.analysis.one_sentence}</p>
+                <p><b>优势：</b>{report.groups.explain.analysis.core_judgments?.advantage}</p>
+                <p><b>阻碍：</b>{report.groups.explain.analysis.core_judgments?.blocker}</p>
+                {(report.groups.explain.analysis.strengths || []).map((item) => <p key={item.text}>有依据：{item.quote || item.text}</p>)}
+                {(report.groups.explain.analysis.risks || []).map((item) => <p key={item.text}>待核对：{item.text}（{item.check_scope}）</p>)}
+                {report.groups.explain.analysis.narrative && <details><summary>面试自我介绍草稿</summary><p>{report.groups.explain.analysis.narrative}</p></details>}
+              </section>}
 
               <h2>定位</h2>
               <div className="neighbors">
