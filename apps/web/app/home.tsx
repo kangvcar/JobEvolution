@@ -37,28 +37,56 @@ export function Home() {
   return (
     <main id="main" className="home-page">
       <section className="home-hero">
-        <p className="mono">智演 / 职业方向诊断</p>
-        <h1>用招聘市场证据，判断你现在更适合哪个 AI 岗位</h1>
-        <p className="hero-copy">上传简历，确认解析结果，再看真实招聘要求与你的经历如何对应。报告会把能力缺口和表达缺口分开，并给出下一步。</p>
+        <div className="hero-copy-block">
+          <p className="eyebrow"><span className="eyebrow-dot" />智演 / 职业迁移导航</p>
+          <h1>你的下一步 AI 岗位，不该靠猜。</h1>
+          <p className="hero-copy">把简历里的经历，放进真实招聘要求里比较。智演会告诉你当前更接近哪条岗位路径，哪些证据已经成立，下一档还差什么。</p>
         <div className="hero-actions">
           <Link className="primary" href="/diagnose">上传简历开始对照</Link>
-          <Link className="ghost" href="/diagnose?job=job-e1662d9b8cfd059f">先看看大模型应用工程师</Link>
+          <Link className="text-link" href="/diagnose?job=job-e1662d9b8cfd059f">先看一份示例报告 <span aria-hidden="true">↗</span></Link>
         </div>
-        <div className="sample-verdict" aria-label="示例方向结论">
-          <p className="mono">示例结论</p>
-          <h2>你具备大模型应用开发基础，下一步应补充可验证的 RAG 项目结果。</h2>
-          <div className="sample-reasons"><span>有 Python、FastAPI 实践证据</span><span>缺少规模、延迟或评测结果</span></div>
         </div>
+        <div className="hero-visual" aria-label="示例方向结论">
+          <div className="signal-board">
+            <div className="signal-board-head"><span>示例诊断</span><span className="mono">图谱 2026 / Q3</span></div>
+            <div className="path-visual">
+              <article className="path-card path-card-current">
+                <span className="mono">当前更接近</span>
+                <h2>大模型应用工程师</h2>
+                <p>Python · FastAPI · RAG</p>
+              </article>
+              <div className="path-connector" aria-hidden="true"><i /><span>可迁移</span><i /></div>
+              <article className="path-card path-card-next">
+                <span className="mono">可比较方向</span>
+                <h2>Agent 工程师</h2>
+                <p>工具调用 · 工作流 · 评测</p>
+              </article>
+            </div>
+            <div className="evidence-bridge">
+              <span className="bridge-line" />
+              <div><b>最大阻碍</b><span>缺少可核对的 RAG 项目结果</span></div>
+              <span className="bridge-line" />
+            </div>
+            <div className="signal-board-foot"><span>证据充分度</span><strong>原文可追溯</strong><span className="status-mark">●</span></div>
+          </div>
+          <p className="visual-note"><span className="mono">01</span> 每个判断都能回到简历片段和招聘来源</p>
+        </div>
+      </section>
+      <section className="home-proof" aria-label="产品工作方式">
+        <div><span className="proof-number">01</span><b>读市场</b><p>从多源招聘数据里看岗位要求怎样变化。</p></div>
+        <div><span className="proof-number">02</span><b>对证据</b><p>把岗位要求和简历原文逐项对应。</p></div>
+        <div><span className="proof-number">03</span><b>定方向</b><p>比较岗位档位与最小换档条件。</p></div>
+        <div><span className="proof-number">04</span><b>去行动</b><p>分开处理简历证明和能力提升。</p></div>
       </section>
       <section className="home-evidence" aria-labelledby="evidence-title">
         <div>
-          <p className="mono">数据依据</p>
-          <h2 id="evidence-title">岗位变化先看证据，再做决定</h2>
-          <p className="hint">岗位定义、招聘公司和本周期变化都来自同一份公开招聘数据。图谱和发现故事放在这里，诊断结论不会脱离来源。</p>
+          <p className="eyebrow">市场证据</p>
+          <h2 id="evidence-title">岗位正在怎么变，决定你该补什么。</h2>
+          <p className="hint">岗位定义、招聘公司和本周期变化来自同一份公开招聘数据。先看市场，再看自己的位置。</p>
         </div>
         <div className="evidence-links">
-          <Link className="evidence-card" href="/graph"><b>岗位</b><span>查看岗位要求与证据</span></Link>
-          <Link className="evidence-card" href="/discover"><b>市场变化</b><span>了解哪些岗位正在形成</span></Link>
+          <Link className="evidence-card" href="/graph"><span className="card-index">A</span><b>岗位图谱</b><span>查看岗位要求与证据</span><span className="card-arrow">↗</span></Link>
+          <Link className="evidence-card" href="/discover"><span className="card-index">B</span><b>市场变化</b><span>了解哪些岗位正在形成</span><span className="card-arrow">↗</span></Link>
         </div>
       </section>
       <aside className="home-feed">
@@ -74,7 +102,7 @@ export function Home() {
             </div>
           </dl>
         ) : (
-          <p className="hint">载入中…</p>
+            <p className="hint">正在读取本周期数据</p>
         )}
         {(feed?.stories || []).slice(0, 2).map((story) => (
           <article className="story" key={story.kind}>
