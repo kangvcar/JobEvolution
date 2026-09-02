@@ -1,6 +1,13 @@
 import json
 
 
+def test_parse_json_content_accepts_provider_wrappers():
+    from app.llm.client import _parse_json_content
+
+    assert _parse_json_content("```json\n{\"ok\": true}\n```") == {"ok": True}
+    assert _parse_json_content("前置说明\n{\"ok\": true}\n") == {"ok": True}
+
+
 def test_complete_json_compacts_after_truncated_response(monkeypatch):
     from app.llm import client
 
@@ -75,8 +82,10 @@ def test_tuzi_request_uses_no_provider_extension(monkeypatch):
 
     monkeypatch.setenv("LLM_PROVIDER", "tuzi")
     monkeypatch.setenv("TUZI_API_KEY", "test")
+    monkeypatch.delenv("TUZI_REASONING_EFFORT", raising=False)
     monkeypatch.setattr(client, "_cached", type("FakeClient", (), {"chat": type("Chat", (), {"completions": FakeCompletions()})()})())
     monkeypatch.setattr(client, "_cached_signature", ("tuzi", "test", "https://api.tu-zi.com/v1"))
     client._usage.update(day=client.date.today(), calls=0, cost=0.0)
     assert client.complete_json([{"role": "user", "content": "test"}]) == {}
+    assert calls[0]["reasoning_effort"] == "none"
     assert "extra_body" not in calls[0]

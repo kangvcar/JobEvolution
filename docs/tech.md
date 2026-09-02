@@ -261,12 +261,13 @@ LLM_PROVIDER=tuzi
 TUZI_API_KEY          必填，不写入仓库
 TUZI_BASE_URL         默认 https://api.tu-zi.com/v1
 TUZI_MODEL            默认 gpt-5.6-luna
+TUZI_REASONING_EFFORT 默认 none，降低长文本评测延迟；兼容性异常时可设为 low 或留空
 ```
 
 调用约定：
 
 - OpenAI SDK，`base_url` 按供应商配置。B.AI 和 Tuzi 使用 OpenAI 兼容 Chat Completions 协议。
-- 抽取、簇判别、简历 JSON：DeepSeek 发送 `thinking: {"type": "disabled"}`；B.AI 默认通过 `BAI_DISABLE_THINKING=1` 发送同一关闭提示，若供应商版本不兼容可设为 0；Tuzi 不发送供应商扩展参数。三者都使用 `response_format: {"type": "json_object"}`。
+- 抽取、簇判别、简历 JSON：DeepSeek 发送 `thinking: {"type": "disabled"}`；B.AI 默认通过 `BAI_DISABLE_THINKING=1` 发送同一关闭提示，若供应商版本不兼容可设为 0；Tuzi 默认发送 `reasoning_effort=none`，可用 `TUZI_REASONING_EFFORT` 调节。三者都使用 `response_format: {"type": "json_object"}`。
 - 诊断总结、学习资源：同一配置供应商，仍使用非思考模型；超时 60s，默认 `LLM_MAX_OUTPUT_TOKENS=4096`，失败重试一次；若首个 JSON 截断，第二次追加紧凑输出约束并将输出上限减半。
 - JSON 对不上 Pydantic 算失败。
 - 外部模型设置全局每日调用量与费用上限,并保留公开接口的每 IP 限速；额度耗尽时明确失败,不在请求中途静默切换供应商。

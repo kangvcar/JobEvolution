@@ -18,5 +18,5 @@
 - 快照：`data/snapshot/release-2026-09-02.json` 与 `data/snapshot/reviewed.json` 已按校准后图谱重导出，包含 16 个岗位、633 项技能、280 条未撤回证据、201 个事件、14 个岗位定义和 14 条声明；文件 SHA-256 为 `6d295b89d638eb5146bf05d370792660b4b11823cb617e10e4115e583096da03`，两个快照字节一致，快照内代码提交为 `450d3be`。导出脚本已处理 Neo4j DateTime 属性。`data/eval/freeze.json` 哈希仍为 `5194b7b806d8fb48714ad3b9f91fe1556a737d36750fe41ab7946a4aadcec438`。
 - 双岗样例：`data/eval/deliver/dual-diagnose.redacted.json`，仅使用合成、脱敏证据，展示方向并列、最小换档数量和未提及证据的报告结构。
 - 人工项：首屏、五步诊断、证据地图、换档模拟、岗位清单、市场卷宗和管理批量审核已通过代码构建验证；320px、200% 缩放、真实 PDF/docx、打印预览和键盘读屏仍需在带浏览器和模型凭据的发布环境复核。
-- LLM 供应商：已接入 DeepSeek、B.AI `deepseek-v4-flash-vision-exp` 和 Tuzi `gpt-5.6-luna`。B.AI 使用 `BAI_DISABLE_THINKING=1` 降低免费端点延迟，Tuzi 不发送供应商扩展参数。发布前必须在部署环境分别用实际密钥完成 `/v1/models` 或最小 JSON smoke，并记录供应商、模型和响应状态，不在仓库保存密钥。
+- LLM 供应商：已接入 DeepSeek、B.AI `deepseek-v4-flash-vision-exp` 和 Tuzi `gpt-5.6-luna`。B.AI 使用 `BAI_DISABLE_THINKING=1`，Tuzi 默认使用 `TUZI_REASONING_EFFORT=none` 降低长文本延迟。发布前必须在部署环境分别用实际密钥完成 `/v1/models` 或最小 JSON smoke，并记录供应商、模型和响应状态，不在仓库保存密钥。
 - 评测并发：`EVAL_WORKERS` 可在 1–32 之间调节；DeepSeek JD 评测默认 2 路，B.AI 默认 8 路，Tuzi 默认 16 路，若供应商限流则降到 2–4 路，单条失败不应被半程结果替代，必须等待 100 条完整样本。

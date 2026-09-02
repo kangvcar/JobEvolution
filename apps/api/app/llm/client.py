@@ -12,6 +12,28 @@ _cached_signature = None
 _usage = {"day": date.today(), "calls": 0, "cost": 0.0}
 
 
+def _parse_json_content(content) -> dict:
+    """Decode provider JSON while tolerating harmless wrapper text."""
+    if isinstance(content, list):
+        content = "".join(
+            part.get("text", "") if isinstance(part, dict) else str(part)
+            for part in content
+        )
+    text = str(content or "").strip()
+    if text.startswith("```"):
+        text = text.strip("`").removeprefix("json").strip()
+    try:
+        value = json.loads(text)
+    except json.JSONDecodeError:
+        start = text.find("{")
+        if start < 0:
+            raise
+        value, _ = json.JSONDecoder().raw_decode(text[start:])
+    if not isinstance(value, dict):
+        raise ValueError("LLM JSON root must be an object")
+    return value
+
+
 def _provider_config() -> tuple[str, str, str, str]:
     provider = os.environ.get("LLM_PROVIDER", "deepseek").strip().casefold()
     if provider == "bai":
@@ -85,6 +107,8 @@ def complete_json(messages) -> dict:
                 # 管线产物要可复现：同一份缓存 + 同一判别提示，重跑不许换答案
                 "temperature": 0,
             }
+            if provider == "tuzi":
+                request["reasoning_effort"] = os.environ.get("TUZI_REASONING_EFFORT", "none")
             disable_thinking = os.environ.get("BAI_DISABLE_THINKING", "1") != "0"
             if provider == "deepseek" or (provider == "bai" and disable_thinking):
                 request["extra_body"] = {"thinking": {"type": "disabled"}}
@@ -94,7 +118,7 @@ def complete_json(messages) -> dict:
             tokens = int(getattr(usage, "total_tokens", 0) or 0)
             _usage["calls"] += 1
             _usage["cost"] += tokens / 1_000_000 * float(os.environ.get("LLM_COST_PER_MILLION", "1"))
-            return json.loads(content)
+            return _parse_json_content(content)
         except Exception as exc:
             last = exc
     raise last if last else RuntimeError("complete_json failed")
