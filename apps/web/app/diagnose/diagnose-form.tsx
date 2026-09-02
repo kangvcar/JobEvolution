@@ -61,6 +61,11 @@ type Report = {
     };
   };
 };
+type Simulation = {
+  simulations?: { job_id: string; name: string; original_band: string; simulated_band: string; shift_set: Named[] }[];
+  migration_map?: { job_id: string; name: string; band: string; minimum_shift_skill_count: number; shared_capabilities: string[]; unique_requirements: string[] }[];
+  market_signal_radar?: { skill_id: string; name: string; sample_occurrence_ratio: number; company_count: number; formal_requirement_reason: string }[];
+};
 
 export function DiagnoseForm() {
   const params = useSearchParams();
@@ -79,6 +84,9 @@ export function DiagnoseForm() {
   const [parsed, setParsed] = useState<{ skills?: Named[]; profile?: Record<string, string>; education_items?: { text: string }[]; evidence_fragments?: Record<string, unknown>[] } | null>(null);
   const [selectedJobIds, setSelectedJobIds] = useState<string[]>([]);
   const [recommendations, setRecommendations] = useState<{ job_id: string; name: string; band: string; reasons: { text: string }[] }[]>([]);
+  const [simulation, setSimulation] = useState<Simulation | null>(null);
+  const [assumedSkills, setAssumedSkills] = useState<string[]>([]);
+  const simulationRequest = useRef(0);
   const abort = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -234,6 +242,15 @@ export function DiagnoseForm() {
     if (!analysis) return;
     const lines = ["表达轨：", ...(analysis.rewrites || []).slice(0, 5).map((item) => `- ${item.suggestion || item.original || "补充经历证据"}`), "能力轨：", ...(analysis.actions?.capability || []).map((item) => `- ${item.name || "能力缺口"}：${item.why || "补齐下一档要求"}`)];
     void navigator.clipboard.writeText(lines.join("\n"));
+  }
+
+  async function simulate(next: string[]) {
+    if (!sessionId || !jobId) return;
+    const requestId = ++simulationRequest.current;
+    setAssumedSkills(next);
+    const res = await fetch(`${API}/diagnose/simulate`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ session_id: sessionId, job_id: jobId, assumed_skill_ids: next, watching_skill_ids: (report?.groups.explain.watching || []).map((row) => row.skill_id) }) });
+    const body = await res.json();
+    if (requestId === simulationRequest.current && res.ok) setSimulation(body);
   }
 
   function MiniGraph() {
@@ -428,6 +445,13 @@ export function DiagnoseForm() {
               <p>已对齐 {names(report.groups.locate.hits)}</p>
 
               <h2>行动</h2>
+              <section className="simulator" aria-labelledby="simulator-title">
+                <div className="row"><h3 id="simulator-title">换档模拟器</h3><span className="hint">假设结果，尚未被简历证明</span></div>
+                <div className="simulator-options">{report.groups.act.path.map((step) => <label key={step.skill_id}><input type="checkbox" checked={assumedSkills.includes(step.skill_id)} onChange={(event) => simulate(event.target.checked ? [...assumedSkills, step.skill_id] : assumedSkills.filter((id) => id !== step.skill_id))} />{step.name}</label>)}</div>
+                <p className="simulator-result" aria-live="polite">{simulation?.simulations?.[0] ? `当前${simulation.simulations[0].original_band} → 假设${simulation.simulations[0].simulated_band}。下一换档：${names(simulation.simulations[0].shift_set)}` : "选择一项正式缺口查看假设档位"}</p>
+                {(simulation?.migration_map || []).length > 0 && <div className="migration-map">{simulation?.migration_map?.map((item) => <article key={item.job_id}><b>{item.name}</b><span>{item.band} · 还需 {item.minimum_shift_skill_count} 项</span><small>共享：{item.shared_capabilities.join("、") || "无"}</small><small>独有：{item.unique_requirements.slice(0, 3).join("、") || "无"}</small></article>)}</div>}
+                {(simulation?.market_signal_radar || []).length > 0 && <div className="market-radar"><b>市场观察</b>{simulation?.market_signal_radar?.map((item) => <span key={item.skill_id}>{item.name} · 招聘样本 {Math.round(item.sample_occurrence_ratio * 100)}% · {item.company_count} 家公司</span>)}</div>}
+              </section>
               <ol>
                 {report.groups.act.path.map((step) => (
                   <li key={step.skill_id}>

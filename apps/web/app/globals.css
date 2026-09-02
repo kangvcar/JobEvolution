@@ -335,6 +335,15 @@ button:active,
 .recommendation span { display: grid; gap: 2px; }
 .recommendation small { color: var(--color-muted); }
 .analysis-card { background: var(--color-paper-2); }
+.simulator { border: 1px solid var(--color-rule); padding: var(--space-sm); margin-bottom: var(--space-md); }
+.simulator h3 { margin: 0; font-size: var(--text-sm); font-weight: 600; }
+.simulator-options { display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-sm); margin-top: var(--space-sm); }
+.simulator-options label { font-size: var(--text-sm); }
+.simulator-result { margin: var(--space-sm) 0 0 !important; color: var(--color-ink) !important; }
+.migration-map { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-xs); margin-top: var(--space-sm); }
+.migration-map article { display: grid; gap: 3px; border-top: 2px solid var(--color-ink); padding-top: var(--space-xs); font-size: var(--text-sm); }
+.migration-map small, .market-radar span { color: var(--color-muted); }
+.market-radar { display: grid; gap: 3px; margin-top: var(--space-md); font-size: var(--text-sm); }
 
 @media print {
   .top, .skip-link, .diagnose-bar button, .diagnose-bar .hint, .evidence-drawer, .evidence-backdrop, .diagnose-split > aside, .diagnose-form { display: none !important; }
@@ -488,6 +497,7 @@ button:active,
   .diagnose-split {
     grid-template-columns: 1fr;
   }
+  .migration-map { grid-template-columns: 1fr; }
 }
 
 .hint {
