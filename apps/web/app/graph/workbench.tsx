@@ -20,13 +20,14 @@ type Job = { id: string; name: string; status?: "emerging" | "formed" };
 type Requirement = {
   skill_id: string;
   name: string;
+  kind?: string;
   category_id?: string | null;
   category?: string | null;
   proficiency?: string;
   levels?: string[];
   sources?: string[];
 };
-type JobDetail = Job & { sources?: string[] };
+type JobDetail = Job & { sources?: string[]; definition?: { text?: string; type?: string; sources?: string[] }[]; watching?: string[] };
 type Slice = {
   categories?: { id: string; name: string }[];
   requires?: Requirement[];
@@ -53,12 +54,23 @@ export function Workbench() {
   const [slice, setSlice] = useState<Slice | null>(null);
   const [evidenceTarget, setEvidenceTarget] = useState<EvidenceTarget | null>(null);
   const [loading, setLoading] = useState(false);
+  const [view, setView] = useState<"graph" | "list">("graph");
   const opener = useRef<HTMLElement | null>(null);
   const background = useRef<HTMLElement>(null);
 
   const closeEvidence = () => {
     setEvidenceTarget(null);
   };
+
+  useEffect(() => {
+    const saved = window.sessionStorage.getItem("job-view");
+    if (saved === "graph" || saved === "list") setView(saved);
+    else if (window.matchMedia("(max-width: 1100px)").matches) setView("list");
+  }, []);
+
+  useEffect(() => {
+    window.sessionStorage.setItem("job-view", view);
+  }, [view]);
 
   useEffect(() => {
     if (!evidenceTarget) return;
@@ -212,7 +224,7 @@ export function Workbench() {
         }
       },
     );
-  }, [current?.name, detail?.name, slice, selectedSkill]);
+  }, [current?.name, detail?.name, slice, selectedSkill, view]);
 
   const skillButton = (skill: Requirement) => (
     <li key={skill.skill_id} data-selected={skill.skill_id === selectedSkill ? "1" : undefined}>
@@ -281,7 +293,7 @@ export function Workbench() {
       </aside>
       <section className="graph-stage">
         <p className="graph-hint">
-          <span>岗位 → 类目 → 技能点</span>
+          <span className="view-tabs"><button type="button" aria-pressed={view === "graph"} onClick={() => setView("graph")}>图谱</button><button type="button" aria-pressed={view === "list"} onClick={() => setView("list")}>要求清单</button></span>
           <span className="g-legend">
             <span>
               <i className="swatch add" />
@@ -293,20 +305,23 @@ export function Workbench() {
             </span>
           </span>
         </p>
-        <div
+        {view === "graph" ? <div
           id="g6"
           ref={canvas}
           tabIndex={0}
           role="application"
           aria-label="岗位切片画布"
-        />
+        /> : <div className="requirement-list" aria-label="岗位要求清单">
+          {(["required", "bonus"] as const).map((kind) => <section key={kind}><h2>{kind === "required" ? "必备" : "加分"}</h2><ul>{visibleRequires.filter((skill) => (kind === "required" ? skill.kind !== "bonus" : skill.kind === "bonus")).map((skill) => <li key={skill.skill_id}><button type="button" onClick={() => { opener.current = document.activeElement as HTMLElement; setSelectedSkill(skill.skill_id); setEvidenceTarget(skill); }}>{skill.name}</button><span>{skill.proficiency || "未标熟练级"}</span></li>)}</ul></section>)}{detail?.watching?.length ? <section><h2>观测中</h2><p className="hint">市场开始提，但还没进要求，不算你的缺口。</p><p className="watching-ids">{detail.watching.join("、")}</p></section> : null}</div>}
       </section>
       <aside className="graph-detail">
         <h1>{detail?.name || current?.name || "图谱"}</h1>
         {detail ? (
           <>
             <p>状态：{detail.status === "formed" ? "成型" : "萌芽"}</p>
-            <p>独立源：{detail.sources?.join("、") || "暂无"}</p>
+            <p>去重招聘公司：{detail.sources?.join("、") || "暂无"}</p>
+            {detail.definition?.length ? <section className="job-definition"><h2>岗位定义</h2>{detail.definition.slice(0, 5).map((claim, index) => <p key={`${claim.text}-${index}`}>{claim.text}</p>)}</section> : <p className="hint">岗位定义审核中</p>}
+            <p>本周期新增 {slice?.period_delta?.added?.length || 0} 项，失效 {slice?.period_delta?.expired?.length || 0} 项。</p>
             <h2>技能点</h2>
             {slice?.categories?.filter((sliceCategory) => visibleRequires.some((skill) => skill.category === sliceCategory.name)).map((sliceCategory) => (
               <section key={sliceCategory.id}>
