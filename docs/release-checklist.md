@@ -8,7 +8,7 @@
 
 ## 2026-09-02 发布验证记录
 
-- 后端全量：`.venv/bin/pytest -q`，143 passed，1 skipped。已覆盖会话隔离、岗位诊断发布门禁、批量审核幂等、换档模拟、证据级、结构化简历字段、证据地图和推荐岗位。
+- 后端全量：`.venv/bin/pytest -q`，144 passed，1 skipped。已覆盖会话隔离、岗位诊断发布门禁、批量审核幂等、换档模拟、证据级、结构化简历字段、证据地图、推荐岗位和版本化元数据路由。
 - 前端：`cd apps/web && npm run typecheck` 通过；`npm run build` 通过。Next 构建仅报告既有 autoprefixer `flex-start` 兼容性警告。
 - Compose：`docker compose config --quiet` 通过。未在本机重启容器，避免覆盖当前运行中的用户环境；正式发布前按第 1、2、3 项执行空卷导入和健康检查。
 - 评测：`PYTHONPATH=apps/api .venv/bin/python -m app.eval report` 已执行未 mock 匹配集，100/100，F1 1.000。JD 解析因模型返回非 JSON，简历解析因未配置模型凭据，真实 F1 未得，原因已写入 `data/eval/out/summary.md`，没有用 mock 数字替代。
