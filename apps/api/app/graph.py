@@ -686,18 +686,19 @@ def link_evidence(evidence_id: str, job_id: str) -> None:
         )
 
 
-def list_job_evidence(job_id: str) -> list[dict]:
+def list_job_evidence(job_id: str, *, include_retracted: bool = False) -> list[dict]:
     if _driver is None:
         return []
     with _driver.session() as session:
         rows = session.run(
             """
             MATCH (e:Evidence)-[:FOR]->(j:Job {id: $id})
-            WHERE coalesce(e.retracted, false) = false
+            WHERE $include_retracted OR coalesce(e.retracted, false) = false
             RETURN e.company AS company, e.observed_at AS observed_at,
-                   e.id AS id, e.source AS source
+                   e.id AS id, e.source AS source, coalesce(e.retracted, false) AS retracted
             """,
             id=job_id,
+            include_retracted=include_retracted,
         )
         return [dict(row) for row in rows]
 
@@ -779,6 +780,22 @@ def definition_passed(job_id: str) -> bool:
             id=job_id,
         ).single()
     return bool(row and row["n"])
+
+
+def diagnostic_release(job_id: str, *, override_reason: str = "") -> dict:
+    """Single data-backed gate shared by API callers before a diagnosis."""
+    from app.pipeline.diagnostic_release import validate_diagnostic_release
+
+    history = list_requires_history(job_id)
+    previous = [row for row in history if row.get("valid_to")]
+    return validate_diagnostic_release(
+        job_id=job_id,
+        definition=current_definition(job_id),
+        requires=list_requires(job_id),
+        evidence=list_job_evidence(job_id, include_retracted=True),
+        previous_requires=previous,
+        override_reason=override_reason,
+    )
 
 
 def set_job_fields(job_id: str, **fields) -> None:

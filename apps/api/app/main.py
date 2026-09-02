@@ -241,6 +241,9 @@ def diagnose(body: DiagnoseBody, request: Request):
     resume = load_session(body.session_id or "")
     if resume is None:
         raise HTTPException(404, "session expired")
+    release_check = graph.diagnostic_release(body.job_id)
+    if not release_check["ok"]:
+        raise HTTPException(409, "岗位数据正在校验，暂不可诊断")
     resume["session_id"] = body.session_id
     requires = graph.list_requires(body.job_id)
     neighbor = None
@@ -327,6 +330,10 @@ class RetractionBody(BaseModel):
     reason: str = ""
 
 
+class DiagnosticOverrideBody(BaseModel):
+    reason: str = ""
+
+
 class LoginBody(BaseModel):
     password: str
 
@@ -405,6 +412,37 @@ def admin_queue(
 ):
     _require_admin(request, x_admin_password)
     return graph.list_pending_events(include_auto_passed=passthrough_enabled())
+
+
+@app.get("/admin/jobs/{job_id}/diagnostic-release")
+def admin_diagnostic_release(
+    job_id: str,
+    request: Request,
+    x_admin_password: str | None = Header(default=None, alias="X-Admin-Password"),
+):
+    _require_admin(request, x_admin_password)
+    if graph.get_any_job(job_id) is None:
+        raise HTTPException(404, "not found")
+    return graph.diagnostic_release(job_id)
+
+
+@app.post("/admin/jobs/{job_id}/diagnostic-release")
+def admin_override_diagnostic_release(
+    job_id: str,
+    body: DiagnosticOverrideBody,
+    request: Request,
+    x_admin_password: str | None = Header(default=None, alias="X-Admin-Password"),
+):
+    _require_admin(request, x_admin_password)
+    if graph.get_any_job(job_id) is None:
+        raise HTTPException(404, "not found")
+    reason = body.reason.strip()
+    if not reason:
+        raise HTTPException(400, "放行理由不能为空")
+    result = graph.diagnostic_release(job_id, override_reason=reason)
+    if result["ok"]:
+        graph.set_job_fields(job_id, diagnostic_override_reason=reason, diagnostic_override_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
+    return result
 
 
 @app.post("/admin/queue/{event_id}/approve")

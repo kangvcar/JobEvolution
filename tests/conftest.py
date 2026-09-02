@@ -16,6 +16,23 @@ def client():
         yield c
 
 
+@pytest.fixture(autouse=True)
+def isolate_static_demo_jobs(client):
+    """Keep fixed demo names from leaking status/evidence across tests."""
+    from app import graph
+
+    graph.init_graph()
+    with graph._driver.session() as session:
+        session.run(
+            "MATCH (j:Job) WHERE j.name IN $names DETACH DELETE j",
+            names=["Agent 工程师", "大模型应用工程师"],
+        )
+        session.run(
+            "MATCH (e:EvolutionEvent) WHERE coalesce(e.payload, '') CONTAINS 'Agent 工程师' OR coalesce(e.payload, '') CONTAINS '大模型应用工程师' DETACH DELETE e"
+        )
+    yield
+
+
 def graph_clean(suffix: str) -> None:
     from app import graph
 
