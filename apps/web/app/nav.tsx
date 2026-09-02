@@ -4,10 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const LINKS = [
-  { href: "/", label: "总览" },
-  { href: "/graph", label: "图谱" },
-  { href: "/diagnose", label: "诊断" },
-  { href: "/discover", label: "发现" },
+  { href: "/", label: "首页" },
+  { href: "/graph", label: "岗位" },
+  { href: "/discover", label: "市场变化" },
 ] as const;
 
 export function Nav() {

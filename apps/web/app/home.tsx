@@ -1,15 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { cssVar, mountGraph } from "./graph-kit";
+import { useEffect, useState } from "react";
 import { EventList, Heat, Pipe } from "./feed-bits";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
-type Domain = { id: string; name: string };
-type Job = { id: string; name: string; status: string; domain: string };
 type Story = {
   kind: string;
   job_id: string;
@@ -29,103 +25,43 @@ type Feed = {
 };
 
 export function Home() {
-  const canvas = useRef<HTMLDivElement>(null);
-  const router = useRouter();
-  const [domains, setDomains] = useState<Domain[]>([]);
-  const [jobs, setJobs] = useState<Job[]>([]);
   const [feed, setFeed] = useState<Feed | null>(null);
 
   useEffect(() => {
-    fetch(`${API}/meta`)
-      .then((r) => r.json())
-      .then((body: { domains?: Domain[] }) => setDomains(Array.isArray(body.domains) ? body.domains : []))
-      .catch(() => setDomains([]));
-    fetch(`${API}/jobs`)
-      .then((r) => r.json())
-      .then((rows: Job[]) => setJobs(Array.isArray(rows) ? rows : []))
-      .catch(() => setJobs([]));
     fetch(`${API}/feed`)
       .then((r) => r.json())
       .then((body: Feed) => setFeed(body))
       .catch(() => setFeed(null));
   }, []);
 
-  useEffect(() => {
-    const el = canvas.current;
-    if (!el) return;
-    const cInk = cssVar("--color-ink");
-    const cPaper = cssVar("--color-paper");
-    const cPaper2 = cssVar("--color-paper-2");
-    const cAccent = cssVar("--color-accent");
-    const cFaint = cssVar("--color-faint");
-    const nodes = domains.map((d) => ({ id: `d-${d.id}`, data: { label: d.name, k: "d" } }));
-    const jobIds = new Set<string>();
-    for (const job of jobs) {
-      jobIds.add(job.id);
-      nodes.push({
-        id: job.id,
-        data: { label: job.name, k: job.status === "emerging" ? "e" : "j" },
-      });
-    }
-    const edges = jobs.map((job, i) => ({
-      id: `e${i}`,
-      source: `d-${job.domain}`,
-      target: job.id,
-    }));
-    return mountGraph(
-      el,
-      { nodes, edges },
-      {
-        size: (d: { data?: { k?: string } }) => (d.data?.k === "d" ? [96, 32] : [88, 28]),
-        radius: 0,
-        fill: (d: { data?: { k?: string } }) => (d.data?.k === "j" ? cInk : cPaper2),
-        stroke: (d: { data?: { k?: string } }) =>
-          d.data?.k === "e" ? cAccent : d.data?.k === "d" ? cFaint : cInk,
-        lineWidth: (d: { data?: { k?: string } }) => (d.data?.k === "e" ? 2 : 1),
-        labelText: (d: { data?: { label?: string } }) => d.data?.label || "",
-        labelFill: (d: { data?: { k?: string } }) => (d.data?.k === "j" ? cPaper : cInk),
-        labelFontSize: 11,
-        labelPlacement: "center",
-        labelMaxWidth: 88,
-        labelWordWrap: true,
-      },
-      (id) => {
-        if (jobIds.has(id)) router.push(`/graph?job=${encodeURIComponent(id)}`);
-      },
-    );
-  }, [domains, jobs, router]);
-
   return (
-    <main id="main" className="atlas">
-      <h1 className="sr-only">总览</h1>
-      <div className="map-stage">
-        <header className="map-orient">
-          <p className="mono">四领域 · 点岗位进工作台</p>
-          <div className="domains">
-            {domains.map((d) => (
-              <span key={d.id}>
-                {d.name} <b>{jobs.filter((j) => j.domain === d.id).length}</b>
-              </span>
-            ))}
-          </div>
-        </header>
-        <div id="g6home" ref={canvas} role="img" aria-label="四领域岗位图，点岗位进工作台" />
-        <p className="map-legend">
-          <span>
-            <i className="swatch d" />
-            领域
-          </span>
-          <span>
-            <i className="swatch j" />
-            成型
-          </span>
-          <span>
-            <i className="swatch e" />
-            萌芽
-          </span>
-        </p>
-      </div>
-      <aside className="inspector">
+    <main id="main" className="home-page">
+      <section className="home-hero">
+        <p className="mono">智演 / 职业方向诊断</p>
+        <h1>用招聘市场证据，判断你现在更适合哪个 AI 岗位</h1>
+        <p className="hero-copy">上传简历，确认解析结果，再看真实招聘要求与你的经历如何对应。报告会把能力缺口和表达缺口分开，并给出下一步。</p>
+        <div className="hero-actions">
+          <Link className="primary" href="/diagnose">上传简历开始对照</Link>
+          <Link className="ghost" href="/diagnose?job=job-e1662d9b8cfd059f">先看看大模型应用工程师</Link>
+        </div>
+        <div className="sample-verdict" aria-label="示例方向结论">
+          <p className="mono">示例结论</p>
+          <h2>你具备大模型应用开发基础，下一步应补充可验证的 RAG 项目结果。</h2>
+          <div className="sample-reasons"><span>有 Python、FastAPI 实践证据</span><span>缺少规模、延迟或评测结果</span></div>
+        </div>
+      </section>
+      <section className="home-evidence" aria-labelledby="evidence-title">
+        <div>
+          <p className="mono">数据依据</p>
+          <h2 id="evidence-title">岗位变化先看证据，再做决定</h2>
+          <p className="hint">岗位定义、招聘公司和本周期变化都来自同一份公开招聘数据。图谱和发现故事放在这里，诊断结论不会脱离来源。</p>
+        </div>
+        <div className="evidence-links">
+          <Link className="evidence-card" href="/graph"><b>岗位</b><span>查看岗位要求与证据</span></Link>
+          <Link className="evidence-card" href="/discover"><b>市场变化</b><span>了解哪些岗位正在形成</span></Link>
+        </div>
+      </section>
+      <aside className="home-feed">
         {feed ? (
           <dl className="readout">
             <div>
@@ -140,7 +76,7 @@ export function Home() {
         ) : (
           <p className="hint">载入中…</p>
         )}
-        {(feed?.stories || []).map((story) => (
+        {(feed?.stories || []).slice(0, 2).map((story) => (
           <article className="story" key={story.kind}>
             <span className={`pill ${story.kind === "discover" ? "hot" : "mid"}`}>
               {story.kind === "discover" ? "新岗位发现" : "既有岗位更新"}

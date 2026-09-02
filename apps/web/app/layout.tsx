@@ -35,6 +35,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </Link>
             <Nav />
             <div className="top-end">
+              <Link className="top-diagnose" href="/diagnose">
+                开始诊断
+              </Link>
               <AdminLink />
             </div>
           </header>
