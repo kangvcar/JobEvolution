@@ -63,6 +63,8 @@ export default function AdminPage() {
   const [tab, setTab] = useState<"queue" | "gold">("queue");
   const [adjFile, setAdjFile] = useState<"jd" | "resume">("jd");
   const [gold, setGold] = useState<AdjState | null>(null);
+  const [bulkBusy, setBulkBusy] = useState<string | null>(null);
+  const [bulkResult, setBulkResult] = useState<Record<string, string>>({});
 
   const csrfHeaders = (): Record<string, string> => {
     const token = document.cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith("admin_csrf="))?.split("=")[1];
@@ -175,6 +177,18 @@ export default function AdminPage() {
     setBusy(null);
   }
 
+  async function approveAll(jobId: string, versionId: string) {
+    const key = `${jobId}:${versionId}`;
+    setBulkBusy(key);
+    setError("");
+    const response = await fetch(`${API}/admin/jobs/${jobId}/versions/${versionId}/approve-all`, { method: "POST", headers: { "Content-Type": "application/json", ...csrfHeaders() }, credentials: "include", body: JSON.stringify({ override_reason: "" }) });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) { setError(body.error || body.detail || "批量审核被拦截，请检查岗位定义、证据和异常增量"); setBulkBusy(null); return; }
+    setBulkResult((current) => ({ ...current, [key]: `已批准 ${body.event_ids?.length || 0} 条，批量决定 ${body.batch_id || "已记录"}` }));
+    await loadQueue();
+    setBulkBusy(null);
+  }
+
   if (queue === null) {
     return (
       <main id="main" className="page admin-page">
@@ -198,6 +212,16 @@ export default function AdminPage() {
   const terms = gold?.row
     ? [...gold.row.kept.map((k) => k.name), ...gold.row.proposals.map((p) => p.span)]
     : [];
+  const bulkGroups = [...(queue || []).reduce((groups, item) => {
+    const jobId = String(item.payload?.job_id || "");
+    if (!jobId) return groups;
+    const versionId = String(item.payload?.version_id || "latest");
+    const key = `${jobId}:${versionId}`;
+    const group = groups.get(key) || { jobId, versionId, name: String(item.payload?.job_name || jobId), count: 0 };
+    group.count += 1;
+    groups.set(key, group);
+    return groups;
+  }, new Map<string, { jobId: string; versionId: string; name: string; count: number }>()).values()];
 
   return (
     <main id="main" className="page admin-page">
@@ -218,6 +242,7 @@ export default function AdminPage() {
         <>
           <p className="hint">口令通过后显示尚未入谱的演化事件。</p>
           {queue.length === 0 ? <p className="empty">暂无待审演化事件</p> : null}
+          {bulkGroups.length ? <section className="bulk-groups" aria-label="岗位版本批量审核"><h2>按岗位版本审核</h2>{bulkGroups.map((group) => { const key = `${group.jobId}:${group.versionId}`; return <article key={key}><div><strong>{group.name}</strong><span>{group.count} 条待审提案 · 版本 {group.versionId}</span></div><button className="primary" type="button" disabled={bulkBusy === key} onClick={() => approveAll(group.jobId, group.versionId)}>一键全部批准</button>{bulkResult[key] ? <p className="hint" role="status">{bulkResult[key]}</p> : null}</article>; })}</section> : null}
           <ul className="admin-queue" aria-label="待审演化事件">
             {queue.map((item) => {
               const payload = item.payload ?? {};

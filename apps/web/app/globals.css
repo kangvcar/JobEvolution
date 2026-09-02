@@ -558,6 +558,11 @@ button:active,
   background: var(--color-paper);
   color: var(--color-ink);
 }
+.bulk-groups { border: 1px solid var(--color-rule); margin-top: var(--space-lg); padding: var(--space-sm); }
+.bulk-groups h2 { margin: 0 0 var(--space-xs); font-size: var(--text-sm); }
+.bulk-groups article { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-sm); border-top: 1px solid var(--color-rule); padding: var(--space-sm) 0; }
+.bulk-groups article div { display: grid; gap: 2px; }
+.bulk-groups article span { color: var(--color-muted); font-size: var(--text-xs); }
 
 .admin-queue textarea {
   width: 100%;
