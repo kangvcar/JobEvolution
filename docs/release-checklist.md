@@ -8,7 +8,7 @@
 
 ## 2026-09-02 发布验证记录
 
-- 后端全量：`.venv/bin/pytest -q`，147 passed，1 skipped。已覆盖会话隔离、岗位诊断发布门禁、批量审核幂等、换档模拟、证据级、结构化简历字段、证据地图、推荐岗位、正式技能边界和版本化元数据路由。
+- 后端全量：`.venv/bin/pytest -q`，148 passed，1 skipped。已覆盖会话隔离、岗位诊断发布门禁、批量审核幂等、换档模拟、证据级、结构化简历字段、证据地图、推荐岗位、正式技能边界、模型不可用可重试响应和版本化元数据路由。
 - 前端：`cd apps/web && npm run typecheck` 通过；`npm run build` 通过。Next 构建仅报告既有 autoprefixer `flex-start` 兼容性警告。
 - Compose：`docker compose config --quiet` 通过。未在本机重启容器，避免覆盖当前运行中的用户环境；正式发布前按第 1、2、3 项执行空卷导入和健康检查。
 - 镜像：最新一次 `docker compose build api web` 通过；一次性 API 容器确认最新镜像包含 `/v1/meta` 路由。运行中的旧容器未重启，因此不以旧镜像的 404 结果代替新镜像验证。
