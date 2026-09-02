@@ -1,6 +1,6 @@
 {
   "schema_version": "jobevolution.snapshot.v1",
-  "git_commit": "4990f3ae92b86c883b22add924fb4111fc9c34d7",
+  "git_commit": "5fc597c6399220693b3a3fbb17e2db58d119cb56",
   "evidence_hash": "3b12eb60769f4c312cc374d6c5d617532759c6849123e57cdda67b875ee28639",
   "jobs": [
     {
@@ -6186,7 +6186,7 @@
       "synonyms": [
         "Prompt Engineering"
       ],
-      "name": "Prompt Engineering",
+      "name": "提示词工程",
       "id": "skill-c7bdea3142254923"
     },
     {
