@@ -12,6 +12,6 @@
 - 前端：`cd apps/web && npm run typecheck` 通过；`npm run build` 通过。Next 构建仅报告既有 autoprefixer `flex-start` 兼容性警告。
 - Compose：`docker compose config --quiet` 通过。未在本机重启容器，避免覆盖当前运行中的用户环境；正式发布前按第 1、2、3 项执行空卷导入和健康检查。
 - 评测：`PYTHONPATH=apps/api .venv/bin/python -m app.eval report` 已执行未 mock 匹配集，100/100，F1 1.000。JD 解析因模型返回非 JSON，简历解析因未配置模型凭据，真实 F1 未得，原因已写入 `data/eval/out/summary.md`，没有用 mock 数字替代。
-- 快照：新增 `data/snapshot/release-2026-09-02.json`，导出自当前运行图谱，包含 16 个岗位、633 项技能、280 条未撤回证据和 201 个事件；文件 SHA-256 为 `63236a0eeb5466296cdb3c2ae8795fb950665c722e8da7f06dc65753659fb903`，内置 evidence hash 与审核快照一致。导出脚本已处理 Neo4j DateTime 属性。`data/eval/freeze.json` 哈希仍为 `5194b7b806d8fb48714ad3b9f91fe1556a737d36750fe41ab7946a4aadcec438`。
+- 快照：新增 `data/snapshot/release-2026-09-02.json`，导出自当前运行图谱，包含 16 个岗位、633 项技能、280 条未撤回证据和 201 个事件；文件 SHA-256 为 `b90f0fc22d794f795d0d3946dcd7b5ef971fcd6d7934abc3755fc99bd811ae07`，内置 evidence hash 与审核快照一致。导出脚本已处理 Neo4j DateTime 属性。`data/eval/freeze.json` 哈希仍为 `5194b7b806d8fb48714ad3b9f91fe1556a737d36750fe41ab7946a4aadcec438`。
 - 双岗样例：`data/eval/deliver/dual-diagnose.redacted.json`，仅使用合成、脱敏证据，展示方向并列、最小换档数量和未提及证据的报告结构。
 - 人工项：首屏、五步诊断、证据地图、换档模拟、岗位清单、市场卷宗和管理批量审核已通过代码构建验证；320px、200% 缩放、真实 PDF/docx、打印预览和键盘读屏仍需在带浏览器和模型凭据的发布环境复核。
