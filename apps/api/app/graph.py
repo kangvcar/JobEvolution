@@ -26,6 +26,7 @@ _CONSTRAINTS = (
     "CREATE CONSTRAINT review_proposal_id IF NOT EXISTS FOR (n:ReviewProposal) REQUIRE n.id IS UNIQUE",
     "CREATE CONSTRAINT skill_merge_id IF NOT EXISTS FOR (n:SkillMerge) REQUIRE n.id IS UNIQUE",
     "CREATE CONSTRAINT review_decision_id IF NOT EXISTS FOR (n:ReviewDecision) REQUIRE n.id IS UNIQUE",
+    "CREATE CONSTRAINT bulk_review_id IF NOT EXISTS FOR (n:BulkReviewDecision) REQUIRE n.id IS UNIQUE",
     "CREATE CONSTRAINT job_definition_version_id IF NOT EXISTS FOR (n:JobDefinitionVersion) REQUIRE n.id IS UNIQUE",
     "CREATE CONSTRAINT definition_claim_id IF NOT EXISTS FOR (n:DefinitionClaim) REQUIRE n.id IS UNIQUE",
     "CREATE CONSTRAINT graph_release_id IF NOT EXISTS FOR (n:GraphRelease) REQUIRE n.id IS UNIQUE",
@@ -566,6 +567,32 @@ def record_review_decision(event_id: str, *, review: str, payload: dict, reason:
             payload=json.dumps(payload, ensure_ascii=False), reason=reason,
         )
     return decision_id
+
+
+def record_bulk_decision(*, batch_id: str, job_id: str, version_id: str, event_ids: list[str], actor: str, reason: str = "") -> str | None:
+    if _driver is None:
+        return None
+    with _driver.session() as session:
+        session.run(
+            """
+            MERGE (b:BulkReviewDecision {id: $id})
+            ON CREATE SET b.job_id = $job_id, b.version_id = $version_id, b.event_ids = $event_ids,
+                          b.actor = $actor, b.reason = $reason, b.decided_at = datetime()
+            """,
+            id=batch_id, job_id=job_id, version_id=version_id, event_ids=event_ids, actor=actor, reason=reason,
+        )
+    return batch_id
+
+
+def get_bulk_decision(batch_id: str) -> dict | None:
+    if _driver is None:
+        return None
+    with _driver.session() as session:
+        row = session.run(
+            "MATCH (b:BulkReviewDecision {id: $id}) RETURN b.id AS id, b.job_id AS job_id, b.version_id AS version_id, b.event_ids AS event_ids, b.actor AS actor, b.reason AS reason, toString(b.decided_at) AS decided_at",
+            id=batch_id,
+        ).single()
+    return dict(row) if row else None
 
 
 def apply_definition_claims(job_id: str, claims: list[dict], *, event_id: str) -> None:

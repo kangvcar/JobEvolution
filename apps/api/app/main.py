@@ -4,6 +4,8 @@ import secrets
 import time
 import uuid
 import logging
+import hashlib
+import json
 from contextlib import asynccontextmanager
 
 from pydantic import BaseModel
@@ -334,6 +336,10 @@ class DiagnosticOverrideBody(BaseModel):
     reason: str = ""
 
 
+class BulkApproveBody(BaseModel):
+    override_reason: str = ""
+
+
 class LoginBody(BaseModel):
     password: str
 
@@ -458,6 +464,76 @@ def admin_approve(
         return apply_event(event_id, review="approved", payload=payload)
     except KeyError:
         raise HTTPException(404, "not found") from None
+
+
+@app.post("/admin/jobs/{job_id}/versions/{version_id}/approve-all")
+def admin_approve_all(
+    job_id: str,
+    version_id: str,
+    body: BulkApproveBody,
+    request: Request,
+    x_admin_password: str | None = Header(default=None, alias="X-Admin-Password"),
+):
+    _require_admin(request, x_admin_password)
+    if graph.get_any_job(job_id) is None:
+        raise HTTPException(404, "not found")
+    pending = []
+    for event in graph.list_pending_events():
+        payload = event.get("payload") or {}
+        if payload.get("job_id") != job_id:
+            continue
+        if version_id not in {"pending", "latest"} and payload.get("version_id") not in {None, version_id}:
+            continue
+        pending.append(event)
+    event_ids = sorted(event["id"] for event in pending)
+    batch_id = "bulk-" + hashlib.sha256(json.dumps([job_id, version_id, event_ids], ensure_ascii=False).encode()).hexdigest()[:24]
+    previous = graph.get_bulk_decision(batch_id)
+    if previous:
+        return {"ok": True, "idempotent": True, "batch_id": batch_id, "event_ids": event_ids, "audit": previous}
+    if not pending:
+        raise HTTPException(404, "没有待审提案")
+    from app.pipeline.diagnostic_release import validate_diagnostic_release
+
+    base = graph.list_requires(job_id)
+    proposals = []
+    unresolved = []
+    for event in pending:
+        payload = event.get("payload") or {}
+        if payload.get("kind") != "requires_add":
+            continue
+        if payload.get("proposed_kind") not in {"required", "bonus"}:
+            unresolved.append(payload.get("skill_name") or payload.get("skill_id") or event["id"])
+            continue
+        proposals.append({
+            "skill_id": payload.get("skill_id"),
+            "kind": payload.get("proposed_kind"),
+            "group_id": payload.get("group_id"),
+            "min_required": payload.get("min_required", 1),
+            "sources": payload.get("sources") or [],
+            "excerpt": payload.get("excerpt") or "",
+        })
+    if unresolved:
+        raise HTTPException(409, json.dumps({"code": "kind_vote_unresolved", "items": unresolved}, ensure_ascii=False))
+    check = validate_diagnostic_release(
+        job_id=job_id,
+        definition=graph.current_definition(job_id),
+        requires=base + proposals,
+        evidence=graph.list_job_evidence(job_id, include_retracted=True),
+        previous_requires=[row for row in graph.list_requires_history(job_id) if row.get("valid_to")],
+        override_reason=body.override_reason,
+    )
+    if not check["ok"]:
+        anomaly_only = all(item.get("code", "").endswith("_anomaly") for item in check["errors"])
+        status = 400 if anomaly_only and not body.override_reason.strip() else 409
+        raise HTTPException(status, json.dumps({"code": "diagnostic_release_blocked", "errors": check["errors"]}, ensure_ascii=False))
+    for event in pending:
+        payload = event.get("payload") or {}
+        if payload.get("proposed_kind") in {"required", "bonus"}:
+            payload["approved_kind"] = payload["proposed_kind"]
+        apply_event(event["id"], review="approved", payload=payload)
+    actor = request.cookies.get("admin_session") or "shared-admin"
+    graph.record_bulk_decision(batch_id=batch_id, job_id=job_id, version_id=version_id, event_ids=event_ids, actor=actor, reason=body.override_reason.strip())
+    return {"ok": True, "idempotent": False, "batch_id": batch_id, "event_ids": event_ids, "audit": graph.get_bulk_decision(batch_id), "check": check}
 
 
 @app.post("/admin/queue/{event_id}/reject")

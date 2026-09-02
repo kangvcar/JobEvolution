@@ -74,3 +74,41 @@ def test_admin_release_endpoint_returns_structured_codes(client):
     finally:
         with graph._driver.session() as session:
             session.run("MATCH (j:Job {id: $id}) DETACH DELETE j", id=job_id)
+
+
+def test_bulk_approval_is_idempotent_and_does_not_call_review_model(client, monkeypatch):
+    from app import main
+
+    event = {
+        "id": "evt-bulk-1",
+        "review": "pending",
+        "payload": {
+            "kind": "requires_add",
+            "job_id": "job-bulk",
+            "version_id": "v1",
+            "skill_id": "s1",
+            "skill_name": "FastAPI",
+            "proposed_kind": "required",
+            "sources": ["e1", "e2"],
+            "excerpt": "熟悉 FastAPI",
+        },
+    }
+    audit = {"id": "bulk-any", "event_ids": ["evt-bulk-1"]}
+    calls = []
+    monkeypatch.setattr(graph, "get_any_job", lambda _: {"id": "job-bulk", "name": "岗"})
+    monkeypatch.setattr(graph, "list_pending_events", lambda: [event])
+    monkeypatch.setattr(graph, "list_requires", lambda _: [])
+    monkeypatch.setattr(graph, "current_definition", lambda _: [{"text": "负责服务开发"}])
+    monkeypatch.setattr(graph, "list_job_evidence", lambda *_args, **_kwargs: [{"id": "e1"}, {"id": "e2"}])
+    monkeypatch.setattr(graph, "list_requires_history", lambda _: [])
+    monkeypatch.setattr(main, "apply_event", lambda event_id, **kwargs: calls.append(event_id))
+    monkeypatch.setattr(graph, "get_bulk_decision", lambda _: None if len(calls) == 0 else audit)
+    monkeypatch.setattr(graph, "record_bulk_decision", lambda **kwargs: audit.update(kwargs))
+
+    first = client.post("/admin/jobs/job-bulk/versions/v1/approve-all", headers={"X-Admin-Password": "change-me"}, json={})
+    assert first.status_code == 200
+    assert calls == ["evt-bulk-1"]
+    second = client.post("/admin/jobs/job-bulk/versions/v1/approve-all", headers={"X-Admin-Password": "change-me"}, json={})
+    assert second.status_code == 200
+    assert second.json()["idempotent"] is True
+    assert calls == ["evt-bulk-1"]

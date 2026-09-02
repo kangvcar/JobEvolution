@@ -357,6 +357,9 @@ def _gate_job(job_name: str, rows: list, index: list[dict], judged: str = "targe
     }
     mentions: dict[str, dict] = {}
     cluster_size = len(rows)
+    version_id = "jobv-" + hashlib.sha256(
+        f"{job_id}:{max((snap.get('observed_at') or '' for snap, _, _ in rows), default='')}".encode("utf-8")
+    ).hexdigest()[:16]
     pending_names: list[tuple] = []
 
     for snap, parsed, _ in rows:
@@ -487,6 +490,7 @@ def _gate_job(job_name: str, rows: list, index: list[dict], judged: str = "targe
             "kind": "requires_add",
             "job_id": job_id,
             "job_name": job_name,
+            "version_id": version_id,
             "domain": domain,
             "skill_id": skill_id,
             "skill_name": rec["skill"]["name"],
