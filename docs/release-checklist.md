@@ -15,6 +15,6 @@
 - 图谱校准：执行 `PYTHONPATH=apps/api NEO4J_URI=bolt://localhost:7687 .venv/bin/python -m app.pipeline.curate_public --period 2026-09-02`，14 个公开岗位全部通过诊断发布门禁；大模型应用工程师收敛为 12 条必备、23 条正式要求，通用素质和模型品牌以 `valid_to` 可回滚失效，14 条岗位定义声明均有至少两个独立证据源。
 - 空卷导入：使用临时 Neo4j 空数据卷导入 `data/snapshot/release-2026-09-02.json` 成功，核对 16 个岗位、280 条证据、14 个岗位定义和 14 条声明；临时容器和数据卷已清理。
 - 评测：`set -a; source .env; set +a; PYTHONPATH=apps/api .venv/bin/python -m app.eval report` 已执行未 mock 全集，JD F1 0.702、简历 F1 0.993、匹配 F1 1.000，三项均 n=100；资源链接抽检 20/20。JD 低于 0.90，差距样本和下一修复方向已写入 `data/eval/out/summary.md`，没有修改金标或伪造达标结果。
-- 快照：`data/snapshot/release-2026-09-02.json` 与 `data/snapshot/reviewed.json` 已按校准后图谱重导出，包含 16 个岗位、633 项技能、280 条未撤回证据、201 个事件、14 个岗位定义和 14 条声明；文件 SHA-256 为 `49267b93507c9b1dd4ce323b40aea9952d4b66be1f3bdef3635c0ff3e9d2677e`，两个快照字节一致，快照内代码提交为 `5fc597c`。导出脚本已处理 Neo4j DateTime 属性。`data/eval/freeze.json` 哈希仍为 `5194b7b806d8fb48714ad3b9f91fe1556a737d36750fe41ab7946a4aadcec438`。
+- 快照：`data/snapshot/release-2026-09-02.json` 与 `data/snapshot/reviewed.json` 已按校准后图谱重导出，包含 16 个岗位、633 项技能、280 条未撤回证据、201 个事件、14 个岗位定义和 14 条声明；文件 SHA-256 为 `6d295b89d638eb5146bf05d370792660b4b11823cb617e10e4115e583096da03`，两个快照字节一致，快照内代码提交为 `450d3be`。导出脚本已处理 Neo4j DateTime 属性。`data/eval/freeze.json` 哈希仍为 `5194b7b806d8fb48714ad3b9f91fe1556a737d36750fe41ab7946a4aadcec438`。
 - 双岗样例：`data/eval/deliver/dual-diagnose.redacted.json`，仅使用合成、脱敏证据，展示方向并列、最小换档数量和未提及证据的报告结构。
 - 人工项：首屏、五步诊断、证据地图、换档模拟、岗位清单、市场卷宗和管理批量审核已通过代码构建验证；320px、200% 缩放、真实 PDF/docx、打印预览和键盘读屏仍需在带浏览器和模型凭据的发布环境复核。
