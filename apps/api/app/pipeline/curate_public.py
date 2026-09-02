@@ -6,8 +6,6 @@ import json
 from datetime import datetime, timezone
 
 from app.pipeline.extract import BRAND_NAMES, BROAD_DOMAIN_NAMES, GENERIC_SKILL_NAMES
-from app.pipeline.status import job_id_for
-from app.targets import JOB_TARGET_NAMES
 
 CURATION_VERSION = "public-curation-v1"
 MAX_REQUIRED = 12
@@ -138,8 +136,10 @@ def curate_public_jobs(*, dry_run: bool = False, period: str = "") -> dict:
             for row in ranked["selected"]:
                 session.run(
                     "MATCH (j:Job {id: $job_id})-[r:REQUIRES]->(s:Skill {id: $skill_id}) "
-                    "SET r.kind = $kind, r.sources = $sources, r.curation_version = $version, r.valid_to = null",
-                    job_id=job_id, skill_id=row["skill_id"], kind=row["kind"], sources=row["sources"], version=CURATION_VERSION,
+                    "SET s.name = $name, r.kind = $kind, r.sources = $sources, "
+                    "r.curation_version = $version, r.valid_to = null",
+                    job_id=job_id, skill_id=row["skill_id"], name=row["name"], kind=row["kind"],
+                    sources=row["sources"], version=CURATION_VERSION,
                 )
             for row in ranked["expired"]:
                 session.run(
