@@ -205,6 +205,7 @@ JSON，UTF-8。错误体 `{ "error": str, "detail": str | null }`。管理口令
 | POST | `/sessions` | multipart 简历 → `{session_id, skills, preview_text}` |
 | PUT | `/sessions/{id}/skills` | 会话内修正技能点与明确熟练级 |
 | POST | `/diagnose` | `{session_id, job_id, levels?}` → 对照报告。含换档条件与按此排序的学习路径、邻近岗档位。`job_id` 为 candidate 时 400。前端可用 query `session_id` + `job_id` 自动再 POST |
+| POST | `/diagnose/simulate` | `{session_id, job_ids, assumed_skill_ids, watching_skill_ids?}` → 两个对照岗位与邻近岗位的假设档位和换档条件。不写会话技能或简历证据 |
 | GET | `/discover` | 候选 / 萌芽 / 成型看板。有 `ALIAS_OF` 出边的岗不进候选列 |
 | GET | `/discover/{id}` | 卷宗：簇、独立源、证据、事件。候选也可以 |
 | GET | `/feed` | 故事、萌芽/谱内计数、管线、热度、流水。候选簇不计别名。总览第一屏只用故事和计数；管线/热度/流水给发现页和总览 `<details>` |
@@ -217,7 +218,9 @@ JSON，UTF-8。错误体 `{ "error": str, "detail": str | null }`。管理口令
 | PUT | `/admin/passthrough` | `{enabled: bool}` |
 | GET | `/events/stream` | SSE，管理可选。`Last-Event-ID` 从 Redis Stream 续 |
 
-`/diagnose` 同步返回完整报告，前端 run 态自己播等待动画。报告字段覆盖方向结论、简历定位判断、优势与风险、简历内容状态、岗位关键词对照、双轨行动清单、项目证据提示、求职叙事稿和判断依据。引用已有事实的模型判断携带简历证据片段 ID；缺失判断携带被检查的简历部分,原文没有的事实只进入待补字段。学习路径按换档条件排序。匹配分可放在 payload 里给档位函数用，UI 不直接渲染该数字。
+`/diagnose` 同步返回完整报告，前端 run 态自己播等待动画。报告字段覆盖方向结论、简历定位判断、优势与风险、简历内容状态、岗位关键词对照、双轨行动清单、项目证据提示、求职叙事稿、简历证据地图关系、邻近岗位迁移数据、市场信号和判断依据。引用已有事实的模型判断携带简历证据片段 ID；缺失判断携带被检查的简历部分,原文没有的事实只进入待补字段。学习路径按换档条件排序。匹配分可放在 payload 里给档位函数用，UI 不直接渲染该数字。
+
+换档模拟复用服务端现有匹配与 `shift_set` 逻辑,只把属于缺口、熟练级不足或要求组候选的 `assumed_skill_ids` 合并进本次计算输入。`watching_skill_ids` 只回显到市场观察栏,匹配函数不读取。响应给每个岗位返回原档位、假设档位和新的换档条件,不写 Redis 会话。简历证据地图与邻近岗位迁移地图只消费 `/diagnose` 已有证据关系和最多三个岗位结果,不新增图数据库实体。
 
 图谱前端用 AntV G6 画这一岗的切片，默认 Canvas。切 WebGL 仅当单岗节点明显卡顿。不用 Timebar，不在边上发采集粒子。
 
