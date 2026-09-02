@@ -344,6 +344,12 @@ button:active,
 .correction-controls ul { list-style: none; padding: 0; margin: var(--space-xs) 0 var(--space-sm); }
 .correction-controls li { display: grid; grid-template-columns: 1fr max-content max-content; gap: var(--space-xs); align-items: center; padding: 4px 0; border-bottom: 1px solid var(--color-rule); }
 .correction-controls select, .correction-controls input, .correction-controls button { font: inherit; border: 1px solid var(--color-rule); background: var(--color-paper); color: var(--color-ink); padding: 4px 6px; }
+.correction-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-xs); }
+.correction-fields label, .evidence-controls label { display: grid; gap: 4px; }
+.correction-fields input { width: 100%; font: inherit; border: 1px solid var(--color-rule); padding: 6px; }
+.evidence-controls { display: grid; gap: var(--space-xs); margin-bottom: var(--space-sm); }
+.evidence-controls label { grid-template-columns: 1fr max-content; align-items: center; border-bottom: 1px solid var(--color-rule); padding: 4px 0; }
+@media (max-width: 640px) { .correction-fields { grid-template-columns: 1fr; } }
 .user-added { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
 .privacy-details p { margin: var(--space-xs) 0 0; }
 .recommendations { display: grid; gap: var(--space-xs); margin: var(--space-sm) 0 var(--space-md); }

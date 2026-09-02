@@ -168,7 +168,8 @@ def test_demo_cv_falls_back_when_model_marks_info_unknown():
     assert [skill["name"] for skill in out["skills"]] == ["Python"]
 
 
-def test_lookup_resource_uses_cache():
+def test_lookup_resource_uses_cache(monkeypatch):
+    monkeypatch.setattr("app.matching.report._verify_resource", lambda url, skill: url)
     sid = "skill-cache-" + uuid.uuid4().hex
     calls = {"n": 0}
 
