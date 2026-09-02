@@ -14,7 +14,9 @@ from app.pipeline.align import align_skill, split_composite
 from app.pipeline.extract import augment_extracted_skills, parse_extracted
 
 PASS = 0.90
-JD_WORKERS = 8
+# DeepSeek occasionally truncates concurrent long JSON responses; two workers
+# keep the frozen evaluation reproducible without changing production throughput.
+JD_WORKERS = 2
 RESUME_WORKERS = 4
 
 
