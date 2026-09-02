@@ -1,5 +1,6 @@
 from app.matching.bands import band_of, cover_required, match_score, shift_set
 from app.matching.score import WATCHING_COPY, compare_job
+from app.matching.report import direction_report, recommend_jobs
 
 
 def test_band_thresholds():
@@ -144,3 +145,17 @@ def test_requirement_group_member_is_not_counted_again_as_standalone():
         [{"skill_id": "python", "name": "Python"}],
     )
     assert report["req_full"] == 1
+
+
+def test_recommendation_is_structured_and_direction_can_be_indistinguishable():
+    resume = {"skills": [{"skill_id": "python", "name": "Python"}], "evidence_fragments": [{"skill_id": "python"}], "experience": "3年", "education": "本科"}
+    jobs = [
+        {"id": "a", "name": "后端", "status": "formed", "requires": [{"skill_id": "python", "name": "Python", "kind": "required", "proficiency": "able"}]},
+        {"id": "b", "name": "服务端", "status": "formed", "requires": [{"skill_id": "python", "name": "Python", "kind": "required", "proficiency": "able"}]},
+    ]
+    recommendations = recommend_jobs(jobs, resume)
+    assert len(recommendations) == 2
+    assert len(recommendations[0]["reasons"]) == 2
+    report = direction_report(jobs, resume)
+    assert report["direction"] == "无法区分方向"
+    assert len(report["jobs"][0]["shift_set"]) <= 5

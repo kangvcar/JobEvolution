@@ -16,6 +16,8 @@ NEIGHBOR = {
     "Agent 工程师": "大模型应用工程师",
 }
 
+BAND_ORDER = {"不匹配": 0, "有明显差距": 1, "基本匹配": 2, "高度匹配": 3}
+
 PRESET_URL = {
     "python": "https://docs.python.org/zh-cn/3/",
     "fastapi": "https://fastapi.tiangolo.com/",
@@ -118,6 +120,73 @@ def revalidate_resource(skill_id: str, name: str) -> bool:
 
 def neighbor_name(job_name: str) -> str | None:
     return NEIGHBOR.get(job_name)
+
+
+def recommend_jobs(jobs: list[dict], resume: dict, *, limit: int = 3) -> list[dict]:
+    ranked = []
+    resume_skills = resume.get("skills") or []
+    for job in jobs:
+        report = compare_job(job.get("requires") or [], resume_skills)
+        covered = report.get("covered") or []
+        specific = sum(1 for row in covered if row.get("required_proficiency") and row.get("skill_id"))
+        evidence = sum(1 for row in covered if row.get("skill_id") in {f.get("skill_id") for f in resume.get("evidence_fragments") or []})
+        reasons = [
+            {"code": "band", "text": f"当前档位为{report['band']}"},
+            {"code": "required", "text": f"必备覆盖 {report['req_cover']:g}/{report['req_full']:g}"},
+        ]
+        ranked.append(
+            (
+                BAND_ORDER.get(report["band"], 0),
+                report.get("req_cover", 0) / report.get("req_full", 1) if report.get("req_full") else 0,
+                evidence,
+                specific,
+                -len(report.get("shift_ids") or []),
+                len(job.get("sources") or []),
+                job,
+                report,
+                reasons,
+            )
+        )
+    ranked.sort(key=lambda row: row[:6], reverse=True)
+    return [
+        {
+            "job_id": row[6]["id"],
+            "name": row[6].get("name") or row[6]["id"],
+            "status": row[6].get("status"),
+            "band": row[7]["band"],
+            "reasons": row[8],
+        }
+        for row in ranked[: max(0, limit)]
+    ]
+
+
+def direction_report(jobs: list[dict], resume: dict) -> dict:
+    results = []
+    for job in jobs[:2]:
+        core = compare_job(job.get("requires") or [], resume.get("skills") or [])
+        evidence_ids = {row.get("skill_id") for row in resume.get("evidence_fragments") or []}
+        results.append(
+            {
+                "job_id": job["id"],
+                "name": job.get("name") or job["id"],
+                "band": core["band"],
+                "required_coverage": {"covered": core["req_cover"], "total": core["req_full"]},
+                "resume_evidence": sum(1 for row in core.get("covered") or [] if row.get("skill_id") in evidence_ids),
+                "transferable_engineering": sum(1 for row in core.get("covered") or [] if row.get("category") == "engineering"),
+                "job_specific_experience": sum(1 for row in core.get("covered") or [] if row.get("category") == "domain"),
+                "experience_education_risk": bool(resume.get("experience") == "简历未标" or resume.get("education") == "简历未标"),
+                "shift_set": core.get("path") or [],
+            }
+        )
+    if len(results) < 2:
+        return {"direction": "insufficient", "jobs": results}
+    keys = ("band", "required_coverage", "resume_evidence", "transferable_engineering", "job_specific_experience", "experience_education_risk")
+    direction = "无法区分方向" if all(results[0][key] == results[1][key] for key in keys) else ""
+    if not direction:
+        left = (BAND_ORDER.get(results[0]["band"], 0), results[0]["required_coverage"]["covered"], results[0]["resume_evidence"])
+        right = (BAND_ORDER.get(results[1]["band"], 0), results[1]["required_coverage"]["covered"], results[1]["resume_evidence"])
+        direction = results[0]["name"] if left > right else results[1]["name"]
+    return {"direction": direction, "jobs": results}
 
 
 def attach_urls(path: list[dict]) -> list[dict]:

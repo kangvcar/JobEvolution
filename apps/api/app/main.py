@@ -16,7 +16,7 @@ from fastapi.responses import JSONResponse
 from starlette.responses import Response
 
 from app import graph
-from app.matching.report import neighbor_name, wrap_report
+from app.matching.report import direction_report, neighbor_name, recommend_jobs, wrap_report
 from app.matching.resume import ResumeError, date_conflicts, evidence_level, extract_text, parse_resume
 from app.matching.session import TTL as SESSION_TTL
 from app.matching.session import load as load_session
@@ -153,8 +153,13 @@ def v1_job_slice(job_id: str):
 
 
 class DiagnoseBody(BaseModel):
-    job_id: str
+    job_id: str | None = None
+    job_ids: list[str] = []
     session_id: str | None = None
+
+
+class RecommendBody(BaseModel):
+    session_id: str
 
 
 @app.post("/sessions")
@@ -298,7 +303,14 @@ def diagnose(body: DiagnoseBody, request: Request):
     if len(recent) >= 30:
         raise HTTPException(429, "诊断请求过于频繁，请稍后重试")
     _diagnose_attempts[ip] = recent + [now]
-    job = graph.get_any_job(body.job_id)
+    selected_ids = [job_id for job_id in body.job_ids if job_id]
+    if body.job_id and not selected_ids:
+        selected_ids = [body.job_id]
+    if not selected_ids:
+        raise HTTPException(400, "请选择至少一个岗位")
+    if len(selected_ids) > 2:
+        raise HTTPException(400, "最多对照两个岗位")
+    job = graph.get_any_job(selected_ids[0])
     if job is None:
         raise HTTPException(404, "not found")
     if job.get("status") == "candidate":
@@ -306,11 +318,21 @@ def diagnose(body: DiagnoseBody, request: Request):
     resume = load_session(body.session_id or "")
     if resume is None:
         raise HTTPException(404, "session expired")
-    release_check = graph.diagnostic_release(body.job_id)
+    release_check = graph.diagnostic_release(selected_ids[0])
     if not release_check["ok"]:
         raise HTTPException(409, "岗位数据正在校验，暂不可诊断")
     resume["session_id"] = body.session_id
-    requires = graph.list_requires(body.job_id)
+    if len(selected_ids) == 2:
+        second = graph.get_any_job(selected_ids[1])
+        if second is None or second.get("status") == "candidate" or not graph.diagnostic_release(selected_ids[1])["ok"]:
+            raise HTTPException(409, "第二个岗位正在校验，暂不可诊断")
+        report = direction_report(
+            [{"id": selected_ids[0], "name": job.get("name"), "requires": graph.list_requires(selected_ids[0])}, {"id": selected_ids[1], "name": second.get("name"), "requires": graph.list_requires(selected_ids[1])}],
+            resume,
+        )
+        report.update({"session_id": body.session_id, "graph_release": resume.get("graph_release")})
+        return report
+    requires = graph.list_requires(selected_ids[0])
     neighbor = None
     other = neighbor_name(job.get("name") or "")
     if other:
@@ -339,12 +361,31 @@ def diagnose(body: DiagnoseBody, request: Request):
         slice_data={
             "categories": list(categories.values()),
             "requires": requires,
-            "period_delta": graph.period_delta(body.job_id),
+            "period_delta": graph.period_delta(selected_ids[0]),
         },
     )
     report["metadata"]["graph_release"] = resume.get("graph_release") or graph.public_release().get("id")
     report["metadata"]["last_updated"] = graph.public_release().get("published_at")
     return report
+
+
+@app.post("/diagnose/recommend")
+def diagnose_recommend(body: RecommendBody):
+    resume = load_session(body.session_id)
+    if resume is None:
+        raise HTTPException(404, "session expired")
+    candidates = []
+    for job in graph.list_jobs(domain=None, status=None, q=None):
+        check = graph.diagnostic_release(job["id"])
+        if not check["ok"]:
+            continue
+        candidates.append({**job, "requires": graph.list_requires(job["id"]), "sources": graph.list_job_evidence(job["id"])})
+    return {"session_id": body.session_id, "graph_release": resume.get("graph_release"), "jobs": recommend_jobs(candidates, resume, limit=3)}
+
+
+@app.post("/v1/diagnose/recommend")
+def v1_diagnose_recommend(body: RecommendBody):
+    return diagnose_recommend(body)
 
 
 @app.post("/v1/diagnose")
