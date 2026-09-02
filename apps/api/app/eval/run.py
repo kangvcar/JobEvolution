@@ -171,6 +171,13 @@ def write_summary(
             lines.append(f"{name.upper()} 低于线  {lows[name]}")
         elif name in errors:
             lines.append(f"{name.upper()} 未得真数  {errors[name]}")
+    if "jd" in lows:
+        try:
+            sample_ids = [row.get("id") for row in read_jsonl(eval_dir() / "jd.jsonl")[:3] if row.get("id")]
+        except (OSError, ValueError):
+            sample_ids = []
+        lines.append(f"JD 差距样本  {'、'.join(sample_ids) or '评测集不可读'}")
+        lines.append("JD 下一修复方向 先用冻结词表做候选召回，再让模型判断职责/要求和必备/加分，最后处理别名与复合技能对齐。")
     lines.append("")
     dest = out / "summary.md"
     dest.write_text("\n".join(lines), encoding="utf-8")

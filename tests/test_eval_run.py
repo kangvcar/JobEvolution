@@ -113,6 +113,7 @@ def test_summary_records_unavailable_unmocked_tasks(monkeypatch, tmp_path):
     from app.eval import run as run_mod
 
     monkeypatch.setattr(run_mod, "out_dir", lambda: tmp_path)
+    monkeypatch.setattr(run_mod, "path_spotcheck", lambda: {"n": 0, "with_url": 0})
     dest = write_summary(
         coverage=82.9,
         mock=False,
@@ -124,6 +125,21 @@ def test_summary_records_unavailable_unmocked_tasks(monkeypatch, tmp_path):
     assert "JD 未得真数" in text
     assert "RESUME 低于线  F1 0.477 < 0.90" in text
     assert "匹配 0.998" in text
+
+
+def test_summary_lists_jd_gap_samples_and_next_direction(monkeypatch, tmp_path):
+    from app.eval import run as run_mod
+
+    monkeypatch.setattr(run_mod, "out_dir", lambda: tmp_path)
+    dest = write_summary(
+        coverage=None,
+        mock=False,
+        results={"jd": {"f1": 0.7, "n": 100}},
+        lows={"jd": "F1 0.700 < 0.90"},
+    )
+    text = dest.read_text(encoding="utf-8")
+    assert "JD 差距样本" in text
+    assert "JD 下一修复方向" in text
 
 
 def test_report_removes_stale_result_after_task_failure(monkeypatch, tmp_path):
