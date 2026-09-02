@@ -192,7 +192,12 @@ async def create_session(request: Request, file: UploadFile = File(...), consent
         text = extract_text(data, file.filename or "")
     except ResumeError as exc:
         raise HTTPException(400, exc.detail) from exc
-    parsed = parse_resume(text, graph.list_skills())
+    try:
+        parsed = parse_resume(text, graph.list_skills())
+    except Exception as exc:
+        # 外部模型余额、限流或短暂故障不应变成无说明的 500。
+        _request_log.warning("resume_parse_failed", extra={"error_type": type(exc).__name__})
+        raise HTTPException(503, "简历解析服务暂时不可用，请稍后重试") from exc
     session_id = save_session(
         {
             "preview_text": text[:4000],

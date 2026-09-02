@@ -223,6 +223,20 @@ def test_diagnose_report_shape(client):
     assert groups["judge"]["cells"]["education"] == "本科"
 
 
+def test_session_returns_retryable_error_when_model_unavailable(client):
+    pdf = minimal_pdf("Python FastAPI")
+    with patch("app.main.extract_text", return_value="Python FastAPI"), patch(
+        "app.main.parse_resume", side_effect=RuntimeError("model unavailable")
+    ):
+        response = client.post(
+            "/sessions",
+            files={"file": ("cv.pdf", pdf, "application/pdf")},
+            data={"consent": "true"},
+        )
+    assert response.status_code == 503
+    assert response.json()["error"] == "简历解析服务暂时不可用，请稍后重试"
+
+
 def test_expired_session_is_404(client):
     job_id = job_id_for("大模型应用工程师")
     res = client.post("/diagnose", json={"session_id": "no-such", "job_id": job_id})
