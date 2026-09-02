@@ -880,7 +880,7 @@ def list_requires_history(job_id: str) -> list[dict]:
 
 
 def period_delta(job_id: str) -> dict:
-    rows = list_requires_history(job_id)
+    rows = [row for row in list_requires_history(job_id) if not row.get("curation_version")]
     stamps = [
         (row.get("valid_from") or "")[:10]
         for row in rows
