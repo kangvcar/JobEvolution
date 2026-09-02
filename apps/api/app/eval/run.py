@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from app.eval.f1 import mean_f1, set_f1
@@ -14,10 +15,35 @@ from app.pipeline.align import align_skill, split_composite
 from app.pipeline.extract import augment_extracted_skills, parse_extracted
 
 PASS = 0.90
-# DeepSeek occasionally truncates concurrent long JSON responses; two workers
-# keep the frozen evaluation reproducible without changing production throughput.
-JD_WORKERS = 2
+# Tuzi 可承受更高并发；EVAL_WORKERS 可按供应商限流调节。
+DEEPSEEK_JD_WORKERS = 2
+BAI_JD_WORKERS = 8
+TUZI_JD_WORKERS = 16
 RESUME_WORKERS = 4
+MATCH_WORKERS = 8
+
+
+def _eval_workers(default: int) -> int:
+    """Bound evaluation fan-out; EVAL_WORKERS is an operator tuning knob."""
+    try:
+        return max(1, min(32, int(os.environ.get("EVAL_WORKERS", default))))
+    except (TypeError, ValueError):
+        return default
+
+
+def _jd_workers() -> int:
+    from app.llm.client import _provider_config
+
+    try:
+        provider = _provider_config()[0]
+    except ValueError:
+        provider = "deepseek"
+    defaults = {
+        "deepseek": DEEPSEEK_JD_WORKERS,
+        "bai": BAI_JD_WORKERS,
+        "tuzi": TUZI_JD_WORKERS,
+    }
+    return _eval_workers(defaults.get(provider, DEEPSEEK_JD_WORKERS))
 
 
 def _index() -> list[dict]:
@@ -80,7 +106,7 @@ def eval_jd(*, mock: bool = False) -> dict:
                         pred.add(hit["id"])
         return set_f1(pred, gold)
 
-    return _evaluate("jd", read_jsonl(eval_dir() / "jd.jsonl"), predict, mock=mock, workers=JD_WORKERS)
+    return _evaluate("jd", read_jsonl(eval_dir() / "jd.jsonl"), predict, mock=mock, workers=_jd_workers())
 
 
 def eval_resume(*, mock: bool = False) -> dict:
@@ -109,7 +135,7 @@ def eval_match(*, mock: bool = False) -> dict:
             pred = {row["skill_id"] for row in report["gaps"]}
         return set_f1(pred, gold)
 
-    return _evaluate("match", read_jsonl(eval_dir() / "match_pairs.jsonl"), predict, mock=mock, workers=JD_WORKERS)
+    return _evaluate("match", read_jsonl(eval_dir() / "match_pairs.jsonl"), predict, mock=mock, workers=_eval_workers(MATCH_WORKERS))
 
 
 def path_spotcheck() -> dict:

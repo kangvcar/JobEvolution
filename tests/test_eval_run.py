@@ -4,6 +4,23 @@ from app.eval.freeze import load_freeze
 from app.eval.run import eval_jd, eval_match, eval_resume, write_summary
 
 
+def test_eval_workers_are_bounded_and_configurable(monkeypatch):
+    from app.eval import run as run_mod
+
+    monkeypatch.setenv("EVAL_WORKERS", "64")
+    assert run_mod._eval_workers(2) == 32
+    monkeypatch.setenv("EVAL_WORKERS", "bad")
+    assert run_mod._eval_workers(2) == 2
+
+
+def test_jd_workers_use_tuzi_high_concurrency(monkeypatch):
+    from app.eval import run as run_mod
+
+    monkeypatch.setenv("LLM_PROVIDER", "tuzi")
+    monkeypatch.delenv("EVAL_WORKERS", raising=False)
+    assert run_mod._jd_workers() == 16
+
+
 def test_unmocked_three_items_read_freeze_not_env(monkeypatch, tmp_path):
     monkeypatch.setenv("ALIGN_THRESHOLD", "0.11")
     from app.eval import freeze as freeze_mod

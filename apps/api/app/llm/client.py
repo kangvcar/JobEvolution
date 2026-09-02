@@ -21,6 +21,13 @@ def _provider_config() -> tuple[str, str, str, str]:
             os.environ.get("BAI_BASE_URL", "https://api.b.ai/v1"),
             os.environ.get("BAI_MODEL", "deepseek-v4-flash-vision-exp"),
         )
+    if provider == "tuzi":
+        return (
+            provider,
+            os.environ.get("TUZI_API_KEY") or "",
+            os.environ.get("TUZI_BASE_URL", "https://api.tu-zi.com/v1"),
+            os.environ.get("TUZI_MODEL", "gpt-5.6-luna"),
+        )
     if provider == "deepseek":
         return (
             provider,
@@ -54,6 +61,10 @@ def complete_json(messages) -> dict:
     if _usage["calls"] >= int(os.environ.get("LLM_DAILY_CALL_CAP", "1000")) or _usage["cost"] >= float(os.environ.get("LLM_DAILY_COST_CAP", "100")):
         raise RuntimeError("daily model quota exceeded")
     provider, _, _, model = _provider_config()
+    try:
+        max_tokens = max(1024, min(16_384, int(os.environ.get("LLM_MAX_OUTPUT_TOKENS", "4096"))))
+    except (TypeError, ValueError):
+        max_tokens = 4096
     last: Exception | None = None
     for attempt in range(2):
         try:
@@ -70,10 +81,12 @@ def complete_json(messages) -> dict:
                 "model": model,
                 "messages": request_messages,
                 "response_format": {"type": "json_object"},
+                "max_tokens": max_tokens // 2 if attempt else max_tokens,
                 # 管线产物要可复现：同一份缓存 + 同一判别提示，重跑不许换答案
                 "temperature": 0,
             }
-            if provider == "deepseek":
+            disable_thinking = os.environ.get("BAI_DISABLE_THINKING", "1") != "0"
+            if provider == "deepseek" or (provider == "bai" and disable_thinking):
                 request["extra_body"] = {"thinking": {"type": "disabled"}}
             raw = _client().chat.completions.create(**request)
             content = raw.choices[0].message.content or "{}"

@@ -55,6 +55,10 @@ services:
       BAI_API_KEY: ${BAI_API_KEY:-}
       BAI_BASE_URL: ${BAI_BASE_URL:-https://api.b.ai/v1}
       BAI_MODEL: ${BAI_MODEL:-deepseek-v4-flash-vision-exp}
+      BAI_DISABLE_THINKING: ${BAI_DISABLE_THINKING:-1}
+      TUZI_API_KEY: ${TUZI_API_KEY:-}
+      TUZI_BASE_URL: ${TUZI_BASE_URL:-https://api.tu-zi.com/v1}
+      TUZI_MODEL: ${TUZI_MODEL:-gpt-5.6-luna}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
       DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
       DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-v4-flash}
@@ -94,6 +98,10 @@ services:
       BAI_API_KEY: ${BAI_API_KEY:-}
       BAI_BASE_URL: ${BAI_BASE_URL:-https://api.b.ai/v1}
       BAI_MODEL: ${BAI_MODEL:-deepseek-v4-flash-vision-exp}
+      BAI_DISABLE_THINKING: ${BAI_DISABLE_THINKING:-1}
+      TUZI_API_KEY: ${TUZI_API_KEY:-}
+      TUZI_BASE_URL: ${TUZI_BASE_URL:-https://api.tu-zi.com/v1}
+      TUZI_MODEL: ${TUZI_MODEL:-gpt-5.6-luna}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
       DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
       DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-v4-flash}

@@ -1,6 +1,6 @@
 # 首次正式发布检查
 
-1. 配置 `ADMIN_PASSWORD`、`CORS_ORIGINS`，并选择 `LLM_PROVIDER=deepseek` + `DEEPSEEK_API_KEY` 或 `LLM_PROVIDER=bai` + `BAI_API_KEY`，再在 HTTPS 反向代理后执行 `docker compose up -d`。
+1. 配置 `ADMIN_PASSWORD`、`CORS_ORIGINS`，并选择 `LLM_PROVIDER=deepseek` + `DEEPSEEK_API_KEY`、`LLM_PROVIDER=bai` + `BAI_API_KEY` 或 `LLM_PROVIDER=tuzi` + `TUZI_API_KEY`，再在 HTTPS 反向代理后执行 `docker compose up -d`。
 2. 确认 `pipeline` 独立容器每日运行，`GET /v1/meta` 返回图谱版本与运行状态。
 3. 从空卷导入 `SNAPSHOT_PATH=/app/data/snapshot/reviewed.json`，验证岗位浏览、简历上传、会话修正、诊断和管理审核。
 4. 运行 `cd apps/api && ../../.venv/bin/pytest -q`；运行 `cd apps/web && npm run build`。
@@ -8,7 +8,7 @@
 
 ## 2026-09-02 发布验证记录
 
-- 后端全量：`.venv/bin/pytest -q`，149 passed，1 skipped。已覆盖会话隔离、岗位诊断发布门禁、批量审核幂等、换档模拟、证据级、结构化简历字段、证据地图、推荐岗位、正式技能边界、模型不可用可重试响应、版本化元数据路由和源文本词表候选召回。
+- 后端全量：`.venv/bin/pytest -q`，156 passed，1 skipped。已覆盖会话隔离、岗位诊断发布门禁、批量审核幂等、换档模拟、证据级、结构化简历字段、证据地图、推荐岗位、正式技能边界、模型不可用可重试响应、版本化元数据路由和源文本词表候选召回，以及 B.AI/Tuzi 供应商配置和请求参数。
 - 前端：`cd apps/web && npm run typecheck` 通过；`npm run build` 通过。Next 构建仅报告既有 autoprefixer `flex-start` 兼容性警告。
 - Compose：`docker compose config --quiet` 通过。未在本机重启容器，避免覆盖当前运行中的用户环境；正式发布前按第 1、2、3 项执行空卷导入和健康检查。
 - 镜像：最新一次 `docker compose build api web` 通过；一次性 API 容器确认最新镜像包含 `/v1/meta` 路由。运行中的旧容器未重启，因此不以旧镜像的 404 结果代替新镜像验证。
@@ -18,4 +18,5 @@
 - 快照：`data/snapshot/release-2026-09-02.json` 与 `data/snapshot/reviewed.json` 已按校准后图谱重导出，包含 16 个岗位、633 项技能、280 条未撤回证据、201 个事件、14 个岗位定义和 14 条声明；文件 SHA-256 为 `6d295b89d638eb5146bf05d370792660b4b11823cb617e10e4115e583096da03`，两个快照字节一致，快照内代码提交为 `450d3be`。导出脚本已处理 Neo4j DateTime 属性。`data/eval/freeze.json` 哈希仍为 `5194b7b806d8fb48714ad3b9f91fe1556a737d36750fe41ab7946a4aadcec438`。
 - 双岗样例：`data/eval/deliver/dual-diagnose.redacted.json`，仅使用合成、脱敏证据，展示方向并列、最小换档数量和未提及证据的报告结构。
 - 人工项：首屏、五步诊断、证据地图、换档模拟、岗位清单、市场卷宗和管理批量审核已通过代码构建验证；320px、200% 缩放、真实 PDF/docx、打印预览和键盘读屏仍需在带浏览器和模型凭据的发布环境复核。
-- B.AI 供应商：已接入 `LLM_PROVIDER=bai`、`BAI_BASE_URL=https://api.b.ai/v1`、`BAI_MODEL=deepseek-v4-flash-vision-exp`，并按 B.AI OpenAI 兼容 Chat Completions 协议移除 DeepSeek 专属 `thinking` 参数；当前本地未配置 `BAI_API_KEY`，端点无凭据返回 401，完整 B.AI 评测待配置密钥后执行。
+- LLM 供应商：已接入 DeepSeek、B.AI `deepseek-v4-flash-vision-exp` 和 Tuzi `gpt-5.6-luna`。B.AI 使用 `BAI_DISABLE_THINKING=1` 降低免费端点延迟，Tuzi 不发送供应商扩展参数。发布前必须在部署环境分别用实际密钥完成 `/v1/models` 或最小 JSON smoke，并记录供应商、模型和响应状态，不在仓库保存密钥。
+- 评测并发：`EVAL_WORKERS` 可在 1–32 之间调节；DeepSeek JD 评测默认 2 路，B.AI 默认 8 路，Tuzi 默认 16 路，若供应商限流则降到 2–4 路，单条失败不应被半程结果替代，必须等待 100 条完整样本。

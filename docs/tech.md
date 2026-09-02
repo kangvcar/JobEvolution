@@ -14,7 +14,7 @@
 | 前端 | React + Next.js（App Router） | 五个路由，见产品篇 |
 | 图 | Neo4j Community，单容器 | 图谱 + 证据引用 + 演化事件 |
 | 总线 / 会话 | Redis 7，单容器 | Stream、指纹集合、简历会话、直通开关、资源缓存 |
-| LLM | DeepSeek 官方 API | 所有生成与 JSON 抽取 |
+| LLM | DeepSeek、B.AI 或 Tuzi 的 OpenAI 兼容 API | 所有生成与 JSON 抽取，按 `LLM_PROVIDER` 切换 |
 | 嵌入 | 硅基流动 `BAAI/bge-m3`（OpenAI 兼容） | 技能对齐、实体消解、岗位聚类。无 `EMBED_API_KEY` 时回落本地哈希向量，测试与 CI 不出网 |
 
 首个生产环境在单台服务器运行 Docker Compose,由 HTTPS 反向代理统一入口；`web` 与 `api` 同源,默认关闭 CORS,只允许配置中明确列出的可信来源。容器包括 `api`、`web`、`neo4j`、`redis` 和独立每日任务,不拆微服务。评测金标和 JD 快照走仓库文件,不另起 Postgres。管理员一口令,写在环境变量 `ADMIN_PASSWORD`。
@@ -22,7 +22,7 @@
 ```
 apps/api/                 FastAPI
   app/main.py
-  app/llm/client.py       DeepSeek chat，唯一出口
+  app/llm/client.py       多供应商 chat，唯一出口
   app/llm/embed.py        bge-m3
   app/collectors/         data/本地表 / ATS / NCSS / Playwright
   app/pipeline/           抽取、消解、入谱、发现、审核闸
@@ -46,7 +46,7 @@ data/本地表 / ATS / NCSS / Playwright
   data/jd/{id}.json  +  Redis SET ingest:fp
         │  XADD jobs:events（采集进度，给 worker / 可选管理页）
         ▼
-  抽取 worker  ── DeepSeek JSON ──► Pydantic
+  抽取 worker  ── 配置供应商 JSON ──► Pydantic
         │
         ├─ 技能对齐（词表 → bge 余弦 0.85）
         ├─ 入池：职责段 ∧ 簇内覆盖率 ≥30%
@@ -57,7 +57,7 @@ data/本地表 / ATS / NCSS / Playwright
                 │
 Next.js  ←──  FastAPI  ←──  简历会话（Redis TTL）
                 │
-          DeepSeek（报告总结、学习资源）
+          配置供应商（报告总结、学习资源）
           bge-m3（硅基流动，对齐 / 聚类）
 ```
 
@@ -130,7 +130,7 @@ RETURN j, r, s
 
 ## 图谱构建与幻觉防控
 
-输入是强 schema 的 JD，不套 Graphiti 整包。自研短管线，机制抄 ATOM 的双时间和 Graphiti 的失效不删。抽取用非思考模型，见 DeepSeek 一节。
+输入是强 schema 的 JD，不套 Graphiti 整包。自研短管线，机制抄 ATOM 的双时间和 Graphiti 的失效不删。抽取使用配置的非思考模型。
 
 1. **切段。** 职责、要求、福利、公司介绍分开。技能只允许从职责/要求段出。福利和介绍里出现的词不算入池。
 2. **抽取。** DeepSeek JSON，Pydantic 校验。一条 JD 抽出：岗位名、领域、原子技能点列表（各带明确必备/明确加分/未标、熟练级、置信 0–1、原文摘录）。只有原文明确写"必须"、"要求"、"熟练掌握"或列入清晰任职要求时才记明确必备,写"优先"、"加分"时记明确加分,其余提及一律未标。斜杠连接的复合技术表述拆开；原文明确写"任选"、"或"或"至少两种"时同时抽要求组和 `min_required`。沟通、团队协作、学习能力等通用素质丢弃。模型品牌从同句动作抽 API 集成、部署、微调或评测,品牌保留在摘录；没有动作只记观测中。校验失败整单重试一次，再失败进待审并标抽取失败。
@@ -166,7 +166,7 @@ LLM 输出必须带摘录。写边时把摘录对应的 `Evidence.id` 放进 `RE
 
 PDF：`pdfplumber` 取文本层。`.docx`：`python-docx`。支持中英文混排；`.doc`、图片和扫描件直接 400，提示不支持。不要上 OCR、LibreOffice 或 pyresparser。
 
-DeepSeek JSON 拆两个子任务并行：基本信息+教育+经历；技能点列表（引导词表用当前图谱技能名）。输出过 `align_skill`。首次诊断前可修改技能点与明确的熟练级,修改只写当前会话。会话结果进不持久化的 Redis，TTL 1 小时，key `session:{id}`；Redis 重启后提示重新上传。字段级 F1 另报，不进三项准确率。
+配置的 JSON 模型拆两个子任务并行：基本信息+教育+经历；技能点列表（引导词表用当前图谱技能名）。输出过 `align_skill`。首次诊断前可修改技能点与明确的熟练级,修改只写当前会话。会话结果进不持久化的 Redis，TTL 1 小时，key `session:{id}`；Redis 重启后提示重新上传。字段级 F1 另报，不进三项准确率。
 
 上传前页面必须告知必要简历文本会发送给当前配置的模型服务商,产品数据库不保存简历,匿名会话最长保留一小时。选择文件或拖放即表示确认本次处理范围,不增加单独 checkbox。原文件仍按 ADR-0032 在解析完成或失败后立即删除；服务商没有经合同和配置验证的数据承诺时,页面不得写"绝不留存"。
 
@@ -233,7 +233,7 @@ JSON，UTF-8。错误体 `{ "error": str, "detail": str | null }`。管理口令
 
 ## LLM 供应商集成
 
-`app/llm/client.py` 是唯一的生成模型出口。其它模块只依赖 `complete_json(messages) -> dict`，通过 `LLM_PROVIDER` 在 DeepSeek 官方端点和 B.AI OpenAI 兼容端点之间切换。B.AI 的 Chat Completions 地址是 `https://api.b.ai/v1/chat/completions`，认证使用 `BAI_API_KEY` 的 Bearer Token；配置依据其 API 参考文档。
+`app/llm/client.py` 是唯一的生成模型出口。其它模块只依赖 `complete_json(messages) -> dict`，通过 `LLM_PROVIDER` 在 DeepSeek、B.AI 和 Tuzi 的 OpenAI 兼容端点之间切换。B.AI 的 Chat Completions 地址是 `https://api.b.ai/v1/chat/completions`，Tuzi 的地址是 `https://api.tu-zi.com/v1/chat/completions`，认证分别使用对应的环境变量 Bearer Token。
 
 默认 DeepSeek：
 
@@ -251,14 +251,24 @@ LLM_PROVIDER=bai
 BAI_API_KEY          必填，不写入仓库
 BAI_BASE_URL         默认 https://api.b.ai/v1
 BAI_MODEL            默认 deepseek-v4-flash-vision-exp
+BAI_DISABLE_THINKING 默认 1，B.AI 端点接受时关闭思考以降低延迟；兼容性异常时设为 0
+```
+
+Tuzi GPT-5.6 Luna：
+
+```
+LLM_PROVIDER=tuzi
+TUZI_API_KEY          必填，不写入仓库
+TUZI_BASE_URL         默认 https://api.tu-zi.com/v1
+TUZI_MODEL            默认 gpt-5.6-luna
 ```
 
 调用约定：
 
-- OpenAI SDK，`base_url` 按供应商配置。B.AI 使用其 OpenAI 兼容 Chat Completions 协议；其文档列明 `/v1/chat/completions` 支持 `messages`、`response_format` 和 `temperature`。
-- 抽取、簇判别、简历 JSON：DeepSeek 发送 `thinking: {"type": "disabled"}`；B.AI 不发送 DeepSeek 专属扩展参数；两者都使用 `response_format: {"type": "json_object"}`。
-- 诊断总结、学习资源：同样非思考；需要稍长文案时仍用 flash，不上 pro，除非 flash 连续失败。
-- 超时 60s，失败重试一次；若首个 JSON 截断，第二次追加紧凑输出约束。JSON 对不上 Pydantic 算失败。
+- OpenAI SDK，`base_url` 按供应商配置。B.AI 和 Tuzi 使用 OpenAI 兼容 Chat Completions 协议。
+- 抽取、簇判别、简历 JSON：DeepSeek 发送 `thinking: {"type": "disabled"}`；B.AI 默认通过 `BAI_DISABLE_THINKING=1` 发送同一关闭提示，若供应商版本不兼容可设为 0；Tuzi 不发送供应商扩展参数。三者都使用 `response_format: {"type": "json_object"}`。
+- 诊断总结、学习资源：同一配置供应商，仍使用非思考模型；超时 60s，默认 `LLM_MAX_OUTPUT_TOKENS=4096`，失败重试一次；若首个 JSON 截断，第二次追加紧凑输出约束并将输出上限减半。
+- JSON 对不上 Pydantic 算失败。
 - 外部模型设置全局每日调用量与费用上限,并保留公开接口的每 IP 限速；额度耗尽时明确失败,不在请求中途静默切换供应商。
 - 禁止在业务里直接 `openai.OpenAI(...)`。测抽取时 mock `complete_json`。
 
