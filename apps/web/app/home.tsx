@@ -1,450 +1,460 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { EventList, kindLabel } from "./feed-bits";
+import "./home.css";
 
-const INSTALL_COMMANDS: Record<string, string> = {
-  curl: "curl -fsSL https://jobevolution.ai/install | bash",
-  npm: "npx jobevolution diagnose ./resume.pdf",
-  bun: "bunx jobevolution diagnose ./resume.pdf",
-  brew: "brew install jobevolution",
-  pip: "pip install jobevolution",
+const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+
+const DOMAIN_ORDER = ["ai", "data", "system", "iot"];
+const DOMAIN: Record<string, string> = {
+  ai: "人工智能",
+  data: "大数据",
+  system: "智能系统",
+  iot: "物联网",
+};
+const STATUS: Record<string, { label: string; tone: string }> = {
+  formed: { label: "成型", tone: "ok" },
+  emerging: { label: "萌芽", tone: "hot" },
+  candidate: { label: "候选", tone: "mid" },
+};
+// 赛题默认对照对：诊断页默认岗位与它最近的萌芽岗。首页按名字找 id，图谱重建时名字不变。
+const PAIR = ["大模型应用工程师", "Agent 工程师"];
+
+type Card = {
+  id: string;
+  name: string;
+  status: string;
+  domain: string;
+  n_sources?: number;
+  n_added?: number;
+  n_expired?: number;
+  last_change?: string;
+};
+type Board = { candidate: Card[]; emerging: Card[]; formed: Card[] };
+type Meta = {
+  graph_release?: { id: string | null; period: string; published_at: string | null };
+  resume_retention_seconds?: number;
+  resume_payload?: string;
+  model_provider?: string;
+};
+type Feed = {
+  emerging: number;
+  formed: number;
+  candidate: number;
+  in_graph: number;
+  pipeline: { source: string; n: number }[];
+  heat: { id: string; name: string; v: number }[];
+  events: { at: string; text: string; review?: string; kind?: string; n?: number; skills?: string[] }[];
+  rise: { name: string; job?: string }[];
+  fall: { name: string; job?: string }[];
+};
+type Slice = {
+  job: { id: string; name: string; status: string };
+  requires: { kind?: string }[];
+  evidence: { company?: string }[];
 };
 
-const FAQ_ITEMS = [
-  {
-    q: "智演如何帮助技术人做职业决策？",
-    a: "智演从多源招聘数据中抽取原子技能点、必备/加分要求边与要求组，对照简历文本证据计算覆盖率与换档缺口，为你推荐性价比最高的职业跃迁路径与最小学习行动集。",
-  },
-  {
-    q: "什么是「最小换档条件」？",
-    a: "从当前岗位跨越到目标岗位时，必须补齐的关键核心技能项。智演根据多源招聘证据支持的必备权重、熟练级及可替代技能组，挑选出耗时最短、通过率最高的 1~3 项核心工程闭环行动。",
-  },
-  {
-    q: "岗位与技能要求如何提取校验？",
-    a: "覆盖新一代信息技术四大领域（AI、大数据、智能系统、物联网）。每条写入正式图谱的要求边必须由至少两个独立招聘源印证，必备/加分票占比不低于 60%，并经过严格的诊断发布完整性校验。",
-  },
-  {
-    q: "简历数据会被上传或训练大模型吗？",
-    a: "不会。所有文本分段与技能证据匹配均在本地会话中运行，数据库不保存简历原文或个人身份，会话最长保留一小时用于报告核对后自动销毁。",
-  },
-  {
-    q: "什么是「萌芽岗位」与「成型岗位」？",
-    a: "萌芽岗位在市场招聘流中高频涌现但尚未形成稳定技术标准（如早期具身智能算法工程师）；成型岗位具备获批岗位定义、多组核心必备要求及完整招聘证据链。",
-  },
-  {
-    q: "支持私有化部署吗？",
-    a: "支持。前端工作台、图谱解析引擎与数据清洗管道完全开源，提供标准 Docker 镜像与 Helm Chart，支持纯离线运行及对接私有知识库和本地开源 LLM。",
-  },
-];
+async function get<T>(path: string): Promise<T | null> {
+  try {
+    const res = await fetch(`${API}${path}`, { cache: "no-store" });
+    if (!res.ok) return null;
+    return (await res.json()) as T;
+  } catch {
+    return null;
+  }
+}
+
+function day(value?: string | null) {
+  return value ? value.slice(0, 10) : "";
+}
+
+function num(value: number | undefined | null) {
+  return typeof value === "number" ? value.toLocaleString("zh-CN") : "—";
+}
 
 export function Home() {
-  const [activeTab, setActiveTab] = useState<string>("curl");
-  const [copied, setCopied] = useState(false);
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const [email, setEmail] = useState("");
-  const [subscribed, setSubscribed] = useState(false);
+  const [meta, setMeta] = useState<Meta | null>(null);
+  const [board, setBoard] = useState<Board | null>(null);
+  const [feed, setFeed] = useState<Feed | null>(null);
+  const [pair, setPair] = useState<Slice[]>([]);
+  const [failed, setFailed] = useState(false);
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(INSTALL_COMMANDS[activeTab] || "");
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const [m, b, f] = await Promise.all([get<Meta>("/meta"), get<Board>("/discover"), get<Feed>("/feed")]);
+      if (!alive) return;
+      if (!m && !b && !f) setFailed(true);
+      setMeta(m);
+      setBoard(b);
+      setFeed(f);
+      const cards = b ? [...b.formed, ...b.emerging, ...b.candidate] : [];
+      const ids = PAIR.map((name) => cards.find((c) => c.name === name)?.id).filter(Boolean) as string[];
+      const slices = await Promise.all(ids.map((id) => get<Slice>(`/graph/jobs/${id}`)));
+      if (alive) setPair(slices.filter(Boolean) as Slice[]);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
 
-  const toggleFaq = (index: number) => {
-    setOpenFaq(openFaq === index ? null : index);
-  };
+  const rows = useMemo(() => {
+    if (!board) return [];
+    const all = [...board.formed, ...board.emerging, ...board.candidate];
+    return all.sort((a, b) => {
+      const d = DOMAIN_ORDER.indexOf(a.domain) - DOMAIN_ORDER.indexOf(b.domain);
+      if (d) return d;
+      return (b.last_change ?? "").localeCompare(a.last_change ?? "");
+    });
+  }, [board]);
+
+  const inGraph = board ? board.formed.length + board.emerging.length : undefined;
+  const pairCards = rows.filter((c) => PAIR.includes(c.name));
+  const samples = feed?.pipeline?.reduce((acc, row) => acc + row.n, 0);
+  const release = meta?.graph_release;
+  const retentionMin = meta?.resume_retention_seconds ? Math.round(meta.resume_retention_seconds / 60) : 60;
+  const loading = !board && !failed;
+  const rebuilding = board && rows.length === 0;
 
   return (
-    <main className="opencode-main">
-      {/* 1. Hero Section matching Image #1 */}
-      <section data-component="hero">
-        {/* Banner with black badge and link */}
-        <div data-component="desktop-app-banner">
-          <span data-slot="badge">新</span>
-          <div data-slot="content">
-            <span data-slot="text">
-              智演 2026 技术岗位图谱现已发布。
-              <span data-slot="platforms"> 适用于 AI、大数据、智能系统和物联网</span>.
-            </span>
-            <Link href="/diagnose" data-slot="link">
-              立即体验
+    <main className="hm">
+      {/* 顶部：定位 + 两个主入口 + 当前发布版本的真实读数 */}
+      <section className="hm-hero">
+        <div className="hm-hero-copy">
+          <p className="hm-eyebrow">
+            <span>岗位能力图谱</span>
+            <span className="hm-dot" />
+            <span>人工智能 · 大数据 · 智能系统 · 物联网</span>
+          </p>
+          <h1>
+            招聘市场在变，
+            <br />
+            你的换档条件也在变。
+          </h1>
+          <p className="hm-lede">
+            智演从四领域招聘数据流里发现新岗位、记录每个岗位要求边的增减，每条要求都能点到原文证据。对着一份简历，它只回答三件事：卡在哪、换邻近岗会不会更好、这个月先补哪几样。
+          </p>
+          <div className="hm-actions">
+            <Link href="/diagnose" className="hm-btn solid">
+              上传简历，做一次诊断
             </Link>
+            <Link href="/graph" className="hm-btn">
+              打开图谱工作台
+            </Link>
+            <span className="hm-actions-note">免登录 · 简历只留在会话里 {retentionMin} 分钟</span>
           </div>
         </div>
 
-        {/* Hero title and copy */}
-        <div data-slot="hero-copy">
-          <h1 className="hero-heading">开源 AI 岗位演化图谱</h1>
-          <p className="hero-desc">
-            从多源招聘数据流中发现新岗位、追踪岗位能力演化，
-            <span data-slot="br"></span>
-            对照带来源的证据计算最小换档条件与技能成长路径
+        <dl className="hm-readout" aria-label="当前发布版本读数">
+          <div className="hm-readout-head">
+            <dt>当前发布版本</dt>
+            <dd>
+              {release?.published_at ? day(release.published_at) : loading ? "…" : "尚未发布"}
+              {release?.period ? <small>切片 {day(release.period)}</small> : null}
+            </dd>
+          </div>
+          <div>
+            <dt>入谱岗位</dt>
+            <dd>{loading ? "…" : num(inGraph)}</dd>
+          </div>
+          <div>
+            <dt>成型 / 萌芽</dt>
+            <dd>
+              {loading ? "…" : `${num(board?.formed.length)} / ${num(board?.emerging.length)}`}
+            </dd>
+          </div>
+          <div>
+            <dt>候选中</dt>
+            <dd>{loading ? "…" : num(board?.candidate.length)}</dd>
+          </div>
+          <div>
+            <dt>去重 JD 样本</dt>
+            <dd>{loading ? "…" : num(samples)}</dd>
+          </div>
+          <div className="hm-readout-foot">
+            <dt>数据口径</dt>
+            <dd>每条要求边至少两个独立源；候选不入谱，不能对照简历。</dd>
+          </div>
+        </dl>
+      </section>
+
+      {/* 主体：左侧岗位总览表，右侧诊断入口 */}
+      <section className="hm-body">
+        <div className="hm-panel hm-jobs">
+          <header className="hm-panel-head">
+            <h2>图谱里有哪些岗位</h2>
+            <Link href="/discover">市场演化 →</Link>
+          </header>
+          <div className="hm-table-wrap">
+            <table className="hm-table">
+              <colgroup>
+                <col />
+                <col className="w-status" />
+                <col className="w-num" />
+                <col className="w-delta" />
+                <col className="w-date" />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>岗位</th>
+                  <th>状态</th>
+                  <th className="num">独立源</th>
+                  <th>本期 +/−</th>
+                  <th>最近变化</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading
+                  ? Array.from({ length: 8 }).map((_, i) => (
+                      <tr key={i} className="hm-skeleton">
+                        <td>
+                          <i style={{ width: `${48 + (i % 3) * 14}%` }} />
+                        </td>
+                        <td>
+                          <i style={{ width: 36 }} />
+                        </td>
+                        <td>
+                          <i style={{ width: 20 }} />
+                        </td>
+                        <td>
+                          <i style={{ width: 40 }} />
+                        </td>
+                        <td>
+                          <i style={{ width: 70 }} />
+                        </td>
+                      </tr>
+                    ))
+                  : null}
+                {failed ? (
+                  <tr>
+                    <td colSpan={5} className="hm-empty">
+                      暂时连不上图谱服务。稍后刷新，或直接进入
+                      <Link href="/diagnose">简历诊断</Link>。
+                    </td>
+                  </tr>
+                ) : null}
+                {rebuilding ? (
+                  <tr>
+                    <td colSpan={5} className="hm-empty">
+                      图谱正在重建，本周期岗位尚未发布。发布后这里会按领域列出全部入谱岗位。
+                    </td>
+                  </tr>
+                ) : null}
+                {rows.map((c, i) => {
+                  const first = i === 0 || rows[i - 1].domain !== c.domain;
+                  const status = STATUS[c.status] ?? { label: c.status, tone: "mid" };
+                  const href = c.status === "candidate" ? "/discover" : `/graph?job=${c.id}`;
+                  return (
+                    <tr key={c.id} className={first ? "hm-domain-first" : undefined}>
+                      <td>
+                        <Link href={href} className="hm-job">
+                          {first ? <span className="hm-domain">{DOMAIN[c.domain] ?? c.domain}</span> : null}
+                          <span className="hm-job-name">{c.name}</span>
+                        </Link>
+                      </td>
+                      <td>
+                        <span className={`pill ${status.tone}`}>{status.label}</span>
+                      </td>
+                      <td className="num">{c.n_sources ?? "—"}</td>
+                      <td className="hm-delta">
+                        {c.n_added ? <span className="rise">+{c.n_added}</span> : null}
+                        {c.n_expired ? <span className="fall">−{c.n_expired}</span> : null}
+                        {!c.n_added && !c.n_expired ? <span className="mute">·</span> : null}
+                      </td>
+                      <td className="mono mute">{c.last_change ?? ""}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <p className="hm-panel-foot">
+            成型 = 至少 10 个独立源或持续 6 个月且定义已批；萌芽 = 至少 3 个独立源、90 天窗；候选只开卷宗。
           </p>
         </div>
 
-        {/* Installation Tabs Card */}
-        <div data-slot="installation">
-          <section
-            className="tabs"
-            data-component="tabs"
-            data-active={activeTab}
-            aria-label="安装选项"
-          >
-            <div role="tablist" data-slot="tablist">
-              {Object.keys(INSTALL_COMMANDS).map((tab) => (
-                <button
-                  key={tab}
-                  role="tab"
-                  aria-selected={activeTab === tab}
-                  type="button"
-                  data-slot="tab"
-                  className={activeTab === tab ? "active" : ""}
-                  onClick={() => setActiveTab(tab)}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
+        <aside className="hm-panel hm-diag">
+          <header className="hm-panel-head">
+            <h2>对着简历算一次</h2>
+            <span className="hm-panel-tag">约 3 分钟</span>
+          </header>
+          <ol className="hm-steps">
+            <li>
+              <b>上传并校对</b>
+              <span>PDF 或 docx。系统抽出角色、年限、技能点与简历证据片段，你逐条确认。</span>
+            </li>
+            <li>
+              <b>选两个对照岗</b>
+              <span>按推荐序给三个可诊断岗位和前两条理由，你挑两个。</span>
+            </li>
+            <li>
+              <b>看方向结论</b>
+              <span>档位文案、缺口集、简历证据不足项、最小换档条件，以及本月先补哪三样。</span>
+            </li>
+          </ol>
 
-            <div className="tab-body" data-slot="tabcontent">
-              <code className="cmd-code">
-                {activeTab === "curl" ? (
-                  <>
-                    curl -fsSL https://<strong className="code-highlight">jobevolution.ai/install</strong> | bash
-                  </>
-                ) : (
-                  INSTALL_COMMANDS[activeTab]
-                )}
-              </code>
-
-              <button
-                type="button"
-                className="copy-icon-btn"
-                onClick={handleCopy}
-                aria-label={copied ? "已复制" : "复制代码"}
-                title={copied ? "已复制" : "复制代码"}
-              >
-                {copied ? (
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#1D1D1F"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                ) : (
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#8E8E93"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                  </svg>
-                )}
-              </button>
-            </div>
-          </section>
-        </div>
-      </section>
-
-      {/* 2. Hero TUI / Video Mockup matching Image #1 split-pane interface */}
-      <section data-component="video" className="hero-tui-section">
-        <div className="tui-terminal-window">
-          {/* Left Main Diff & Action List Pane */}
-          <div className="tui-main-pane">
-            <div className="tui-tasks-list">
-              <p className="task-row done">
-                <span className="check">[✓]</span> 提取简历教育与经历证据: 硕士 · 3年大模型工程落地经验
-              </p>
-              <p className="task-row done">
-                <span className="check">[✓]</span> 对齐可诊断岗位规范要求: 大模型应用工程师 (12 条必备要求边)
-              </p>
-              <p className="task-row done">
-                <span className="check">[✓]</span> 核对高置信度技能点: Python, PyTorch, LangChain, FastAPI (覆盖率 76%)
-              </p>
-              <p className="task-row pending">
-                <span className="box-empty">[ ]</span> 补齐核心换档缺口: Triton 推理优化 / 模型量化加速 (权重 0.85 · 必备)
-              </p>
-              <p className="task-row pending">
-                <span className="box-empty">[ ]</span> 补充工程闭环证据: 多路召回重排架构 (Hybrid Search + Reranker)
-              </p>
-              <p className="task-row pending">
-                <span className="box-empty">[ ]</span> 运行诊断发布完整性校验并导出换档报告
-              </p>
-            </div>
-
-            <div className="tui-diff-header">
-              <span className="diff-arrow">←</span> 技能对账差异: Triton 推理优化
-            </div>
-
-            <div className="tui-diff-lines">
-              <div className="diff-row">
-                <span className="line-num">12</span>
-                <span className="line-code line-del">- 仅了解常规 HuggingFace Pipeline 推理测试流程</span>
-              </div>
-              <div className="diff-row">
-                <span className="line-num">13</span>
-                <span className="line-code line-add">+ 掌握 vLLM / TensorRT-LLM 生产级吞吐优化与压测</span>
-              </div>
-              <div className="diff-row">
-                <span className="line-num">14</span>
-                <span className="line-code line-add">+ 掌握 PagedAttention 显存优化与量化加速 (AWQ/GPTQ)</span>
-              </div>
-              <div className="diff-row">
-                <span className="line-num">15</span>
-                <span className="line-code">  &lt;div className="benchmark-metrics"&gt;</span>
-              </div>
-            </div>
+          <div className="hm-pair">
+            <p className="hm-pair-title">默认对照对 · 诊断页默认岗位与它最近的新岗</p>
+            {PAIR.map((name) => {
+              const card = pairCards.find((c) => c.name === name);
+              const s = pair.find((x) => x.job.name === name);
+              const required = s?.requires.filter((r) => (r.kind ?? "required") === "required").length;
+              const preferred = s ? s.requires.length - (required ?? 0) : undefined;
+              const companies = s ? new Set(s.evidence.map((e) => e.company).filter(Boolean)).size : card?.n_sources;
+              const status = card ? STATUS[card.status] ?? { label: card.status, tone: "mid" } : undefined;
+              return (
+                <div className="hm-pair-job" key={name}>
+                  <div className="hm-pair-name">
+                    <span>{name}</span>
+                    {status ? <span className={`pill ${status.tone}`}>{status.label}</span> : null}
+                  </div>
+                  {s ? (
+                    <dl>
+                      <div>
+                        <dt>必备</dt>
+                        <dd>{required}</dd>
+                      </div>
+                      <div>
+                        <dt>加分</dt>
+                        <dd>{preferred}</dd>
+                      </div>
+                      <div>
+                        <dt>公司</dt>
+                        <dd>{companies}</dd>
+                      </div>
+                    </dl>
+                  ) : (
+                    <p className="hm-pair-note">
+                      {loading
+                        ? "读取中…"
+                        : card
+                          ? `${card.n_sources ?? 0} 个独立源。岗位定义审核中，可看卷宗，暂不可诊断。`
+                          : "本周期尚未入谱。"}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
-          {/* Right Status Sidebar Pane matching Image #1 */}
-          <aside className="tui-side-pane">
-            <div className="side-block">
-              <div className="side-title">目标换档: 大模型应用工程师</div>
-              <div className="side-sub">档位推算: B档 → A档</div>
-            </div>
-
-            <div className="side-block">
-              <div className="side-section-label">Context</div>
-              <div className="side-stat">150,000+ 招聘样本</div>
-              <div className="side-stat">76% 技能覆盖率</div>
-              <div className="side-stat">双独立源交叉验证</div>
-            </div>
-
-            <div className="side-block">
-              <div className="side-section-label">已覆盖技能 (6项)</div>
-              <ul className="side-list">
-                <li>• Python (精通)</li>
-                <li>• PyTorch (熟练)</li>
-                <li>• LangChain / RAG</li>
-                <li>• FastAPI 异步服务</li>
-              </ul>
-            </div>
-
-            <div className="side-block">
-              <div className="side-section-label">▼ 换档核心缺口</div>
-              <ul className="side-list gap-list">
-                <li>• Triton 推理优化</li>
-                <li>• 生产级并发压测</li>
-                <li>• 多路召回重排</li>
-              </ul>
-            </div>
-          </aside>
-        </div>
-      </section>
-
-      {/* 3. What is JobEvolution Section */}
-      <section data-component="what">
-        <h3>什么是智演</h3>
-        <p>
-          多源异构数据驱动的职业能力图谱与换档决策系统。
-          追踪新一代信息技术四大领域的真实招聘需求变迁，用带来源的事实证据替代主观猜测。
-        </p>
-        <ul className="features-list">
-          <li>
-            <span>[*]</span>
-            <div>
-              <strong>四大技术领域图谱</strong> 系统化收纳 AI、大数据、智能系统、物联网领域的规范岗位节点
-            </div>
-          </li>
-          <li>
-            <span>[*]</span>
-            <div>
-              <strong>真实招聘证据链</strong> 每条要求边均由至少两个独立招聘源支持，可追溯真实原始快照
-            </div>
-          </li>
-          <li>
-            <span>[*]</span>
-            <div>
-              <strong>最小换档路径推算</strong> 计算简历技能与目标岗位要求的差异，按要求组与优先级输出换档行动
-            </div>
-          </li>
-          <li>
-            <span>[*]</span>
-            <div>
-              <strong>本地沙箱隐私优先</strong> 简历解析与技能提取完全在用户本地会话运行，绝不上报、不参与训练
-            </div>
-          </li>
-          <li>
-            <span>[*]</span>
-            <div>
-              <strong>动态生命周期卷宗</strong> 双时间模型分离观察时间与有效时间，透明呈现岗位萌芽、成型、升值与衰退
-            </div>
-          </li>
-          <li>
-            <span>[*]</span>
-            <div>
-              <strong>终端 CLI 与图谱工作台</strong> 提供毫秒级 CLI 诊断工具与交互式 G6 岗位能力拓扑大图
-            </div>
-          </li>
-        </ul>
-        <Link href="/graph" className="btn-what-cta">
-          打开岗位工作台 →
-        </Link>
-      </section>
-
-      {/* 4. Growth & Stats Section */}
-      <section data-component="growth">
-        <h3>开源职业能力图谱指标</h3>
-        <p>
-          基于多源异构技术招聘数据流构建，拥有超过 150,000 条带来源的岗位证据样本，850 个规范技能节点，
-          已稳定建立 17 个信息技术核心演化目标岗位。
-        </p>
-        <div className="growth-figures">
-          <figure className="growth-figure">
-            <div className="ascii-chart">
-              <span className="chart-line">|    .---.      .---.</span>
-              <span className="chart-line">|   /     \    /     \</span>
-              <span className="chart-line">|--'       '--'       '--</span>
-            </div>
-            <figcaption>图 1. 150K+ 真实招聘证据样本</figcaption>
-          </figure>
-          <figure className="growth-figure">
-            <div className="ascii-chart">
-              <span className="chart-line">|        .---.</span>
-              <span className="chart-line">|  .----'     '----.</span>
-              <span className="chart-line">|-'                 '---</span>
-            </div>
-            <figcaption>图 2. 850+ 规范技术技能点</figcaption>
-          </figure>
-          <figure className="growth-figure">
-            <div className="ascii-chart">
-              <span className="chart-line">|      /\        /\</span>
-              <span className="chart-line">|     /  \  /\  /  \</span>
-              <span className="chart-line">|____/    \/  \/    \___</span>
-            </div>
-            <figcaption>图 3. 100% 双独立源链条校验</figcaption>
-          </figure>
-        </div>
-      </section>
-
-      {/* 5. Privacy Section */}
-      <section data-component="privacy">
-        <div data-slot="privacy-title">
-          <h3>隐私优先的设计</h3>
-          <p>
-            严格的本地沙箱设计。用户上传的简历在本地内存态完成文本分段、实体抽取与对账比对，
-            不上传云端明文，数据库不保存简历原文，会话结束后自动销毁。{" "}
-            <Link href="/diagnose" className="inline-link">
-              了解更多隐私规范
-            </Link>
-          </p>
-        </div>
-      </section>
-
-      {/* 6. FAQ Section */}
-      <section data-component="faq">
-        <h3>常见问题</h3>
-        <ul className="faq-list">
-          {FAQ_ITEMS.map((item, index) => {
-            const isOpen = openFaq === index;
-            return (
-              <li key={item.q} className={isOpen ? "is-open" : ""}>
-                <button
-                  type="button"
-                  data-slot="faq-question"
-                  onClick={() => toggleFaq(index)}
-                  aria-expanded={isOpen}
-                >
-                  <span className="toggle-icon">{isOpen ? "−" : "+"}</span>
-                  <span className="question-text">{item.q}</span>
-                </button>
-                {isOpen && <div className="faq-answer">{item.a}</div>}
-              </li>
-            );
-          })}
-        </ul>
-      </section>
-
-      {/* 7. Zen-like CTA Section */}
-      <section data-component="zen-cta">
-        <div data-slot="zen-cta-copy">
-          <strong>探索新一代信息技术四大领域图谱</strong>
-          <p>
-            直接查阅 AI、大数据、智能系统与物联网领域的技能要求、新增增量与失效历史，
-            告别黑盒信息差，基于招聘事实做职业规划。
-          </p>
-          <Link href="/graph" className="btn-solid">
-            进入岗位工作台
+          <Link href="/diagnose" className="hm-btn solid wide">
+            看看你离它们差几步
           </Link>
-        </div>
+
+          <ul className="hm-privacy">
+            <li>只发送提取后的简历文本，不传原文件。</li>
+            <li>数据库不保存简历原文与身份信息。</li>
+            <li>匿名会话最长保留 {retentionMin} 分钟，到期自动销毁。</li>
+          </ul>
+        </aside>
       </section>
 
-      {/* 8. Email Subscription Section */}
-      <section data-component="email">
-        <div data-slot="dock">
-          <h3>订阅岗位图谱更新</h3>
-          <p>每周技术岗位演化周报、新兴技术栈变动与最小换档实战卷宗。</p>
-          {subscribed ? (
-            <p className="success-msg">[+] 订阅成功。岗位图谱变动将准时投递至您的邮箱。</p>
+      {/* 本周期在变什么：三格，全部来自 /feed */}
+      <section className="hm-pulse">
+        <div className="hm-panel">
+          <header className="hm-panel-head">
+            <h2>技能覆盖热度</h2>
+            <span className="hm-panel-tag">簇内覆盖率</span>
+          </header>
+          {feed?.heat?.length ? (
+            <ol className="hm-heat">
+              {feed.heat.slice(0, 10).map((row) => (
+                <li key={row.id}>
+                  <span className="hm-heat-name" title={row.name}>
+                    {row.name}
+                  </span>
+                  <span className="hm-heat-track">
+                    <i style={{ width: `${Math.min(100, row.v)}%` }} />
+                  </span>
+                  <span className="hm-heat-v">{row.v}%</span>
+                </li>
+              ))}
+            </ol>
           ) : (
-            <form
-              className="email-form"
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (email.trim()) setSubscribed(true);
-              }}
-            >
-              <input
-                type="email"
-                required
-                placeholder="name@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              <button type="submit" className="btn-solid">
-                订阅周报
-              </button>
-            </form>
+            <p className="hm-empty-note">{loading ? "读取中…" : "本周期尚无覆盖率数据。"}</p>
           )}
         </div>
+
+        <div className="hm-panel">
+          <header className="hm-panel-head">
+            <h2>本周期升值 / 失效</h2>
+            <span className="hm-panel-tag">切片差分</span>
+          </header>
+          {feed && (feed.rise.length || feed.fall.length) ? (
+            <ul className="hm-diff">
+              {feed.rise.slice(0, 6).map((r, i) => (
+                <li key={`r${i}`}>
+                  <span className="rise">+</span>
+                  <span>{r.name}</span>
+                  {r.job ? <span className="mute">{r.job}</span> : null}
+                </li>
+              ))}
+              {feed.fall.slice(0, 6).map((r, i) => (
+                <li key={`f${i}`}>
+                  <span className="fall">−</span>
+                  <span>{r.name}</span>
+                  {r.job ? <span className="mute">{r.job}</span> : null}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="hm-empty-note">
+              {loading ? "读取中…" : "本周期没有技能点升值或失效。要求边的稳定本身也是信号。"}
+            </p>
+          )}
+          <p className="hm-panel-foot">
+            覆盖率上升且刚过 30% 入池线记为升值；写入 valid_to 记为失效。观测中的技能不算缺口。
+          </p>
+        </div>
+
+        <div className="hm-panel">
+          <header className="hm-panel-head">
+            <h2>最近演化事件</h2>
+            <Link href="/discover">全部流水 →</Link>
+          </header>
+          {feed ? (
+            <EventList rows={feed.events.slice(0, 5)} />
+          ) : (
+            <p className="hm-empty-note">{loading ? "读取中…" : "暂无事件。"}</p>
+          )}
+          {feed?.events?.length ? (
+            <p className="hm-panel-foot">
+              事件类型：{Array.from(new Set(feed.events.map((e) => kindLabel(e.kind ?? "")))).join(" · ")}。
+              待审事件不进入公开图谱。
+            </p>
+          ) : null}
+        </div>
       </section>
 
-      {/* 9. Footer Section */}
-      <footer data-component="footer">
-        <div className="footer-links-grid">
-          <div className="footer-col">
-            <Link href="https://github.com" target="_blank" rel="noreferrer">
-              GitHub [ 150K ]
-            </Link>
-          </div>
-          <div className="footer-col">
-            <Link href="/graph">岗位工作台</Link>
-          </div>
-          <div className="footer-col">
-            <Link href="/discover">市场变化</Link>
-          </div>
-          <div className="footer-col">
-            <Link href="/diagnose">简历诊断</Link>
-          </div>
-          <div className="footer-col">
-            <Link href="/admin">管理后台</Link>
-          </div>
+      {/* 为什么可信：写规则，不写口号，每格都能点到验证处 */}
+      <section className="hm-trust">
+        <div>
+          <b>每条要求边有来源</b>
+          <p>至少两个独立招聘源印证，点开技能点就是原文最短摘录与公司、观察时间。</p>
+          <Link href="/graph">在工作台点一条看看 →</Link>
         </div>
-        <div className="footer-bottom">
-          <span className="copyright">© 2026 智演 (JobEvolution) · 国家工程研发支持 (XH-202621)</span>
-          <div className="footer-meta">
-            <Link href="/discover">图谱本体</Link>
-            <span>·</span>
-            <Link href="/diagnose">隐私规范</Link>
-            <span>·</span>
-            <Link href="/graph">可诊断岗位</Link>
-            <span>·</span>
-            <span className="lang-picker">简体中文 ▼</span>
-          </div>
+        <div>
+          <b>必备与加分不靠猜</b>
+          <p>明确必备票或加分票占已分类票 60% 以上才定性质，否则只进待审。三类票数与原文并列展示。</p>
+          <Link href="/discover">看某个岗位的卷宗 →</Link>
         </div>
+        <div>
+          <b>发布前有一道闸</b>
+          <p>新岗位首次发布、核心必备新增、低置信抽取都先进待审队列。要求数异常的岗位暂停诊断。</p>
+          <Link href="/admin">管理后台 →</Link>
+        </div>
+      </section>
+
+      <footer className="hm-foot">
+        <span>© 2026 智演 JobEvolution</span>
+        <nav>
+          <Link href="/graph">图谱工作台</Link>
+          <Link href="/discover">市场演化</Link>
+          <Link href="/diagnose">简历诊断</Link>
+          <Link href="/admin">管理后台</Link>
+        </nav>
       </footer>
     </main>
   );
