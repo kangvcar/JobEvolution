@@ -5230,5 +5230,243 @@
     "synonyms": [
       "分布式系统领域研究成果"
     ]
+  },
+  {
+    "id": "skill-d843ea4d68cea304",
+    "name": "数据分布",
+    "synonyms": [
+      "数据分布"
+    ]
+  },
+  {
+    "id": "skill-76422565d5b09012",
+    "name": "任务设置",
+    "synonyms": [
+      "任务设置"
+    ]
+  },
+  {
+    "id": "skill-72cdfd8d921fe9e7",
+    "name": "失效模式",
+    "synonyms": [
+      "失效模式"
+    ]
+  },
+  {
+    "id": "skill-72b99d0b1565db4e",
+    "name": "反馈信号",
+    "synonyms": [
+      "反馈信号"
+    ]
+  },
+  {
+    "id": "skill-db5614b8d6964195",
+    "name": "失败类型",
+    "synonyms": [
+      "失败类型"
+    ]
+  },
+  {
+    "id": "skill-565d64601d4d174f",
+    "name": "优先级",
+    "synonyms": [
+      "优先级"
+    ]
+  },
+  {
+    "id": "skill-5312545faf4743c3",
+    "name": "数据闭环",
+    "synonyms": [
+      "数据闭环"
+    ]
+  },
+  {
+    "id": "skill-569376af02966dbe",
+    "name": "系统稳定性改进",
+    "synonyms": [
+      "系统稳定性改进"
+    ]
+  },
+  {
+    "id": "skill-48298ad1fd2535e3",
+    "name": "评测方法",
+    "synonyms": [
+      "评测方法"
+    ]
+  },
+  {
+    "id": "skill-27a6616b35be631f",
+    "name": "大规模多模态模型",
+    "synonyms": [
+      "大规模多模态模型"
+    ]
+  },
+  {
+    "id": "skill-99ef5c12def30b4a",
+    "name": "基础模型预训练",
+    "synonyms": [
+      "基础模型预训练"
+    ]
+  },
+  {
+    "id": "skill-5d7b7e77768bfdfc",
+    "name": "多模态",
+    "synonyms": [
+      "多模态"
+    ]
+  },
+  {
+    "id": "skill-c79c645a90a29783",
+    "name": "视觉-语言-动作",
+    "synonyms": [
+      "视觉-语言-动作"
+    ]
+  },
+  {
+    "id": "skill-fd5fb78ba29c9c80",
+    "name": "对齐",
+    "synonyms": [
+      "对齐"
+    ]
+  },
+  {
+    "id": "skill-b9419eb861de3c79",
+    "name": "融合",
+    "synonyms": [
+      "融合"
+    ]
+  },
+  {
+    "id": "skill-e96e469bbdfaf2c6",
+    "name": "视觉基础模型",
+    "synonyms": [
+      "视觉基础模型"
+    ]
+  },
+  {
+    "id": "skill-e72622fe470d04bc",
+    "name": "导航",
+    "synonyms": [
+      "导航"
+    ]
+  },
+  {
+    "id": "skill-ed31fbb483ee1b0a",
+    "name": "操作",
+    "synonyms": [
+      "操作"
+    ]
+  },
+  {
+    "id": "skill-43a4acfa87a011fa",
+    "name": "深度学习基础理论",
+    "synonyms": [
+      "深度学习基础理论"
+    ]
+  },
+  {
+    "id": "skill-d9424364226c2210",
+    "name": "模型架构设计",
+    "synonyms": [
+      "模型架构设计"
+    ]
+  },
+  {
+    "id": "skill-caa40cff511c4bad",
+    "name": "ViT",
+    "synonyms": [
+      "ViT"
+    ]
+  },
+  {
+    "id": "skill-89ad3663bb60a8be",
+    "name": "Diffusion",
+    "synonyms": [
+      "Diffusion"
+    ]
+  },
+  {
+    "id": "skill-0e6a8fdb15914085",
+    "name": "Mamba",
+    "synonyms": [
+      "Mamba"
+    ]
+  },
+  {
+    "id": "skill-6bedde76921414dc",
+    "name": "大规模分布式模型训练",
+    "synonyms": [
+      "大规模分布式模型训练"
+    ]
+  },
+  {
+    "id": "skill-efdee63b60991816",
+    "name": "FSDP",
+    "synonyms": [
+      "FSDP"
+    ]
+  },
+  {
+    "id": "skill-f3544582f59ca976",
+    "name": "训练加速框架",
+    "synonyms": [
+      "训练加速框架"
+    ]
+  },
+  {
+    "id": "skill-8289e67df525e14f",
+    "name": "科研",
+    "synonyms": [
+      "科研"
+    ]
+  },
+  {
+    "id": "skill-fd424a854fde33c9",
+    "name": "复现前沿论文",
+    "synonyms": [
+      "复现前沿论文"
+    ]
+  },
+  {
+    "id": "skill-c5d3067c551fa34d",
+    "name": "改进",
+    "synonyms": [
+      "改进"
+    ]
+  },
+  {
+    "id": "skill-9822d1d8eda12663",
+    "name": "ICCV",
+    "synonyms": [
+      "ICCV"
+    ]
+  },
+  {
+    "id": "skill-9a84738c13bc37a4",
+    "name": "ECCV",
+    "synonyms": [
+      "ECCV"
+    ]
+  },
+  {
+    "id": "skill-19449b19a91621fd",
+    "name": "大规模数据集",
+    "synonyms": [
+      "大规模数据集"
+    ]
+  },
+  {
+    "id": "skill-62321eb2b5dea0c8",
+    "name": "ImageNet",
+    "synonyms": [
+      "ImageNet"
+    ]
+  },
+  {
+    "id": "skill-1adfc1b6d40d417f",
+    "name": "模型预训练",
+    "synonyms": [
+      "模型预训练"
+    ]
   }
 ]

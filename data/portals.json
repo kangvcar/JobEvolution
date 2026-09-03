@@ -18,6 +18,8 @@
     {"key": "asiainfo-sec", "type": "feishu", "name": "亚信安全", "host": "asiainfo-sec.jobs.feishu.cn", "enabled": true, "builtin": false},
     {"key": "lierda", "type": "feishu", "name": "利尔达科技", "host": "lierda.jobs.feishu.cn", "enabled": true, "builtin": false},
     {"key": "lg77oym6sy", "type": "feishu", "name": "美克生能源", "host": "lg77oym6sy.jobs.feishu.cn", "enabled": true, "builtin": false},
-    {"key": "weikezhijia", "type": "feishu", "name": "马上消费", "host": "weikezhijia.jobs.feishu.cn", "enabled": true, "builtin": false}
+    {"key": "weikezhijia", "type": "feishu", "name": "马上消费", "host": "weikezhijia.jobs.feishu.cn", "enabled": true, "builtin": false},
+    {"key": "qianxun", "type": "feishu", "name": "千寻智能", "host": "nwd4iy9rd2s.jobs.feishu.cn", "enabled": true, "builtin": false},
+    {"key": "qijing", "type": "feishu", "name": "启境汽车", "host": "mcn3fvhkq7iw.jobs.feishu.cn", "enabled": true, "builtin": false}
   ]
 }

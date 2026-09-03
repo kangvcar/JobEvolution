@@ -188,6 +188,22 @@ DEFAULT_PORTALS = [
         "enabled": True,
         "builtin": False,
     },
+    {
+        "key": "qianxun",
+        "type": "feishu",
+        "name": "千寻智能",
+        "host": "nwd4iy9rd2s.jobs.feishu.cn",
+        "enabled": True,
+        "builtin": False,
+    },
+    {
+        "key": "qijing",
+        "type": "feishu",
+        "name": "启境汽车",
+        "host": "mcn3fvhkq7iw.jobs.feishu.cn",
+        "enabled": True,
+        "builtin": False,
+    },
 ]
 
 
