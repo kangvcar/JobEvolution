@@ -13,6 +13,11 @@
     {"key": "xiaomi", "type": "feishu", "name": "小米", "host": "xiaomi.jobs.f.mioffice.cn", "enabled": true, "builtin": false},
     {"key": "unitree", "type": "beisen", "name": "宇树科技", "host": "unitree.zhiye.com", "enabled": true, "builtin": false},
     {"key": "agirobot", "type": "feishu", "name": "智元AGIBOT", "host": "agirobot.jobs.feishu.cn", "enabled": true, "builtin": false},
-    {"key": "arashivision", "type": "feishu", "name": "影石创新", "host": "arashivision.jobs.feishu.cn", "enabled": true, "builtin": false}
+    {"key": "arashivision", "type": "feishu", "name": "影石创新", "host": "arashivision.jobs.feishu.cn", "enabled": true, "builtin": false},
+    {"key": "tsingtengms", "type": "feishu", "name": "紫光青藤", "host": "tsingtengms.jobs.feishu.cn", "enabled": true, "builtin": false},
+    {"key": "asiainfo-sec", "type": "feishu", "name": "亚信安全", "host": "asiainfo-sec.jobs.feishu.cn", "enabled": true, "builtin": false},
+    {"key": "lierda", "type": "feishu", "name": "利尔达科技", "host": "lierda.jobs.feishu.cn", "enabled": true, "builtin": false},
+    {"key": "lg77oym6sy", "type": "feishu", "name": "美克生能源", "host": "lg77oym6sy.jobs.feishu.cn", "enabled": true, "builtin": false},
+    {"key": "weikezhijia", "type": "feishu", "name": "马上消费", "host": "weikezhijia.jobs.feishu.cn", "enabled": true, "builtin": false}
   ]
 }

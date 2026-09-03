@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date
 from pathlib import Path
 
@@ -76,36 +77,51 @@ def _write_checkpoint(**state) -> None:
     write_json_atomic(eval_dir() / CHECKPOINT_FILE, {"version": 1, **state})
 
 
-def _draft_file(name: str) -> dict:
+def _worker_count() -> int:
+    default = 8 if os.environ.get("LLM_PROVIDER", "").strip().casefold() == "tuzi" else 1
+    try:
+        return max(1, min(32, int(os.environ.get("DRAFT_WORKERS", default))))
+    except (TypeError, ValueError):
+        return default
+
+
+def _draft_file(name: str, workers: int | None = None) -> dict:
     path = eval_dir() / name
     rows = read_jsonl(path)
     completed = sum(_has_current_draft(row) for row in rows)
     failures = []
-    _write_checkpoint(status="running", file=name, current="", completed=completed, total=len(rows), failures=failures)
-    for index, row in enumerate(rows):
-        if _has_current_draft(row):
-            continue
-        current = row.get("id") or str(index)
-        _write_checkpoint(
-            status="running", file=name, current=current, completed=completed, total=len(rows), failures=failures
-        )
-        try:
-            rows[index] = _draft_one(row)
-            _write_jsonl(path, rows)
-        except Exception as exc:
-            failures.append({"id": current, "error": f"{type(exc).__name__}: {exc}"[:300]})
+    pending = [
+        (index, row.get("id") or str(index), row)
+        for index, row in enumerate(rows)
+        if not _has_current_draft(row)
+    ]
+    limit = max(1, min(workers or _worker_count(), len(pending) or 1))
+    active = {current for _, current, _ in pending}
+    _write_checkpoint(
+        status="running", file=name, current=",".join(sorted(active)), completed=completed,
+        total=len(rows), failures=failures, workers=limit
+    )
+    with ThreadPoolExecutor(max_workers=limit, thread_name_prefix="gold-draft") as pool:
+        futures = {pool.submit(_draft_one, row): (index, current) for index, current, row in pending}
+        for future in as_completed(futures):
+            index, current = futures[future]
+            try:
+                rows[index] = future.result()
+                _write_jsonl(path, rows)
+            except Exception as exc:
+                failures.append({"id": current, "error": f"{type(exc).__name__}: {exc}"[:300]})
+            else:
+                completed += 1
+            active.discard(current)
             _write_checkpoint(
-                status="partial", file=name, current="", completed=completed, total=len(rows), failures=failures
+                status="partial" if failures else "running", file=name,
+                current=",".join(sorted(active)), completed=completed,
+                total=len(rows), failures=failures, workers=limit
             )
-            continue
-        completed += 1
-        _write_checkpoint(
-            status="running", file=name, current="", completed=completed, total=len(rows), failures=failures
-        )
     total = sum(len((row.get("notes") or {}).get("gold_draft", {}).get("skills", [])) for row in rows)
     _write_checkpoint(
         status="done" if not failures else "partial", file=name, current="", completed=completed,
-        total=len(rows), failures=failures
+        total=len(rows), failures=failures, workers=limit
     )
     return {"file": name, "rows": len(rows), "draft_skills": total, "failed": len(failures)}
 

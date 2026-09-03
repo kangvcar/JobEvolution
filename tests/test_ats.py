@@ -31,7 +31,7 @@ ADMIN = "change-me"
 
 def test_default_sources_cover_system_iot_keywords():
     keys = {row["key"] for row in DEFAULT_PORTALS}
-    assert {"agirobot", "arashivision"} <= keys
+    assert {"agirobot", "arashivision", "tsingtengms", "asiainfo-sec", "lierda", "lg77oym6sy", "weikezhijia"} <= keys
     assert {"嵌入式", "机器人", "硬件", "物联网"} <= set(SEARCH_WORDS)
 
 
@@ -279,6 +279,34 @@ def test_official_checkpoint_resumes_finished_portal(tmp_path, monkeypatch):
     assert run["resumed"] is True
     assert calls == ["first", "second", "second"]
     assert json.loads((tmp_path / "collect.checkpoint.json").read_text(encoding="utf-8"))["status"] == "completed"
+
+
+def test_official_checkpoint_retries_failed_portal_after_completed_run(tmp_path, monkeypatch):
+    portals = [{"key": key, "type": "fake", "name": key, "enabled": True} for key in ("done", "failed")]
+    (tmp_path / "portals.json").write_text(json.dumps({"portals": portals}), encoding="utf-8")
+    (tmp_path / "collect.checkpoint.json").write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "status": "completed",
+                "portals": {
+                    "done": {"status": "done", "stats": {"key": "done", "read": 0, "ingested": 0}},
+                    "failed": {"status": "failed", "stats": {"key": "failed", "read": 0, "ingested": 0}},
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    calls = []
+
+    def fake_fetch(portal, **kwargs):
+        calls.append(portal["key"])
+        return []
+
+    monkeypatch.setattr("app.collectors.ats.fetch_portal", fake_fetch)
+    result = run_official(data_dir=tmp_path, out_dir=tmp_path / "jd", redis=MemoryRedis(), workers=1)
+    assert result["resumed"] is True
+    assert calls == ["failed"]
 
 
 def test_official_fetches_pending_portals_concurrently(tmp_path, monkeypatch):

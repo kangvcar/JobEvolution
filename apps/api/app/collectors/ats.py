@@ -148,6 +148,46 @@ DEFAULT_PORTALS = [
         "enabled": True,
         "builtin": False,
     },
+    {
+        "key": "tsingtengms",
+        "type": "feishu",
+        "name": "紫光青藤",
+        "host": "tsingtengms.jobs.feishu.cn",
+        "enabled": True,
+        "builtin": False,
+    },
+    {
+        "key": "asiainfo-sec",
+        "type": "feishu",
+        "name": "亚信安全",
+        "host": "asiainfo-sec.jobs.feishu.cn",
+        "enabled": True,
+        "builtin": False,
+    },
+    {
+        "key": "lierda",
+        "type": "feishu",
+        "name": "利尔达科技",
+        "host": "lierda.jobs.feishu.cn",
+        "enabled": True,
+        "builtin": False,
+    },
+    {
+        "key": "lg77oym6sy",
+        "type": "feishu",
+        "name": "美克生能源",
+        "host": "lg77oym6sy.jobs.feishu.cn",
+        "enabled": True,
+        "builtin": False,
+    },
+    {
+        "key": "weikezhijia",
+        "type": "feishu",
+        "name": "马上消费",
+        "host": "weikezhijia.jobs.feishu.cn",
+        "enabled": True,
+        "builtin": False,
+    },
 ]
 
 
@@ -179,7 +219,13 @@ def _load_checkpoint(data_dir: Path, portals: list[dict]) -> tuple[dict, bool]:
         state = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         state = None
-    if not isinstance(state, dict) or state.get("status") != "running":
+    if not isinstance(state, dict):
+        return _new_checkpoint(portals), False
+    failed = any(
+        isinstance(value, dict) and value.get("status") == "failed"
+        for value in (state.get("portals") or {}).values()
+    )
+    if state.get("status") != "running" and not failed:
         return _new_checkpoint(portals), False
     state.setdefault("portals", {})
     return state, True
