@@ -1,23 +1,10 @@
 [
   {
-    "date": "2026-08-29",
-    "macrostructure": "Workbench",
-    "theme": "paper-plex-warm",
+    "date": "2026-09-03",
+    "scope": "app",
+    "macrostructure": "Long Document + Workbench",
+    "theme": "Terminal-inspired warm monochrome",
     "enrichment": "none",
-    "brief": "Redesign diagnose: idle bench+dock, run dual frames, done caption+instruments"
-  },
-  {
-    "date": "2026-08-29",
-    "macrostructure": "Stat-Led",
-    "theme": "paper-plex-warm",
-    "enrichment": "none",
-    "brief": "Redesign home inspector: readable Stat-Led lead (萌芽 6) plus stories"
-  },
-  {
-    "date": "2026-08-29",
-    "macrostructure": "Map / Diagram",
-    "theme": "Cobalt",
-    "enrichment": "none",
-    "brief": "Redesign signature-ui.html job-graph prototype as light instrument panel"
+    "brief": "智演全产品 UI 重设计，包含 landing page、岗位工作台、诊断、市场变化和管理页"
   }
 ]

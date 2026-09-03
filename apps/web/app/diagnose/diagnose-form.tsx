@@ -91,6 +91,7 @@ export function DiagnoseForm() {
   const [userAdded, setUserAdded] = useState<Named[]>([]);
   const [newSkill, setNewSkill] = useState("");
   const [simulation, setSimulation] = useState<Simulation | null>(null);
+  const [reportView, setReportView] = useState<"conclusion" | "action" | "evidence">("conclusion");
   const [assumedSkills, setAssumedSkills] = useState<string[]>([]);
   const simulationRequest = useRef(0);
   const abort = useRef<AbortController | null>(null);
@@ -155,6 +156,7 @@ export function DiagnoseForm() {
         throw new Error(body.error || "诊断失败");
       }
       setReport(body);
+      setReportView("conclusion");
       setPhase("done");
       setStep("report");
       if (body.groups?.explain) {
@@ -222,6 +224,7 @@ export function DiagnoseForm() {
       const body = await res.json();
       if (!res.ok) { setError(body.error || "无法生成对照"); setPhase("idle"); setStep("choose"); return; }
       setReport(body);
+      setReportView("conclusion");
       setJobId(selectedJobIds[0]);
       setPhase("done");
       setStep("report");
@@ -266,6 +269,15 @@ export function DiagnoseForm() {
     const res = await fetch(`${API}/diagnose/simulate`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ session_id: sessionId, job_id: jobId, assumed_skill_ids: next, watching_skill_ids: (report?.groups.explain.watching || []).map((row) => row.skill_id) }) });
     const body = await res.json();
     if (requestId === simulationRequest.current && res.ok) setSimulation(body);
+  }
+
+  const showReportView = (view: "conclusion" | "action" | "evidence") => {
+    setReportView(view);
+  };
+
+  function jumpReport(view: "conclusion" | "action" | "evidence", id: string) {
+    showReportView(view);
+    window.requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" }));
   }
 
   function MiniGraph() {
@@ -350,14 +362,14 @@ export function DiagnoseForm() {
           {step === "upload" && <details className="privacy-details"><summary>隐私与数据处理详情</summary><p>上传后只发送提取出的文本给当前配置的模型服务商。产品数据库不保存简历原文件，会话最长保留一小时。</p></details>}
           {step === "correct" && <section className="correction-panel" aria-label="解析校对"><p className="hint">请确认角色、年限、学历、技能和证据级。提交前不会生成岗位结论，修改只保留简历原文能支持的内容。</p><div className="correction-fields"><label>当前角色<input value={parsed?.profile?.role || ""} onChange={(event) => setParsed((current) => current ? { ...current, profile: { ...(current.profile || {}), role: event.target.value } } : current)} placeholder="未标注" /></label><label>工作年限<input value={parsed?.profile?.experience || ""} onChange={(event) => setParsed((current) => current ? { ...current, profile: { ...(current.profile || {}), experience: event.target.value } } : current)} placeholder="未标注" /></label><label>学历<input value={parsed?.education_items?.[0]?.text || ""} onChange={(event) => setParsed((current) => current ? { ...current, education_items: [{ text: event.target.value }] } : current)} placeholder="未标注" /></label></div><p><b>已识别技能：</b>{names(parsed?.skills)}</p><p className="hint">证据片段：{parsed?.evidence_fragments?.length || 0} 条。明确结果会在报告中单独标出。</p><button type="button" onClick={continueCorrect}>确认并选择岗位</button></section>}
           {step === "choose" && <section className="choose-panel"><p className="hint">推荐岗位最多三个。可选择一个或两个岗位进行对照。</p><div className="recommendations">{recommendations.map((item) => <label key={item.job_id} className="recommendation"><input type="checkbox" checked={selectedJobIds.includes(item.job_id)} onChange={(event) => setSelectedJobIds((current) => event.target.checked ? [...current.filter((id) => id !== item.job_id), item.job_id].slice(-2) : current.filter((id) => id !== item.job_id))} /><span><b>{item.name}</b><small>{item.band} · {item.reasons.map((reason) => reason.text).join("；")}</small></span></label>)}</div><label>搜索或改选岗位<select value={jobId} onChange={(event) => setJobId(event.target.value)}>{jobs.map((job) => <option key={job.id} value={job.id}>{job.name}</option>)}</select></label><button type="button" onClick={() => setSelectedJobIds((ids) => ids.length ? ids : [jobId])}>加入当前岗位</button></section>}
-          {step === "correct" && <section className="correction-controls" aria-label="修改技能"><p><b>已识别技能</b></p><ul>{(parsed?.skills || []).map((skill, index) => <li key={`${skill.skill_id}-${index}`}><span>{skill.name}</span><select aria-label={`${skill.name} 熟练级`} value={skill.proficiency || ""} onChange={(event) => setParsed((current) => current ? { ...current, skills: (current.skills || []).map((item, i) => i === index ? { ...item, proficiency: event.target.value || null } : item) } : current)}><option value="">未标熟练级</option><option value="aware">了解</option><option value="able">熟悉</option><option value="expert">精通</option></select><button type="button" onClick={() => setParsed((current) => current ? { ...current, skills: (current.skills || []).filter((_, i) => i !== index) } : current)}>移除</button></li>)}</ul><div className="evidence-controls"><p><b>证据级校对</b></p>{(parsed?.evidence_fragments || []).map((fragment, index) => <label key={`${fragment.id || fragment.skill_id}-${index}`}>{fragment.text}<select aria-label="证据级" value={fragment.evidence_level || "mention"} onChange={(event) => setParsed((current) => current ? { ...current, evidence_fragments: (current.evidence_fragments || []).map((item, i) => i === index ? { ...item, evidence_level: event.target.value as EvidenceFragment["evidence_level"] } : item) } : current)}><option value="mention">提及</option><option value="use">使用</option><option value="result">结果</option></select></label>)}</div><div className="user-added"><input aria-label="补充技能" value={newSkill} onChange={(event) => setNewSkill(event.target.value)} placeholder="补充你做过但简历没写的技能" /><button type="button" onClick={() => { const name = newSkill.trim(); if (name) { setUserAdded((items) => [...items, { name, skill_id: name }]); setNewSkill(""); } }}>加入待核对</button></div>{userAdded.length > 0 && <p className="hint">你补充的，简历尚未证明：{userAdded.map((item) => item.name).join("、")}</p>}</section>}
+          {step === "correct" && <section className="correction-controls" aria-label="修改技能"><p><b>已识别技能</b></p><ul>{(parsed?.skills || []).map((skill, index) => <li key={`${skill.skill_id}-${index}`}><span>{skill.name}</span><select aria-label={`${skill.name} 熟练级`} value={skill.proficiency || ""} onChange={(event) => setParsed((current) => current ? { ...current, skills: (current.skills || []).map((item, i) => i === index ? { ...item, proficiency: event.target.value || null } : item) } : current)}><option value="">未标熟练级</option><option value="aware">了解</option><option value="able">熟悉</option><option value="expert">精通</option></select><button type="button" onClick={() => setParsed((current) => current ? { ...current, skills: (current.skills || []).filter((_, i) => i !== index) } : current)}>移除</button></li>)}</ul><div className="evidence-controls"><p><b>证据级校对</b></p>{(parsed?.evidence_fragments || []).map((fragment, index) => <label key={`${fragment.id || fragment.skill_id}-${index}`}>{fragment.text}<select aria-label={`${fragment.text} 证据级`} value={fragment.evidence_level || "mention"} onChange={(event) => setParsed((current) => current ? { ...current, evidence_fragments: (current.evidence_fragments || []).map((item, i) => i === index ? { ...item, evidence_level: event.target.value as EvidenceFragment["evidence_level"] } : item) } : current)}><option value="mention">提及</option><option value="use">使用</option><option value="result">结果</option></select></label>)}</div><div className="user-added"><input aria-label="补充技能" value={newSkill} onChange={(event) => setNewSkill(event.target.value)} placeholder="补充你做过但简历没写的技能" /><button type="button" onClick={() => { const name = newSkill.trim(); if (name) { setUserAdded((items) => [...items, { name, skill_id: name }]); setNewSkill(""); } }}>加入待核对</button></div>{userAdded.length > 0 && <p className="hint">你补充的，简历尚未证明：{userAdded.map((item) => item.name).join("、")}</p>}</section>}
           <div className="diagnose-actions">
             {step === "correct" && <button type="button" onClick={() => pick(null)}>重新上传</button>}
             {step === "choose" && <button type="button" onClick={() => setStep("correct")}>返回校对</button>}
             {step === "upload" && <button type="submit" disabled={phase === "run"}>上传并解析</button>}
             {step === "choose" && <button type="button" onClick={compareSelected} disabled={selectedJobIds.length === 0}>生成对照</button>}
             {step === "run" && (
-              <p className="ticker" aria-live="polite">
+              <p className="ticker" role="status" aria-live="polite">
                 {TICKER.map((line, i) => (
                   <span key={line} data-on={i === tick ? "1" : "0"}>
                     {line}
@@ -402,6 +414,11 @@ export function DiagnoseForm() {
               再分析一次
             </button>
           </header>
+          {!report.direction && <nav className="report-tabs" aria-label="报告视图">
+            {([['conclusion', '结论', 'report-conclusion'], ['action', '行动', 'report-action'], ['evidence', '依据', 'report-evidence']] as const).map(([view, label, target]) => (
+              <button key={view} type="button" aria-pressed={reportView === view} onClick={() => jumpReport(view, target)}>{label}</button>
+            ))}
+          </nav>}
           {report.direction ? <section className="direction-report" aria-live="polite">
             <p className="verdict">{report.direction === "无法区分方向" ? "两个岗位当前没有可区分的优势，请比较各自换档条件。" : `当前更接近：${report.direction}`}</p>
             <div className="direction-cards">{(report.jobs || []).map((item) => <article key={item.job_id}><h2>{item.name}</h2><p>当前档位：{item.band}</p><p>必备覆盖：{item.required_coverage?.covered ?? 0}/{item.required_coverage?.total ?? 0}</p><p>岗位专属证据：{item.job_specific_evidence ?? 0} 项</p><p>可迁移工程能力：{item.transferable_engineering ?? 0} 项</p><p>岗位独有经历：{item.job_specific_experience ?? 0} 项</p><p>最小换档：{item.minimum_shift_skill_count ?? item.shift_set?.length ?? 0} 项</p><p>换档条件：{names(item.shift_set)}</p></article>)}</div>
@@ -410,7 +427,8 @@ export function DiagnoseForm() {
               <h2>简历</h2>
               <pre>{report.preview_text || preview || "（无预览）"}</pre>
             </aside>
-            <section>
+            <section className="report-content">
+              <div id="report-conclusion" className="report-view-panel report-conclusion">
               <h2>判断</h2>
               <p className="verdict">{report.groups.judge.summary}</p>
               <p>档位 {report.groups.judge.band}</p>
@@ -435,20 +453,18 @@ export function DiagnoseForm() {
               <p>目标岗 {report.groups.judge.job_status}</p>
               <p>换档条件 {names(report.groups.judge.shift_set)}</p>
 
-              {report.groups.explain.analysis && <section className="analysis-card" aria-label="AI 简历分析">
-                <h2>简历分析</h2>
-                <p className="verdict">{report.groups.explain.analysis.one_sentence}</p>
-                <p><b>优势：</b>{report.groups.explain.analysis.core_judgments?.advantage}</p>
-                <p><b>阻碍：</b>{report.groups.explain.analysis.core_judgments?.blocker}</p>
-                {(report.groups.explain.analysis.strengths || []).map((item) => <p key={item.text}>有依据：{item.quote || item.text}</p>)}
-                {(report.groups.explain.analysis.risks || []).map((item) => <p key={item.text}>待核对：{item.text}（{item.check_scope}）</p>)}
-                <details><summary>查看简历证据地图</summary><div className="evidence-map-list">{(report.groups.explain.analysis.evidence_map || []).map((item, index) => <div key={`${item.requirement_id}-${item.evidence_fragment_id || index}`}><b>{item.requirement_name || item.requirement_id}</b><span>{item.evidence_level || "未提及"}</span><small>{item.quote || "简历中未找到对应证据"}</small></div>)}</div></details>
-                {(report.groups.explain.analysis.rewrites || []).slice(0, 5).map((item, index) => <details key={`${item.original}-${index}`}><summary>表达建议 {index + 1}</summary><p>原文：{item.original}</p><p>问题：{item.problem}</p><p>建议：{item.suggestion}</p><p className="hint">仍需补充：{(item.facts_to_add || []).join("、") || "无需补充"}</p></details>)}
-                {(report.groups.explain.analysis.actions?.capability || []).map((item) => <p key={item.name}>能力轨：{item.name}。{item.why}</p>)}
-                {report.groups.explain.analysis.narrative && <details><summary>面试自我介绍草稿</summary><p>{report.groups.explain.analysis.narrative}</p></details>}
-              </section>}
+                {report.groups.explain.analysis && <section className="analysis-card" aria-label="AI 简历分析">
+                  <h2>简历分析</h2>
+                  <p className="verdict">{report.groups.explain.analysis.one_sentence}</p>
+                  <p><b>优势：</b>{report.groups.explain.analysis.core_judgments?.advantage}</p>
+                  <p><b>阻碍：</b>{report.groups.explain.analysis.core_judgments?.blocker}</p>
+                  {(report.groups.explain.analysis.strengths || []).map((item) => <p key={item.text}>有依据：{item.quote || item.text}</p>)}
+                  {(report.groups.explain.analysis.risks || []).map((item) => <p key={item.text}>待核对：{item.text}（{item.check_scope}）</p>)}
+                  {(report.groups.explain.analysis.rewrites || []).slice(0, 5).map((item, index) => <details key={`${item.original}-${index}`}><summary>表达建议 {index + 1}</summary><p>原文：{item.original}</p><p>问题：{item.problem}</p><p>建议：{item.suggestion}</p><p className="hint">仍需补充：{(item.facts_to_add || []).join("、") || "无需补充"}</p></details>)}
+                  {(report.groups.explain.analysis.actions?.capability || []).map((item) => <p key={item.name}>能力轨：{item.name}。{item.why}</p>)}
+                </section>}
 
-              <h2>定位</h2>
+                <h2>定位</h2>
               <div className="neighbors">
                 {report.groups.locate.neighbors.map((n) => (
                   <button
@@ -464,56 +480,47 @@ export function DiagnoseForm() {
               <MiniGraph />
               <p>已对齐 {names(report.groups.locate.hits)}</p>
 
-              <h2>行动</h2>
-              <section className="simulator" aria-labelledby="simulator-title">
-                <div className="row"><h3 id="simulator-title">换档模拟器</h3><span className="hint">假设结果，尚未被简历证明</span></div>
-                <div className="simulator-options">{report.groups.act.path.map((step) => <label key={step.skill_id}><input type="checkbox" checked={assumedSkills.includes(step.skill_id)} onChange={(event) => simulate(event.target.checked ? [...assumedSkills, step.skill_id] : assumedSkills.filter((id) => id !== step.skill_id))} />{step.name}</label>)}</div>
-                <p className="simulator-result" aria-live="polite">{simulation?.simulations?.[0] ? `当前${simulation.simulations[0].original_band} → 假设${simulation.simulations[0].simulated_band}。下一换档：${names(simulation.simulations[0].shift_set)}` : "选择一项正式缺口查看假设档位"}</p>
-                {(simulation?.migration_map || []).length > 0 && <div className="migration-map">{simulation?.migration_map?.map((item) => <article key={item.job_id}><b>{item.name}</b><span>{item.band} · 还需 {item.minimum_shift_skill_count} 项</span><small>共享：{item.shared_capabilities.join("、") || "无"}</small><small>独有：{item.unique_requirements.slice(0, 3).join("、") || "无"}</small></article>)}</div>}
-                {(simulation?.market_signal_radar || []).length > 0 && <div className="market-radar"><b>市场观察</b>{simulation?.market_signal_radar?.map((item) => <span key={item.skill_id}>{item.name} · 招聘样本 {Math.round(item.sample_occurrence_ratio * 100)}% · {item.company_count} 家公司</span>)}</div>}
-              </section>
-              <ol>
-                {report.groups.act.path.map((step) => (
-                  <li key={step.skill_id}>
-                    {step.name}（{step.why}）
-                    {step.excerpt ? ` · ${step.excerpt}` : ""}
-                    {step.url ? (
-                      <>
-                        {" "}
-                        <a href={step.url} rel="noreferrer" target="_blank">
-                          资源
-                        </a>
-                      </>
-                    ) : null}
-                  </li>
-                ))}
-              </ol>
-              <table className="ledger">
-                <thead>
-                  <tr>
-                    <th>技能点</th>
-                    <th>边</th>
-                    <th>覆盖</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {report.groups.act.ledger.map((row) => (
-                    <tr key={`${row.side}-${row.name}`}>
-                      <td>{row.name}</td>
-                      <td>{row.side === "bonus" ? "加分" : "必备"}</td>
-                      <td>{row.cover}</td>
+              </div>
+              <div id="report-action" className="report-view-panel report-action">
+                <h2>行动</h2>
+                <section className="simulator" aria-labelledby="simulator-title">
+                  <div className="row"><h3 id="simulator-title">换档模拟器</h3><span className="hint">假设结果，尚未被简历证明</span></div>
+                  <div className="simulator-options">{report.groups.act.path.map((step) => <label key={step.skill_id}><input type="checkbox" checked={assumedSkills.includes(step.skill_id)} onChange={(event) => simulate(event.target.checked ? [...assumedSkills, step.skill_id] : assumedSkills.filter((id) => id !== step.skill_id))} />{step.name}</label>)}</div>
+                  <p className="simulator-result" aria-live="polite">{simulation?.simulations?.[0] ? `当前${simulation.simulations[0].original_band} → 假设${simulation.simulations[0].simulated_band}。下一换档：${names(simulation.simulations[0].shift_set)}` : "选择一项正式缺口查看假设档位"}</p>
+                </section>
+                <ol className="action-list">
+                  {report.groups.act.path.map((step) => <li key={step.skill_id}><b>{step.name}</b>（{step.why}）{step.excerpt ? `。${step.excerpt}` : ""}{step.url ? <> <a href={step.url} rel="noreferrer" target="_blank">资源</a></> : null}</li>)}
+                </ol>
+                {report.groups.explain.analysis?.narrative && <details><summary>面试自我介绍草稿</summary><p>{report.groups.explain.analysis.narrative}</p></details>}
+              </div>
+              <div id="report-evidence" className="report-view-panel report-evidence">
+                <h2>依据</h2>
+                <p>{report.groups.explain.watching_copy}</p>
+                <p>观测中 {names(report.groups.explain.watching)}</p>
+                <p>半档 {names(report.groups.explain.half)}</p>
+                <p>已覆盖 {names(report.groups.explain.covered)}</p>
+                <p>简历多出来的 {names(report.groups.explain.extra)}</p>
+                <p>{report.groups.explain.notes}</p>
+                <table className="ledger">
+                  <thead>
+                    <tr>
+                      <th>技能点</th>
+                      <th>边</th>
+                      <th>覆盖</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              <h2>解释</h2>
-              <p>{report.groups.explain.watching_copy}</p>
-              <p>观测中 {names(report.groups.explain.watching)}</p>
-              <p>半档 {names(report.groups.explain.half)}</p>
-              <p>已覆盖 {names(report.groups.explain.covered)}</p>
-              <p>简历多出来的 {names(report.groups.explain.extra)}</p>
-              <p>{report.groups.explain.notes}</p>
+                  </thead>
+                  <tbody>
+                    {report.groups.act.ledger.map((row) => (
+                      <tr key={`${row.side}-${row.name}`}>
+                        <td>{row.name}</td>
+                        <td>{row.side === "bonus" ? "加分" : "必备"}</td>
+                        <td>{row.cover}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {report.groups.explain.analysis && <details><summary>查看简历证据地图</summary><div className="evidence-map-list">{(report.groups.explain.analysis.evidence_map || []).map((item, index) => <div key={`${item.requirement_id}-${item.evidence_fragment_id || index}`}><b>{item.requirement_name || item.requirement_id}</b><span>{item.evidence_level || "未提及"}</span><small>{item.quote || "简历中未找到对应证据"}</small></div>)}</div></details>}
+              </div>
             </section>
           </div>}
         </div>
