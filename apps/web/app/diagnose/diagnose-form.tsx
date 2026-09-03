@@ -367,7 +367,7 @@ export function DiagnoseForm() {
             {step === "correct" && <button type="button" onClick={() => pick(null)}>重新上传</button>}
             {step === "choose" && <button type="button" onClick={() => setStep("correct")}>返回校对</button>}
             {step === "upload" && <button type="submit" disabled={phase === "run"}>上传并解析</button>}
-            {step === "choose" && <button type="button" onClick={compareSelected} disabled={selectedJobIds.length === 0}>生成对照</button>}
+            {step === "choose" && <button type="button" onClick={compareSelected} disabled={selectedJobIds.length === 0}>开始对照</button>}
             {step === "run" && (
               <p className="ticker" role="status" aria-live="polite">
                 {TICKER.map((line, i) => (
