@@ -818,6 +818,25 @@ def admin_retract_evidence(evidence_id: str, body: RetractionBody, request: Requ
     return {"id": evidence_id, "retracted": True}
 
 
+@app.get("/admin/review/stats")
+def admin_review_stats(request: Request, x_admin_password: str | None = Header(default=None, alias="X-Admin-Password")):
+    """今日裁决按 review 计数；通过率只算人工 approved / (approved + rejected)，自动通过不计。"""
+    _require_admin(request, x_admin_password)
+    from datetime import datetime
+
+    since = datetime.now().astimezone().replace(hour=0, minute=0, second=0, microsecond=0)
+    stats = graph.review_stats(since=since.isoformat())
+    approved = stats["total"].get("approved", 0)
+    rejected = stats["total"].get("rejected", 0)
+    return {**stats, "pass_rate": approved / (approved + rejected) if approved + rejected else None}
+
+
+@app.get("/admin/skills/names")
+def admin_skill_names(request: Request, ids: str = Query(""), x_admin_password: str | None = Header(default=None, alias="X-Admin-Password")):
+    _require_admin(request, x_admin_password)
+    return graph.skill_names([part for part in ids.split(",") if part][:200])
+
+
 @app.get("/admin/ops/status")
 def admin_ops_status(request: Request, x_admin_password: str | None = Header(default=None, alias="X-Admin-Password")):
     _require_admin(request, x_admin_password)

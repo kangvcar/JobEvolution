@@ -586,6 +586,35 @@ def record_bulk_decision(*, batch_id: str, job_id: str, version_id: str, event_i
     return batch_id
 
 
+def review_stats(*, since: str) -> dict:
+    """人工与自动裁决计数。since 为当天零点的 ISO 时间，today 只算它之后的。"""
+    out = {"today": {}, "total": {}}
+    if _driver is None:
+        return out
+    with _driver.session() as session:
+        rows = session.run(
+            """
+            MATCH (d:ReviewDecision)
+            WITH d.review AS review, d.decided_at >= datetime($since) AS today
+            RETURN review, today, count(*) AS n
+            """,
+            since=since,
+        )
+        for row in rows:
+            out["total"][row["review"]] = out["total"].get(row["review"], 0) + row["n"]
+            if row["today"]:
+                out["today"][row["review"]] = row["n"]
+    return out
+
+
+def skill_names(ids: list[str]) -> dict[str, str]:
+    if _driver is None or not ids:
+        return {}
+    with _driver.session() as session:
+        rows = session.run("MATCH (s:Skill) WHERE s.id IN $ids RETURN s.id AS id, s.name AS name", ids=ids)
+        return {row["id"]: row["name"] for row in rows}
+
+
 def get_bulk_decision(batch_id: str) -> dict | None:
     if _driver is None:
         return None
