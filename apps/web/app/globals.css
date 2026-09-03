@@ -144,13 +144,18 @@ header[data-component="top"],
   display: inline-flex;
   align-items: center;
   color: var(--color-ink);
+  transition: opacity 150ms ease;
+}
+
+.brand-logo:hover {
+  opacity: 0.72;
 }
 
 .brand-logo .logo-svg {
+  /* 11 像素行 × 3px = 33px，保证每个像素为整数倍，边缘不糊 */
   height: 33px;
   width: auto;
   display: block;
-  image-rendering: pixelated;
 }
 
 /* OpenCode Desktop Navigation: links and CTA button inside single ul */
