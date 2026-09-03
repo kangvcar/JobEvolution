@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { cssVar } from "../graph-kit";
-import { FlowWorkbenchCanvas, FlowSkillData } from "./flow-canvas";
+import { FlowWorkbenchCanvas } from "./flow-canvas";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -104,7 +103,6 @@ const FALLBACK_DETAIL_LLM: JobDetail = {
 };
 
 export function Workbench() {
-  const canvas = useRef<HTMLDivElement>(null);
   const params = useSearchParams();
   const wanted = params.get("job") || params.get("job_id") || "";
   const wantedSkill = params.get("skill_id") || "";
@@ -120,15 +118,12 @@ export function Workbench() {
   const [detail, setDetail] = useState<JobDetail | null>(null);
   const [slice, setSlice] = useState<Slice | null>(null);
   const [evidenceTarget, setEvidenceTarget] = useState<EvidenceTarget | null>(null);
-  const [loading, setLoading] = useState(false);
   const [view, setView] = useState<"graph" | "list">("graph");
   const [inspectorOpen, setInspectorOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<"skills" | "definition" | "delta">("skills");
   const [pickerOpen, setPickerOpen] = useState(false);
 
   const opener = useRef<HTMLElement | null>(null);
-  const background = useRef<HTMLElement>(null);
-
   const closeEvidence = () => {
     setEvidenceTarget(null);
   };
@@ -206,10 +201,7 @@ export function Workbench() {
       setSlice(FALLBACK_SLICE_LLM);
       return;
     }
-    setDetail(null);
-    setSlice(null);
     setEvidenceTarget(null);
-    setLoading(true);
     Promise.all([
       fetch(`${API}/jobs/${encodeURIComponent(selected)}`).then((r) => (r.ok ? r.json() : null)),
       fetch(`${API}/graph/jobs/${encodeURIComponent(selected)}`).then((r) => (r.ok ? r.json() : null)),
@@ -217,12 +209,10 @@ export function Workbench() {
       .then(([job, graph]) => {
         setDetail(job || (selected === "llm-app" ? FALLBACK_DETAIL_LLM : current ? { id: current.id, name: current.name, status: current.status, definition: [{ text: "岗位核心标准由国家技术工程体系持续追踪更新中。" }], sources: ["行业头部科技企业"] } : FALLBACK_DETAIL_LLM));
         setSlice(graph || FALLBACK_SLICE_LLM);
-        setLoading(false);
       })
       .catch(() => {
         setDetail(FALLBACK_DETAIL_LLM);
         setSlice(FALLBACK_SLICE_LLM);
-        setLoading(false);
       });
   }, [selected, current]);
 
@@ -272,7 +262,7 @@ export function Workbench() {
 
   return (
     <>
-      <main id="main" ref={background} className="graph-studio">
+      <main id="main" className="graph-studio">
         {/* Studio Dual-Tier Navigation & Control Masthead */}
         <header className="studio-topbar-container">
           {/* Tier 1: Workspace Breadcrumb & Global View Actions */}

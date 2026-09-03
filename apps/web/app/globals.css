@@ -1192,14 +1192,6 @@ header[data-component="top"],
   color: var(--color-ink);
 }
 
-.studio-topbar-left,
-.studio-topbar-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: nowrap;
-}
-
 /* Active Job Selector Pill & Dropdown */
 .job-picker-anchor {
   position: relative;
@@ -2091,40 +2083,7 @@ header[data-component="top"],
   color: var(--color-body);
 }
 
-/* ==========================================================================
-   Modern Slide-over Modal for Evidence
-   ========================================================================== */
-.evidence-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 0, 0, 0.45);
-  backdrop-filter: blur(4px);
-  z-index: 300;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.evidence-slideover-card {
-  width: min(540px, 100vw);
-  height: 100%;
-  background: var(--color-canvas);
-  border-left: 1px solid var(--color-rule);
-  padding: 32px 28px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  box-shadow: -12px 0 40px rgba(0, 0, 0, 0.15);
-  overflow-y: auto;
-}
-
-.slideover-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--color-rule);
-  padding-bottom: 16px;
-}
-
+/* Evidence details */
 .evidence-eyebrow {
   font-size: 11.5px;
   text-transform: uppercase;
@@ -2132,51 +2091,6 @@ header[data-component="top"],
   letter-spacing: 0.04em;
   display: block;
   margin-bottom: 4px;
-}
-
-.slideover-header h3 {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--color-ink);
-}
-
-.close-slideover-btn {
-  background: transparent;
-  border: none;
-  font-size: 16px;
-  color: var(--color-mute);
-  padding: 4px 8px;
-}
-
-.slideover-body {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  flex-grow: 1;
-}
-
-.skill-meta-ribbon {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-rule);
-  padding: 12px 14px;
-  border-radius: 4px;
-}
-
-.skill-meta-ribbon .meta-k {
-  font-size: 11px;
-  color: var(--color-mute);
-  display: block;
-}
-
-.skill-meta-ribbon .meta-v {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-ink);
-  margin-top: 2px;
-  display: block;
 }
 
 .evidence-timeline {
@@ -2218,34 +2132,10 @@ header[data-component="top"],
   color: var(--color-mute);
 }
 
-.slideover-footer {
-  border-top: 1px solid var(--color-rule);
-  padding-top: 16px;
-}
-
-.done-btn {
-  width: 100%;
-  height: 40px;
-  background: var(--color-ink);
-  color: var(--color-canvas);
-  border: 1px solid var(--color-ink);
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 600;
-}
-
 @media (max-width: 1024px) {
-  .studio-inspector-card {
-    position: static;
-    width: 100%;
-    margin-top: 16px;
-  }
   .studio-viewport {
     flex-direction: column;
     min-height: auto;
-  }
-  .studio-canvas-container {
-    height: 500px;
   }
   .matrix-grid {
     grid-template-columns: 1fr;
@@ -3055,14 +2945,6 @@ header[data-component="top"],
    Responsive Adaptations for Subpages
    ========================================================================== */
 @media (max-width: 1024px) {
-  .graph-page {
-    grid-template-columns: 1fr;
-  }
-  .graph-rail,
-  .graph-detail {
-    border: none;
-    border-bottom: 1px solid var(--color-rule);
-  }
   .disc-board {
     grid-template-columns: 1fr;
   }
@@ -3724,5 +3606,3 @@ header[data-component="top"],
   bottom: 60px !important;
   overflow: hidden;
 }
-
-
