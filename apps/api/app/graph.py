@@ -483,7 +483,7 @@ def list_requires(job_id: str) -> list[dict]:
     return out
 
 
-def upsert_event(event: dict, job_id: str | None) -> None:
+def upsert_event(event: dict, job_id: str | None, *, create_proposal: bool = True) -> None:
     if _driver is None:
         return
     payload = event.get("payload") or {}
@@ -503,19 +503,20 @@ def upsert_event(event: dict, job_id: str | None) -> None:
             review=event.get("review") or "pending",
             payload=payload,
         )
-        session.run(
-            """
-            MERGE (p:ReviewProposal {id: $id})
-            ON CREATE SET p.event_id = $id, p.payload = $payload, p.created_at = datetime($at),
-                          p.model = $model, p.prompt = $prompt, p.confidence = $confidence
-            WITH p
-            MATCH (e:EvolutionEvent {id: $id})
-            MERGE (p)-[:FOR_EVENT]->(e)
-            """,
-            id=event["id"], payload=payload, at=event.get("at") or datetime.now().isoformat(),
-            model=event.get("model") or "", prompt=event.get("prompt") or "",
-            confidence=float(event.get("confidence") or 0),
-        )
+        if create_proposal:
+            session.run(
+                """
+                MERGE (p:ReviewProposal {id: $id})
+                ON CREATE SET p.event_id = $id, p.payload = $payload, p.created_at = datetime($at),
+                              p.model = $model, p.prompt = $prompt, p.confidence = $confidence
+                WITH p
+                MATCH (e:EvolutionEvent {id: $id})
+                MERGE (p)-[:FOR_EVENT]->(e)
+                """,
+                id=event["id"], payload=payload, at=event.get("at") or datetime.now().isoformat(),
+                model=event.get("model") or "", prompt=event.get("prompt") or "",
+                confidence=float(event.get("confidence") or 0),
+            )
         if job_id:
             session.run(
                 """

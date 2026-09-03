@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import sys
+import time
 from pathlib import Path
 
 from app.collectors.controller import run_ingest
@@ -28,9 +29,11 @@ def default_data_dir() -> Path:
 
 
 class _EvidenceBatch:
-    def __init__(self, graph, size: int = 250):
+    def __init__(self, graph, size: int = 32, interval: float = 1.0):
         self._graph = graph
         self._size = size
+        self._interval = interval
+        self._next_flush = time.monotonic() + interval
         self._buf: list[dict] = []
 
     def __call__(self, snapshot: dict) -> None:
@@ -44,7 +47,7 @@ class _EvidenceBatch:
                 "simhash": snapshot["simhash"],
             }
         )
-        if len(self._buf) >= self._size:
+        if len(self._buf) >= self._size or time.monotonic() >= self._next_flush:
             self.flush()
 
     def drop(self, evidence_id: str) -> None:
@@ -56,6 +59,7 @@ class _EvidenceBatch:
             return
         self._graph.upsert_evidence_many(self._buf)
         self._buf.clear()
+        self._next_flush = time.monotonic() + self._interval
 
 
 def _evidence_writer():

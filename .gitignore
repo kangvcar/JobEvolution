@@ -21,5 +21,8 @@ data/collect.lock
 data/official-only/jd/*.json
 data/official-only/jd/*.cache
 data/official-only/collect.lock
+data/official-only/collect.checkpoint.json
 data/eval-official-only/*.jsonl.bak
+data/eval-official-only/draft.checkpoint.json
 data/eval-official-only/out/*
+node_modules/

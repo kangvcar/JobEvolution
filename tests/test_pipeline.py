@@ -235,6 +235,30 @@ def test_extract_cache_hits_on_second_run(tmp_path):
     graph_clean(suffix)
 
 
+def test_extract_retries_transient_failure_and_records_checkpoint(tmp_path):
+    suffix = uuid.uuid4().hex[:8]
+    snapshots = _jd_snaps(tmp_path, suffix, excerpt="熟悉 FastAPI", confidence=0.9, companies=("甲",))
+    calls = {"n": 0}
+    stable = _extract_fn("熟悉 FastAPI", 0.9, "requirement")
+
+    def flaky(messages):
+        calls["n"] += 1
+        if calls["n"] < 3:
+            raise ValueError("temporary provider failure")
+        return stable(messages)
+
+    events = run_extract_and_gate(snapshots, complete_json=flaky, workers=1)
+    assert calls["n"] == 3
+    assert not [event for event in events if event.get("kind") == "extract_failed"]
+    with graph._driver.session() as session:
+        row = session.run(
+            "MATCH (e:EvolutionEvent {kind: 'extract_completed'}) WHERE e.payload CONTAINS $id RETURN count(e) AS n",
+            id=snapshots[0]["id"],
+        ).single()
+    assert row["n"] == 1
+    graph_clean(suffix)
+
+
 def test_gate_restores_evidence_for_fresh_graph(tmp_path):
     suffix = uuid.uuid4().hex[:8]
     snapshots = _jd_snaps(tmp_path, suffix, excerpt="熟悉 FastAPI", confidence=0.9)

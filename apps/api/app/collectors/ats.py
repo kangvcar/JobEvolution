@@ -14,7 +14,7 @@ import urllib.request
 from datetime import datetime
 from pathlib import Path
 
-from app.collectors.controller import ingest_records, parse_observed_at
+from app.collectors.controller import ingest_records, parse_observed_at, write_json_atomic
 from app.collectors.domain import classify_domain
 from app.collectors.simhash import format_simhash, simhash64
 from app.collectors.sink import (
@@ -35,6 +35,7 @@ SEARCH_WORDS = ("大模型", "Agent", "智能体", "算法", "机器学习", "�
 FEISHU_PATHS = ("index", "experienced", "fte", "social", "recruitment", "campus")
 MAX_NEW = 200
 PAGE_SLEEP = 1.5
+CHECKPOINT_FILE = "collect.checkpoint.json"
 _INTERN = re.compile(r"实习|intern", re.I)
 _TAG = re.compile(r"<[^>]+>")
 _SPACE = re.compile(r"\s+")
@@ -95,6 +96,38 @@ DEFAULT_PORTALS = [
         "enabled": True,
         "builtin": False,
     },
+    {
+        "key": "lixiang",
+        "type": "feishu",
+        "name": "理想汽车",
+        "host": "li.jobs.feishu.cn",
+        "enabled": True,
+        "builtin": False,
+    },
+    {
+        "key": "xiaopeng",
+        "type": "feishu",
+        "name": "小鹏汽车",
+        "host": "xiaopeng.jobs.feishu.cn",
+        "enabled": True,
+        "builtin": False,
+    },
+    {
+        "key": "xiaomi",
+        "type": "feishu",
+        "name": "小米",
+        "host": "xiaomi.jobs.f.mioffice.cn",
+        "enabled": True,
+        "builtin": False,
+    },
+    {
+        "key": "unitree",
+        "type": "beisen",
+        "name": "宇树科技",
+        "host": "unitree.zhiye.com",
+        "enabled": True,
+        "builtin": False,
+    },
 ]
 
 
@@ -104,6 +137,38 @@ def portals_path(data_dir: Path) -> Path:
 
 def lock_path(data_dir: Path) -> Path:
     return Path(data_dir) / "collect.lock"
+
+
+def checkpoint_path(data_dir: Path) -> Path:
+    return Path(data_dir) / CHECKPOINT_FILE
+
+
+def _new_checkpoint(portals: list[dict]) -> dict:
+    return {
+        "version": 1,
+        "run_id": str(time.time_ns()),
+        "status": "running",
+        "started_at": datetime.now().astimezone().isoformat(),
+        "portals": {row.get("key") or "": {} for row in portals},
+    }
+
+
+def _load_checkpoint(data_dir: Path, portals: list[dict]) -> tuple[dict, bool]:
+    path = checkpoint_path(data_dir)
+    try:
+        state = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        state = None
+    if not isinstance(state, dict) or state.get("status") != "running":
+        return _new_checkpoint(portals), False
+    state.setdefault("portals", {})
+    return state, True
+
+
+def _flush_evidence(on_evidence) -> None:
+    flush = getattr(on_evidence, "flush", None)
+    if callable(flush):
+        flush()
 
 
 def load_portals(data_dir: Path) -> list[dict]:
@@ -145,7 +210,7 @@ def validate_portals(portals: list[dict]) -> None:
     if enabled_count(portals) > 20:
         raise ValueError("at most 20 enabled portals")
     for row in portals:
-        if row.get("type") == "feishu" and not valid_host(row.get("host") or ""):
+        if row.get("type") in ("feishu", "beisen") and not valid_host(row.get("host") or ""):
             raise ValueError("invalid host")
 
 
@@ -507,6 +572,72 @@ def fetch_feishu(host: str, company: str, http=http_json, sleep=_sleep, *, probe
     return out
 
 
+def fetch_beisen(host: str, company: str, http=http_json, sleep=_sleep, is_new=lambda _: True) -> list[RawRecord]:
+    if not valid_host(host):
+        raise ValueError("invalid host")
+    page = 1
+    page_size = 50
+    out: list[RawRecord] = []
+    while len(out) < MAX_NEW:
+        data = http(
+            f"https://{host}/api/Jobad/GetJobAdPageList",
+            method="POST",
+            body={"pageIndex": page, "pageSize": page_size},
+            headers={"Origin": f"https://{host}", "Referer": f"https://{host}/jobs"},
+            timeout=25,
+        )
+        status = data.get("Code", data.get("code")) if isinstance(data, dict) else None
+        if status not in (None, 0, 200, "200"):
+            raise ValueError(f"beisen code {status}")
+        posts = (data.get("Data") or []) if isinstance(data, dict) else []
+        if not isinstance(posts, list) or not posts:
+            break
+        for post in posts:
+            title = post.get("JobAdName") or post.get("name") or ""
+            jid = str(post.get("JobAdId") or post.get("Id") or "")
+            if not jid or not keep_title(title, from_search=True):
+                continue
+            body = strip_html("\n\n".join(x for x in (post.get("Duty") or "", post.get("Require") or "") if x))
+            candidate = RawRecord(
+                company=company,
+                title=title,
+                body=body,
+                published_at="",
+                city="",
+                channel=host,
+                job_id=jid,
+                source="ats",
+            )
+            if not body or not is_new(candidate):
+                continue
+            locations = post.get("LocNames") or []
+            cities = ", ".join(
+                (item.get("Name") or item.get("name") or "") if isinstance(item, dict) else str(item)
+                for item in locations
+            )
+            out.append(
+                RawRecord(
+                    company=company,
+                    title=title,
+                    body=body,
+                    published_at=portal_time(post.get("PostDate")),
+                    city=cities,
+                    channel=host,
+                    job_id=jid,
+                    source="ats",
+                    domain=domain_for(title),
+                    url=f"https://{host}/jobad/{jid}",
+                )
+            )
+            if len(out) >= MAX_NEW:
+                break
+        if len(posts) < page_size:
+            break
+        page += 1
+        sleep()
+    return out
+
+
 def probe_feishu(host: str, http=http_json) -> None:
     rows = fetch_feishu(host, "probe", http=http, sleep=lambda: None, probe=True)
     if not rows:
@@ -521,17 +652,29 @@ def fetch_portal(portal: dict, http=http_json, sleep=_sleep, is_new=lambda _: Tr
         return fetch_bytedance(http=http, sleep=sleep, is_new=is_new)
     if kind == "feishu":
         return fetch_feishu(portal.get("host") or "", portal.get("name") or portal.get("key") or "飞书", http=http, sleep=sleep, is_new=is_new)
+    if kind == "beisen":
+        return fetch_beisen(portal.get("host") or "", portal.get("name") or portal.get("key") or "北森", http=http, sleep=sleep, is_new=is_new)
     raise ValueError(f"unsupported type {kind}")
 
 
 def run_official(*, data_dir: Path, out_dir: Path, redis, http=http_json, sleep=_sleep, on_evidence=None) -> dict:
     portals = [row for row in load_portals(data_dir) if row.get("enabled")]
     validate_portals(portals)
+    checkpoint, resumed = _load_checkpoint(data_dir, portals)
+    write_json_atomic(checkpoint_path(data_dir), checkpoint)
     emit_collect_event(redis, EVENT_COLLECT_STARTED, {"portals": [row.get("key") for row in portals]})
     portal_stats = []
     any_ok = False
     for portal in portals:
         key = portal.get("key") or ""
+        previous = checkpoint.get("portals", {}).get(key) or {}
+        if resumed and previous.get("status") == "done":
+            stat = previous.get("stats") or {"key": key, "read": 0, "ingested": 0, "error": ""}
+            portal_stats.append(stat)
+            any_ok = True
+            continue
+        checkpoint["current"] = key
+        write_json_atomic(checkpoint_path(data_dir), checkpoint)
         try:
             def is_new(record: RawRecord) -> bool:
                 if not record.job_id:
@@ -542,15 +685,24 @@ def run_official(*, data_dir: Path, out_dir: Path, redis, http=http_json, sleep=
             records = fetch_portal(portal, http=http, sleep=sleep, is_new=is_new)
             written = ingest_records(records, out_dir=out_dir, redis=redis, on_evidence=on_evidence)
             any_ok = True
-            portal_stats.append({"key": key, "read": len(records), **written, "error": ""})
+            stat = {"key": key, "read": len(records), **written, "error": ""}
+            portal_stats.append(stat)
+            checkpoint["portals"][key] = {"status": "done", "stats": stat}
         except Exception as exc:
             emit_collect_event(
                 redis,
                 EVENT_COLLECT_PORTAL_FAILED,
                 {"key": key, "error": str(exc)[:300]},
             )
-            portal_stats.append(
-                {"key": key, "read": 0, "ingested": 0, "skipped_fingerprint": 0, "skipped_near_dup": 0, "error": str(exc)[:300]}
-            )
+            stat = {"key": key, "read": 0, "ingested": 0, "skipped_fingerprint": 0, "skipped_near_dup": 0, "error": str(exc)[:300]}
+            portal_stats.append(stat)
+            checkpoint["portals"][key] = {"status": "failed", "stats": stat}
+        finally:
+            _flush_evidence(on_evidence)
+            write_json_atomic(checkpoint_path(data_dir), checkpoint)
+    checkpoint["status"] = "completed"
+    checkpoint["current"] = ""
+    checkpoint["finished_at"] = datetime.now().astimezone().isoformat()
+    write_json_atomic(checkpoint_path(data_dir), checkpoint)
     emit_collect_event(redis, EVENT_COLLECT_FINISHED, {"portals": portal_stats})
-    return {"ok": any_ok, "portals": portal_stats}
+    return {"ok": any_ok, "resumed": resumed, "portals": portal_stats}

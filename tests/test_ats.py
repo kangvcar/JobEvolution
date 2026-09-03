@@ -1,7 +1,10 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from app.collectors.ats import (
+    fetch_beisen,
     fetch_tencent,
     keep_title,
     load_portals,
@@ -76,6 +79,34 @@ def test_tencent_fetches_detail_after_title_filter():
     assert "Python" in rows[0].body
     assert any("ByPostId" in url for url in calls)
     assert not any("postId=2" in url for url in calls)
+
+
+def test_beisen_fetches_public_job_json():
+    calls = []
+
+    def http(url, **kwargs):
+        calls.append((url, kwargs))
+        return {
+            "Code": 200,
+            "Count": 1,
+            "Data": [
+                {
+                    "JobAdId": 511174092,
+                    "JobAdName": "视觉大模型算法工程师",
+                    "Duty": "负责机器人视觉算法",
+                    "Require": "熟悉 Python、PyTorch",
+                    "LocNames": ["杭州"],
+                    "PostDate": "2026-08-01T00:00:00",
+                }
+            ],
+        }
+
+    rows = fetch_beisen("unitree.zhiye.com", "宇树科技", http=http, sleep=lambda: None)
+    assert len(rows) == 1
+    assert rows[0].job_id == "511174092"
+    assert rows[0].domain == "ai"
+    assert "PyTorch" in rows[0].body
+    assert calls[0][0].endswith("/api/Jobad/GetJobAdPageList")
 
 
 def test_ats_new_body_writes_second_snapshot(tmp_path):
@@ -203,6 +234,41 @@ def test_run_official_emits_collect_events(tmp_path):
     assert "collect_portal_failed" in types
     assert stats["ok"] is True
     assert any(row["key"] == "tencent" and row["ingested"] == 1 for row in stats["portals"])
+    checkpoint = json.loads((tmp_path / "collect.checkpoint.json").read_text(encoding="utf-8"))
+    assert checkpoint["status"] == "completed"
+
+
+def test_official_checkpoint_resumes_finished_portal(tmp_path, monkeypatch):
+    (tmp_path / "portals.json").write_text(
+        json.dumps(
+            {
+                "portals": [
+                    {"key": "first", "type": "fake", "name": "一", "enabled": True},
+                    {"key": "second", "type": "fake", "name": "二", "enabled": True},
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    calls = []
+    interrupted = {"value": False}
+
+    def fake_fetch(portal, **kwargs):
+        calls.append(portal["key"])
+        if portal["key"] == "second" and not interrupted["value"]:
+            interrupted["value"] = True
+            raise KeyboardInterrupt
+        return []
+
+    monkeypatch.setattr("app.collectors.ats.fetch_portal", fake_fetch)
+    with pytest.raises(KeyboardInterrupt):
+        run_official(data_dir=tmp_path, out_dir=tmp_path / "jd", redis=MemoryRedis(), sleep=lambda: None)
+    checkpoint = json.loads((tmp_path / "collect.checkpoint.json").read_text(encoding="utf-8"))
+    assert checkpoint["status"] == "running"
+    run = run_official(data_dir=tmp_path, out_dir=tmp_path / "jd", redis=MemoryRedis(), sleep=lambda: None)
+    assert run["resumed"] is True
+    assert calls == ["first", "second", "second"]
+    assert json.loads((tmp_path / "collect.checkpoint.json").read_text(encoding="utf-8"))["status"] == "completed"
 
 
 def test_load_portals_writes_defaults(tmp_path):

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from collections import Counter
 from datetime import datetime, timedelta
@@ -179,6 +180,26 @@ def _snapshot_dest(out_dir: Path, fingerprint: str) -> Path:
     return Path(out_dir) / f"{snapshot_id(fingerprint)}.json"
 
 
+def write_json_atomic(path: Path, payload: dict) -> None:
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    with tmp.open("w", encoding="utf-8") as handle:
+        json.dump(payload, handle, ensure_ascii=False)
+        handle.write("\n")
+        handle.flush()
+        os.fsync(handle.fileno())
+    os.replace(tmp, path)
+
+
+def _snapshot_relpath(out_dir: Path, snapshot_name: str) -> str:
+    out_dir = Path(out_dir)
+    for parent in (out_dir, *out_dir.parents):
+        if parent.name == "data":
+            return (Path("data") / out_dir.relative_to(parent) / snapshot_name).as_posix()
+    return f"data/jd/{snapshot_name}"
+
+
 def _index_meta(snapshot: dict) -> dict:
     return {
         "id": snapshot["id"],
@@ -223,7 +244,7 @@ def _replace_snapshot(
 
 def _write_snapshot(out_dir: Path, record: RawRecord, body_hash: int) -> dict:
     sid = snapshot_id(record.fingerprint)
-    relpath = f"data/jd/{sid}.json"
+    relpath = _snapshot_relpath(out_dir, f"{sid}.json")
     company = normalize_company(record.company)
     doc = {
         "id": sid,
@@ -244,9 +265,7 @@ def _write_snapshot(out_dir: Path, record: RawRecord, body_hash: int) -> dict:
         "url": record.url,
     }
     dest = Path(out_dir) / f"{sid}.json"
-    tmp = dest.with_suffix(".json.tmp")
-    tmp.write_text(json.dumps(doc, ensure_ascii=False), encoding="utf-8")
-    tmp.replace(dest)
+    write_json_atomic(dest, doc)
     return doc
 
 

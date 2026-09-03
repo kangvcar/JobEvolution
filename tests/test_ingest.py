@@ -214,6 +214,13 @@ def test_same_fingerprint_skipped_on_second_run(tmp_path):
     assert len(list_snapshot_paths(out_dir)) == first["paths"]
 
 
+def test_snapshot_path_matches_isolated_output(tmp_path):
+    out_dir = tmp_path / "data" / "official-only" / "jd"
+    run_ingest(data_dir=FIXTURES, out_dir=out_dir, redis=MemoryRedis())
+    snapshot = json.loads(next(iter(list_snapshot_paths(out_dir))).read_text(encoding="utf-8"))
+    assert snapshot["path"].startswith("data/official-only/jd/")
+
+
 def test_simhash_near_dup_keeps_earliest_and_skips_independent_source(tmp_path):
     stats, out_dir, _ = _ingest(tmp_path)
     snapshots = [

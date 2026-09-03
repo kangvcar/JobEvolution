@@ -7,6 +7,10 @@
     {"key": "moonshot", "type": "feishu", "name": "月之暗面", "host": "moonshot.jobs.feishu.cn", "enabled": false, "builtin": false},
     {"key": "nio", "type": "feishu", "name": "蔚来", "host": "nio.jobs.feishu.cn", "enabled": true, "builtin": false},
     {"key": "poizon", "type": "feishu", "name": "得物", "host": "poizon.jobs.feishu.cn", "enabled": true, "builtin": false},
-    {"key": "bambulab", "type": "feishu", "name": "拓竹科技", "host": "bambulab.jobs.feishu.cn", "enabled": true, "builtin": false}
+    {"key": "bambulab", "type": "feishu", "name": "拓竹科技", "host": "bambulab.jobs.feishu.cn", "enabled": true, "builtin": false},
+    {"key": "lixiang", "type": "feishu", "name": "理想汽车", "host": "li.jobs.feishu.cn", "enabled": true, "builtin": false},
+    {"key": "xiaopeng", "type": "feishu", "name": "小鹏汽车", "host": "xiaopeng.jobs.feishu.cn", "enabled": true, "builtin": false},
+    {"key": "xiaomi", "type": "feishu", "name": "小米", "host": "xiaomi.jobs.f.mioffice.cn", "enabled": true, "builtin": false},
+    {"key": "unitree", "type": "beisen", "name": "宇树科技", "host": "unitree.zhiye.com", "enabled": true, "builtin": false}
   ]
 }

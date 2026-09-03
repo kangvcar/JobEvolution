@@ -4,13 +4,15 @@ import hashlib
 import json
 import os
 import re
+import time
 from collections import Counter, defaultdict
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 
 from pydantic import ValidationError
 
+from app.collectors.controller import write_json_atomic
 from app.collectors.normalize import is_channel_name, normalize_company
 from app.collectors.sink import STREAM_KEY, connect_redis
 from app.llm.embed import embed
@@ -19,6 +21,7 @@ from app.pipeline.constants import (
     COVERAGE_THRESHOLD,
     DISCOVER_MIN_CLUSTER,
     EXTRACT_CACHE_VERSION,
+    EXTRACT_ATTEMPTS,
     EXTRACT_WORKERS,
     PASSTHROUGH_KEY,
     SKILL_IRON_CATEGORY,
@@ -183,6 +186,29 @@ def enqueue_extract_failure(snapshot: dict, error: str) -> dict:
     return event
 
 
+def record_extract_checkpoint(snapshot: dict, parsed: ExtractedJd) -> dict:
+    from app import graph
+
+    payload = {
+        "kind": "extract_completed",
+        "path": snapshot.get("path"),
+        "evidence_id": snapshot.get("id"),
+        "job_name": parsed.job_name,
+        "skill_count": len(parsed.skills),
+        "cache_version": EXTRACT_CACHE_VERSION,
+    }
+    event = {
+        "id": _event_id(payload),
+        "kind": "extract_completed",
+        "at": datetime.now(timezone.utc).isoformat(),
+        "confidence": 1.0,
+        "review": "completed",
+        "payload": payload,
+    }
+    graph.upsert_event(event, job_id=None, create_proposal=False)
+    return event
+
+
 def apply_event(event_id: str, *, review: str, payload: dict | None = None) -> dict:
     from app import graph
 
@@ -241,12 +267,9 @@ def _store_cached_extract(snap: dict, parsed: ExtractedJd) -> None:
     if cache_file is None:
         return
     try:
-        cache_file.write_text(
-            json.dumps(
-                {"v": EXTRACT_CACHE_VERSION, "extracted": parsed.model_dump()},
-                ensure_ascii=False,
-            ),
-            encoding="utf-8",
+        write_json_atomic(
+            cache_file,
+            {"v": EXTRACT_CACHE_VERSION, "extracted": parsed.model_dump()},
         )
     except OSError:
         pass  # ponytail: 缓存尽力而为，写失败只损失一次加速，重跑即自愈
@@ -274,29 +297,41 @@ def run_extract_and_gate(
             cached = _load_cached_extract(snap)
             if cached is not None:
                 return ("ok", snap, cached)
-        try:
-            parsed = parse_extracted(complete, snapshot=snap)
-            if source_recall:
-                parsed = augment_extracted_skills(parsed, snap.get("body") or "", index)
-        except ValueError as exc:
-            return ("fail", snap, str(exc))
+        last_error = "extract failed"
+        for attempt in range(EXTRACT_ATTEMPTS):
+            try:
+                parsed = parse_extracted(complete, snapshot=snap)
+                if source_recall:
+                    parsed = augment_extracted_skills(parsed, snap.get("body") or "", index)
+                break
+            except Exception as exc:
+                last_error = str(exc)[:300] or type(exc).__name__
+                if attempt + 1 < EXTRACT_ATTEMPTS:
+                    time.sleep(0.25 * (attempt + 1))
+        else:
+            return ("fail", snap, last_error)
         if cache:
             _store_cached_extract(snap, parsed)
         return ("ok", snap, parsed)
 
-    if n_workers == 1:
-        extracted = [_extract_one(snap) for snap in snapshots]
-    else:
-        with ThreadPoolExecutor(max_workers=n_workers) as pool:
-            extracted = list(pool.map(_extract_one, snapshots))
-
     extracted_rows = []
     events: list[dict] = []
-    for status, snap, payload in extracted:
+    def consume(result) -> None:
+        status, snap, payload = result
         if status == "fail":
             events.append(enqueue_extract_failure(snap, payload))
-            continue
-        extracted_rows.append((snap, payload))
+        else:
+            record_extract_checkpoint(snap, payload)
+            extracted_rows.append((snap, payload))
+
+    if n_workers == 1:
+        for snap in snapshots:
+            consume(_extract_one(snap))
+    else:
+        with ThreadPoolExecutor(max_workers=n_workers) as pool:
+            futures = {pool.submit(_extract_one, snap): snap for snap in snapshots}
+            for future in as_completed(futures):
+                consume(future.result())
 
     aligned: dict[str, list] = defaultdict(list)
     unmatched: dict[str, list] = defaultdict(list)
