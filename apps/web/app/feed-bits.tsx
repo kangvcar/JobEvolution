@@ -5,6 +5,7 @@ type EventRow = { at: string; text: string; review?: string };
 export function kindLabel(kind: string) {
   if (kind === "requires_add") return "岗位要求新增";
   if (kind === "job_status") return "岗位状态流转";
+  if (kind === "skill_merge_proposal") return "技能合并提案";
   if (kind === "extract_failed") return "抽取失败";
   return kind;
 }

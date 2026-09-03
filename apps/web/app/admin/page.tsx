@@ -1,25 +1,10 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { kindLabel } from "../feed-bits";
+import QueueBoard, { QueueEvent } from "./queue-board";
+import { Portal, PortalTable } from "./portal-table";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-
-type QueueEvent = {
-  id: string;
-  kind: string;
-  at: string;
-  confidence: number;
-  review?: "pending" | "auto_passed";
-  payload?: {
-    job_name?: string;
-    skill_name?: string;
-    excerpt?: string;
-    error?: string;
-    layer?: "high" | "mid" | "low";
-    [key: string]: unknown;
-  };
-};
 
 type AdjRow = {
   id: string;
@@ -39,9 +24,11 @@ type AdjState = {
   draft_missing?: boolean;
 };
 
-function reviewLabel(review: QueueEvent["review"]) {
-  return review === "auto_passed" ? "自动通过" : "待审";
-}
+type OpsEntry = { status: string; at?: number };
+type Ops = { status: Record<string, OpsEntry>; stale: boolean };
+type FeedLine = { at: string; type: string; text: string };
+
+const OPS_LABEL: Record<string, string> = { pipeline: "管线", backup: "备份", publish: "发布" };
 
 function highlight(text: string, terms: string[]) {
   const clean = [...new Set(terms.filter((t) => t && t.length > 1))].map((t) =>
@@ -53,22 +40,42 @@ function highlight(text: string, terms: string[]) {
   );
 }
 
+function ago(at?: number) {
+  if (!at) return "无记录";
+  const hours = Math.floor((Date.now() / 1000 - at) / 3600);
+  return hours < 1 ? "1 小时内" : hours < 48 ? `${hours} 小时前` : `${Math.floor(hours / 24)} 天前`;
+}
+
+// 把采集事件的 payload 压成一行人话；字段来自 collectors/sink.py。
+function feedText(type: string, payload: unknown) {
+  if (typeof payload !== "object" || payload === null) return String(payload ?? "");
+  const p = payload as Record<string, unknown>;
+  if (type === "jd_ingested") return `${p.company ?? ""} · ${p.title ?? ""}`;
+  if (type === "collect_portal_failed") return `${p.key ?? ""} ${p.error ?? ""}`;
+  if (type === "collect_started" && Array.isArray(p.portals)) return `${p.portals.length} 个门户`;
+  if (type === "collect_finished" && Array.isArray(p.portals)) {
+    const stats = p.portals as { ingested?: number; error?: string }[];
+    const ingested = stats.reduce((n, s) => n + (s.ingested || 0), 0);
+    const failed = stats.filter((s) => s.error).length;
+    return `入库 ${ingested} 条${failed ? `，${failed} 个门户失败` : ""}`;
+  }
+  return JSON.stringify(p);
+}
+
 export default function AdminPage() {
   const [password, setPassword] = useState("");
   const [queue, setQueue] = useState<QueueEvent[] | null>(null);
   const [passthrough, setPassthrough] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
-  const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [tab, setTab] = useState<"queue" | "gold" | "collect">("queue");
-  const [portals, setPortals] = useState<{ key: string; type: string; name: string; host?: string; enabled: boolean; builtin?: boolean }[] | null>(null);
+  const [portals, setPortals] = useState<Portal[] | null>(null);
   const [collectBusy, setCollectBusy] = useState(false);
-  const [feed, setFeed] = useState<string[]>([]);
-  const [addName, setAddName] = useState("");
-  const [addHost, setAddHost] = useState("");
+  const [feed, setFeed] = useState<FeedLine[]>([]);
   const streamRef = useRef<EventSource | null>(null);
   const [adjFile, setAdjFile] = useState<"jd" | "resume">("jd");
   const [gold, setGold] = useState<AdjState | null>(null);
+  const [ops, setOps] = useState<Ops | null>(null);
   const [bulkBusy, setBulkBusy] = useState<string | null>(null);
   const [bulkResult, setBulkResult] = useState<Record<string, string>>({});
 
@@ -89,19 +96,6 @@ export default function AdminPage() {
     setGold(await response.json());
   }
 
-  async function enter(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError("");
-    try {
-      const response = await fetch(`${API}/admin/login`, { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ password }) });
-      if (!response.ok) throw new Error("口令错误");
-      setPassthrough((await response.json()).enabled);
-      await loadQueue();
-    } catch {
-      setError("口令错误");
-    }
-  }
-
   async function loadPortals() {
     const response = await fetch(`${API}/admin/portals`, { credentials: "include" });
     if (!response.ok) throw new Error("门户名单读取失败");
@@ -110,14 +104,33 @@ export default function AdminPage() {
     setCollectBusy(Boolean(body.busy));
   }
 
+  async function loadOps() {
+    const response = await fetch(`${API}/admin/ops/status`, { credentials: "include" });
+    if (response.ok) setOps(await response.json());
+  }
+
+  async function enter(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    try {
+      const response = await fetch(`${API}/admin/login`, { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ password }) });
+      if (!response.ok) throw new Error("口令错误");
+      setPassthrough((await response.json()).enabled);
+      await loadQueue();
+      // 顶栏三个计数并行取；任一失败只影响自己那格，不拦登录。
+      loadPortals().catch(() => null);
+      loadNext("jd").catch(() => null);
+      loadOps().catch(() => null);
+    } catch {
+      setError("口令错误");
+    }
+  }
+
   function openTab(next: "queue" | "gold" | "collect") {
     setTab(next);
-    if (next === "gold" && gold === null) {
-      loadNext(adjFile).catch(() => setError("裁决队列读取失败"));
-    }
-    if (next === "collect") {
-      loadPortals().catch(() => setError("门户名单读取失败"));
-    }
+    setError("");
+    if (next === "gold" && gold === null) loadNext(adjFile).catch(() => setError("裁决队列读取失败"));
+    if (next === "collect") loadPortals().catch(() => setError("门户名单读取失败"));
   }
 
   useEffect(() => {
@@ -131,8 +144,10 @@ export default function AdminPage() {
     source.onmessage = (event) => {
       try {
         const row = JSON.parse(event.data);
-        const line = `${row.type} ${typeof row.payload === "string" ? row.payload : JSON.stringify(row.payload ?? {})}`;
-        setFeed((current) => [line, ...current].slice(0, 50));
+        // SSE id 是 Redis 流 id「毫秒-序号」，取毫秒当事件时间。
+        const ms = Number(String(event.lastEventId).split("-")[0]);
+        const at = Number.isFinite(ms) && ms > 0 ? new Date(ms).toTimeString().slice(0, 8) : "--:--:--";
+        setFeed((current) => [{ at, type: row.type, text: feedText(row.type, row.payload) }, ...current].slice(0, 50));
         if (row.type === "collect_started") setCollectBusy(true);
         if (row.type === "collect_finished") setCollectBusy(false);
       } catch {
@@ -147,52 +162,54 @@ export default function AdminPage() {
     };
   }, [tab]);
 
-  async function togglePortal(key: string, enabled: boolean) {
+  async function post(path: string, body?: unknown) {
     setError("");
-    const response = await fetch(`${API}/admin/portals/${key}`, { method: "POST", headers: { "Content-Type": "application/json", ...csrfHeaders() }, credentials: "include", body: JSON.stringify({ enabled }) });
+    const response = await fetch(`${API}${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...csrfHeaders() },
+      credentials: "include",
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    return response;
+  }
+
+  async function togglePortal(key: string, enabled: boolean) {
+    const response = await post(`/admin/portals/${key}`, { enabled });
     if (!response.ok) {
-      const body = await response.json().catch(() => ({}));
-      setError(body.error || "无法更新门户");
+      setError((await response.json().catch(() => ({}))).error || "无法更新门户");
       return;
     }
     await loadPortals();
   }
 
   async function removePortal(key: string) {
-    setError("");
-    const response = await fetch(`${API}/admin/portals/${key}/delete`, { method: "POST", headers: csrfHeaders(), credentials: "include" });
+    const response = await post(`/admin/portals/${key}/delete`);
     if (!response.ok) {
-      const body = await response.json().catch(() => ({}));
-      setError(body.error || "无法删除门户");
+      setError((await response.json().catch(() => ({}))).error || "无法删除门户");
       return;
     }
     await loadPortals();
   }
 
-  async function addPortal(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError("");
-    const response = await fetch(`${API}/admin/portals`, { method: "POST", headers: { "Content-Type": "application/json", ...csrfHeaders() }, credentials: "include", body: JSON.stringify({ name: addName, host: addHost }) });
+  async function addPortal(name: string, host: string) {
+    const response = await post("/admin/portals", { name, host });
     const body = await response.json().catch(() => ({}));
     if (!response.ok) {
       setError(body.error || "探测失败，未保存");
-      return;
+      return false;
     }
-    setAddName("");
-    setAddHost("");
     setPortals(body.portals || []);
+    return true;
   }
 
   async function runCollect() {
-    setError("");
-    const response = await fetch(`${API}/admin/collect`, { method: "POST", headers: csrfHeaders(), credentials: "include" });
+    const response = await post("/admin/collect");
     if (response.status === 409) {
       setError("已有采集任务在跑");
       return;
     }
     if (!response.ok) {
-      const body = await response.json().catch(() => ({}));
-      setError(body.error || "无法启动采集");
+      setError((await response.json().catch(() => ({}))).error || "无法启动采集");
       return;
     }
     setCollectBusy(true);
@@ -205,13 +222,7 @@ export default function AdminPage() {
 
   async function decide(payload: { deleted?: string[]; added?: { skill_id: string; span: string }[]; skip?: boolean }) {
     if (!gold?.row) return;
-    setError("");
-    const response = await fetch(`${API}/admin/adjudicate/decide`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...csrfHeaders() },
-      credentials: "include",
-      body: JSON.stringify({ file: gold.file, row_id: gold.row.id, ...payload }),
-    });
+    const response = await post("/admin/adjudicate/decide", { file: gold.file, row_id: gold.row.id, ...payload });
     if (!response.ok) {
       setError("裁决写回失败");
       return;
@@ -252,17 +263,12 @@ export default function AdminPage() {
     }
   }
 
-  async function review(item: QueueEvent, decision: "approved" | "rejected") {
+  async function review(item: QueueEvent, decision: "approved" | "rejected", draft?: string) {
     setBusy(item.id);
     setError("");
     const payload = item.payload ? { ...item.payload } : undefined;
-    const draft = drafts[item.id];
     if (decision === "approved" && payload && draft !== undefined) payload.excerpt = draft;
-      const response = await fetch(`${API}/admin/queue/${item.id}/${decision === "approved" ? "approve" : "reject"}`, {
-        method: "POST",
-      headers: { "Content-Type": "application/json", ...csrfHeaders() }, credentials: "include",
-      body: decision === "approved" ? JSON.stringify({ payload }) : undefined,
-    });
+    const response = await post(`/admin/queue/${item.id}/${decision === "approved" ? "approve" : "reject"}`, decision === "approved" ? { payload } : undefined);
     if (!response.ok) {
       setError("审核操作失败，请重试");
       setBusy(null);
@@ -275,10 +281,13 @@ export default function AdminPage() {
   async function approveAll(jobId: string, versionId: string) {
     const key = `${jobId}:${versionId}`;
     setBulkBusy(key);
-    setError("");
-    const response = await fetch(`${API}/admin/jobs/${jobId}/versions/${versionId}/approve-all`, { method: "POST", headers: { "Content-Type": "application/json", ...csrfHeaders() }, credentials: "include", body: JSON.stringify({ override_reason: "" }) });
+    const response = await post(`/admin/jobs/${jobId}/versions/${versionId}/approve-all`, { override_reason: "" });
     const body = await response.json().catch(() => ({}));
-    if (!response.ok) { setError(body.error || body.detail || "批量审核被拦截，请检查岗位定义、证据和异常增量"); setBulkBusy(null); return; }
+    if (!response.ok) {
+      setError(body.error || body.detail || "批量审核被拦截，请检查岗位定义、证据和异常增量");
+      setBulkBusy(null);
+      return;
+    }
     setBulkResult((current) => ({ ...current, [key]: `已批准 ${body.event_ids?.length || 0} 条，批量决定 ${body.batch_id || "已记录"}` }));
     await loadQueue();
     setBulkBusy(null);
@@ -304,132 +313,97 @@ export default function AdminPage() {
     );
   }
 
-  const terms = gold?.row
-    ? [...gold.row.kept.map((k) => k.name), ...gold.row.proposals.map((p) => p.span)]
-    : [];
-  const bulkGroups = [...(queue || []).reduce((groups, item) => {
-    const jobId = String(item.payload?.job_id || "");
-    if (!jobId) return groups;
-    const versionId = String(item.payload?.version_id || "latest");
-    const key = `${jobId}:${versionId}`;
-    const group = groups.get(key) || { jobId, versionId, name: String(item.payload?.job_name || jobId), count: 0 };
-    group.count += 1;
-    groups.set(key, group);
-    return groups;
-  }, new Map<string, { jobId: string; versionId: string; name: string; count: number }>()).values()];
+  const terms = gold?.row ? [...gold.row.kept.map((k) => k.name), ...gold.row.proposals.map((p) => p.span)] : [];
+  const enabledPortals = portals?.filter((p) => p.enabled).length;
 
   return (
     <main id="main" className="page admin-page">
-      <div className="admin-event-head">
+      <header className="admin-bar">
         <h1>管理</h1>
-        <div className="admin-tabs" role="tablist">
-          <button type="button" role="tab" aria-pressed={tab === "queue"} onClick={() => openTab("queue")}>待审队列</button>
-          <button type="button" role="tab" aria-pressed={tab === "gold"} onClick={() => openTab("gold")}>金标裁决</button>
-          <button type="button" role="tab" aria-pressed={tab === "collect"} onClick={() => openTab("collect")}>官网采集</button>
-        </div>
-        <button className="ghost" type="button" aria-pressed={passthrough} onClick={togglePassthrough}>
-          {passthrough ? "直通开启" : "直通关闭"}
+        <nav className="admin-tabs" role="tablist" aria-label="管理分区">
+          <button type="button" role="tab" aria-selected={tab === "queue"} onClick={() => openTab("queue")}>
+            待审 <b>{queue.length}</b>
+          </button>
+          <button type="button" role="tab" aria-selected={tab === "gold"} onClick={() => openTab("gold")}>
+            金标 <b>{gold ? `${gold.done}/${gold.total}` : "–"}</b>
+          </button>
+          <button type="button" role="tab" aria-selected={tab === "collect"} onClick={() => openTab("collect")} data-busy={collectBusy || undefined}>
+            采集 <b>{portals ? `${enabledPortals}/${portals.length}` : "–"}</b>
+          </button>
+        </nav>
+        <ul className="ops-dots" aria-label="运维状态" title={ops?.stale ? "管线超过 48 小时没有成功记录" : undefined}>
+          {Object.entries(OPS_LABEL).map(([key, label]) => {
+            const entry = ops?.status?.[key];
+            const state = !entry || entry.status === "unknown" ? "unknown" : entry.status === "failed" ? "failed" : "ok";
+            return (
+              <li key={key} data-state={state} title={`${label}：${entry?.status ?? "unknown"} · ${ago(entry?.at)}`}>
+                <i /> {label}
+              </li>
+            );
+          })}
+        </ul>
+        <button className="ghost small" type="button" aria-pressed={passthrough} onClick={togglePassthrough}>
+          {passthrough ? "自动审核开启" : "自动审核关闭"}
         </button>
-        <button className="ghost" type="button" onClick={async () => { await fetch(`${API}/admin/logout`, { method: "POST", credentials: "include", headers: csrfHeaders() }); window.location.reload(); }}>退出</button>
-      </div>
+        <button className="ghost small" type="button" onClick={async () => { await fetch(`${API}/admin/logout`, { method: "POST", credentials: "include", headers: csrfHeaders() }); window.location.reload(); }}>退出</button>
+      </header>
       {error ? <p className="admin-error" role="alert">{error}</p> : null}
 
       {tab === "queue" ? (
-        <>
-          <p className="hint">口令通过后显示尚未入谱的演化事件。</p>
-          {queue.length === 0 ? <p className="empty">暂无待审演化事件</p> : null}
-          {bulkGroups.length ? <section className="bulk-groups" aria-label="岗位版本批量审核"><h2>按岗位版本审核</h2>{bulkGroups.map((group) => { const key = `${group.jobId}:${group.versionId}`; return <article key={key}><div><strong>{group.name}</strong><span>{group.count} 条待审提案 · 版本 {group.versionId}</span></div><button className="primary" type="button" disabled={bulkBusy === key} onClick={() => approveAll(group.jobId, group.versionId)}>一键全部批准</button>{bulkResult[key] ? <p className="hint" role="status">{bulkResult[key]}</p> : null}</article>; })}</section> : null}
-          <ul className="admin-queue" aria-label="待审演化事件">
-            {queue.map((item) => {
-              const payload = item.payload ?? {};
-              const subject = payload.job_name || payload.skill_name || "未标注岗位或技能点";
-              const summary = payload.excerpt || payload.error || "暂无摘要";
-              const layerLabel = payload.layer === "low" ? "低置信，不可直通" : payload.layer === "mid" ? "中置信，需审核" : payload.layer === "high" ? "高置信，需审核" : "";
-              return (
-                <li key={item.id}>
-                  <div className="admin-event-head"><strong>{kindLabel(item.kind)} · {reviewLabel(item.review)}</strong><time dateTime={item.at}>{item.at.slice(0, 10)}</time></div>
-                  <p className="admin-event-subject">{subject}</p>
-                  <p className="hint">原始提案：{summary}</p>
-                  {layerLabel ? <p className="hint">{layerLabel}</p> : null}
-                  {item.review !== "auto_passed" && item.kind !== "extract_failed" ? (
-                    <label>
-                      最终事实（可选改写，原稿仍保留）
-                      <textarea value={drafts[item.id] ?? (payload.excerpt || "")} onChange={(event) => setDrafts((current) => ({ ...current, [item.id]: event.target.value }))} rows={3} />
-                    </label>
-                  ) : null}
-                  {item.review !== "auto_passed" ? (
-                  <div className="row">
-                    <button className="primary" type="button" disabled={busy === item.id} onClick={() => review(item, "approved")}>确认发布</button>
-                    <button className="ghost" type="button" disabled={busy === item.id} onClick={() => review(item, "rejected")}>驳回</button>
-                  </div>
-                  ) : null}
-                </li>
-              );
-            })}
-          </ul>
-        </>
+        <QueueBoard queue={queue} busy={busy} bulkBusy={bulkBusy} bulkResult={bulkResult} onReview={review} onApproveAll={approveAll} />
       ) : null}
 
       {tab === "gold" ? (
-        <section aria-label="金标裁决">
-          <p className="hint">
-            ADR-0011 两段修订的裁决段：自动留的是原文或草稿可溯的金标，你只裁存疑与提案。
-            快捷键 d=全删存疑 a=全收提案 s=跳过。
-          </p>
-          <div className="admin-event-head">
-            <div className="admin-tabs" role="group" aria-label="金标文件">
+        <section className="adj" aria-label="金标裁决">
+          <div className="adj-head">
+            <div className="seg" role="group" aria-label="金标文件">
               <button type="button" aria-pressed={adjFile === "jd"} onClick={() => switchAdjFile("jd")}>JD 金标</button>
               <button type="button" aria-pressed={adjFile === "resume"} onClick={() => switchAdjFile("resume")}>简历金标</button>
             </div>
-            {gold ? <p className="hint">进度 {gold.done}/{gold.total}</p> : null}
+            <p className="hint">自动留的是原文或草稿可溯的金标，只裁存疑与提案。<kbd>d</kbd> 全删存疑 <kbd>a</kbd> 全收提案 <kbd>s</kbd> 跳过</p>
           </div>
           {gold?.draft_missing ? <p className="empty">这一行还没有草稿，先在主机跑 python -m app.eval draft。</p> : null}
           {gold && !gold.row && !gold.draft_missing ? <p className="empty">该文件已全部裁决。</p> : null}
           {gold?.row ? (
             <article className="adj-card">
-              <h2>{gold.row.title}</h2>
-              <p className="adj-text">{highlight(gold.row.text, terms)}</p>
-              <p className="hint">自动留 {gold.row.kept.length}：{gold.row.kept.map((k) => k.name).join("、") || "（无）"}</p>
-              {gold.row.suspects.length ? (
-                <div>
-                  <div className="admin-event-head">
-                    <h3>存疑（金标里原文与草稿都找不到）</h3>
-                    <button className="ghost" type="button" onClick={() => decide({ deleted: gold.row!.suspects.map((s) => s.id) })}>全删（d）</button>
-                  </div>
-                  <ul className="adj-list">
-                    {gold.row.suspects.map((s) => (
-                      <li key={s.id}>
-                        <span>{s.name}</span>
-                        <span className="row">
-                          <button className="primary" type="button" onClick={() => decide({ deleted: [s.id] })}>删</button>
-                          <button className="ghost" type="button" onClick={() => decide({})}>留</button>
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
-              {gold.row.proposals.length ? (
-                <div>
-                  <div className="admin-event-head">
-                    <h3>提案加（草稿对齐到词表）</h3>
-                    <button className="ghost" type="button" onClick={() => decide({ added: gold.row!.proposals.map((p) => ({ skill_id: p.skill_id, span: p.span })) })}>全收（a）</button>
-                  </div>
-                  <ul className="adj-list">
-                    {gold.row.proposals.map((p) => (
-                      <li key={p.skill_id}>
-                        <span>{p.name}（草稿: {p.span}）</span>
-                        <button className="primary" type="button" onClick={() => decide({ added: [p] })}>加</button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
-              {gold.row.unaligned.length ? (
-                <p className="hint">草稿未对齐（仅提示，不入金标）：{gold.row.unaligned.join("、")}</p>
-              ) : null}
-              <div className="row">
-                <button className="ghost" type="button" onClick={() => decide({ skip: true })}>跳过此行（s）</button>
+              <div className="adj-text">
+                <h2>{gold.row.title}</h2>
+                <p>{highlight(gold.row.text, terms)}</p>
+              </div>
+              <div className="adj-side">
+                <section>
+                  <h3>自动留 <b>{gold.row.kept.length}</b></h3>
+                  <p className="hint">{gold.row.kept.map((k) => k.name).join("、") || "（无）"}</p>
+                </section>
+                <section>
+                  <h3>存疑 <b>{gold.row.suspects.length}</b>{gold.row.suspects.length ? <button className="ghost small" type="button" onClick={() => decide({ deleted: gold.row!.suspects.map((s) => s.id) })}>全删 d</button> : null}</h3>
+                  {gold.row.suspects.length ? (
+                    <ul className="adj-list">
+                      {gold.row.suspects.map((s) => (
+                        <li key={s.id}>
+                          <span>{s.name}</span>
+                          <button className="primary small" type="button" onClick={() => decide({ deleted: [s.id] })}>删</button>
+                          <button className="ghost small" type="button" onClick={() => decide({})}>留</button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : <p className="hint">原文与草稿都能找到，无存疑。</p>}
+                </section>
+                <section>
+                  <h3>提案加 <b>{gold.row.proposals.length}</b>{gold.row.proposals.length ? <button className="ghost small" type="button" onClick={() => decide({ added: gold.row!.proposals.map((p) => ({ skill_id: p.skill_id, span: p.span })) })}>全收 a</button> : null}</h3>
+                  {gold.row.proposals.length ? (
+                    <ul className="adj-list">
+                      {gold.row.proposals.map((p) => (
+                        <li key={p.skill_id}>
+                          <span>{p.name} <small>草稿 {p.span}</small></span>
+                          <button className="primary small" type="button" onClick={() => decide({ added: [p] })}>加</button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : <p className="hint">草稿没有新增提案。</p>}
+                </section>
+                {gold.row.unaligned.length ? <p className="hint">草稿未对齐（不入金标）：{gold.row.unaligned.join("、")}</p> : null}
+                <button className="ghost small" type="button" onClick={() => decide({ skip: true })}>跳过此行 s</button>
               </div>
             </article>
           ) : null}
@@ -437,41 +411,15 @@ export default function AdminPage() {
       ) : null}
 
       {tab === "collect" ? (
-        <section aria-label="官网采集">
-          <p className="hint">只打公司官网公开 JSON。立即采集与每日任务共用一把锁，当晚抽取进待审，求职者页不订这条流。</p>
-          <div className="row">
-            <button className="primary" type="button" disabled={collectBusy} onClick={runCollect}>立即采集</button>
-            {collectBusy ? <p className="hint" role="status">任务在跑或刚已启动</p> : null}
-          </div>
-          <ul className="admin-queue" aria-label="招聘门户">
-            {(portals || []).map((portal) => (
-              <li key={portal.key}>
-                <div className="admin-event-head">
-                  <strong>{portal.name}</strong>
-                  <span className="hint">{portal.type}{portal.host ? ` · ${portal.host}` : ""}</span>
-                </div>
-                <div className="row">
-                  <label>
-                    <input type="checkbox" checked={portal.enabled} onChange={(event) => togglePortal(portal.key, event.target.checked)} />
-                    启用
-                  </label>
-                  {portal.builtin ? <p className="hint">内置，不可删</p> : <button className="ghost" type="button" onClick={() => removePortal(portal.key)}>删除</button>}
-                </div>
-              </li>
-            ))}
-          </ul>
-          <form onSubmit={addPortal} aria-label="新增飞书门户">
-            <label htmlFor="portal-name">名称</label>
-            <input id="portal-name" value={addName} onChange={(event) => setAddName(event.target.value)} required />
-            <label htmlFor="portal-host">飞书域名</label>
-            <input id="portal-host" value={addHost} onChange={(event) => setAddHost(event.target.value)} placeholder="zhipu-ai.jobs.feishu.cn" required />
-            <button className="primary" type="submit">探测并保存</button>
-          </form>
-          <h2>采集事件</h2>
-          <ul className="admin-queue" aria-live="polite" aria-label="采集事件">
-            {feed.length === 0 ? <li className="empty">尚无事件</li> : feed.map((line, index) => <li key={`${index}-${line.slice(0, 24)}`}><p className="hint">{line}</p></li>)}
-          </ul>
-        </section>
+        <PortalTable
+          portals={portals || []}
+          collectBusy={collectBusy}
+          feed={feed}
+          onRunCollect={runCollect}
+          onToggle={togglePortal}
+          onRemove={removePortal}
+          onAdd={addPortal}
+        />
       ) : null}
     </main>
   );
