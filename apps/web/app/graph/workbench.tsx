@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { FlowWorkbenchCanvas } from "./flow-canvas";
+import { FlowWorkbenchCanvas, type Neighbor } from "./flow-canvas";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -29,7 +29,12 @@ type Requirement = {
   proficiency?: string;
   levels?: string[];
   sources?: string[];
+  excerpt?: string;
+  confidence?: number;
+  layer?: string;
+  valid_from?: string | null;
 };
+type Dossier = { n_sources?: number; n_window?: number; neighbor?: Neighbor | null };
 type JobDetail = Job & {
   sources?: string[];
   definition?: { text?: string; type?: string; sources?: string[] }[];
@@ -67,14 +72,14 @@ const FALLBACK_SLICE_LLM: Slice = {
     { id: "domain", name: "领域知识" },
   ],
   requires: [
-    { skill_id: "s1", name: "Python 异步高并发", category: "语言", category_id: "lang", proficiency: "精通", levels: ["mid", "senior"], sources: ["ev-01", "ev-02"] },
+    { skill_id: "s1", name: "Python 异步高并发", category: "语言", category_id: "lang", proficiency: "精通", levels: ["mid", "senior"], sources: ["ev-01", "ev-02"], layer: "high", valid_from: "2026-01-12", excerpt: "精通 Python，有高并发服务开发经验" },
     { skill_id: "s2", name: "PyTorch 深度学习", category: "框架", category_id: "framework", proficiency: "熟练", levels: ["junior", "mid"], sources: ["ev-01"] },
     { skill_id: "s3", name: "LangChain / LlamaIndex", category: "框架", category_id: "framework", proficiency: "熟练", levels: ["mid"], sources: ["ev-02"] },
-    { skill_id: "s4", name: "vLLM / Triton 推理加速", category: "平台", category_id: "platform", proficiency: "精通", levels: ["senior"], sources: ["ev-01", "ev-03"] },
+    { skill_id: "s4", name: "vLLM / Triton 推理加速", category: "平台", category_id: "platform", proficiency: "精通", levels: ["senior"], sources: ["ev-01", "ev-03"], layer: "high", valid_from: "2026-02-20", excerpt: "熟悉 vLLM、Triton 等推理加速框架" },
     { skill_id: "s5", name: "Hybrid Search 多路召回", category: "工程", category_id: "engineering", proficiency: "熟练", levels: ["mid", "senior"], sources: ["ev-03"] },
     { skill_id: "s6", name: "LoRA / QLoRA 微调实战", category: "领域知识", category_id: "domain", proficiency: "熟练", levels: ["mid"], sources: ["ev-02"] },
     { skill_id: "s7", name: "Docker / K8s 容器编排", category: "工程", category_id: "engineering", proficiency: "熟悉", levels: ["junior", "mid"], sources: ["ev-01"] },
-    { skill_id: "s8", name: "CUDA 核心性能算子优化", category: "领域知识", category_id: "domain", kind: "bonus", proficiency: "了解", levels: ["senior"], sources: ["ev-03"] },
+    { skill_id: "s8", name: "CUDA 核心性能算子优化", category: "领域知识", category_id: "domain", kind: "bonus", proficiency: "了解", levels: ["senior"], sources: ["ev-03"], layer: "mid", valid_from: "2026-03-01" },
   ],
   period_delta: {
     added: [
@@ -120,10 +125,12 @@ export function Workbench() {
   const [selectedSkill, setSelectedSkill] = useState(wantedSkill);
   const [detail, setDetail] = useState<JobDetail | null>(null);
   const [slice, setSlice] = useState<Slice | null>(null);
+  const [dossier, setDossier] = useState<Dossier | null>(null);
+  const [period, setPeriod] = useState("");
   const [evidenceTarget, setEvidenceTarget] = useState<EvidenceTarget | null>(null);
   const [view, setView] = useState<"graph" | "list">("graph");
   const [inspectorOpen, setInspectorOpen] = useState(true);
-  const [activeTab, setActiveTab] = useState<"skills" | "definition" | "delta">("skills");
+  const [activeTab, setActiveTab] = useState<"skills" | "definition" | "delta" | "watching">("skills");
   const [pickerOpen, setPickerOpen] = useState(false);
 
   const opener = useRef<HTMLElement | null>(null);
@@ -159,9 +166,10 @@ export function Workbench() {
   useEffect(() => {
     fetch(`${API}/meta`)
       .then((r) => r.json())
-      .then((body: { domains?: Domain[] }) =>
-        setDomains(Array.isArray(body.domains) && body.domains.length ? body.domains : FALLBACK_DOMAINS),
-      )
+      .then((body: { domains?: Domain[]; graph_release?: { period?: string } }) => {
+        setDomains(Array.isArray(body.domains) && body.domains.length ? body.domains : FALLBACK_DOMAINS);
+        setPeriod(body.graph_release?.period || "");
+      })
       .catch(() => setDomains(FALLBACK_DOMAINS));
   }, []);
 
@@ -207,14 +215,17 @@ export function Workbench() {
     Promise.all([
       fetch(`${API}/jobs/${encodeURIComponent(selected)}`).then((r) => (r.ok ? r.json() : null)),
       fetch(`${API}/graph/jobs/${encodeURIComponent(selected)}`).then((r) => (r.ok ? r.json() : null)),
+      fetch(`${API}/discover/${encodeURIComponent(selected)}`).then((r) => (r.ok ? r.json() : null)),
     ])
-      .then(([job, graph]) => {
+      .then(([job, graph, dossier]) => {
+        setDossier(dossier);
         setDetail(job || (selected === "llm-app" ? FALLBACK_DETAIL_LLM : currentId ? { id: currentId, name: current?.name || "", status: current?.status, definition: [{ text: "岗位核心标准由国家技术工程体系持续追踪更新中。" }], sources: ["行业头部科技企业"] } : FALLBACK_DETAIL_LLM));
         setSlice(graph || FALLBACK_SLICE_LLM);
       })
       .catch(() => {
         setDetail(FALLBACK_DETAIL_LLM);
         setSlice(FALLBACK_SLICE_LLM);
+        setDossier(null);
       });
   }, [selected, currentId]);
 
@@ -243,27 +254,10 @@ export function Workbench() {
   };
 
   const flowSlice = slice
-    ? {
-        categories: slice.categories,
-        requires: (slice.requires || []).map((r) => ({
-          ...r,
-          id: r.skill_id,
-          proficiency: proficiencyLabel(r.proficiency),
-        })),
-        period_delta: {
-          added: (slice.period_delta?.added || []).map((r) => ({
-            ...r,
-            id: r.skill_id,
-            proficiency: proficiencyLabel(r.proficiency),
-          })),
-          expired: (slice.period_delta?.expired || []).map((r) => ({
-            ...r,
-            id: r.skill_id,
-            proficiency: proficiencyLabel(r.proficiency),
-          })),
-        },
-      }
+    ? { requires: (slice.requires || []).map((r) => ({ ...r, id: r.skill_id, proficiency: proficiencyLabel(r.proficiency) })) }
     : null;
+  const requiredCount = (slice?.requires || []).filter((s) => s.kind !== "bonus").length;
+  const bonusCount = (slice?.requires || []).length - requiredCount;
 
   return (
     <>
@@ -475,29 +469,27 @@ export function Workbench() {
                     name: detail?.name || current?.name || "大模型应用工程师",
                     status: detail?.status || current?.status,
                   }}
+                  stats={dossier}
+                  neighbor={dossier?.neighbor}
                   watching={detail?.watching}
+                  evidence={slice?.evidence}
+                  period={period}
                   slice={flowSlice}
                   selectedSkill={selectedSkill}
                   onSkillClick={(skill) => {
                     opener.current = null;
                     setSelectedSkill(skill.id);
-                    const allRequires = [
-                      ...(slice?.requires || []),
-                      ...(slice?.period_delta?.expired || []),
-                    ];
-                    const matched = allRequires.find((item) => item.skill_id === skill.id);
-                    if (matched) {
-                      setEvidenceTarget(matched);
-                    } else {
-                      setEvidenceTarget({
-                        skill_id: skill.id,
-                        name: skill.name,
-                        category: skill.category,
-                        proficiency: skill.proficiency,
-                        sources: skill.sources,
-                      });
-                    }
+                    setEvidenceTarget((slice?.requires || []).find((item) => item.skill_id === skill.id) || { ...skill, skill_id: skill.id });
                     setInspectorOpen(true);
+                  }}
+                  onWatchingClick={() => {
+                    setEvidenceTarget(null);
+                    setActiveTab("watching");
+                    setInspectorOpen(true);
+                  }}
+                  onNeighborClick={(jobId) => {
+                    setSelectedSkill("");
+                    setSelected(jobId);
                   }}
                 />
               </div>
@@ -506,24 +498,26 @@ export function Workbench() {
               <footer className="studio-docked-statusbar" aria-label="图谱运行态数据">
                 <div className="statusbar-left">
                   <div className="status-metric">
-                    <span className="status-label">节点总数</span>
-                    <strong className="status-val">{slice?.requires?.length || 0}</strong>
+                    <span className="status-label">必备</span>
+                    <strong className="status-val">{requiredCount}</strong>
+                  </div>
+                  <div className="status-metric">
+                    <span className="status-label">加分</span>
+                    <strong className="status-val">{bonusCount}</strong>
+                  </div>
+                  <div className="status-metric">
+                    <span className="status-label">观测中</span>
+                    <strong className="status-val">{detail?.watching?.length || 0}</strong>
+                  </div>
+                  <div className="status-metric">
+                    <span className="status-label">独立源</span>
+                    <strong className="status-val">{dossier?.n_sources ?? detail?.sources?.length ?? 0}</strong>
                   </div>
                   <div className="status-divider" />
-                  <div className="status-legend-group">
-                    <span className="legend-chip">
-                      <span className="swatch add" /> 新增要求 (+{slice?.period_delta?.added?.length || 0})
-                    </span>
-                    <span className="legend-chip">
-                      <span className="swatch exp" /> 周期失效 (-{slice?.period_delta?.expired?.length || 0})
-                    </span>
-                    <span className="legend-chip">
-                      <span className="swatch done" /> 双独立源印证
-                    </span>
-                  </div>
+                  <span className="status-tip">边越粗，支持它的独立源越多 · 虚线为加分 · 悬停卡片看原文摘录</span>
                 </div>
                 <div className="statusbar-right">
-                  <span className="status-tip">鼠标滚轮可平移缩放 · 点击节点查看企业证据</span>
+                  <span className="status-tip">{period ? `图谱版本 ${period}` : "本地预览数据"}</span>
                 </div>
               </footer>
             </div>
@@ -666,23 +660,36 @@ export function Workbench() {
 
                   <div className="docked-evidence-body">
                     <div className="evidence-title-section">
-                      <span className="evidence-eyebrow">双独立源真实招聘证据</span>
+                      <span className="evidence-eyebrow">招聘证据</span>
                       <h3 className="evidence-skill-title">{evidenceTarget.name}</h3>
                     </div>
 
                     <div className="docked-meta-ribbon">
                       <div>
-                        <span className="meta-k">期望熟练度</span>
-                        <strong className="meta-v">{proficiencyLabel(evidenceTarget.proficiency) || "熟练应用"}</strong>
+                        <span className="meta-k">熟练级</span>
+                        <strong className="meta-v">{proficiencyLabel(evidenceTarget.proficiency) || "未标"}</strong>
                       </div>
                       <div>
-                        <span className="meta-k">所属技术领域</span>
-                        <strong className="meta-v">{evidenceTarget.category || "核心工程"}</strong>
+                        <span className="meta-k">技能类目</span>
+                        <strong className="meta-v">{evidenceTarget.category || "其他"}</strong>
                       </div>
+                      {evidenceTarget.valid_from && (
+                        <div>
+                          <span className="meta-k">生效自</span>
+                          <strong className="meta-v">{evidenceTarget.valid_from.slice(0, 10)}</strong>
+                        </div>
+                      )}
                     </div>
 
+                    {evidenceTarget.excerpt && (
+                      <blockquote className="evidence-excerpt">
+                        <span className="evidence-eyebrow">JD 原文摘录</span>
+                        <p>{evidenceTarget.excerpt}</p>
+                      </blockquote>
+                    )}
+
                     <div className="evidence-history-section">
-                      <h4>招聘快照与验证凭证</h4>
+                      <h4>JD 快照</h4>
                       {(() => {
                         const all = slice?.evidence || [];
                         const ids = evidenceTarget.sources || [];
@@ -766,6 +773,13 @@ export function Workbench() {
                     >
                       演化动态
                     </button>
+                    <button
+                      type="button"
+                      className={`tab-btn${activeTab === "watching" ? " active" : ""}`}
+                      onClick={() => setActiveTab("watching")}
+                    >
+                      观测中 ({detail?.watching?.length || 0})
+                    </button>
                   </div>
 
                   {/* Inspector Tab Content */}
@@ -813,6 +827,19 @@ export function Workbench() {
                         ) : (
                           <p className="empty-hint">当前岗位定义正在由双独立源交叉验证审核中。</p>
                         )}
+                      </div>
+                    )}
+
+                    {activeTab === "watching" && (
+                      <div className="inspector-watching-view">
+                        <p className="empty-hint">市场开始提，还没进要求，不算缺口。达到簇内覆盖率门槛后才会成为要求边。</p>
+                        <div className="chips-grid">
+                          {(detail?.watching || []).map((name) => (
+                            <span key={name} className="radar-chip">
+                              {name}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     )}
 
