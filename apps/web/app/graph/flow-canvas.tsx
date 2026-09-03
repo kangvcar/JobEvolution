@@ -16,6 +16,7 @@ import {
   ReactFlowProvider,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import { useForceLayout } from "./force-layout";
 
 export type FlowSkillData = {
   id: string;
@@ -32,7 +33,7 @@ export type FlowSkillData = {
 };
 
 // 1. Zone Indicator Header Badges
-function WingZoneNode({ data }: NodeProps<Node<{ label: string; mode: "decay" | "growth" | "core"; desc?: string }>>) {
+export function WingZoneNode({ data }: NodeProps<Node<{ label: string; mode: "decay" | "growth" | "core"; desc?: string }>>) {
   return (
     <div className={`wing-zone-badge ${data.mode}`}>
       <span className="wing-dot" />
@@ -42,7 +43,7 @@ function WingZoneNode({ data }: NodeProps<Node<{ label: string; mode: "decay" | 
 }
 
 // 2. Precision Anchor Job Node (Center Spine Origin)
-function JobNode({ data }: NodeProps<Node<{ label: string; status?: "formed" | "emerging"; sourceCount?: number }>>) {
+export function JobNode({ data }: NodeProps<Node<{ label: string; status?: "formed" | "emerging"; sourceCount?: number }>>) {
   const isFormed = data.status !== "emerging";
 
   return (
@@ -85,7 +86,7 @@ const CATEGORY_THEMES: Record<string, { label: string; code: string; color: stri
 };
 
 // 3. Category Hub Node (Dock Pill Architecture)
-function CategoryNode({
+export function CategoryNode({
   data,
 }: NodeProps<Node<{ id: string; label: string; code?: string; count: number; isExpired?: boolean; isHovered?: boolean; isDimmed?: boolean }>>) {
   const theme = CATEGORY_THEMES[data.id] || CATEGORY_THEMES[data.label] || {
@@ -120,7 +121,7 @@ function CategoryNode({
 }
 
 // 4. Precision Capability Specification Node
-function SkillNode({ data }: NodeProps<Node<FlowSkillData>>) {
+export function SkillNode({ data }: NodeProps<Node<FlowSkillData>>) {
   const isAdded = data.delta === "added";
   const isExpired = data.delta === "expired";
   const isSelected = Boolean(data.selected);
@@ -184,7 +185,7 @@ function SkillNode({ data }: NodeProps<Node<FlowSkillData>>) {
 }
 
 // 5. Bottom Horizon Frontier Watching Shelf Node
-function FrontierWatchingNode({ data }: NodeProps<Node<{ items: string[] }>>) {
+export function FrontierWatchingNode({ data }: NodeProps<Node<{ items: string[] }>>) {
   return (
     <div className="frontier-watching-shelf" style={{ width: 760 }}>
       <div className="frontier-header">
@@ -241,6 +242,7 @@ function InnerFlowCanvas({ job, watching, slice, selectedSkill, onSkillClick }: 
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [filterMode, setFilterMode] = useState<CanvasFilterMode>("all");
   const [showMinimap, setShowMinimap] = useState(false);
+  const [useForceLayoutEnabled, setUseForceLayoutEnabled] = useState(false);
   const hoverTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Compute Dual-Wing Evolution Balanced Layout
@@ -705,19 +707,32 @@ function InnerFlowCanvas({ job, watching, slice, selectedSkill, onSkillClick }: 
     return { nodes: rawNodes, edges: rawEdges };
   }, [job, slice, selectedSkill, hoveredNodeId, filterMode]);
 
+  // Apply force-directed layout
+  const layoutedNodes = useForceLayout(nodes, edges, {
+    enabled: useForceLayoutEnabled,
+    chargeStrength: -800,
+    collideRadius: 140,
+    xStrength: 0.15,
+    yStrength: 0.05,
+    linkDistance: 160,
+    linkStrength: 0.3,
+  });
+
+  const finalNodes = useForceLayoutEnabled ? layoutedNodes : nodes;
+
   // Smooth Auto Fit View on real content nodes
   React.useEffect(() => {
-    if (nodes.length > 0) {
+    if (finalNodes.length > 0) {
       const timer = setTimeout(() => {
         fitView({
-          nodes,
+          nodes: finalNodes,
           padding: 0.14,
           duration: 400,
         });
       }, 80);
       return () => clearTimeout(timer);
     }
-  }, [nodes, job.id, filterMode, fitView]);
+  }, [finalNodes, job.id, filterMode, fitView]);
 
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
@@ -748,16 +763,16 @@ function InnerFlowCanvas({ job, watching, slice, selectedSkill, onSkillClick }: 
 
   const handleCenterCore = useCallback(() => {
     fitView({
-      nodes,
+      nodes: finalNodes,
       padding: 0.14,
       duration: 350,
     });
-  }, [fitView, nodes]);
+  }, [fitView, finalNodes]);
 
   return (
     <div className="flow-canvas-container">
       <ReactFlow
-        nodes={nodes}
+        nodes={finalNodes}
         edges={edges}
         nodeTypes={nodeTypes}
         onNodeClick={onNodeClick}
@@ -846,6 +861,29 @@ function InnerFlowCanvas({ job, watching, slice, selectedSkill, onSkillClick }: 
               <span className="dot add" /> 增量 ▶
             </button>
           </div>
+
+          <div className="dock-separator" />
+
+          {/* Force Layout Toggle */}
+          <button
+            type="button"
+            className={`dock-tool-btn${useForceLayoutEnabled ? " is-active" : ""}`}
+            onClick={() => setUseForceLayoutEnabled((v) => !v)}
+            title={useForceLayoutEnabled ? "切换到固定布局" : "启用智能布局"}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="2" />
+              <circle cx="12" cy="5" r="2" />
+              <circle cx="19" cy="12" r="2" />
+              <circle cx="5" cy="12" r="2" />
+              <circle cx="12" cy="19" r="2" />
+              <line x1="12" y1="7" x2="12" y2="10" />
+              <line x1="12" y1="14" x2="12" y2="17" />
+              <line x1="14" y1="12" x2="17" y2="12" />
+              <line x1="7" y1="12" x2="10" y2="12" />
+            </svg>
+            <span>{useForceLayoutEnabled ? "智能" : "固定"}</span>
+          </button>
 
           <div className="dock-separator" />
 
