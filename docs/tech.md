@@ -118,7 +118,7 @@ RETURN j, r, s
 
 分层：`source` 产出原始记录，`controller` 去重与落盘，`sink` 写 Redis Stream。参考结构见 [`research/jd-collection.md`](research/jd-collection.md)，不要去 pip 装那些已失效的 Scrapy 站群。
 
-**冷启动。** 仓库 `data/` 下所有本地 JD 表（CSV / 日后新丢进来的表都算），不限定智联或某一个文件名。各表字段名不同，`source` 先映射到统一记录：公司、岗位名、正文、发布日、渠道。缺正文的行丢掉。标题用领域词粗滤四领域（人工智能优先），去近重后写入 `data/jd/`，再跑抽取。不要手写赛题 JD，不要先灌 `bootstrap.py`。天池人岗匹配只补条数或字段缺口。
+**冷启动。** 官方招聘门户是唯一主数据源。各门户先映射到统一记录：公司、岗位名、正文、发布日、渠道。缺正文的行丢掉。标题用领域词粗滤四领域（人工智能优先），去近重后写入 `data/official-only/jd/`，再跑抽取。不要手写赛题 JD，不要先灌 `bootstrap.py`。天池人岗匹配只补条数或字段缺口。
 
 **主力增量。** Greenhouse / Lever / Ashby 公开 JSON；NCSS 公开列表。低频、字段稳。不挡冷启动。
 

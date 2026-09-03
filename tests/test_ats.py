@@ -33,7 +33,7 @@ ADMIN = "change-me"
 
 def test_default_sources_cover_system_iot_keywords():
     keys = {row["key"] for row in DEFAULT_PORTALS}
-    assert {"agirobot", "arashivision", "tsingtengms", "asiainfo-sec", "lierda", "lg77oym6sy", "weikezhijia"} <= keys
+    assert {"agirobot", "arashivision", "tsingtengms", "asiainfo-sec", "lierda", "lg77oym6sy", "weikezhijia", "qianxun", "qijing", "tarsrobot", "thundersoft", "whales", "zhcomputing", "sudu"} <= keys
     assert {"嵌入式", "机器人", "硬件", "物联网"} <= set(SEARCH_WORDS)
 
 

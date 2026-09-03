@@ -876,7 +876,7 @@ def admin_portals(request: Request, x_admin_password: str | None = Header(defaul
 @app.post("/admin/portals")
 def admin_add_portal(body: PortalBody, request: Request, x_admin_password: str | None = Header(default=None, alias="X-Admin-Password")):
     _require_admin(request, x_admin_password)
-    from app.collectors.ats import enabled_count, load_portals, probe_feishu, save_portals, valid_host
+    from app.collectors.ats import MAX_ENABLED_PORTALS, enabled_count, load_portals, probe_feishu, save_portals, valid_host
 
     host = (body.host or "").strip().lower()
     name = (body.name or "").strip()
@@ -886,8 +886,8 @@ def admin_add_portal(body: PortalBody, request: Request, x_admin_password: str |
     portals = load_portals(data_dir)
     if any((row.get("host") or "").lower() == host or row.get("key") == host for row in portals):
         raise HTTPException(409, "portal exists")
-    if enabled_count(portals) >= 20:
-        raise HTTPException(400, "at most 20 enabled portals")
+    if enabled_count(portals) >= MAX_ENABLED_PORTALS:
+        raise HTTPException(400, f"at most {MAX_ENABLED_PORTALS} enabled portals")
     try:
         probe_feishu(host)
     except Exception as exc:
@@ -903,15 +903,15 @@ def admin_add_portal(body: PortalBody, request: Request, x_admin_password: str |
 @app.post("/admin/portals/{key}")
 def admin_patch_portal(key: str, body: PortalPatch, request: Request, x_admin_password: str | None = Header(default=None, alias="X-Admin-Password")):
     _require_admin(request, x_admin_password)
-    from app.collectors.ats import enabled_count, load_portals, save_portals
+    from app.collectors.ats import MAX_ENABLED_PORTALS, enabled_count, load_portals, save_portals
 
     data_dir = _data_dir()
     portals = load_portals(data_dir)
     row = next((item for item in portals if item.get("key") == key), None)
     if row is None:
         raise HTTPException(404, "portal not found")
-    if body.enabled and not row.get("enabled") and enabled_count(portals) >= 20:
-        raise HTTPException(400, "at most 20 enabled portals")
+    if body.enabled and not row.get("enabled") and enabled_count(portals) >= MAX_ENABLED_PORTALS:
+        raise HTTPException(400, f"at most {MAX_ENABLED_PORTALS} enabled portals")
     row["enabled"] = body.enabled
     save_portals(data_dir, portals)
     return row

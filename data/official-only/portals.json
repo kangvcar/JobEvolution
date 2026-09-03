@@ -20,6 +20,11 @@
     {"key": "lg77oym6sy", "type": "feishu", "name": "美克生能源", "host": "lg77oym6sy.jobs.feishu.cn", "enabled": true, "builtin": false},
     {"key": "weikezhijia", "type": "feishu", "name": "马上消费", "host": "weikezhijia.jobs.feishu.cn", "enabled": true, "builtin": false},
     {"key": "qianxun", "type": "feishu", "name": "千寻智能", "host": "nwd4iy9rd2s.jobs.feishu.cn", "enabled": true, "builtin": false},
-    {"key": "qijing", "type": "feishu", "name": "启境汽车", "host": "mcn3fvhkq7iw.jobs.feishu.cn", "enabled": true, "builtin": false}
+    {"key": "qijing", "type": "feishu", "name": "启境汽车", "host": "mcn3fvhkq7iw.jobs.feishu.cn", "enabled": true, "builtin": false},
+    {"key": "tarsrobot", "type": "feishu", "name": "它石智航", "host": "tarsrobot.jobs.feishu.cn", "enabled": true, "builtin": false},
+    {"key": "thundersoft", "type": "feishu", "name": "中科创达", "host": "thundersoft.jobs.feishu.cn", "enabled": true, "builtin": false},
+    {"key": "whales", "type": "feishu", "name": "帷幄", "host": "whales.jobs.feishu.cn", "enabled": true, "builtin": false},
+    {"key": "zhcomputing", "type": "feishu", "name": "知合计算", "host": "zhcomputing.jobs.feishu.cn", "enabled": true, "builtin": false},
+    {"key": "sudu", "type": "feishu", "name": "苏度科技", "host": "wcn7iq2vq1am.jobs.feishu.cn", "enabled": true, "builtin": false}
   ]
 }

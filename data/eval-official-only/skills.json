@@ -825,7 +825,8 @@
     "id": "skill-2552a9843c49f92b",
     "name": "matlab",
     "synonyms": [
-      "matlab"
+      "matlab",
+      "Matlab"
     ]
   },
   {
@@ -1399,7 +1400,8 @@
     "id": "skill-917bce6eaeecd6f5",
     "name": "Sim2Real",
     "synonyms": [
-      "Sim2Real"
+      "Sim2Real",
+      "sim2real"
     ]
   },
   {
@@ -5467,6 +5469,601 @@
     "name": "模型预训练",
     "synonyms": [
       "模型预训练"
+    ]
+  },
+  {
+    "id": "skill-d6403399ab872921",
+    "name": "SLAM算法",
+    "synonyms": [
+      "SLAM算法"
+    ]
+  },
+  {
+    "id": "skill-49726f09c8123a40",
+    "name": "定位",
+    "synonyms": [
+      "定位"
+    ]
+  },
+  {
+    "id": "skill-326d0e14b0f046d1",
+    "name": "地图构建",
+    "synonyms": [
+      "地图构建"
+    ]
+  },
+  {
+    "id": "skill-2a64dba06d0e69a5",
+    "name": "真值数据系统",
+    "synonyms": [
+      "真值数据系统"
+    ]
+  },
+  {
+    "id": "skill-2054efadd89124c0",
+    "name": "激光雷达",
+    "synonyms": [
+      "激光雷达"
+    ]
+  },
+  {
+    "id": "skill-209c47b5910f631d",
+    "name": "视觉",
+    "synonyms": [
+      "视觉"
+    ]
+  },
+  {
+    "id": "skill-6418def04ef81b8b",
+    "name": "深度相机",
+    "synonyms": [
+      "深度相机"
+    ]
+  },
+  {
+    "id": "skill-c74b0a481a6c9c67",
+    "name": "IMU",
+    "synonyms": [
+      "IMU"
+    ]
+  },
+  {
+    "id": "skill-2bd1d8313c34794e",
+    "name": "多传感器的数据融合算法",
+    "synonyms": [
+      "多传感器的数据融合算法"
+    ]
+  },
+  {
+    "id": "skill-886546817a7cbc08",
+    "name": "Nerf",
+    "synonyms": [
+      "Nerf"
+    ]
+  },
+  {
+    "id": "skill-0226fb37abce5e63",
+    "name": "3DGS",
+    "synonyms": [
+      "3DGS"
+    ]
+  },
+  {
+    "id": "skill-3550a6bbe4b950db",
+    "name": "空间感知",
+    "synonyms": [
+      "空间感知"
+    ]
+  },
+  {
+    "id": "skill-35fcfff5bfc9a30e",
+    "name": "代码编写",
+    "synonyms": [
+      "代码编写"
+    ]
+  },
+  {
+    "id": "skill-a3ba53fadbaed9d7",
+    "name": "调试",
+    "synonyms": [
+      "调试"
+    ]
+  },
+  {
+    "id": "skill-e80586e19b8825e8",
+    "name": "数学基础",
+    "synonyms": [
+      "数学基础"
+    ]
+  },
+  {
+    "id": "skill-f830684c231eea3e",
+    "name": "线性代数",
+    "synonyms": [
+      "线性代数"
+    ]
+  },
+  {
+    "id": "skill-8b7d5539eecac651",
+    "name": "概率论",
+    "synonyms": [
+      "概率论"
+    ]
+  },
+  {
+    "id": "skill-47d29a427ffeb4ba",
+    "name": "最优化理论",
+    "synonyms": [
+      "最优化理论"
+    ]
+  },
+  {
+    "id": "skill-0139506ddcb130d1",
+    "name": "SLAM相关的算法",
+    "synonyms": [
+      "SLAM相关的算法"
+    ]
+  },
+  {
+    "id": "skill-a4f7cbe44e925942",
+    "name": "传感器",
+    "synonyms": [
+      "传感器"
+    ]
+  },
+  {
+    "id": "skill-4a14d3cf46d8b6ab",
+    "name": "视觉传感器",
+    "synonyms": [
+      "视觉传感器"
+    ]
+  },
+  {
+    "id": "skill-86bad92f466fce28",
+    "name": "融合技术",
+    "synonyms": [
+      "融合技术"
+    ]
+  },
+  {
+    "id": "skill-5b7d1fdb7ab69739",
+    "name": "三维重建技术",
+    "synonyms": [
+      "三维重建技术"
+    ]
+  },
+  {
+    "id": "skill-eeed14fad8af23d2",
+    "name": "神经网络",
+    "synonyms": [
+      "神经网络"
+    ]
+  },
+  {
+    "id": "skill-193509eb48bf90e8",
+    "name": "视觉感知",
+    "synonyms": [
+      "视觉感知"
+    ]
+  },
+  {
+    "id": "skill-4b460e0fba5aa0a4",
+    "name": "机器人领域实际项目经验",
+    "synonyms": [
+      "机器人领域实际项目经验"
+    ]
+  },
+  {
+    "id": "skill-dc8c931bbe1b6a95",
+    "name": "自动驾驶领域实际项目经验",
+    "synonyms": [
+      "自动驾驶领域实际项目经验"
+    ]
+  },
+  {
+    "id": "skill-133bab926f592a00",
+    "name": "代表作品",
+    "synonyms": [
+      "代表作品"
+    ]
+  },
+  {
+    "id": "skill-e3dad74562c28178",
+    "name": "复杂具身任务",
+    "synonyms": [
+      "复杂具身任务"
+    ]
+  },
+  {
+    "id": "skill-a312b0ba888ce9e8",
+    "name": "移动操作",
+    "synonyms": [
+      "移动操作"
+    ]
+  },
+  {
+    "id": "skill-a78b65320e9b8b88",
+    "name": "灵巧操作",
+    "synonyms": [
+      "灵巧操作"
+    ]
+  },
+  {
+    "id": "skill-71ee5799b49b5bcc",
+    "name": "长程任务",
+    "synonyms": [
+      "长程任务"
+    ]
+  },
+  {
+    "id": "skill-21575dc25b49a1ce",
+    "name": "全系统集成",
+    "synonyms": [
+      "全系统集成"
+    ]
+  },
+  {
+    "id": "skill-40c05bebf13312d9",
+    "name": "真机联调",
+    "synonyms": [
+      "真机联调"
+    ]
+  },
+  {
+    "id": "skill-f389c007c430285e",
+    "name": "感知",
+    "synonyms": [
+      "感知"
+    ]
+  },
+  {
+    "id": "skill-4f51d0285e88c4c9",
+    "name": "控制",
+    "synonyms": [
+      "控制"
+    ]
+  },
+  {
+    "id": "skill-b1d19e90852f36b5",
+    "name": "中间件",
+    "synonyms": [
+      "中间件"
+    ]
+  },
+  {
+    "id": "skill-4136f067c2858f2f",
+    "name": "端到端真机稳定运行",
+    "synonyms": [
+      "端到端真机稳定运行"
+    ]
+  },
+  {
+    "id": "skill-cd7bac2b28d79dda",
+    "name": "sim2real gap",
+    "synonyms": [
+      "sim2real gap"
+    ]
+  },
+  {
+    "id": "skill-6574d79795c02975",
+    "name": "sim2real 研究",
+    "synonyms": [
+      "sim2real 研究"
+    ]
+  },
+  {
+    "id": "skill-7e6c402e95df4607",
+    "name": "机器人软硬件 debug",
+    "synonyms": [
+      "机器人软硬件 debug"
+    ]
+  },
+  {
+    "id": "skill-fe34924d143b8145",
+    "name": "ROS",
+    "synonyms": [
+      "ROS"
+    ]
+  },
+  {
+    "id": "skill-2ac8a4aa03615668",
+    "name": "ROS2",
+    "synonyms": [
+      "ROS2"
+    ]
+  },
+  {
+    "id": "skill-31a96a4734c6e626",
+    "name": "机器人软件系统集成",
+    "synonyms": [
+      "机器人软件系统集成"
+    ]
+  },
+  {
+    "id": "skill-cd127eb950d9d62a",
+    "name": "机器人仿真环境",
+    "synonyms": [
+      "机器人仿真环境"
+    ]
+  },
+  {
+    "id": "skill-e1d8c4c0ac6232a7",
+    "name": "模型集成",
+    "synonyms": [
+      "模型集成"
+    ]
+  },
+  {
+    "id": "skill-578d66fc861f0722",
+    "name": "灵巧手",
+    "synonyms": [
+      "灵巧手"
+    ]
+  },
+  {
+    "id": "skill-7e7177150f75a52c",
+    "name": "触觉传感器",
+    "synonyms": [
+      "触觉传感器"
+    ]
+  },
+  {
+    "id": "skill-4bde9d8ad2801779",
+    "name": "灵巧操作系统交付",
+    "synonyms": [
+      "灵巧操作系统交付"
+    ]
+  },
+  {
+    "id": "skill-aaad5b6ab14adb7d",
+    "name": "复杂场景建图",
+    "synonyms": [
+      "复杂场景建图"
+    ]
+  },
+  {
+    "id": "skill-1d1af8a5fb5a00a1",
+    "name": "long-horizon task",
+    "synonyms": [
+      "long-horizon task"
+    ]
+  },
+  {
+    "id": "skill-80789e81543b99c6",
+    "name": "嵌入式",
+    "synonyms": [
+      "嵌入式"
+    ]
+  },
+  {
+    "id": "skill-d8633d131357b309",
+    "name": "驱动层开发",
+    "synonyms": [
+      "驱动层开发"
+    ]
+  },
+  {
+    "id": "skill-4728290d8c78821b",
+    "name": "机械臂路径生成",
+    "synonyms": [
+      "机械臂路径生成"
+    ]
+  },
+  {
+    "id": "skill-15d486a64cd9ab64",
+    "name": "轨迹规划",
+    "synonyms": [
+      "轨迹规划"
+    ]
+  },
+  {
+    "id": "skill-4c39b111e438d591",
+    "name": "建模辨识",
+    "synonyms": [
+      "建模辨识"
+    ]
+  },
+  {
+    "id": "skill-f2286fa997d3e4e1",
+    "name": "补偿",
+    "synonyms": [
+      "补偿"
+    ]
+  },
+  {
+    "id": "skill-5ef5babd6db3674c",
+    "name": "力位混合控制",
+    "synonyms": [
+      "力位混合控制"
+    ]
+  },
+  {
+    "id": "skill-8ecb1d1c9dec9106",
+    "name": "阻抗控制",
+    "synonyms": [
+      "阻抗控制"
+    ]
+  },
+  {
+    "id": "skill-45111fb0627537cf",
+    "name": "导纳控制",
+    "synonyms": [
+      "导纳控制"
+    ]
+  },
+  {
+    "id": "skill-0b05e4d95d4bb49d",
+    "name": "重力补偿",
+    "synonyms": [
+      "重力补偿"
+    ]
+  },
+  {
+    "id": "skill-f467a8c6f8c31962",
+    "name": "碰撞检测",
+    "synonyms": [
+      "碰撞检测"
+    ]
+  },
+  {
+    "id": "skill-c233a22503344dff",
+    "name": "机器人运动学",
+    "synonyms": [
+      "机器人运动学"
+    ]
+  },
+  {
+    "id": "skill-910f7f152c73f331",
+    "name": "多机械臂协同",
+    "synonyms": [
+      "多机械臂协同"
+    ]
+  },
+  {
+    "id": "skill-732ce644ec527c52",
+    "name": "人机协作",
+    "synonyms": [
+      "人机协作"
+    ]
+  },
+  {
+    "id": "skill-b75dbce4684e6ffb",
+    "name": "机器人学原理",
+    "synonyms": [
+      "机器人学原理"
+    ]
+  },
+  {
+    "id": "skill-79ada274144f0f98",
+    "name": "刚体运动学",
+    "synonyms": [
+      "刚体运动学"
+    ]
+  },
+  {
+    "id": "skill-87be1def400d5528",
+    "name": "正向运动学",
+    "synonyms": [
+      "正向运动学"
+    ]
+  },
+  {
+    "id": "skill-43c6a7b6b875fbd8",
+    "name": "逆向运动学",
+    "synonyms": [
+      "逆向运动学"
+    ]
+  },
+  {
+    "id": "skill-dc7563b8bbed2c92",
+    "name": "FK",
+    "synonyms": [
+      "FK"
+    ]
+  },
+  {
+    "id": "skill-91597823f4fe25e6",
+    "name": "IK",
+    "synonyms": [
+      "IK"
+    ]
+  },
+  {
+    "id": "skill-d65a0a2c8f6f981a",
+    "name": "力感知",
+    "synonyms": [
+      "力感知"
+    ]
+  },
+  {
+    "id": "skill-76b904969bd7e4c0",
+    "name": "力控制",
+    "synonyms": [
+      "力控制"
+    ]
+  },
+  {
+    "id": "skill-449673d56bc83bc9",
+    "name": "A*",
+    "synonyms": [
+      "A*"
+    ]
+  },
+  {
+    "id": "skill-78c0e3cded64bfae",
+    "name": "RRT*",
+    "synonyms": [
+      "RRT*"
+    ]
+  },
+  {
+    "id": "skill-f754105b74d860b3",
+    "name": "PRM",
+    "synonyms": [
+      "PRM"
+    ]
+  },
+  {
+    "id": "skill-16f5bd781096b026",
+    "name": "数值优化技术",
+    "synonyms": [
+      "数值优化技术"
+    ]
+  },
+  {
+    "id": "skill-b3b747adf7756a99",
+    "name": "LQR",
+    "synonyms": [
+      "LQR"
+    ]
+  },
+  {
+    "id": "skill-1d62d1f70c18d2c0",
+    "name": "MPC",
+    "synonyms": [
+      "MPC"
+    ]
+  },
+  {
+    "id": "skill-f1e27e1f9fb8780f",
+    "name": "QP求解方法",
+    "synonyms": [
+      "QP求解方法"
+    ]
+  },
+  {
+    "id": "skill-e88bc81066fa7e10",
+    "name": "QP求解器",
+    "synonyms": [
+      "QP求解器"
+    ]
+  },
+  {
+    "id": "skill-cec729599e1fec28",
+    "name": "Eigen矩阵库",
+    "synonyms": [
+      "Eigen矩阵库"
+    ]
+  },
+  {
+    "id": "skill-65e6b63de5875424",
+    "name": "Bullet",
+    "synonyms": [
+      "Bullet"
+    ]
+  },
+  {
+    "id": "skill-a83237fa64974f54",
+    "name": "Webots",
+    "synonyms": [
+      "Webots"
+    ]
+  },
+  {
+    "id": "skill-ceaf0ec06b00df91",
+    "name": "ROS2框架",
+    "synonyms": [
+      "ROS2框架"
     ]
   }
 ]
