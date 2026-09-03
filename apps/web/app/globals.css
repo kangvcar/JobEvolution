@@ -143,11 +143,14 @@ header[data-component="top"],
 .brand-logo {
   display: inline-flex;
   align-items: center;
+  color: var(--color-ink);
 }
 
 .brand-logo .logo-svg {
-  height: 34px;
+  height: 33px;
   width: auto;
+  display: block;
+  image-rendering: pixelated;
 }
 
 /* OpenCode Desktop Navigation: links and CTA button inside single ul */
@@ -1038,10 +1041,11 @@ header[data-component="top"],
   border: 1px solid var(--color-rule);
 }
 
+/* 状态标签只用墨色层级，不引入彩色：hot 实底、ok 墨边、mid 浅灰。 */
 .pill.ok {
-  background: var(--color-surface);
-  color: var(--color-ok);
-  border: 1px solid var(--color-rule);
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  border: 1px solid var(--color-rule-2);
 }
 
 .primary {
