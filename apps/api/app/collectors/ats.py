@@ -376,9 +376,27 @@ def _sleep() -> None:
     time.sleep(PAGE_SLEEP)
 
 
+def known_page_limit() -> int:
+    """连续已知页的提前停止阈值；0 表示完整扫描。"""
+    if os.environ.get("COLLECT_FULL_SCAN", "0").strip() == "1":
+        return 0
+    try:
+        return max(0, min(20, int(os.environ.get("COLLECT_KNOWN_PAGES", "2"))))
+    except (TypeError, ValueError):
+        return 2
+
+
+def next_stale_pages(current: int, *, checked: int, new: int, failed: int = 0) -> int:
+    # ponytail: 依赖门户结果大致按更新时间排序；排序不稳定时用 COLLECT_FULL_SCAN=1。
+    if checked and not new and not failed:
+        return current + 1
+    return 0
+
+
 def fetch_tencent(http=http_json, sleep=_sleep, is_new=lambda _: True) -> list[RawRecord]:
     seen: set[str] = set()
     out: list[RawRecord] = []
+    stale_limit = known_page_limit()
 
     def fetch_detail(post):
         jid = str(post.get("PostId") or "")
@@ -397,6 +415,7 @@ def fetch_tencent(http=http_json, sleep=_sleep, is_new=lambda _: True) -> list[R
 
     for word in SEARCH_WORDS:
         page = 1
+        stale_pages = 0
         while len(out) < MAX_NEW:
             qs = urllib.parse.urlencode(
                 {"keyword": word, "pageIndex": page, "pageSize": 10, "language": "zh-cn", "area": "cn"}
@@ -419,10 +438,13 @@ def fetch_tencent(http=http_json, sleep=_sleep, is_new=lambda _: True) -> list[R
                     continue
                 seen.add(jid)
                 candidates.append(post)
+            page_new = 0
+            page_failed = 0
             with ThreadPoolExecutor(max_workers=min(8, len(candidates) or 1), thread_name_prefix="tencent-detail") as pool:
                 details = pool.map(fetch_detail, candidates)
                 for result in details:
                     if result is None:
+                        page_failed += 1
                         continue
                     post, detail_row = result
                     title = post.get("RecruitPostName") or ""
@@ -438,6 +460,7 @@ def fetch_tencent(http=http_json, sleep=_sleep, is_new=lambda _: True) -> list[R
                         )
                     )
                     if not body:
+                        page_failed += 1
                         continue
                     row = RawRecord(
                         company="腾讯",
@@ -453,8 +476,17 @@ def fetch_tencent(http=http_json, sleep=_sleep, is_new=lambda _: True) -> list[R
                     )
                     if is_new(row):
                         out.append(row)
+                        page_new += 1
                     if len(out) >= MAX_NEW:
                         break
+            stale_pages = next_stale_pages(
+                stale_pages,
+                checked=len(candidates),
+                new=page_new,
+                failed=page_failed,
+            )
+            if stale_limit and stale_pages >= stale_limit:
+                break
             if len(posts) < 10:
                 break
             page += 1
@@ -465,6 +497,7 @@ def fetch_tencent(http=http_json, sleep=_sleep, is_new=lambda _: True) -> list[R
 def fetch_bytedance(http=http_json, sleep=_sleep, is_new=lambda _: True) -> list[RawRecord]:
     seen: set[str] = set()
     out: list[RawRecord] = []
+    stale_limit = known_page_limit()
     headers = {
         "portal-channel": "office",
         "portal-platform": "pc",
@@ -473,6 +506,7 @@ def fetch_bytedance(http=http_json, sleep=_sleep, is_new=lambda _: True) -> list
     }
     for word in SEARCH_WORDS:
         offset = 0
+        stale_pages = 0
         while len(out) < MAX_NEW:
             data = http(
                 "https://jobs.bytedance.com/api/v1/search/job/posts",
@@ -491,10 +525,15 @@ def fetch_bytedance(http=http_json, sleep=_sleep, is_new=lambda _: True) -> list
             posts = ((data.get("data") or {}).get("job_post_list")) or []
             if not posts:
                 break
+            page_candidates = 0
+            page_new = 0
             for post in posts:
                 title = post.get("title") or ""
                 jid = str(post.get("id") or "")
-                if not jid or jid in seen or not keep_title(title, from_search=True):
+                if not jid or not keep_title(title, from_search=True):
+                    continue
+                if jid in seen:
+                    page_candidates += 1
                     continue
                 seen.add(jid)
                 body = strip_html(
@@ -502,6 +541,7 @@ def fetch_bytedance(http=http_json, sleep=_sleep, is_new=lambda _: True) -> list
                 )
                 if not body:
                     continue
+                page_candidates += 1
                 city = (post.get("city_info") or {}).get("name") or ""
                 row = RawRecord(
                     company="字节跳动",
@@ -517,8 +557,12 @@ def fetch_bytedance(http=http_json, sleep=_sleep, is_new=lambda _: True) -> list
                 )
                 if is_new(row):
                     out.append(row)
+                    page_new += 1
                 if len(out) >= MAX_NEW:
                     break
+            stale_pages = next_stale_pages(stale_pages, checked=page_candidates, new=page_new)
+            if stale_limit and stale_pages >= stale_limit:
+                break
             if len(posts) < 30:
                 break
             offset += 30
@@ -568,8 +612,10 @@ def fetch_feishu(host: str, company: str, http=http_json, sleep=_sleep, *, probe
     words = ("",) if probe else SEARCH_WORDS
     seen: set[str] = set()
     out: list[RawRecord] = []
+    stale_limit = known_page_limit()
     for word in words:
         offset = 0
+        stale_pages = 0
         while len(out) < (1 if probe else MAX_NEW):
             headers = {
                 "Origin": f"https://{host}",
@@ -614,10 +660,15 @@ def fetch_feishu(host: str, company: str, http=http_json, sleep=_sleep, *, probe
                     )
                 ]
             from_search = bool(word)
+            page_candidates = 0
+            page_new = 0
             for post in posts:
                 title = post.get("title") or ""
                 jid = str(post.get("id") or "")
-                if not jid or jid in seen or not keep_title(title, from_search=from_search):
+                if not jid or not keep_title(title, from_search=from_search):
+                    continue
+                if jid in seen:
+                    page_candidates += 1
                     continue
                 seen.add(jid)
                 body = strip_html(
@@ -625,6 +676,7 @@ def fetch_feishu(host: str, company: str, http=http_json, sleep=_sleep, *, probe
                 )
                 if not body:
                     continue
+                page_candidates += 1
                 cities = ", ".join(
                     c.get("name", "") for c in (post.get("city_list") or []) if isinstance(c, dict)
                 )
@@ -642,8 +694,12 @@ def fetch_feishu(host: str, company: str, http=http_json, sleep=_sleep, *, probe
                 )
                 if is_new(row):
                     out.append(row)
+                    page_new += 1
                 if len(out) >= MAX_NEW:
                     break
+            stale_pages = next_stale_pages(stale_pages, checked=page_candidates, new=page_new)
+            if stale_limit and stale_pages >= stale_limit:
+                break
             if len(posts) < 50:
                 break
             offset += 50
@@ -657,6 +713,8 @@ def fetch_beisen(host: str, company: str, http=http_json, sleep=_sleep, is_new=l
     page = 1
     page_size = 50
     out: list[RawRecord] = []
+    stale_limit = known_page_limit()
+    stale_pages = 0
     while len(out) < MAX_NEW:
         data = http(
             f"https://{host}/api/Jobad/GetJobAdPageList",
@@ -671,11 +729,15 @@ def fetch_beisen(host: str, company: str, http=http_json, sleep=_sleep, is_new=l
         posts = (data.get("Data") or []) if isinstance(data, dict) else []
         if not isinstance(posts, list) or not posts:
             break
+        page_candidates = 0
+        page_new = 0
+        page_failed = 0
         for post in posts:
             title = post.get("JobAdName") or post.get("name") or ""
             jid = str(post.get("JobAdId") or post.get("Id") or "")
             if not jid or not keep_title(title, from_search=True):
                 continue
+            page_candidates += 1
             body = strip_html("\n\n".join(x for x in (post.get("Duty") or "", post.get("Require") or "") if x))
             candidate = RawRecord(
                 company=company,
@@ -687,7 +749,10 @@ def fetch_beisen(host: str, company: str, http=http_json, sleep=_sleep, is_new=l
                 job_id=jid,
                 source="ats",
             )
-            if not body or not is_new(candidate):
+            if not body:
+                page_failed += 1
+                continue
+            if not is_new(candidate):
                 continue
             locations = post.get("LocNames") or []
             cities = ", ".join(
@@ -708,8 +773,17 @@ def fetch_beisen(host: str, company: str, http=http_json, sleep=_sleep, is_new=l
                     url=f"https://{host}/jobad/{jid}",
                 )
             )
+            page_new += 1
             if len(out) >= MAX_NEW:
                 break
+        stale_pages = next_stale_pages(
+            stale_pages,
+            checked=page_candidates,
+            new=page_new,
+            failed=page_failed,
+        )
+        if stale_limit and stale_pages >= stale_limit:
+            break
         if len(posts) < page_size:
             break
         page += 1

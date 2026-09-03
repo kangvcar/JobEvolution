@@ -9,7 +9,9 @@ from app.collectors.ats import (
     DEFAULT_PORTALS,
     SEARCH_WORDS,
     fetch_beisen,
+    fetch_feishu,
     fetch_tencent,
+    known_page_limit,
     keep_title,
     load_portals,
     run_official,
@@ -117,6 +119,41 @@ def test_beisen_fetches_public_job_json():
     assert rows[0].domain == "ai"
     assert "PyTorch" in rows[0].body
     assert calls[0][0].endswith("/api/Jobad/GetJobAdPageList")
+
+
+def test_feishu_stops_after_known_pages(monkeypatch):
+    monkeypatch.setenv("COLLECT_KNOWN_PAGES", "2")
+    first_word = SEARCH_WORDS[0]
+    calls = []
+    page = [
+        {"id": f"known-{i}", "title": "算法工程师", "description": "负责算法", "requirement": "熟悉 Python"}
+        for i in range(50)
+    ]
+
+    def http(url, **kwargs):
+        body = kwargs.get("body") or {}
+        if body.get("limit") == 1:
+            return {"code": 0, "data": {"job_post_list": [{"id": "probe", "title": "算法工程师"}]}}
+        calls.append((body.get("keyword"), body.get("offset")))
+        if body.get("keyword") != first_word:
+            return {"code": 0, "data": {"job_post_list": []}}
+        offset = body.get("offset")
+        if offset in (0, 50):
+            return {"code": 0, "data": {"job_post_list": page}}
+        return {"code": 0, "data": {"job_post_list": []}}
+
+    rows = fetch_feishu("example.jobs.feishu.cn", "示例", http=http, sleep=lambda: None, is_new=lambda _: False)
+
+    assert rows == []
+    assert calls[:2] == [(first_word, 0), (first_word, 50)]
+    assert (first_word, 100) not in calls
+
+
+def test_known_page_limit_full_scan_override(monkeypatch):
+    monkeypatch.setenv("COLLECT_KNOWN_PAGES", "2")
+    assert known_page_limit() == 2
+    monkeypatch.setenv("COLLECT_FULL_SCAN", "1")
+    assert known_page_limit() == 0
 
 
 def test_ats_new_body_writes_second_snapshot(tmp_path):
