@@ -1,6 +1,6 @@
 type PipeRow = { source: string; n: number };
 type HeatRow = { name: string; v: number };
-type EventRow = { at: string; text: string; review?: string };
+type EventRow = { at: string; text: string; review?: string; kind?: string; n?: number; skills?: string[] };
 
 export function kindLabel(kind: string) {
   if (kind === "requires_add") return "岗位要求新增";
@@ -47,14 +47,29 @@ export function Heat({ rows }: { rows: HeatRow[] }) {
   );
 }
 
+function reviewTone(review: string) {
+  if (review === "待审") return "mid";
+  if (review === "驳回" || review === "已撤回") return "warn";
+  return "ok";
+}
+
 export function EventList({ rows }: { rows: EventRow[] }) {
+  if (!rows.length) return <p className="hint">暂无变化记录。</p>;
   return (
-    <div>
+    <div className="ev-list">
       {rows.map((row, i) => (
         <div className="ev" key={`${row.at}-${i}`}>
           <span className="mono">{(row.at || "").slice(5, 10)}</span>
-          <span>{row.text}</span>
-          {row.review ? <span className="pill">{row.review}</span> : <span />}
+          <span className="ev-text" title={row.skills?.join("、")}>
+            {row.text}
+            {row.n ? (
+              <>
+                {" "}新增 {row.n} 条要求
+                <span className="ev-names">：{(row.skills ?? []).join("、")}{row.n > (row.skills?.length ?? 0) ? " 等" : ""}</span>
+              </>
+            ) : null}
+          </span>
+          {row.review ? <span className={`pill ${reviewTone(row.review)}`}>{row.review}</span> : <span />}
         </div>
       ))}
     </div>

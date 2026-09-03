@@ -960,7 +960,6 @@ def list_job_events(job_id: str) -> list[dict]:
         return out
 
 
-FORMED_SLICE = 3
 _STORY_DISCOVER = "Agent 工程师"
 _STORY_UPDATE = "大模型应用工程师"
 
@@ -1037,11 +1036,23 @@ def list_board_jobs() -> dict:
     return boards
 
 
+def _with_delta(item: dict) -> dict:
+    """卡片带本期新增 / 失效计数和最近一次要求变化日期，列表按它排序。"""
+    rows = [row for row in list_requires_history(item["id"]) if not row.get("retracted")]
+    stamps = [(row.get("valid_from") or "")[:10] for row in rows] + [(row.get("valid_to") or "")[:10] for row in rows]
+    delta = period_delta(item["id"])
+    return {
+        **item,
+        "n_added": len(delta["added"]),
+        "n_expired": len(delta["expired"]),
+        "last_change": max((s for s in stamps if s), default=""),
+    }
+
+
 def _rank_formed(items: list[dict]) -> list[dict]:
     scored = []
     for item in items:
-        delta = period_delta(item["id"])
-        n = len(delta["added"]) + len(delta["expired"])
+        n = item["n_added"] + item["n_expired"]
         prefer = 1 if item["name"] == _STORY_UPDATE else 0
         scored.append((prefer, n, item))
     scored.sort(key=lambda row: (row[0], row[1]), reverse=True)
@@ -1050,11 +1061,11 @@ def _rank_formed(items: list[dict]) -> list[dict]:
 
 def discover_boards() -> dict:
     boards = list_board_jobs()
-    formed = _rank_formed(boards["formed"])
+    formed = _rank_formed([_with_delta(item) for item in boards["formed"]])
     return {
-        "candidate": boards["candidate"],
-        "emerging": boards["emerging"],
-        "formed": formed[:FORMED_SLICE],
+        "candidate": [_with_delta(item) for item in boards["candidate"]],
+        "emerging": [_with_delta(item) for item in boards["emerging"]],
+        "formed": formed,
         "formed_total": len(formed),
     }
 
@@ -1091,6 +1102,33 @@ def discover_dossier(job_id: str) -> dict | None:
                 "shared_requirements": sorted(current_names[sid] for sid in current_ids & other_ids),
                 "unique_requirements": sorted(other_names[sid] for sid in other_ids - current_ids),
             }
+    requires = [
+        {
+            "skill_id": row.get("skill_id"),
+            "name": row.get("name") or row.get("skill_id"),
+            "kind": row.get("kind") or "required",
+            "category": row.get("category") or "",
+            "n_sources": len(row.get("sources") or []),
+            "excerpt": row.get("excerpt") or "",
+            "valid_from": (row.get("valid_from") or "")[:10],
+        }
+        for row in list_requires(job_id)
+    ]
+    # 事件里 watching 与 sources 各上百个 id，前端不用；只留能读的字段。
+    events = []
+    for row in list_job_events(job_id):
+        payload = row.get("payload") if isinstance(row.get("payload"), dict) else {}
+        events.append(
+            {
+                "id": row.get("id"),
+                "kind": row.get("kind"),
+                "at": row.get("at"),
+                "review": row.get("review"),
+                "skill_name": payload.get("skill_name") or payload.get("proposed_name") or "",
+                "excerpt": payload.get("excerpt") or "",
+            }
+        )
+    job = {key: value for key, value in job.items() if key != "watching"}
     return {
         **job,
         "n_sources": n_total,
@@ -1100,7 +1138,8 @@ def discover_dossier(job_id: str) -> dict | None:
         "neighbor": neighbor,
         "sources": companies,
         "evidence": evidence,
-        "events": list_job_events(job_id),
+        "requires": requires,
+        "events": events,
         "aliases_in": list_aliases_in(job_id),
         "alias_of": alias_of(job_id),
     }
@@ -1210,10 +1249,12 @@ def _feed_events() -> list[dict]:
             RETURN e.kind AS kind, e.at AS at, e.review AS review,
                    e.payload AS payload, j.name AS job_name
             ORDER BY e.at DESC
-            LIMIT 24
+            LIMIT 400
             """
         )
+        # 一次入库几十条同岗位要求，逐条列没意义；同岗位同日同状态的新增归成一组。
         out = []
+        groups: dict[tuple, dict] = {}
         for row in rows:
             payload = row["payload"] or "{}"
             if isinstance(payload, str):
@@ -1236,15 +1277,22 @@ def _feed_events() -> list[dict]:
                 "auto_passed": "自动通过",
                 "rejected": "驳回",
             }.get(review, review)
-            out.append(
-                {
-                    "at": row["at"] or "",
-                    "text": text,
-                    "review": review_zh,
-                    "kind": kind,
-                }
-            )
-        return out
+            item = {"at": row["at"] or "", "text": text, "review": review_zh, "kind": kind}
+            if kind == "requires_add" and skill:
+                key = ((row["at"] or "")[:10], job_name, review)
+                group = groups.get(key)
+                if group is None:
+                    group = {**item, "text": job_name, "n": 0, "skills": []}
+                    groups[key] = group
+                    out.append(group)
+                group["n"] += 1
+                if len(group["skills"]) < 6:
+                    group["skills"].append(skill)
+                continue
+            out.append(item)
+            if len(out) >= 40:
+                break
+        return out[:40]
 
 
 def build_feed() -> dict:

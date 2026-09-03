@@ -10,22 +10,20 @@ def _seed_job(graph, *, suffix: str, name: str, status: str, domain: str = "ai")
     return job_id
 
 
-def test_discover_formed_column_is_a_slice_of_three(client):
+def test_discover_lists_every_formed_job_with_change_summary(client):
     from app import graph
 
     graph.init_graph()
     suffix = uuid.uuid4().hex[:8]
     try:
-        for i in range(4):
-            _seed_job(graph, suffix=suffix, name=f"成型切片{i}", status="formed")
-        client
+        seeded = {_seed_job(graph, suffix=suffix, name=f"成型全量{i}", status="formed") for i in range(4)}
         board = client.get("/discover").json()
-        jobs = client.get("/jobs").json()
-        formed_public = [row for row in jobs if row["status"] == "formed"]
-        assert len(board["formed"]) <= 3
-        assert len(formed_public) >= len(board["formed"])
-        if len(formed_public) > 3:
-            assert len(board["formed"]) == 3
+        ids = {row["id"] for row in board["formed"]}
+        assert seeded <= ids
+        assert board["formed_total"] == len(board["formed"])
+        card = next(row for row in board["formed"] if row["id"] in seeded)
+        assert card["n_added"] == 0 and card["n_expired"] == 0
+        assert card["last_change"] == ""
     finally:
         graph_clean(suffix)
 
@@ -91,6 +89,9 @@ def test_candidate_dossier_visible_jobs_hidden(client):
         assert dossier["events"]
         assert dossier["n_sources"] >= 1
         assert dossier["cluster"]["n"] == len(dossier["evidence"])
+        assert "watching" not in dossier
+        assert dossier["requires"] == []
+        assert set(dossier["events"][0]) == {"id", "kind", "at", "review", "skill_name", "excerpt"}
     finally:
         graph_clean(suffix)
 

@@ -2220,178 +2220,503 @@ header[data-component="top"],
 }
 
 /* ==========================================================================
-   Discover Page (/discover - 市场演化看板)
+   Discover Page (/discover - 市场演化)
+   一屏做决定：顶栏计数，左表右卷宗，卷宗自己滚动，算法说明折在页底。
    ========================================================================== */
 .discover-page {
-  padding: 40px var(--padding);
+  padding: 24px var(--padding) 40px;
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 14px;
   width: 100%;
+  max-width: 1280px;
+  --row: 34px;
 }
 
-.discover-page h1 {
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--color-ink);
-  letter-spacing: -0.02em;
-}
-
-/* Readout KPI Ribbon */
-.discover-page .readout {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 16px;
-  margin: 0;
-  padding: 16px 20px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-rule);
-  border-radius: 4px;
-}
-
-.discover-page .readout div {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.discover-page .readout dt {
-  font-size: 11.5px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-mute);
-}
-
-.discover-page .readout dd {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--color-ink);
-  margin: 0;
-}
-
-/* Market Stage Filter Pills */
-.market-filters {
+.disc-bar {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 24px;
+  min-height: 44px;
+  border-bottom: 1px solid var(--color-rule);
+  padding-bottom: 12px;
+}
+
+.disc-bar h1 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-ink);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.disc-readout {
+  display: flex;
+  gap: 22px;
+  margin: 0;
+  flex: 1;
+}
+
+.disc-readout div {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  cursor: help;
+}
+
+.disc-readout dt {
+  font-size: 12px;
+  color: var(--color-mute);
+  white-space: nowrap;
+}
+
+.disc-readout dd {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.disc-search {
+  height: 32px;
+  width: 200px;
+  padding: 0 10px;
+  border: 1px solid var(--color-rule);
+  border-radius: 4px;
+  background: var(--color-canvas);
+  font-size: 13px;
+  color: var(--color-ink);
+}
+
+.disc-search:focus {
+  outline: none;
+  border-color: var(--color-ink);
+}
+
+.disc-filters {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
-.market-filters button {
-  padding: 6px 14px;
+.market-filters,
+.disc-domains {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.market-filters button,
+.disc-domains button {
+  height: 28px;
+  padding: 0 11px;
   background: var(--color-surface);
   border: 1px solid var(--color-rule);
   border-radius: 4px;
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--color-body);
   font-weight: 500;
   transition: all 120ms ease;
+  font-variant-numeric: tabular-nums;
 }
 
-.market-filters button:hover {
+.market-filters button:hover,
+.disc-domains button:hover {
   border-color: var(--color-ink);
   color: var(--color-ink);
 }
 
-.market-filters button[aria-pressed="true"] {
+.market-filters button[aria-pressed="true"],
+.disc-domains button[aria-pressed="true"] {
   background: var(--color-ink);
   color: var(--color-canvas);
   border-color: var(--color-ink);
   font-weight: 600;
 }
 
-/* 2-Column Split Board: Job Cards vs Dossier */
 .disc-board {
   display: grid;
-  grid-template-columns: 1fr 400px;
-  gap: 24px;
+  grid-template-columns: minmax(0, 1fr) minmax(400px, 44%);
+  gap: 16px;
   align-items: start;
 }
 
-.job-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.kitem {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 14px 18px;
+/* 岗位表 */
+.disc-list {
+  border: 1px solid var(--color-rule);
+  border-radius: 4px;
   background: var(--color-canvas);
-  border: 1px solid var(--color-rule);
-  border-radius: 4px;
+  overflow: hidden;
+}
+
+.disc-table,
+.req-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.disc-table col.w-status { width: 62px; }
+.disc-table col.w-domain { width: 78px; }
+.disc-table col.w-num { width: 46px; }
+.disc-table col.w-delta { width: 78px; }
+.disc-table col.w-date { width: 96px; }
+.req-table col.w-kind { width: 60px; }
+.req-table col.w-num { width: 52px; }
+.req-table col.w-date { width: 84px; }
+
+.disc-table th,
+.req-table th {
+  height: 30px;
+  padding: 0 10px;
   text-align: left;
-  transition: all 120ms ease;
-}
-
-.kitem:hover {
-  border-color: var(--color-ink);
-  background: var(--color-surface);
-}
-
-.kitem.on {
-  border-color: var(--color-ink);
-  background: var(--color-surface);
-  box-shadow: inset 3px 0 0 var(--color-ink);
-}
-
-.kitem b {
-  font-size: 14.5px;
-  color: var(--color-ink);
-  flex-grow: 1;
-}
-
-.kitem .meta {
-  font-size: 12.5px;
+  font-size: 11.5px;
+  font-weight: 500;
   color: var(--color-mute);
+  border-bottom: 1px solid var(--color-rule);
   white-space: nowrap;
+  background: var(--color-surface);
 }
 
-/* Dossier Card */
-.story.dossier {
+.disc-table td,
+.req-table td {
+  height: var(--row);
+  padding: 0 10px;
+  border-bottom: 1px solid var(--color-rule);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--color-body);
+}
+
+.disc-table tbody tr { cursor: pointer; }
+.disc-table tbody tr:hover td { background: var(--color-surface); }
+.disc-table tbody tr[aria-current] td {
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+.disc-table tbody tr[aria-current] td:first-child { box-shadow: inset 3px 0 0 var(--color-ink); }
+.disc-table tbody tr:focus-visible { outline: none; }
+.disc-table tbody tr:focus-visible td { background: var(--color-card); }
+
+.disc-table .disc-name,
+.req-table .disc-name {
+  font-weight: 600;
+  color: var(--color-ink);
+}
+.disc-table .num,
+.req-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.disc-table .mute,
+.req-table .mute { color: var(--color-mute); }
+.disc-table .mono,
+.req-table .mono,
+.timeline .mono { font-size: 12px; }
+
+.disc-delta span + span { margin-left: 4px; }
+.rise { color: var(--color-rise); }
+.fall { color: var(--color-fall); }
+
+/* 卷宗 */
+.dossier-pane {
   background: var(--color-surface);
   border: 1px solid var(--color-rule);
   border-radius: 4px;
-  padding: 24px;
+  padding: 16px 18px;
   display: flex;
   flex-direction: column;
   gap: 14px;
   position: sticky;
-  top: 100px;
+  top: 84px;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
 }
 
-.story.dossier h2 {
+.dossier-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dossier-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.dossier-head h2 {
   font-size: 18px;
   font-weight: 700;
   color: var(--color-ink);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.dossier-question {
-  font-size: 13px !important;
-  font-weight: 700 !important;
+.dossier-src { margin: -8px 0 0; font-size: 12.5px; }
+
+.dossier-head .primary { height: 32px; padding: 0 14px; font-size: 13px; flex-shrink: 0; }
+.dossier-head .primary:disabled {
+  background: var(--color-card);
+  color: var(--color-mute);
+  border-color: var(--color-rule);
+  cursor: not-allowed;
+}
+
+.dossier-verdict {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-ink);
+  padding: 10px 12px;
+  background: var(--color-canvas);
+  border-left: 3px solid var(--color-ink);
+  border-radius: 0 4px 4px 0;
+}
+
+.dossier-sec {
   border-top: 1px solid var(--color-rule);
   padding-top: 12px;
-  margin-top: 4px;
-  color: var(--color-ink) !important;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-/* Lower Data & Feed */
+.dossier-sec h3 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-ink);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.dossier-sec .count {
+  font-weight: 500;
+  color: var(--color-mute);
+  font-variant-numeric: tabular-nums;
+}
+
+.dossier-pending {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-mute);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.dossier-pending:hover { color: var(--color-ink); }
+
+.req-table { background: var(--color-canvas); border: 1px solid var(--color-rule); border-radius: 4px; }
+.req-table th { height: 26px; }
+.req-table td { height: 28px; font-size: 12.5px; }
+.req-table .req-cat th {
+  height: 24px;
+  font-size: 11px;
+  color: var(--color-body);
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-rule);
+}
+.req-table tbody:first-of-type .req-cat th { border-top: 0; }
+.req-table tbody tr:last-child td { border-bottom: 0; }
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  padding: 0 9px;
+  border: 1px solid var(--color-rule);
+  border-radius: 12px;
+  background: var(--color-canvas);
+  font-size: 12px;
+  color: var(--color-body);
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chip i {
+  font-style: normal;
+  font-size: 11px;
+  color: var(--color-mute);
+  font-variant-numeric: tabular-nums;
+}
+.chip.rise { border-color: color-mix(in srgb, var(--color-rise) 40%, transparent); color: var(--color-rise); }
+.chip.fall { border-color: color-mix(in srgb, var(--color-fall) 40%, transparent); color: var(--color-fall); }
+.chip.more { cursor: pointer; color: var(--color-ink); border-style: dashed; }
+.chip.more:hover { border-color: var(--color-ink); }
+
+.dossier-timeline summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+.dossier-timeline summary::-webkit-details-marker { display: none; }
+.dossier-timeline summary::after {
+  content: "展开";
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--color-mute);
+}
+.dossier-timeline[open] summary::after { content: "收起"; }
+
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.timeline li {
+  display: grid;
+  grid-template-columns: 84px 1fr;
+  gap: 10px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--color-body);
+}
+.timeline .mono { color: var(--color-mute); }
+.pill.warn {
+  background: var(--color-surface);
+  color: var(--color-warning-hover);
+  border: 1px solid var(--color-rule);
+}
+
+/* 页底算法说明 */
+.disc-method {
+  border-top: 1px solid var(--color-rule);
+  padding-top: 12px;
+}
+.disc-method > summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-body);
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.disc-method > summary::-webkit-details-marker { display: none; }
+.disc-method > summary::before {
+  content: "▸";
+  font-size: 11px;
+  color: var(--color-mute);
+}
+.disc-method[open] > summary::before { content: "▾"; }
+.disc-method > summary:hover { color: var(--color-ink); }
+
 .disc-lower {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-  border-top: 1px solid var(--color-rule);
-  padding-top: 32px;
+  grid-template-columns: 1fr 1.4fr 1fr;
+  gap: 24px;
+  padding-top: 20px;
 }
+.disc-lower h2,
+.disc-feed h2 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-ink);
+  margin-bottom: 2px;
+}
+.disc-lower .hint,
+.disc-feed .hint { font-size: 12.5px; margin-bottom: 10px; }
+
+.pipe { display: flex; flex-direction: column; gap: 6px; }
+.pipe-row {
+  display: grid;
+  grid-template-columns: 64px 1fr 48px;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+  color: var(--color-body);
+}
+.pipe-row span:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+
+.heat-track {
+  display: block;
+  height: 6px;
+  width: 100%;
+  min-width: 60px;
+  background: var(--color-card);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.heat-track i {
+  display: block;
+  height: 100%;
+  background: var(--color-ink);
+  border-radius: 3px;
+}
+
+.disc-lower .table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.disc-lower .table td { padding: 3px 0; color: var(--color-body); }
+.disc-lower .table td:first-child { width: 42%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 10px; }
+.disc-lower .table td:nth-child(2) { padding-right: 10px; }
+.disc-lower .table td.num { text-align: right; width: 44px; font-variant-numeric: tabular-nums; }
+
+.disc-more {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--color-mute);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.disc-more:hover { color: var(--color-ink); }
+
+.move h2 { margin-bottom: 6px; }
+.move h2 + ul, .move h2 + .hint { margin-bottom: 14px; }
+.move ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.move li { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--color-body); }
+.move .tag { font-size: 11px; }
 
 .disc-feed {
   border-top: 1px solid var(--color-rule);
-  padding-top: 32px;
+  padding-top: 16px;
+  margin-top: 20px;
 }
+.ev-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 32px;
+  row-gap: 2px;
+}
+.ev {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  height: 28px;
+  font-size: 12.5px;
+  color: var(--color-body);
+  border-bottom: 1px solid var(--color-rule);
+}
+.ev .mono { color: var(--color-mute); font-size: 12px; }
+.ev-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ev-names { color: var(--color-mute); }
 
 /* ==========================================================================
    Diagnose Page (/diagnose - 简历技能换档诊断)
@@ -3406,12 +3731,19 @@ header[data-component="top"],
   .disc-board {
     grid-template-columns: 1fr;
   }
-  .story.dossier {
+  .dossier-pane {
     position: static;
+    max-height: none;
   }
+  .disc-bar { flex-wrap: wrap; gap: 12px 20px; }
+  .disc-readout { gap: 16px; flex-wrap: wrap; }
+  .disc-search { width: 100%; }
+  .disc-table col.w-date { width: 0; }
+  .disc-table th:last-child, .disc-table td:last-child { display: none; }
   .disc-lower {
     grid-template-columns: 1fr;
   }
+  .ev-list { grid-template-columns: 1fr; }
   .diagnose-split {
     grid-template-columns: 1fr;
   }
@@ -3420,9 +3752,6 @@ header[data-component="top"],
   }
   .correction-fields {
     grid-template-columns: 1fr;
-  }
-  .discover-page .readout {
-    grid-template-columns: repeat(2, 1fr);
   }
 }
 
