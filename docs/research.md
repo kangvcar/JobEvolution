@@ -9,7 +9,7 @@
 - **抄思路**：读机制，自己用 DeepSeek / Pydantic / Cypher 重写。
 - **抄部分实现**：只搬分层、拦截或评测框架，不把整仓当依赖。
 
-调研日期 2026-08-28；智联/51job/猎聘可用性复核 2026-08-30。star 和推送会变，装依赖前打开仓库页看一眼。
+调研日期 2026-08-28；智联/51job/猎聘可用性复核 2026-08-30；公司官网招聘页 2026-09-03。star 和推送会变，装依赖前打开仓库页看一眼。
 
 ## 采集
 
@@ -18,7 +18,9 @@
 | 冷启动 JD | 仓库 `data/` 下本地 JD 表 | 数据导入 | 字段映射后粗滤四领域，写入 `data/jd/`，再跑抽取 | 各表列名不同，要先对齐到公司/岗位/正文/日期 |
 | 条数补洞 | [天池智联人岗匹配](https://tianchi.aliyun.com/dataset/31623) | 数据导入 | 只补字段或条数缺口 | 偏匹配赛，正文不如现场 JD 厚 |
 | 稳定公开源 | Greenhouse / Lever / Ashby JSON；[NCSS](https://www.ncss.cn/student/jobs/index.html) | 抄思路 | 自写 source，打公开列表/JSON | NCSS 无官方 API，页面改了要修 |
-| ATS 采集器参考 | [jobhive 一类 ATS 刮刀横评](https://scrapfly.io/blog/posts/best-open-source-job-scrapers) | 抄思路 | 只抄端点形状，不 vendor | 覆盖偏用海外 ATS 的公司 |
+| 国内官网招聘页 | [Hiring-Radar](https://github.com/simonlin1212/Hiring-Radar)（飞书/Moka/北森 + 腾讯/字节等自建） | 抄思路 | 自写 source；先打已验证 JSON，加公司用配置行 | 门户域名和 `website-path` 会过期；Moka 有前端 AES 信封 |
+| 国内大厂 URL 对照 | [FindJobs-Agent](https://github.com/he-yufeng/FindJobs-Agent) `job_crawler_v2.py` | 抄思路 | 只抄公司→端点，不引入 Agent | 阿里/美团/京东在仓内已走 Selenium |
+| ATS 采集器参考 | [ats-scrapers](https://github.com/kalil0321/ats-scrapers)；[ats-job-apis](https://github.com/noble-ronin/ats-job-apis) | 抄思路 | 只抄端点形状，不 vendor、不 pip 装 | 覆盖偏海外 ATS；字节适配器打的是英文门户 |
 | BOSS 增量 | [BossHunter](https://github.com/shengjidaguai-china/BossHunter) | 抄思路 | Playwright 已登录会话 + 拦 `joblist.json` | 账号会封；headless 易撞验证码 |
 | 多站分层 | [RAYNLIU2005/-Multi-threadedCrawler](https://github.com/RAYNLIU2005/-Multi-threadedCrawler) | 抄部分实现 | `source / controller / sink` + fingerprint 幂等 | star 少，选择器会过期，当骨架不当时钟 |
 | 猎聘/智联/51job 现网会话 | [AgentMesh-JobAgent](https://github.com/jiyangnan/AgentMesh-JobAgent) v0.5.40（2026-08-28） | 抄思路 | 受管 Chrome + 每站独立 source；失败即停 | 求职 Agent，云端收费；不要 vendor |
@@ -30,7 +32,7 @@
 
 **排除。** 2019–2021 的 Scrapy 站群（JobWitcher、scrapy-51job、spider2、chenjiandongx/51job-spider）：选择器失效。纯 `requests` / cookie 重放（silie666/job-crawler）：过期。mcp-jobs：默认 headless 打首页，会撞墙。纯 `requests` 打 BOSS：账户级 `code: 36`。Kafka：单机过重。
 
-细节：[research/jd-collection.md](research/jd-collection.md) · 三站可用性：[research/job-site-crawlers.md](research/job-site-crawlers.md)
+细节：[research/jd-collection.md](research/jd-collection.md) · 三站可用性：[research/job-site-crawlers.md](research/job-site-crawlers.md) · 官网招聘页：[research/company-career-pages.md](research/company-career-pages.md)
 
 ## 图谱管线与存储
 
