@@ -29,10 +29,10 @@ def test_skill_names_lookup(client):
     sid = f"skill-{uuid.uuid4().hex[:8]}"
     graph.upsert_skill({"id": sid, "name": "向量检索", "category": "engineering"})
     try:
-        response = client.get(f"/admin/skills/names?ids={sid},missing-id", headers={"X-Admin-Password": ADMIN})
+        response = client.post("/admin/skills/names", json={"ids": [sid, "missing-id"]}, headers={"X-Admin-Password": ADMIN})
         assert response.status_code == 200
         assert response.json() == {sid: "向量检索"}
-        assert client.get("/admin/skills/names?ids=x").status_code == 401
+        assert client.post("/admin/skills/names", json={"ids": [sid]}).status_code == 401
     finally:
         with graph._driver.session() as session:
             session.run("MATCH (s:Skill {id: $id}) DETACH DELETE s", id=sid)

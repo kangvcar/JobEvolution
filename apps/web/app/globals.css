@@ -3041,6 +3041,19 @@ header[data-component="top"],
 .ops-dots li[data-state="ok"] i { background: var(--color-ok); }
 .ops-dots li[data-state="failed"] i { background: var(--color-danger); }
 
+.admin-stats {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-mute);
+  white-space: nowrap;
+}
+
+.admin-stats b {
+  margin: 0 8px 0 2px;
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+}
+
 /* 待审队列：左分组导航，右紧凑表格 */
 .qb {
   display: grid;
@@ -3279,6 +3292,8 @@ header[data-component="top"],
 
 .adj-text h2 { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
 .adj-text mark { background: var(--color-card); font-weight: 600; padding: 0 3px; }
+.adj-source { color: var(--color-mute); font-size: 11px; line-height: 1.4; overflow-wrap: anywhere; margin-bottom: 10px; }
+.adj-original { white-space: pre-wrap; overflow-wrap: anywhere; }
 
 .adj-side {
   display: flex;

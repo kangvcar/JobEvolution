@@ -10,6 +10,7 @@ type AdjRow = {
   id: string;
   title: string;
   text: string;
+  source_path?: string;
   kept: { id: string; name: string }[];
   suspects: { id: string; name: string }[];
   proposals: { skill_id: string; name: string; span: string }[];
@@ -26,6 +27,7 @@ type AdjState = {
 
 type OpsEntry = { status: string; at?: number };
 type Ops = { status: Record<string, OpsEntry>; stale: boolean };
+type Stats = { today: Record<string, number>; total: Record<string, number>; pass_rate: number | null };
 type FeedLine = { at: string; type: string; text: string };
 
 const OPS_LABEL: Record<string, string> = { pipeline: "管线", backup: "备份", publish: "发布" };
@@ -76,6 +78,8 @@ export default function AdminPage() {
   const [adjFile, setAdjFile] = useState<"jd" | "resume">("jd");
   const [gold, setGold] = useState<AdjState | null>(null);
   const [ops, setOps] = useState<Ops | null>(null);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [skillNames, setSkillNames] = useState<Record<string, string>>({});
   const [bulkBusy, setBulkBusy] = useState<string | null>(null);
   const [bulkResult, setBulkResult] = useState<Record<string, string>>({});
 
@@ -87,7 +91,19 @@ export default function AdminPage() {
   async function loadQueue() {
     const response = await fetch(`${API}/admin/queue`, { credentials: "include" });
     if (!response.ok) throw new Error("口令错误");
-    setQueue(await response.json());
+    const items: QueueEvent[] = await response.json();
+    setQueue(items);
+    // 合并提案只带技能 id，名字另查一次。
+    const ids = [...new Set(items.filter((i) => i.kind === "skill_merge_proposal").flatMap((i) => [i.payload?.old_skill_id, i.payload?.canonical_skill_id]))].filter((id): id is string => Boolean(id));
+    if (ids.length) {
+      const names = await post("/admin/skills/names", { ids });
+      if (names.ok) setSkillNames(await names.json());
+    }
+  }
+
+  async function loadStats() {
+    const response = await fetch(`${API}/admin/review/stats`, { credentials: "include" });
+    if (response.ok) setStats(await response.json());
   }
 
   async function loadNext(file: "jd" | "resume") {
@@ -121,6 +137,7 @@ export default function AdminPage() {
       loadPortals().catch(() => null);
       loadNext("jd").catch(() => null);
       loadOps().catch(() => null);
+      loadStats().catch(() => null);
     } catch {
       setError("口令错误");
     }
@@ -276,6 +293,7 @@ export default function AdminPage() {
     }
     setQueue((items) => items?.filter(({ id }) => id !== item.id) ?? []);
     setBusy(null);
+    loadStats().catch(() => null);
   }
 
   async function approveAll(jobId: string, versionId: string) {
@@ -291,6 +309,7 @@ export default function AdminPage() {
     setBulkResult((current) => ({ ...current, [key]: `已批准 ${body.event_ids?.length || 0} 条，批量决定 ${body.batch_id || "已记录"}` }));
     await loadQueue();
     setBulkBusy(null);
+    loadStats().catch(() => null);
   }
 
   if (queue === null) {
@@ -315,6 +334,8 @@ export default function AdminPage() {
 
   const terms = gold?.row ? [...gold.row.kept.map((k) => k.name), ...gold.row.proposals.map((p) => p.span)] : [];
   const enabledPortals = portals?.filter((p) => p.enabled).length;
+  const today = stats ? Object.values(stats.today).reduce((a, b) => a + b, 0) : null;
+  const statsTitle = stats ? `今日批准 ${stats.today.approved ?? 0} · 驳回 ${stats.today.rejected ?? 0} · 自动通过 ${stats.today.auto_passed ?? 0}；通过率按历史人工裁决算` : undefined;
 
   return (
     <main id="main" className="page admin-page">
@@ -342,6 +363,9 @@ export default function AdminPage() {
             );
           })}
         </ul>
+        <p className="admin-stats" title={statsTitle}>
+          今日裁决 <b>{today ?? "–"}</b> 通过率 <b>{stats?.pass_rate == null ? "–" : `${Math.round(stats.pass_rate * 100)}%`}</b>
+        </p>
         <button className="ghost small" type="button" aria-pressed={passthrough} onClick={togglePassthrough}>
           {passthrough ? "自动审核开启" : "自动审核关闭"}
         </button>
@@ -350,7 +374,7 @@ export default function AdminPage() {
       {error ? <p className="admin-error" role="alert">{error}</p> : null}
 
       {tab === "queue" ? (
-        <QueueBoard queue={queue} busy={busy} bulkBusy={bulkBusy} bulkResult={bulkResult} onReview={review} onApproveAll={approveAll} />
+        <QueueBoard queue={queue} skillNames={skillNames} busy={busy} bulkBusy={bulkBusy} bulkResult={bulkResult} onReview={review} onApproveAll={approveAll} />
       ) : null}
 
       {tab === "gold" ? (
@@ -368,7 +392,8 @@ export default function AdminPage() {
             <article className="adj-card">
               <div className="adj-text">
                 <h2>{gold.row.title}</h2>
-                <p>{highlight(gold.row.text, terms)}</p>
+                {gold.row.source_path ? <p className="adj-source">证据：{gold.row.source_path}</p> : null}
+                <p className="adj-original">{highlight(gold.row.text, terms)}</p>
               </div>
               <div className="adj-side">
                 <section>

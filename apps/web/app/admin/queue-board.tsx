@@ -86,6 +86,7 @@ function LayerBar({ items }: { items: QueueEvent[] }) {
 
 type Props = {
   queue: QueueEvent[];
+  skillNames: Record<string, string>;
   busy: string | null;
   bulkBusy: string | null;
   bulkResult: Record<string, string>;
@@ -93,7 +94,7 @@ type Props = {
   onApproveAll: (jobId: string, versionId: string) => void;
 };
 
-export default function QueueBoard({ queue, busy, bulkBusy, bulkResult, onReview, onApproveAll }: Props) {
+export default function QueueBoard({ queue, skillNames, busy, bulkBusy, bulkResult, onReview, onApproveAll }: Props) {
   const groups = useMemo(() => groupQueue(queue), [queue]);
   const [groupKey, setGroupKey] = useState<string | null>(null);
   const group = groups.find((g) => g.key === groupKey) ?? groups[0];
@@ -244,7 +245,7 @@ export default function QueueBoard({ queue, busy, bulkBusy, bulkResult, onReview
                   ) : group?.key === "skill_merge_proposal" ? (
                     <>
                       <td className="qb-name">{p.proposed_name}</td>
-                      <td className="mono" title={`${p.old_skill_id} → ${p.canonical_skill_id}`}>{String(p.old_skill_id).slice(-6)} → {String(p.canonical_skill_id).slice(-6)}</td>
+                      <td title={`${p.old_skill_id} → ${p.canonical_skill_id}`}>{skillNames[p.canonical_skill_id ?? ""] ?? String(p.canonical_skill_id).slice(-6)}</td>
                       <td>{label(REASON, p.reason)}</td>
                     </>
                   ) : (

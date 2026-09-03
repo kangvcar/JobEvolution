@@ -831,10 +831,15 @@ def admin_review_stats(request: Request, x_admin_password: str | None = Header(d
     return {**stats, "pass_rate": approved / (approved + rejected) if approved + rejected else None}
 
 
-@app.get("/admin/skills/names")
-def admin_skill_names(request: Request, ids: str = Query(""), x_admin_password: str | None = Header(default=None, alias="X-Admin-Password")):
+class SkillIdsBody(BaseModel):
+    ids: list[str]
+
+
+@app.post("/admin/skills/names")
+def admin_skill_names(body: SkillIdsBody, request: Request, x_admin_password: str | None = Header(default=None, alias="X-Admin-Password")):
+    """待审队列一屏上千个技能 id，走 body 不走 query string。"""
     _require_admin(request, x_admin_password)
-    return graph.skill_names([part for part in ids.split(",") if part][:200])
+    return graph.skill_names(body.ids[:2000])
 
 
 @app.get("/admin/ops/status")
