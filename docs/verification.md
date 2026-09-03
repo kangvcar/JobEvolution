@@ -31,6 +31,23 @@ JSONL 一行为一条。技能点一律写图谱 `Skill.id`（归一化后），
 
 **来源。** `data/` 本地 JD 打底，从管线写入的 `data/jd/` 抽。不要手写赛题 JD，不要只抽智联一张表。ATS / NCSS / 天池有则补，不设现场源比例。四领域都要有；人工智能不少于 40 条，另外三个领域各不少于 12 条。17 个入谱岗每个至少 3 条；赛题那一对（Agent 工程师、大模型应用工程师）各不少于 8 条。缺岗先放宽标题词再滤一刀，仍不够则该岗不进三项分母，不要手补正文。
 
+官方门户复跑使用 `data/official-only/`，与本地 CSV/JD 归档和产品图谱隔离。Redis 使用 DB 2；Neo4j 使用 `neo4j-official` 独立卷。首次或需要重建时执行：
+
+```
+docker compose --profile official up -d neo4j-official
+docker compose run --rm --no-deps \
+  -e DATA_DIR=/app/data/official-only \
+  -e JD_DIR=/app/data/official-only/jd \
+  -e NEO4J_URI=bolt://neo4j-official:7687 \
+  -e REDIS_URL=redis://redis:6379/2 \
+  pipeline python -m app.collectors --daily \
+    --data-dir /app/data/official-only \
+    --out-dir /app/data/official-only/jd \
+    --redis-url redis://redis:6379/2
+```
+
+确认日志中的 `extract_failed` 为 0 后，再以同样的 `JD_DIR` 和 `NEO4J_URI` 执行 `EVAL_DIR=/app/data/eval-official-only python -m app.eval build`、`python -m app.eval draft`。`draft` 只写模型建议；`adjudicate` 必须逐条回看 `path` 指向的 JD 原文后才可写入人工裁决。不要删除 `data/*.csv` 或复用产品 Neo4j 卷。
+
 **标注。** 一人标即可。不一致以图谱技能点为准，记进 `notes`。每条标：
 
 - `job_id`：对齐到 17 岗之一，或 `null`（噪声 / 未入谱）

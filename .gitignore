@@ -18,3 +18,8 @@ data/jd/*.json
 data/jd/*.tmp
 data/jd/*.cache
 data/collect.lock
+data/official-only/jd/*.json
+data/official-only/jd/*.cache
+data/official-only/collect.lock
+data/eval-official-only/*.jsonl.bak
+data/eval-official-only/out/*

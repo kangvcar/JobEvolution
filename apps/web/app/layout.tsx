@@ -11,11 +11,11 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "智演 (JobEvolution) | 开源 AI 职业能力图谱与迁移诊断",
-  description: "从多源招聘数据流中发现新岗位、追踪既有岗位能力演化；对照带来源的岗位证据与要求边，计算最小换档条件与技能成长路径。",
+  title: "智演 (JobEvolution) | 开源 AI 职业能力图谱",
+  description: "从多源招聘数据流中发现新岗位、追踪岗位能力演化；对照带来源的证据与要求边，计算最小换档条件与技能成长路径。",
   openGraph: {
-    title: "智演 (JobEvolution) | 开源 AI 职业能力图谱与迁移诊断",
-    description: "多源异构数据驱动的岗位与能力图谱构建与动态演化分析研究。",
+    title: "智演 (JobEvolution) | 开源 AI 职业能力图谱",
+    description: "多源异构数据驱动的岗位与能力图谱构建与动态演化分析。",
     type: "website",
   },
 };

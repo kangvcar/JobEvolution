@@ -132,6 +132,13 @@ def test_gold_build_does_not_call_compare_job(monkeypatch, tmp_path):
     assert len(rows) == 100
 
 
+def test_eval_dir_honors_isolated_directory(monkeypatch, tmp_path):
+    from app.eval import paths
+
+    monkeypatch.setenv("EVAL_DIR", str(tmp_path))
+    assert paths.eval_dir() == tmp_path
+
+
 def test_gold_mention_scan_excludes_non_formal_candidates():
     from app.eval.scan import mention_skill_ids
 

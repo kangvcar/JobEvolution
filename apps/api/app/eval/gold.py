@@ -54,8 +54,10 @@ def _load_doc(path: Path) -> dict | None:
     return doc
 
 
-def _pick_jd() -> list[dict]:
-    files = sorted((repo_root() / "data" / "jd").glob("jd-*.json"))
+def _pick_jd(jd_dir: Path | None = None) -> list[dict]:
+    from app.pipeline.__main__ import default_jd_dir
+
+    files = sorted((jd_dir or default_jd_dir()).glob("jd-*.json"))
     picked: list[dict] = []
     seen: set[str] = set()
     named = {name: 0 for name in CONTEST}
@@ -102,7 +104,7 @@ def _pick_jd() -> list[dict]:
     return picked
 
 
-def build_gold(*, index: list[dict], jobs: list[dict]) -> None:
+def build_gold(*, index: list[dict], jobs: list[dict], jd_dir: Path | None = None) -> None:
     dest = eval_dir()
     dest.mkdir(parents=True, exist_ok=True)
     write_json(
@@ -110,7 +112,7 @@ def build_gold(*, index: list[dict], jobs: list[dict]) -> None:
         [{"id": s["id"], "name": s.get("name") or "", "synonyms": list(s.get("synonyms") or [])} for s in index],
     )
     jd_rows = []
-    for i, doc in enumerate(_pick_jd(), start=1):
+    for i, doc in enumerate(_pick_jd(jd_dir), start=1):
         text = duty_text(doc.get("body") or "")[:2500]
         skills = mention_skill_ids(text, index)
         name = match_target(doc.get("title") or "")

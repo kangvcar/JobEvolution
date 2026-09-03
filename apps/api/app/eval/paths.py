@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 
 
 def repo_root() -> Path:
@@ -10,6 +11,9 @@ def repo_root() -> Path:
 
 
 def eval_dir() -> Path:
+    configured = os.environ.get("EVAL_DIR")
+    if configured:
+        return Path(configured)
     return repo_root() / "data" / "eval"
 
 

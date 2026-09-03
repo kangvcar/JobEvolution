@@ -6,10 +6,10 @@ import Link from "next/link";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const TICKER = [
-  "在对你的技能",
-  "在读这个岗现在要什么",
-  "在标缺口和半档",
-  "在定档位",
+  "读取简历技能证据",
+  "对照岗位规范要求",
+  "标记覆盖缺口半档",
+  "推算换档条件",
 ];
 const DEFAULT_JOB = "大模型应用工程师";
 
@@ -325,8 +325,8 @@ export function DiagnoseForm() {
       </ol>
       {phase !== "done" && (
         <form className="diagnose-form" onSubmit={onSubmit}>
-          <h1>{step === "upload" ? "上传简历" : step === "correct" ? "校对解析结果" : step === "choose" ? "选择目标岗位" : "正在生成对照"}</h1>
-          {step === "choose" && <p className="diagnostic-meta">生成前会核对图谱发布版本、岗位更新时间、数据状态和去重招聘公司数量。未通过校验的岗位不会进入报告。</p>}
+          <h1>{step === "upload" ? "上传简历" : step === "correct" ? "校对解析结果" : step === "choose" ? "选择对照岗位" : "正在生成对照"}</h1>
+          {step === "choose" && <p className="diagnostic-meta">生成前会核对图谱发布版本、岗位更新时间、数据状态和去重招聘公司数量。未通过校验的岗位不进入报告。</p>}
           {step === "upload" && <label>
             目标岗位
             <select value={jobId} onChange={(e) => setJobId(e.target.value)}>
@@ -359,7 +359,7 @@ export function DiagnoseForm() {
             />
             <span>{file ? file.name : "选择文件或拖入此处"}</span>
           </label>}
-          {step === "upload" && <details className="privacy-details"><summary>隐私与数据处理详情</summary><p>上传后只发送提取出的文本给当前配置的模型服务商。产品数据库不保存简历原文件，会话最长保留一小时。</p></details>}
+          {step === "upload" && <details className="privacy-details"><summary>隐私与数据处理</summary><p>上传后只发送提取出的文本给当前配置的模型服务商。数据库不保存简历原文件，会话最长保留一小时。</p></details>}
           {step === "correct" && <section className="correction-panel" aria-label="解析校对"><p className="hint">请确认角色、年限、学历、技能和证据级。提交前不会生成岗位结论，修改只保留简历原文能支持的内容。</p><div className="correction-fields"><label>当前角色<input value={parsed?.profile?.role || ""} onChange={(event) => setParsed((current) => current ? { ...current, profile: { ...(current.profile || {}), role: event.target.value } } : current)} placeholder="未标注" /></label><label>工作年限<input value={parsed?.profile?.experience || ""} onChange={(event) => setParsed((current) => current ? { ...current, profile: { ...(current.profile || {}), experience: event.target.value } } : current)} placeholder="未标注" /></label><label>学历<input value={parsed?.education_items?.[0]?.text || ""} onChange={(event) => setParsed((current) => current ? { ...current, education_items: [{ text: event.target.value }] } : current)} placeholder="未标注" /></label></div><p><b>已识别技能：</b>{names(parsed?.skills)}</p><p className="hint">证据片段：{parsed?.evidence_fragments?.length || 0} 条。明确结果会在报告中单独标出。</p><button type="button" onClick={continueCorrect}>确认并选择岗位</button></section>}
           {step === "choose" && <section className="choose-panel"><p className="hint">推荐岗位最多三个。可选择一个或两个岗位进行对照。</p><div className="recommendations">{recommendations.map((item) => <label key={item.job_id} className="recommendation"><input type="checkbox" checked={selectedJobIds.includes(item.job_id)} onChange={(event) => setSelectedJobIds((current) => event.target.checked ? [...current.filter((id) => id !== item.job_id), item.job_id].slice(-2) : current.filter((id) => id !== item.job_id))} /><span><b>{item.name}</b><small>{item.band} · {item.reasons.map((reason) => reason.text).join("；")}</small></span></label>)}</div><label>搜索或改选岗位<select value={jobId} onChange={(event) => setJobId(event.target.value)}>{jobs.map((job) => <option key={job.id} value={job.id}>{job.name}</option>)}</select></label><button type="button" onClick={() => setSelectedJobIds((ids) => ids.length ? ids : [jobId])}>加入当前岗位</button></section>}
           {step === "correct" && <section className="correction-controls" aria-label="修改技能"><p><b>已识别技能</b></p><ul>{(parsed?.skills || []).map((skill, index) => <li key={`${skill.skill_id}-${index}`}><span>{skill.name}</span><select aria-label={`${skill.name} 熟练级`} value={skill.proficiency || ""} onChange={(event) => setParsed((current) => current ? { ...current, skills: (current.skills || []).map((item, i) => i === index ? { ...item, proficiency: event.target.value || null } : item) } : current)}><option value="">未标熟练级</option><option value="aware">了解</option><option value="able">熟悉</option><option value="expert">精通</option></select><button type="button" onClick={() => setParsed((current) => current ? { ...current, skills: (current.skills || []).filter((_, i) => i !== index) } : current)}>移除</button></li>)}</ul><div className="evidence-controls"><p><b>证据级校对</b></p>{(parsed?.evidence_fragments || []).map((fragment, index) => <label key={`${fragment.id || fragment.skill_id}-${index}`}>{fragment.text}<select aria-label={`${fragment.text} 证据级`} value={fragment.evidence_level || "mention"} onChange={(event) => setParsed((current) => current ? { ...current, evidence_fragments: (current.evidence_fragments || []).map((item, i) => i === index ? { ...item, evidence_level: event.target.value as EvidenceFragment["evidence_level"] } : item) } : current)}><option value="mention">提及</option><option value="use">使用</option><option value="result">结果</option></select></label>)}</div><div className="user-added"><input aria-label="补充技能" value={newSkill} onChange={(event) => setNewSkill(event.target.value)} placeholder="补充你做过但简历没写的技能" /><button type="button" onClick={() => { const name = newSkill.trim(); if (name) { setUserAdded((items) => [...items, { name, skill_id: name }]); setNewSkill(""); } }}>加入待核对</button></div>{userAdded.length > 0 && <p className="hint">你补充的，简历尚未证明：{userAdded.map((item) => item.name).join("、")}</p>}</section>}

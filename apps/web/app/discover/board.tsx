@@ -6,7 +6,7 @@ import { EventList, Heat, Pipe, kindLabel } from "../feed-bits";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const DOMAIN: Record<string, string> = {
-  ai: "人工智能",
+  ai: "AI",
   data: "大数据",
   system: "智能系统",
   iot: "物联网",
@@ -121,9 +121,9 @@ export function DiscoverBoard() {
 
   return (
     <main id="main" className="page discover-page">
-      <h1>市场变化</h1>
+      <h1>市场演化看板</h1>
       <p className="hint">
-        先看岗位卷宗，再决定是否值得关注。状态只是筛选标签，不是结论。
+        先看岗位卷宗再决定是否关注。状态只是筛选标签，不是结论。
       </p>
       {feed ? (
         <dl className="readout">
@@ -193,16 +193,16 @@ export function DiscoverBoard() {
                   别名已并入：{dossier.aliases_in.map((row) => row.name).join("、")}
                 </p>
               ) : null}
-              <h2 className="dossier-question">为什么系统认为这个岗位正在形成？</h2>
-              <p className="hint">{dossier.events.length ? `已有 ${dossier.events.length} 次岗位变化记录，状态为${statusLabel(dossier.status)}。` : "暂无足够的岗位变化记录。"}</p>
+              <h2 className="dossier-question">为什么认为这个岗位正在形成？</h2>
+              <p className="hint">{dossier.events.length ? `已有 ${dossier.events.length} 次岗位变化记录，当前状态为${statusLabel(dossier.status)}。` : "暂无足够的岗位变化记录。"}</p>
               <h2 className="dossier-question">哪些公司最近开始招聘？</h2>
               <p className="hint">{dossier.sources.length ? dossier.sources.slice(0, 5).join("、") : "暂无公司证据。"}{dossier.n_sources > 5 ? ` 等 ${dossier.n_sources} 家` : ""}</p>
               <h2 className="dossier-question">现在值得关注吗？</h2>
-              <p className="hint">{dossier.status === "formed" ? "可以开始比较，岗位定义和证据已通过发布校验。" : dossier.status === "emerging" ? "继续观察近期招聘变化，再决定是否比较。" : "证据仍在审核，先阅读卷宗。"}</p>
+              <p className="hint">{dossier.status === "formed" ? "可以开始比较，岗位定义和证据已通过发布校验。" : dossier.status === "emerging" ? "继续观察近期招聘变化再决定是否比较。" : "证据仍在审核，先阅读卷宗。"}</p>
               <h2 className="dossier-question">本周期新增了什么要求？</h2>
               <p className="hint">新增：{dossier.period_delta?.added?.map((row) => row.name).join("、") || "无"}。失效：{dossier.period_delta?.expired?.map((row) => row.name).join("、") || "无"}。</p>
               <h2 className="dossier-question">它和已有岗位有什么区别？</h2>
-              <p className="hint">{dossier.alias_of ? `它是${dossier.alias_of.name}的别名，不重复计入结果。` : dossier.neighbor ? `与${dossier.neighbor.name}共享${dossier.neighbor.shared_requirements.slice(0, 3).join("、") || "暂无"}；对方独有要求包括${dossier.neighbor.unique_requirements.slice(0, 3).join("、") || "暂无"}。` : "暂无已确认的相近岗位差异摘要。"}</p>
+              <p className="hint">{dossier.alias_of ? `它是${dossier.alias_of.name}的别名，不重复计入结果。` : dossier.neighbor ? `与${dossier.neighbor.name}共享${dossier.neighbor.shared_requirements.slice(0, 3).join("、") || "暂无"}，对方独有要求包括${dossier.neighbor.unique_requirements.slice(0, 3).join("、") || "暂无"}。` : "暂无已确认的相近岗位差异摘要。"}</p>
               {dossier.status === "candidate" ? (
                 <p className="hint">未入谱。不能对照简历，不能进工作台。</p>
               ) : (
@@ -248,7 +248,7 @@ export function DiscoverBoard() {
         </section>
         <section>
           <h2>技能出现情况</h2>
-          <p className="hint">公开岗位中的出现比例，与首页同一张表。</p>
+          <p className="hint">公开岗位中的出现比例。</p>
           <Heat rows={feed?.heat || []} />
         </section>
         <aside className="move">
@@ -274,7 +274,7 @@ export function DiscoverBoard() {
       </div>
       <section className="disc-feed">
         <h2>演化流水</h2>
-        <p className="hint">岗位要求和状态变化，与首页同一份记录。</p>
+        <p className="hint">岗位要求和状态变化记录。</p>
         <EventList rows={feed?.events || []} />
       </section>
     </main>

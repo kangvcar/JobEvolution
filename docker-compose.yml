@@ -36,6 +36,25 @@ services:
       retries: 12
       start_period: 30s
 
+  neo4j-official:
+    image: neo4j:5-community
+    profiles: ["official"]
+    ports:
+      - "27687:7687"
+      - "27474:7474"
+    environment:
+      NEO4J_AUTH: ${NEO4J_USER:-neo4j}/${NEO4J_PASSWORD:-jobevolution}
+      NEO4J_server_memory_heap_max__size: 1G
+      NEO4J_server_memory_pagecache_size: 512M
+    volumes:
+      - neo4j_official_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:7474 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
   redis:
     image: redis:7-alpine
     ports:
@@ -142,3 +161,4 @@ services:
 volumes:
   neo4j_data:
   neo4j_test_data:
+  neo4j_official_data:

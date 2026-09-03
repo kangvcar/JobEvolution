@@ -4,37 +4,37 @@ import Link from "next/link";
 import { useState } from "react";
 
 const INSTALL_COMMANDS: Record<string, string> = {
-  curl: "curl -fsSL https://jobevolution.ai/diagnose | bash",
-  npm: "npx jobevolution-cli diagnose ./resume.pdf",
-  bun: "bunx jobevolution-cli diagnose ./resume.pdf",
-  brew: "brew install jobevolution/tap/jobevolution",
-  paru: "paru -S jobevolution-bin",
+  curl: "curl -fsSL https://jobevolution.ai/install | bash",
+  npm: "npx jobevolution diagnose ./resume.pdf",
+  bun: "bunx jobevolution diagnose ./resume.pdf",
+  brew: "brew install jobevolution",
+  pip: "pip install jobevolution",
 };
 
 const FAQ_ITEMS = [
   {
-    q: "智演 (JobEvolution) 是如何帮助技术人进行职业选择的？",
-    a: "传统求职依赖模糊的职位标签和主观猜测。智演从多源海量招聘数据流中自动化抽取原子技能点、要求边（必备/加分/熟练级）与要求组，对照您的简历文本证据，计算当前覆盖率与换档缺口，为您推荐最具性价比的职业跃迁目标与最小学习行动路径。",
+    q: "智演如何帮助技术人做职业决策？",
+    a: "智演从多源招聘数据中抽取原子技能点、必备/加分要求边与要求组，对照简历文本证据计算覆盖率与换档缺口，为你推荐性价比最高的职业跃迁路径与最小学习行动集。",
   },
   {
     q: "什么是「最小换档条件」？",
-    a: "换档条件指从当前岗位跨越到目标岗位时，必须补齐的关键核心技能项。智演不会盲目罗列所有未掌握的技能，而是根据图谱中多源招聘证据支持的必备权重、熟练级（了解/熟练/精通）及可替代技能组，挑选出耗时最短、通过率最高的 1~3 项核心工程闭环行动。",
+    a: "从当前岗位跨越到目标岗位时，必须补齐的关键核心技能项。智演根据多源招聘证据支持的必备权重、熟练级及可替代技能组，挑选出耗时最短、通过率最高的 1~3 项核心工程闭环行动。",
   },
   {
-    q: "岗位定义与技能要求是如何提取与校验的？",
-    a: "智演覆盖新一代信息技术四大固定领域（人工智能、大数据、智能系统、物联网）。每条写入正式图谱的要求边，都必须由至少两个独立招聘源印证，且明确必备/加分票占比不低于 60%，并经过严格的诊断发布完整性校验，杜绝虚假与异常要求。",
+    q: "岗位与技能要求如何提取校验？",
+    a: "覆盖新一代信息技术四大领域（AI、大数据、智能系统、物联网）。每条写入正式图谱的要求边必须由至少两个独立招聘源印证，必备/加分票占比不低于 60%，并经过严格的诊断发布完整性校验。",
   },
   {
-    q: "简历数据会被上传或用于公共大模型训练吗？",
-    a: "绝不会。智演恪守「隐私优先」架构，所有文本分段与技能证据匹配均在您本地会话中运行，产品数据库不保存简历原文或个人身份标识，会话最长仅保留一小时用于报告核对，随后自动销毁。",
+    q: "简历数据会被上传或训练大模型吗？",
+    a: "不会。所有文本分段与技能证据匹配均在本地会话中运行，数据库不保存简历原文或个人身份，会话最长保留一小时用于报告核对后自动销毁。",
   },
   {
     q: "什么是「萌芽岗位」与「成型岗位」？",
-    a: "萌芽岗位指在市场招聘流中高频涌现、正在演变但尚未形成稳定技术标准的职位（如早期的具身智能算法工程师）；成型岗位则是具备获批岗位定义、多组核心必备要求及完整招聘证据链的标准岗位。",
+    a: "萌芽岗位在市场招聘流中高频涌现但尚未形成稳定技术标准（如早期具身智能算法工程师）；成型岗位具备获批岗位定义、多组核心必备要求及完整招聘证据链。",
   },
   {
-    q: "智演支持私有化部署或接入企业内网吗？",
-    a: "支持。智演的前端工作台、核心图谱解析引擎与数据清洗管道完全开源，提供标准 Docker 镜像与 Helm Chart，支持纯离线运行及对接私有知识库和本地开源 LLM（如 DeepSeek、Qwen、Ollama）。",
+    q: "支持私有化部署吗？",
+    a: "支持。前端工作台、图谱解析引擎与数据清洗管道完全开源，提供标准 Docker 镜像与 Helm Chart，支持纯离线运行及对接私有知识库和本地开源 LLM。",
   },
 ];
 
@@ -75,11 +75,11 @@ export function Home() {
 
         {/* Hero title and copy */}
         <div data-slot="hero-copy">
-          <h1 className="hero-heading">开源  AI  岗位演化图谱</h1>
+          <h1 className="hero-heading">开源 AI 岗位演化图谱</h1>
           <p className="hero-desc">
-            从多源招聘数据流中发现新岗位、追踪既有岗位能力演化，
+            从多源招聘数据流中发现新岗位、追踪岗位能力演化，
             <span data-slot="br"></span>
-            对照带来源的岗位证据，计算最小换档条件与技能成长路径。
+            对照带来源的证据计算最小换档条件与技能成长路径
           </p>
         </div>
 
@@ -247,40 +247,40 @@ export function Home() {
 
       {/* 3. What is JobEvolution Section */}
       <section data-component="what">
-        <h3>什么是 智演？</h3>
+        <h3>什么是智演</h3>
         <p>
-          智演 (JobEvolution) 是一套多源异构数据驱动的职业能力图谱与换档决策系统。
-          深入追踪新一代信息技术四大领域的真实招聘需求变迁，帮助求职者与技术团队用带来源的事实证据替代主观猜测。
+          多源异构数据驱动的职业能力图谱与换档决策系统。
+          追踪新一代信息技术四大领域的真实招聘需求变迁，用带来源的事实证据替代主观猜测。
         </p>
         <ul className="features-list">
           <li>
             <span>[*]</span>
             <div>
-              <strong>四大技术领域图谱</strong> 系统化收纳人工智能、大数据、智能系统、物联网四大领域的规范岗位节点
+              <strong>四大技术领域图谱</strong> 系统化收纳 AI、大数据、智能系统、物联网领域的规范岗位节点
             </div>
           </li>
           <li>
             <span>[*]</span>
             <div>
-              <strong>真实招聘证据链</strong> 每条要求边（必备/加分/熟练级）均由至少两个独立招聘源支持，可追溯真实原始快照
+              <strong>真实招聘证据链</strong> 每条要求边均由至少两个独立招聘源支持，可追溯真实原始快照
             </div>
           </li>
           <li>
             <span>[*]</span>
             <div>
-              <strong>最小换档路径推算</strong> 计算当前简历技能与目标岗位要求的差异，按要求组与优先级输出换档行动路径
+              <strong>最小换档路径推算</strong> 计算简历技能与目标岗位要求的差异，按要求组与优先级输出换档行动
             </div>
           </li>
           <li>
             <span>[*]</span>
             <div>
-              <strong>本地沙箱与隐私优先</strong> 简历解析与技能提取完全在用户本地会话中运行，绝不上报、不参与公共训练
+              <strong>本地沙箱隐私优先</strong> 简历解析与技能提取完全在用户本地会话运行，绝不上报、不参与训练
             </div>
           </li>
           <li>
             <span>[*]</span>
             <div>
-              <strong>动态生命周期与卷宗</strong> 双时间模型分离记录观察时间与有效时间，透明呈现岗位的萌芽、成型、升值与衰退
+              <strong>动态生命周期卷宗</strong> 双时间模型分离观察时间与有效时间，透明呈现岗位萌芽、成型、升值与衰退
             </div>
           </li>
           <li>
@@ -297,10 +297,10 @@ export function Home() {
 
       {/* 4. Growth & Stats Section */}
       <section data-component="growth">
-        <h3>开源职业能力与市场指标</h3>
+        <h3>开源职业能力图谱指标</h3>
         <p>
           基于多源异构技术招聘数据流构建，拥有超过 150,000 条带来源的岗位证据样本，850 个规范技能节点，
-          并已稳定建立 17 个信息技术核心演化目标岗位。
+          已稳定建立 17 个信息技术核心演化目标岗位。
         </p>
         <div className="growth-figures">
           <figure className="growth-figure">
@@ -335,12 +335,11 @@ export function Home() {
         <div data-slot="privacy-title">
           <h3>隐私优先的设计</h3>
           <p>
-            智演 采用严格的本地沙箱设计。用户上传的简历在本地内存态完成文本分段、实体抽取与对账比对，
-            不上传云端明文，产品数据库不保存简历原文，会话结束后自动销毁。{" "}
+            严格的本地沙箱设计。用户上传的简历在本地内存态完成文本分段、实体抽取与对账比对，
+            不上传云端明文，数据库不保存简历原文，会话结束后自动销毁。{" "}
             <Link href="/diagnose" className="inline-link">
-              了解更多关于 隐私
+              了解更多隐私规范
             </Link>
-            。
           </p>
         </div>
       </section>
@@ -374,8 +373,8 @@ export function Home() {
         <div data-slot="zen-cta-copy">
           <strong>探索新一代信息技术四大领域图谱</strong>
           <p>
-            直接查阅人工智能、大数据、智能系统与物联网领域的技能要求、新增增量与失效历史，
-            告别黑盒与信息差，基于招聘事实做职业规划。
+            直接查阅 AI、大数据、智能系统与物联网领域的技能要求、新增增量与失效历史，
+            告别黑盒信息差，基于招聘事实做职业规划。
           </p>
           <Link href="/graph" className="btn-solid">
             进入岗位工作台
@@ -386,10 +385,10 @@ export function Home() {
       {/* 8. Email Subscription Section */}
       <section data-component="email">
         <div data-slot="dock">
-          <h3>第一时间获知岗位图谱更新</h3>
-          <p>订阅每周技术岗位演化周报、新兴技术栈变动与最小换档实战卷宗。</p>
+          <h3>订阅岗位图谱更新</h3>
+          <p>每周技术岗位演化周报、新兴技术栈变动与最小换档实战卷宗。</p>
           {subscribed ? (
-            <p className="success-msg">[+] 感谢订阅！最新岗位图谱变动将准时投递至您的邮箱。</p>
+            <p className="success-msg">[+] 订阅成功。岗位图谱变动将准时投递至您的邮箱。</p>
           ) : (
             <form
               className="email-form"
@@ -435,7 +434,7 @@ export function Home() {
           </div>
         </div>
         <div className="footer-bottom">
-          <span className="copyright">© 2026 智演 (JobEvolution) · 国家工程研发支持项目 (XH-202621)</span>
+          <span className="copyright">© 2026 智演 (JobEvolution) · 国家工程研发支持 (XH-202621)</span>
           <div className="footer-meta">
             <Link href="/discover">图谱本体</Link>
             <span>·</span>

@@ -6,8 +6,8 @@ import { useState } from "react";
 
 const NAV_LINKS = [
   { href: "https://github.com", label: "GitHub", external: true },
-  { href: "/graph", label: "岗位图谱", external: false },
-  { href: "/discover", label: "市场变化", external: false },
+  { href: "/graph", label: "图谱工作台", external: false },
+  { href: "/discover", label: "市场演化", external: false },
   { href: "/admin", label: "管理后台", external: false },
 ] as const;
 

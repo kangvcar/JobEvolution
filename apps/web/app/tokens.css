@@ -1,42 +1,70 @@
-/* Hallmark · design-system: design.md · theme: Terminal-inspired warm monochrome · accent: cold-blue · type: IBM Plex Mono */
+/* OpenCode Design System · Terminal-native monochrome · Berkeley Mono throughout */
 :root {
-  --color-canvas: oklch(0.992 0.003 20);
+  /* OpenCode Color Tokens - extracted from opencode.ai */
+  --color-canvas: #fdfcfc;
   --color-paper: var(--color-canvas);
-  --color-surface: oklch(0.979 0.003 20);
+  --color-surface: #f8f7f7;
+  --color-surface-soft: var(--color-surface);
   --color-paper-2: var(--color-surface);
-  --color-card: oklch(0.946 0.012 20);
-  --color-ink: oklch(0.24 0.014 20);
-  --color-ink-deep: oklch(0.16 0.03 20);
-  --color-charcoal: oklch(0.34 0.01 285);
-  --color-body: oklch(0.34 0.01 285);
-  --color-muted: oklch(0.47 0.008 20);
+  --color-card: #f1eeee;
+  --color-surface-card: var(--color-card);
+  --color-ink: #201d1d;
+  --color-primary: var(--color-ink);
+  --color-ink-deep: #0f0000;
+  --color-charcoal: #302c2c;
+  --color-body: #424245;
+  --color-muted: #646262;
   --color-mute: var(--color-muted);
-  --color-stone: oklch(0.55 0.006 20);
-  --color-faint: oklch(0.68 0.006 20);
+  --color-stone: #6e6e73;
+  --color-faint: #9a9898;
   --color-ash: var(--color-faint);
-  --color-rule: oklch(0.88 0.01 20 / 0.72);
-  --color-rule-2: oklch(0.8 0.01 20);
-  --color-rule-strong: oklch(0.47 0.008 20);
-  --color-accent: oklch(0.59 0.22 255);
-  --color-accent-hover: oklch(0.46 0.18 255);
-  --color-accent-active: oklch(0.38 0.16 255);
-  --color-accent-soft: oklch(0.59 0.22 255 / 0.1);
+  --color-hairline: rgba(15, 0, 0, 0.12);
+  --color-rule: var(--color-hairline);
+  --color-rule-2: #646262;
+  --color-hairline-strong: var(--color-rule-2);
+  --color-rule-strong: var(--color-rule-2);
+  --color-accent: #007aff;
+  --color-accent-hover: #0056b3;
+  --color-accent-active: #004085;
+  --color-accent-soft: rgba(0, 122, 255, 0.1);
   --color-accent-ink: var(--color-canvas);
   --color-focus: var(--color-accent);
-  --color-warning: oklch(0.57 0.14 75);
-  --color-danger: oklch(0.49 0.17 28);
+  --color-warning: #ff9f0a;
+  --color-warning-hover: #cc7f08;
+  --color-warning-active: #995f06;
+  --color-danger: #ff3b30;
+  --color-danger-hover: #d70015;
+  --color-danger-active: #a50011;
   --color-rise: var(--color-danger);
-  --color-success: oklch(0.48 0.13 157);
+  --color-success: #30d158;
   --color-ok: var(--color-success);
   --color-fall: var(--color-success);
-  --color-dark: oklch(0.24 0.014 20);
-  --color-dark-elevated: oklch(0.31 0.014 20);
-  --color-on-dark: oklch(0.992 0.003 20);
-  --color-dark-mute: oklch(0.72 0.006 20);
-  --color-overlay: oklch(0.24 0.014 20 / 0.42);
+  --color-surface-dark: #201d1d;
+  --color-dark: var(--color-surface-dark);
+  --color-surface-dark-elevated: #302c2c;
+  --color-dark-elevated: var(--color-surface-dark-elevated);
+  --color-on-dark: #fdfcfc;
+  --color-on-dark-mute: #9a9898;
+  --color-dark-mute: var(--color-on-dark-mute);
+  --color-on-primary: var(--color-on-dark);
+  --color-overlay: rgba(32, 29, 29, 0.42);
+
+  /* OpenCode Typography - Berkeley Mono only */
   --font-mono: var(--font-plex-mono), "Berkeley Mono", "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --font-mono-stack: var(--font-mono);
   --font-display: var(--font-mono);
+  --font-primary: var(--font-mono);
+
+  /* OpenCode Spacing Scale */
+  --spacing-xxs: 1px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 24px;
+  --spacing-xxl: 32px;
+  --spacing-section: 96px;
+
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -54,98 +82,42 @@
   --space-lg: var(--space-5);
   --space-xl: var(--space-7);
   --space-2xl: var(--space-9);
+
+  /* OpenCode Typography Scale */
+  --text-display-xl: 38px;
+  --text-heading-md: 16px;
+  --text-body-md: 16px;
+  --text-body-strong: 16px;
+  --text-body-tight: 16px;
+  --text-link-md: 16px;
+  --text-button-md: 16px;
+  --text-caption-md: 14px;
+
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-md: 1rem;
   --text-lg: 1.25rem;
   --text-xl: 1.75rem;
   --text-2xl: clamp(2rem, 4vw, 3.25rem);
-  --text-display: clamp(2.75rem, 7vw, 6.5rem);
-  --radius-control: 4px;
-  --radius-surface: 0;
+  --text-display: clamp(2.375rem, 5.5vw, 3rem);
+
+  /* OpenCode Border Radius */
+  --radius-none: 0px;
+  --radius-sm: 4px;
+  --radius-full: 9999px;
+  --radius-control: var(--radius-sm);
+  --radius-surface: var(--radius-none);
+
+  /* Animation & Layout */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --dur-short: 220ms;
+  --dur-short: 150ms;
   --dur-medium: 500ms;
   --z-sticky: 200;
   --z-drawer: 300;
   --z-modal: 400;
-  --page-gutter: clamp(1rem, 4vw, 3rem);
-  --content-wide: 1200px;
-  --content-reading: 960px;
+  --page-gutter: clamp(1.5rem, 4vw, 5rem);
+  --content-wide: 1080px;
+  --content-reading: 760px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --color-canvas: oklch(0.24 0.014 20);
-    --color-paper: var(--color-canvas);
-    --color-surface: oklch(0.31 0.014 20);
-    --color-paper-2: var(--color-surface);
-    --color-card: oklch(0.37 0.014 20);
-    --color-ink: oklch(0.992 0.003 20);
-    --color-ink-deep: oklch(0.96 0.008 20);
-    --color-charcoal: oklch(0.92 0.008 20);
-    --color-body: oklch(0.84 0.006 20);
-    --color-muted: oklch(0.72 0.006 20);
-    --color-mute: var(--color-muted);
-    --color-stone: oklch(0.64 0.006 20);
-    --color-faint: oklch(0.5 0.006 20);
-    --color-ash: var(--color-faint);
-    --color-rule: oklch(0.992 0.003 20 / 0.18);
-    --color-rule-2: oklch(0.64 0.006 20);
-    --color-rule-strong: oklch(0.72 0.006 20);
-    --color-accent: oklch(0.72 0.16 255);
-    --color-accent-hover: oklch(0.82 0.12 255);
-    --color-accent-active: oklch(0.88 0.1 255);
-    --color-accent-soft: oklch(0.72 0.16 255 / 0.16);
-    --color-accent-ink: var(--color-canvas);
-    --color-focus: var(--color-accent);
-    --color-warning: oklch(0.78 0.13 80);
-    --color-danger: oklch(0.72 0.15 28);
-    --color-rise: var(--color-danger);
-    --color-success: oklch(0.72 0.12 157);
-    --color-ok: var(--color-success);
-    --color-fall: var(--color-success);
-    --color-dark: oklch(0.16 0.03 20);
-    --color-dark-elevated: oklch(0.31 0.014 20);
-    --color-on-dark: oklch(0.992 0.003 20);
-    --color-dark-mute: oklch(0.72 0.006 20);
-    --color-overlay: oklch(0.12 0.02 20 / 0.56);
-  }
-}
-
-:root[data-theme="dark"] {
-  --color-canvas: oklch(0.24 0.014 20);
-  --color-paper: var(--color-canvas);
-  --color-surface: oklch(0.31 0.014 20);
-  --color-paper-2: var(--color-surface);
-  --color-card: oklch(0.37 0.014 20);
-  --color-ink: oklch(0.992 0.003 20);
-  --color-ink-deep: oklch(0.96 0.008 20);
-  --color-charcoal: oklch(0.92 0.008 20);
-  --color-body: oklch(0.84 0.006 20);
-  --color-muted: oklch(0.72 0.006 20);
-  --color-mute: var(--color-muted);
-  --color-stone: oklch(0.64 0.006 20);
-  --color-faint: oklch(0.5 0.006 20);
-  --color-ash: var(--color-faint);
-  --color-rule: oklch(0.992 0.003 20 / 0.18);
-  --color-rule-2: oklch(0.64 0.006 20);
-  --color-rule-strong: oklch(0.72 0.006 20);
-  --color-accent: oklch(0.72 0.16 255);
-  --color-accent-hover: oklch(0.82 0.12 255);
-  --color-accent-active: oklch(0.88 0.1 255);
-  --color-accent-soft: oklch(0.72 0.16 255 / 0.16);
-  --color-accent-ink: var(--color-canvas);
-  --color-focus: var(--color-accent);
-  --color-warning: oklch(0.78 0.13 80);
-  --color-danger: oklch(0.72 0.15 28);
-  --color-rise: var(--color-danger);
-  --color-success: oklch(0.72 0.12 157);
-  --color-ok: var(--color-success);
-  --color-fall: var(--color-success);
-  --color-dark: oklch(0.16 0.03 20);
-  --color-dark-elevated: oklch(0.31 0.014 20);
-  --color-on-dark: oklch(0.992 0.003 20);
-  --color-dark-mute: oklch(0.72 0.006 20);
-  --color-overlay: oklch(0.12 0.02 20 / 0.56);
-}
+/* OpenCode maintains light theme focus - dark mode optional but light is canonical */
