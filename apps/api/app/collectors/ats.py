@@ -38,6 +38,7 @@ SEARCH_WORDS = (
 )
 FEISHU_PATHS = ("index", "experienced", "fte", "social", "recruitment", "campus")
 MAX_NEW = 200
+MAX_ENABLED_PORTALS = 30
 PAGE_SLEEP = 1.5
 CHECKPOINT_FILE = "collect.checkpoint.json"
 _INTERN = re.compile(r"实习|intern", re.I)
@@ -204,6 +205,46 @@ DEFAULT_PORTALS = [
         "enabled": True,
         "builtin": False,
     },
+    {
+        "key": "tarsrobot",
+        "type": "feishu",
+        "name": "它石智航",
+        "host": "tarsrobot.jobs.feishu.cn",
+        "enabled": True,
+        "builtin": False,
+    },
+    {
+        "key": "thundersoft",
+        "type": "feishu",
+        "name": "中科创达",
+        "host": "thundersoft.jobs.feishu.cn",
+        "enabled": True,
+        "builtin": False,
+    },
+    {
+        "key": "whales",
+        "type": "feishu",
+        "name": "帷幄",
+        "host": "whales.jobs.feishu.cn",
+        "enabled": True,
+        "builtin": False,
+    },
+    {
+        "key": "zhcomputing",
+        "type": "feishu",
+        "name": "知合计算",
+        "host": "zhcomputing.jobs.feishu.cn",
+        "enabled": True,
+        "builtin": False,
+    },
+    {
+        "key": "sudu",
+        "type": "feishu",
+        "name": "苏度科技",
+        "host": "wcn7iq2vq1am.jobs.feishu.cn",
+        "enabled": True,
+        "builtin": False,
+    },
 ]
 
 
@@ -289,8 +330,8 @@ def valid_host(host: str) -> bool:
 def validate_portals(portals: list[dict]) -> None:
     if not isinstance(portals, list) or any(not isinstance(row, dict) for row in portals):
         raise ValueError("invalid portals")
-    if enabled_count(portals) > 20:
-        raise ValueError("at most 20 enabled portals")
+    if enabled_count(portals) > MAX_ENABLED_PORTALS:
+        raise ValueError(f"at most {MAX_ENABLED_PORTALS} enabled portals")
     for row in portals:
         if row.get("type") in ("feishu", "beisen") and not valid_host(row.get("host") or ""):
             raise ValueError("invalid host")

@@ -15,7 +15,7 @@
 
 | 用途 | 项目 | 方式 | 我们做什么 | 风险 |
 |---|---|---|---|---|
-| 冷启动 JD | 仓库 `data/` 下本地 JD 表 | 数据导入 | 字段映射后粗滤四领域，写入 `data/jd/`，再跑抽取 | 各表列名不同，要先对齐到公司/岗位/正文/日期 |
+| 冷启动 JD | 官方招聘门户 | 数据采集 | 字段映射后粗滤四领域，写入 `data/official-only/jd/`，再跑抽取 | 门户字段和排序会变化，需保留快照与检查点 |
 | 条数补洞 | [天池智联人岗匹配](https://tianchi.aliyun.com/dataset/31623) | 数据导入 | 只补字段或条数缺口 | 偏匹配赛，正文不如现场 JD 厚 |
 | 稳定公开源 | Greenhouse / Lever / Ashby JSON；[NCSS](https://www.ncss.cn/student/jobs/index.html) | 抄思路 | 自写 source，打公开列表/JSON | NCSS 无官方 API，页面改了要修 |
 | 国内官网招聘页 | [Hiring-Radar](https://github.com/simonlin1212/Hiring-Radar)（飞书/Moka/北森 + 腾讯/字节等自建） | 抄思路 | 自写 source；先打已验证 JSON，加公司用配置行 | 门户域名和 `website-path` 会过期；Moka 有前端 AES 信封 |
