@@ -128,7 +128,11 @@ function SkillNode({ data }: NodeProps<Node<FlowSkillData>>) {
   const isHovered = Boolean(data.isHovered);
 
   // Proficiency dots generator
-  const profLevel = data.proficiency?.includes("精通") ? 3 : data.proficiency?.includes("熟练") ? 2 : 1;
+  const profLevel = data.proficiency?.includes("精通") || data.proficiency === "expert"
+    ? 3
+    : data.proficiency?.includes("熟练") || data.proficiency === "able"
+    ? 2
+    : 1;
 
   return (
     <div
@@ -215,6 +219,7 @@ export type CanvasFilterMode = "all" | "added" | "expired" | "core";
 
 interface FlowCanvasProps {
   job: { id: string; name: string; status?: "formed" | "emerging" };
+  watching?: string[];
   slice: {
     categories?: { id: string; name: string }[];
     requires?: FlowSkillData[];
@@ -230,7 +235,7 @@ const FALLBACK_WATCHING = [
   "端侧小模型量化剪枝与部署",
 ];
 
-function InnerFlowCanvas({ job, slice, selectedSkill, onSkillClick }: FlowCanvasProps) {
+function InnerFlowCanvas({ job, watching, slice, selectedSkill, onSkillClick }: FlowCanvasProps) {
   const { fitView, zoomIn, zoomOut, setViewport } = useReactFlow();
 
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
@@ -343,7 +348,7 @@ function InnerFlowCanvas({ job, slice, selectedSkill, onSkillClick }: FlowCanvas
         target: leftNodeId,
         sourceHandle: "left",
         targetHandle: "right-in",
-        type: "bezier",
+        type: "default",
         animated: isLeftActive,
         style: {
           stroke: "var(--color-rise, #ff453a)",
@@ -390,7 +395,7 @@ function InnerFlowCanvas({ job, slice, selectedSkill, onSkillClick }: FlowCanvas
           target: skillNodeId,
           sourceHandle: "bottom-out",
           targetHandle: "top-in",
-          type: "bezier",
+          type: "default",
           animated: isNodeFocused,
           style: {
             stroke: "var(--color-rise, #ff453a)",
@@ -440,7 +445,7 @@ function InnerFlowCanvas({ job, slice, selectedSkill, onSkillClick }: FlowCanvas
         target: centerHubNodeId,
         sourceHandle: "bottom",
         targetHandle: "top-in",
-        type: "bezier",
+        type: "default",
         animated: isCenterActive,
         style: {
           stroke: isCenterActive ? "var(--color-ink, #1d1d1f)" : "var(--color-rule-strong, #b5b5ba)",
@@ -491,7 +496,7 @@ function InnerFlowCanvas({ job, slice, selectedSkill, onSkillClick }: FlowCanvas
             target: skillNodeId,
             sourceHandle: "bottom-out",
             targetHandle: "top-in",
-            type: "bezier",
+            type: "default",
             animated: isNodeFocused,
             style: {
               stroke: isNodeFocused ? "var(--color-ink, #1d1d1f)" : "var(--color-rule-strong, #ccc)",
@@ -516,7 +521,7 @@ function InnerFlowCanvas({ job, slice, selectedSkill, onSkillClick }: FlowCanvas
             target: skillNodeId,
             sourceHandle: "bottom-out",
             targetHandle: "top-in",
-            type: "bezier",
+            type: "default",
             animated: isNodeFocused,
             style: {
               stroke: isNodeFocused ? "var(--color-ink, #1d1d1f)" : "var(--color-rule-strong, #ccc)",
@@ -567,7 +572,7 @@ function InnerFlowCanvas({ job, slice, selectedSkill, onSkillClick }: FlowCanvas
         target: rightNodeId,
         sourceHandle: "right",
         targetHandle: "left-in",
-        type: "bezier",
+        type: "default",
         animated: true,
         style: {
           stroke: "var(--color-fall, #30d158)",
@@ -622,7 +627,7 @@ function InnerFlowCanvas({ job, slice, selectedSkill, onSkillClick }: FlowCanvas
             target: skillNodeId,
             sourceHandle: "bottom-out",
             targetHandle: "top-in",
-            type: "bezier",
+            type: "default",
             animated: isAdded || isNodeFocused,
             style: {
               stroke: isNodeFocused
@@ -655,7 +660,7 @@ function InnerFlowCanvas({ job, slice, selectedSkill, onSkillClick }: FlowCanvas
             target: skillNodeId,
             sourceHandle: "bottom-out",
             targetHandle: "top-in",
-            type: "bezier",
+            type: "default",
             animated: isAdded || isNodeFocused,
             style: {
               stroke: isNodeFocused
@@ -691,7 +696,7 @@ function InnerFlowCanvas({ job, slice, selectedSkill, onSkillClick }: FlowCanvas
       type: "frontierWatching",
       position: { x: -380, y: 245 },
       data: {
-        items: FALLBACK_WATCHING,
+        items: watching ?? FALLBACK_WATCHING,
       },
       selectable: false,
       draggable: false,
@@ -760,8 +765,7 @@ function InnerFlowCanvas({ job, slice, selectedSkill, onSkillClick }: FlowCanvas
         onNodeMouseLeave={onNodeMouseLeave}
         minZoom={0.2}
         maxZoom={1.6}
-        defaultEdgeOptions={{ type: "bezier" }}
-        proOptions={{ hideAttribution: true }}
+        defaultEdgeOptions={{ type: "default" }}
       >
         <Background variant={BackgroundVariant.Dots} gap={32} size={1.2} color="rgba(0,0,0,0.08)" />
 

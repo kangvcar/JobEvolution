@@ -22,6 +22,19 @@ def test_unknown_job_is_404(client):
     assert body.get("detail") is None or isinstance(body["detail"], (str, type(None)))
 
 
+def test_job_detail_resolves_watching_skill_names(client, monkeypatch):
+    from app import graph
+
+    monkeypatch.setattr(graph, "get_public_job", lambda _: {"id": "job-1", "name": "岗位", "status": "formed", "watching": ["skill-1", "missing"]})
+    monkeypatch.setattr(graph, "list_skills", lambda **_: [{"id": "skill-1", "name": "Python"}])
+    monkeypatch.setattr(graph, "list_job_events", lambda _: [])
+    monkeypatch.setattr(graph, "list_job_evidence", lambda _: [])
+    monkeypatch.setattr(graph, "current_definition", lambda _: [])
+
+    body = client.get("/jobs/job-1").json()
+    assert body["watching"] == ["Python", "missing"]
+
+
 def test_unknown_slice_is_404(client):
     response = client.get("/graph/jobs/no-such-job")
     assert response.status_code == 404

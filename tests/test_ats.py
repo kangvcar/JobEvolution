@@ -7,6 +7,7 @@ from app.collectors.ats import (
     load_portals,
     run_official,
     strip_html,
+    valid_host,
 )
 from app.collectors.controller import ingest_records, list_snapshot_paths
 from app.collectors.source import RawRecord
@@ -117,6 +118,34 @@ def test_ats_new_body_writes_second_snapshot(tmp_path):
     assert len(paths) == 2
     urls = {json.loads(path.read_text(encoding="utf-8"))["url"] for path in paths}
     assert "https://example.com/1" in urls
+
+
+def test_ats_changed_near_duplicate_keeps_old_snapshot(tmp_path):
+    redis = MemoryRedis()
+    out_dir = tmp_path / "jd"
+    first = RawRecord(
+        company="腾讯",
+        title="大模型应用工程师",
+        body="负责大模型应用开发，熟悉 Python 与 FastAPI",
+        published_at="2026-01-01",
+        city="深圳",
+        channel="tencent",
+        job_id="post-near",
+        source="ats",
+        domain="ai",
+        observed_at="2026-01-01T00:00:00",
+    )
+    second = RawRecord(**{**first.__dict__, "body": first.body + "，支持线上服务"})
+    assert ingest_records([first], out_dir=out_dir, redis=redis)["ingested"] == 1
+    assert ingest_records([second], out_dir=out_dir, redis=redis)["ingested"] == 1
+    assert len(list_snapshot_paths(out_dir)) == 2
+
+
+def test_host_validation_rejects_paths_and_accepts_feishu_host():
+    assert valid_host("zhipu-ai.jobs.feishu.cn")
+    assert not valid_host("zhipu-ai.jobs.feishu.cn/jobs")
+    assert not valid_host("zhipu-ai.jobs.feishu.cn evil")
+    assert not valid_host("https://zhipu-ai.jobs.feishu.cn")
 
 
 def test_run_official_emits_collect_events(tmp_path):

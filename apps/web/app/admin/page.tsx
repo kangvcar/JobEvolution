@@ -133,6 +133,8 @@ export default function AdminPage() {
         const row = JSON.parse(event.data);
         const line = `${row.type} ${typeof row.payload === "string" ? row.payload : JSON.stringify(row.payload ?? {})}`;
         setFeed((current) => [line, ...current].slice(0, 50));
+        if (row.type === "collect_started") setCollectBusy(true);
+        if (row.type === "collect_finished") setCollectBusy(false);
       } catch {
         /* ignore malformed SSE payloads */
       }

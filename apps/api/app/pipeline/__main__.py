@@ -104,6 +104,9 @@ def main(argv: list[str] | None = None) -> int:
     snaps = select_snapshots(jd_dir)
     print(json.dumps({"jd_dir": str(jd_dir), "selected": len(snaps)}, ensure_ascii=False))
     if not snaps:
+        from app.ops_status import record
+
+        record("pipeline", "failed", events=0, failed=0, error="no JD snapshots")
         return 1
 
     from app import graph
@@ -112,11 +115,17 @@ def main(argv: list[str] | None = None) -> int:
     graph.init_graph()
     if args.passthrough:
         set_passthrough(True)
-    events = run_extract_and_gate(snaps, workers=args.workers, cache=not args.no_cache)
+    from app.ops_status import record
+
+    try:
+        events = run_extract_and_gate(snaps, workers=args.workers, cache=not args.no_cache)
+    except Exception as exc:
+        record("pipeline", "failed", events=0, failed=1, error=str(exc)[:300])
+        print(json.dumps({"events": 0, "pending": 0, "auto_passed": 0, "extract_failed": 1, "error": str(exc)[:300]}, ensure_ascii=False))
+        return 1
     pending = sum(1 for e in events if e.get("review") == "pending")
     auto = sum(1 for e in events if e.get("review") == "auto_passed")
     failed = sum(1 for e in events if e.get("kind") == "extract_failed")
-    from app.ops_status import record
     record("pipeline", "failed" if failed else "success", events=len(events), failed=failed)
     release = None
     if failed == 0:

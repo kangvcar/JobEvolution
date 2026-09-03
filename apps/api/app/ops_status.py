@@ -32,5 +32,6 @@ def record(kind: str, status: str, **extra) -> dict:
 
 
 def stale() -> bool:
-    at = read().get("pipeline", {}).get("at", 0)
-    return not at or time.time() - at > 48 * 3600
+    pipeline = read().get("pipeline", {})
+    at = pipeline.get("at", 0)
+    return pipeline.get("status") == "failed" or not at or time.time() - at > 48 * 3600

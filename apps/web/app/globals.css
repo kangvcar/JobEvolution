@@ -2135,10 +2135,87 @@ header[data-component="top"],
 @media (max-width: 1024px) {
   .studio-viewport {
     flex-direction: column;
+    height: auto;
     min-height: auto;
+    overflow: visible;
+  }
+  .studio-canvas-area {
+    height: 560px;
+    min-height: 560px;
+    flex: none;
+  }
+  .studio-docked-inspector {
+    width: 100%;
+    height: auto;
+    min-height: 360px;
+    border-left: none;
+    border-top: 1px solid var(--color-rule);
+  }
+  .studio-bento-matrix {
+    height: auto;
+    min-height: 400px;
+    overflow: visible;
   }
   .matrix-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .studio-masthead {
+    height: auto;
+    min-height: 48px;
+    flex-wrap: wrap;
+    padding: 8px 12px;
+  }
+  .masthead-left,
+  .job-picker-anchor {
+    min-width: 0;
+  }
+  .job-active-pill {
+    max-width: calc(100vw - 24px);
+  }
+  .masthead-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .view-mode-group {
+    flex: 1;
+    min-width: 0;
+  }
+  .mode-btn {
+    flex: 1;
+    justify-content: center;
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+  .studio-subbar {
+    height: auto;
+    flex-wrap: wrap;
+    padding: 8px 12px;
+  }
+  .subbar-left,
+  .subbar-right {
+    width: 100%;
+    min-width: 0;
+  }
+  .subbar-right {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .filter-dropdown-pair {
+    flex: 1;
+    min-width: 0;
+  }
+  .studio-select {
+    flex: 1;
+    min-width: 0;
+  }
+  .subbar-metric-chip {
+    flex: 1;
+  }
+  .job-picker-popover {
+    width: min(340px, calc(100vw - 24px));
   }
 }
 

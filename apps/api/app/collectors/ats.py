@@ -16,7 +16,9 @@ from pathlib import Path
 
 from app.collectors.controller import ingest_records, parse_observed_at
 from app.collectors.domain import classify_domain
+from app.collectors.simhash import format_simhash, simhash64
 from app.collectors.sink import (
+    BODY_KEY,
     EVENT_COLLECT_FINISHED,
     EVENT_COLLECT_PORTAL_FAILED,
     EVENT_COLLECT_STARTED,
@@ -37,7 +39,9 @@ _INTERN = re.compile(r"实习|intern", re.I)
 _TAG = re.compile(r"<[^>]+>")
 _SPACE = re.compile(r"\s+")
 _CJK = re.compile(r"[\u4e00-\u9fff]")
-_HOST = re.compile(r"^[A-Za-z0-9.-]+$")
+_HOST = re.compile(
+    r"(?=.{1,253}$)(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,63}$"
+)
 CTX = ssl.create_default_context()
 
 DEFAULT_PORTALS = [
@@ -94,6 +98,7 @@ def load_portals(data_dir: Path) -> list[dict]:
 
 
 def save_portals(data_dir: Path, portals: list[dict]) -> None:
+    validate_portals(portals)
     path = portals_path(data_dir)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
@@ -104,6 +109,20 @@ def save_portals(data_dir: Path, portals: list[dict]) -> None:
 
 def enabled_count(portals: list[dict]) -> int:
     return sum(1 for row in portals if row.get("enabled"))
+
+
+def valid_host(host: str) -> bool:
+    return bool(_HOST.fullmatch((host or "").strip()))
+
+
+def validate_portals(portals: list[dict]) -> None:
+    if not isinstance(portals, list) or any(not isinstance(row, dict) for row in portals):
+        raise ValueError("invalid portals")
+    if enabled_count(portals) > 20:
+        raise ValueError("at most 20 enabled portals")
+    for row in portals:
+        if row.get("type") == "feishu" and not valid_host(row.get("host") or ""):
+            raise ValueError("invalid host")
 
 
 def collect_busy(data_dir: Path) -> bool:
@@ -202,7 +221,7 @@ def _sleep() -> None:
     time.sleep(PAGE_SLEEP)
 
 
-def fetch_tencent(http=http_json, sleep=_sleep) -> list[RawRecord]:
+def fetch_tencent(http=http_json, sleep=_sleep, is_new=lambda _: True) -> list[RawRecord]:
     seen: set[str] = set()
     out: list[RawRecord] = []
     for word in SEARCH_WORDS:
@@ -211,7 +230,13 @@ def fetch_tencent(http=http_json, sleep=_sleep) -> list[RawRecord]:
             qs = urllib.parse.urlencode(
                 {"keyword": word, "pageIndex": page, "pageSize": 10, "language": "zh-cn", "area": "cn"}
             )
-            data = http(f"https://careers.tencent.com/tencentcareer/api/post/Query?{qs}")
+            data = http(
+                f"https://careers.tencent.com/tencentcareer/api/post/Query?{qs}",
+                headers={
+                    "Origin": "https://careers.tencent.com",
+                    "Referer": "https://careers.tencent.com/",
+                },
+            )
             posts = ((data.get("Data") or {}).get("Posts")) or []
             if not posts:
                 break
@@ -225,37 +250,41 @@ def fetch_tencent(http=http_json, sleep=_sleep) -> list[RawRecord]:
                 try:
                     detail = http(
                         "https://careers.tencent.com/tencentcareer/api/post/ByPostId?"
-                        + urllib.parse.urlencode({"postId": jid, "language": "zh-cn"})
+                        + urllib.parse.urlencode({"postId": jid, "language": "zh-cn"}),
+                        headers={
+                            "Origin": "https://careers.tencent.com",
+                            "Referer": "https://careers.tencent.com/",
+                        },
                     )
                 except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError, ValueError):
                     continue
-                row = (detail.get("Data") or {}) if isinstance(detail, dict) else {}
+                detail_row = (detail.get("Data") or {}) if isinstance(detail, dict) else {}
                 body = strip_html(
                     "\n\n".join(
                         x
                         for x in (
-                            row.get("Responsibility") or post.get("Responsibility") or "",
-                            row.get("Requirement") or "",
+                            detail_row.get("Responsibility") or post.get("Responsibility") or "",
+                            detail_row.get("Requirement") or "",
                         )
                         if x
                     )
                 )
                 if not body:
                     continue
-                out.append(
-                    RawRecord(
-                        company="腾讯",
-                        title=row.get("RecruitPostName") or title,
-                        body=body,
-                        published_at=portal_time(row.get("LastUpdateTime") or post.get("LastUpdateTime")),
-                        city=row.get("LocationName") or post.get("LocationName") or "",
-                        channel="tencent",
-                        job_id=jid,
-                        source="ats",
-                        domain=domain_for(title),
-                        url=row.get("PostURL") or post.get("PostURL") or "",
-                    )
+                row = RawRecord(
+                    company="腾讯",
+                    title=detail_row.get("RecruitPostName") or title,
+                    body=body,
+                    published_at=portal_time(detail_row.get("LastUpdateTime") or post.get("LastUpdateTime")),
+                    city=detail_row.get("LocationName") or post.get("LocationName") or "",
+                    channel="tencent",
+                    job_id=jid,
+                    source="ats",
+                    domain=domain_for(title),
+                    url=detail_row.get("PostURL") or post.get("PostURL") or "",
                 )
+                if is_new(row):
+                    out.append(row)
                 if len(out) >= MAX_NEW:
                     break
             if len(posts) < 10:
@@ -265,7 +294,7 @@ def fetch_tencent(http=http_json, sleep=_sleep) -> list[RawRecord]:
     return out
 
 
-def fetch_bytedance(http=http_json, sleep=_sleep) -> list[RawRecord]:
+def fetch_bytedance(http=http_json, sleep=_sleep, is_new=lambda _: True) -> list[RawRecord]:
     seen: set[str] = set()
     out: list[RawRecord] = []
     headers = {
@@ -306,20 +335,20 @@ def fetch_bytedance(http=http_json, sleep=_sleep) -> list[RawRecord]:
                 if not body:
                     continue
                 city = (post.get("city_info") or {}).get("name") or ""
-                out.append(
-                    RawRecord(
-                        company="字节跳动",
-                        title=title,
-                        body=body,
-                        published_at=portal_time(post.get("publish_time")),
-                        city=city,
-                        channel="bytedance",
-                        job_id=jid,
-                        source="ats",
-                        domain=domain_for(title),
-                        url=f"https://jobs.bytedance.com/experienced/position/{jid}/detail",
-                    )
+                row = RawRecord(
+                    company="字节跳动",
+                    title=title,
+                    body=body,
+                    published_at=portal_time(post.get("publish_time")),
+                    city=city,
+                    channel="bytedance",
+                    job_id=jid,
+                    source="ats",
+                    domain=domain_for(title),
+                    url=f"https://jobs.bytedance.com/experienced/position/{jid}/detail",
                 )
+                if is_new(row):
+                    out.append(row)
                 if len(out) >= MAX_NEW:
                     break
             if len(posts) < 30:
@@ -364,8 +393,8 @@ def resolve_feishu_path(host: str, http=http_json) -> str:
     return "index"
 
 
-def fetch_feishu(host: str, company: str, http=http_json, sleep=_sleep, *, probe: bool = False) -> list[RawRecord]:
-    if not _HOST.fullmatch(host or ""):
+def fetch_feishu(host: str, company: str, http=http_json, sleep=_sleep, *, probe: bool = False, is_new=lambda _: True) -> list[RawRecord]:
+    if not valid_host(host):
         raise ValueError("invalid host")
     path = resolve_feishu_path(host, http=http)
     words = ("",) if probe else SEARCH_WORDS
@@ -431,20 +460,20 @@ def fetch_feishu(host: str, company: str, http=http_json, sleep=_sleep, *, probe
                 cities = ", ".join(
                     c.get("name", "") for c in (post.get("city_list") or []) if isinstance(c, dict)
                 )
-                out.append(
-                    RawRecord(
-                        company=company,
-                        title=title,
-                        body=body,
-                        published_at=portal_time(post.get("publish_time")),
-                        city=cities,
-                        channel=host,
-                        job_id=jid,
-                        source="ats",
-                        domain=domain_for(title),
-                        url=f"https://{host}/{path}/position/{jid}/detail",
-                    )
+                row = RawRecord(
+                    company=company,
+                    title=title,
+                    body=body,
+                    published_at=portal_time(post.get("publish_time")),
+                    city=cities,
+                    channel=host,
+                    job_id=jid,
+                    source="ats",
+                    domain=domain_for(title),
+                    url=f"https://{host}/{path}/position/{jid}/detail",
                 )
+                if is_new(row):
+                    out.append(row)
                 if len(out) >= MAX_NEW:
                     break
             if len(posts) < 50:
@@ -460,26 +489,33 @@ def probe_feishu(host: str, http=http_json) -> None:
         raise ValueError("empty list")
 
 
-def fetch_portal(portal: dict, http=http_json, sleep=_sleep) -> list[RawRecord]:
+def fetch_portal(portal: dict, http=http_json, sleep=_sleep, is_new=lambda _: True) -> list[RawRecord]:
     kind = portal.get("type")
     if kind == "tencent":
-        return fetch_tencent(http=http, sleep=sleep)
+        return fetch_tencent(http=http, sleep=sleep, is_new=is_new)
     if kind == "bytedance":
-        return fetch_bytedance(http=http, sleep=sleep)
+        return fetch_bytedance(http=http, sleep=sleep, is_new=is_new)
     if kind == "feishu":
-        return fetch_feishu(portal.get("host") or "", portal.get("name") or portal.get("key") or "飞书", http=http, sleep=sleep)
+        return fetch_feishu(portal.get("host") or "", portal.get("name") or portal.get("key") or "飞书", http=http, sleep=sleep, is_new=is_new)
     raise ValueError(f"unsupported type {kind}")
 
 
 def run_official(*, data_dir: Path, out_dir: Path, redis, http=http_json, sleep=_sleep, on_evidence=None) -> dict:
     portals = [row for row in load_portals(data_dir) if row.get("enabled")]
+    validate_portals(portals)
     emit_collect_event(redis, EVENT_COLLECT_STARTED, {"portals": [row.get("key") for row in portals]})
     portal_stats = []
     any_ok = False
     for portal in portals:
         key = portal.get("key") or ""
         try:
-            records = fetch_portal(portal, http=http, sleep=sleep)
+            def is_new(record: RawRecord) -> bool:
+                if not record.job_id:
+                    return True
+                previous = redis.hget(BODY_KEY, f"{record.source}\0{record.job_id}")
+                return previous != format_simhash(simhash64(record.body))
+
+            records = fetch_portal(portal, http=http, sleep=sleep, is_new=is_new)
             written = ingest_records(records, out_dir=out_dir, redis=redis, on_evidence=on_evidence)
             any_ok = True
             portal_stats.append({"key": key, "read": len(records), **written, "error": ""})

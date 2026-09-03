@@ -168,6 +168,9 @@ def _load_existing(out_dir: Path, redis, index: SimhashIndex) -> None:
                 "id": doc.get("id") or path.stem,
                 "observed_at": doc.get("observed_at") or "",
                 "fingerprint": doc.get("fingerprint") or "",
+                "source": doc.get("source") or "",
+                "job_id": doc.get("job_id") or "",
+                "simhash": str(raw_hash),
             },
         )
 
@@ -181,6 +184,9 @@ def _index_meta(snapshot: dict) -> dict:
         "id": snapshot["id"],
         "observed_at": snapshot.get("observed_at") or "",
         "fingerprint": snapshot.get("fingerprint") or "",
+        "source": snapshot.get("source") or "",
+        "job_id": snapshot.get("job_id") or "",
+        "simhash": snapshot.get("simhash") or "",
     }
 
 
@@ -287,6 +293,8 @@ def ingest_records(
     skipped_near = 0
     ingested = 0
     for record in records:
+        if not (record.body or "").strip():
+            continue
         if not record.observed_at:
             record.observed_at = record.published_at or datetime.now().isoformat()
         body_hash = simhash64(record.body)
@@ -316,6 +324,13 @@ def ingest_records(
                 skipped_fp += 1
                 continue
         hit = index.find(body_hash)
+        if hit is not None and record.source == "ats" and record.job_id:
+            same_posting = hit.get("source") == "ats" and hit.get("job_id") == record.job_id
+            if same_posting and hit.get("simhash") == body_hex:
+                skipped_fp += 1
+                continue
+            if same_posting:
+                hit = None
         if hit is not None:
             if observed_sort_key(record.observed_at) < observed_sort_key(
                 hit.get("observed_at") or ""

@@ -106,7 +106,13 @@ npm install
 npm run dev
 ```
 
-前端地址仍为 <http://localhost:3000>，接口默认连接 `http://localhost:8000`。修改 `.tsx`、CSS 或其他前端文件后，Next.js 会自动热更新，不需要重建 Docker 镜像。
+前端地址仍为 <http://localhost:3000>，接口默认连接 `http://localhost:8000`。如果把 Next.js 改为运行在 `3001` 端口，Compose 默认也已允许该来源。使用其他端口时，把端口加入 `CORS_ORIGINS`，再重建 API 容器：
+
+```bash
+CORS_ORIGINS=http://localhost:3000,http://localhost:3001 docker compose up -d --force-recreate api
+```
+
+修改 `.tsx`、CSS 或其他前端文件后，Next.js 会自动热更新，不需要重建 Docker 镜像。
 
 如果还要测试每日采集和抽取任务，再启动 `pipeline`：
 
@@ -215,6 +221,7 @@ docker compose down -v
 | `ADMIN_PASSWORD` | 管理后台口令 |
 | `NEO4J_USER` / `NEO4J_PASSWORD` | Neo4j 登录信息 |
 | `NEXT_PUBLIC_API_URL` | 前端请求 API 的地址 |
+| `CORS_ORIGINS` | 允许访问 API 的前端来源，多个来源用逗号分隔 |
 
 不要把 `.env` 提交到 Git。API Key、管理员口令和 Cookie 不应写入日志或公开页面。
 

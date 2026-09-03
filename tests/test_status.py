@@ -1,4 +1,5 @@
 import os
+import time
 import uuid
 
 from app.pipeline.constants import EMERGING_SOURCES, EMERGING_WINDOW_DAYS, FORMED_SOURCES
@@ -7,6 +8,19 @@ from app.pipeline.status import compute_status, job_id_for, source_stats
 from conftest import graph_clean
 
 ADMIN = os.environ.get("ADMIN_PASSWORD", "change-me")
+
+
+def test_failed_pipeline_is_stale_but_failed_collect_is_not(tmp_path, monkeypatch):
+    from app import ops_status
+
+    path = tmp_path / "ops.json"
+    monkeypatch.setattr(ops_status, "PATH", path)
+    ops_status.record("pipeline", "success")
+    ops_status.record("collect", "failed")
+    assert ops_status.stale() is False
+    ops_status.record("pipeline", "failed")
+    assert ops_status.stale() is True
+    assert time.time() - ops_status.read()["pipeline"]["at"] < 5
 
 
 def test_skill_relink_keeps_one_category_edge():

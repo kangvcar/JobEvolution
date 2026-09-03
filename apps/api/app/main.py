@@ -107,6 +107,8 @@ def job_detail(job_id: str):
     row = graph.get_public_job(job_id)
     if row is None:
         raise HTTPException(404, "not found")
+    skill_names = {skill["id"]: skill["name"] for skill in graph.list_skills(with_embed=False)}
+    row["watching"] = [skill_names.get(skill_id, skill_id) for skill_id in row.get("watching") or []]
     row["events"] = graph.list_job_events(job_id)
     evidence = graph.list_job_evidence(job_id)
     row["sources"] = sorted({item["company"] for item in evidence if item.get("company")})
@@ -573,11 +575,12 @@ def admin_login(body: LoginBody, request: Request, response: Response):
         raise HTTPException(401, "unauthorized")
     session_id, csrf = secrets.token_urlsafe(32), secrets.token_urlsafe(24)
     _admin_sessions[session_id] = (now + ADMIN_SESSION_TTL, csrf)
+    secure_cookie = os.environ.get("ADMIN_COOKIE_SECURE", "0") == "1"
     response.set_cookie("admin_session", session_id, max_age=ADMIN_SESSION_TTL, httponly=True,
-                        secure=os.environ.get("ADMIN_COOKIE_SECURE", "1") == "1",
+                        secure=secure_cookie,
                         samesite="strict", path="/")
     response.set_cookie("admin_csrf", csrf, max_age=ADMIN_SESSION_TTL, httponly=False,
-                        secure=os.environ.get("ADMIN_COOKIE_SECURE", "1") == "1",
+                        secure=secure_cookie,
                         samesite="strict", path="/")
     return {"expires_in": ADMIN_SESSION_TTL}
 
@@ -849,11 +852,11 @@ def admin_portals(request: Request, x_admin_password: str | None = Header(defaul
 @app.post("/admin/portals")
 def admin_add_portal(body: PortalBody, request: Request, x_admin_password: str | None = Header(default=None, alias="X-Admin-Password")):
     _require_admin(request, x_admin_password)
-    from app.collectors.ats import enabled_count, load_portals, probe_feishu, save_portals
+    from app.collectors.ats import enabled_count, load_portals, probe_feishu, save_portals, valid_host
 
-    host = (body.host or "").strip().lower().removeprefix("https://").removeprefix("http://").split("/")[0]
+    host = (body.host or "").strip().lower()
     name = (body.name or "").strip()
-    if not host or not name:
+    if not host or not name or not valid_host(host):
         raise HTTPException(400, "name and host required")
     data_dir = _data_dir()
     portals = load_portals(data_dir)
@@ -946,7 +949,10 @@ def events_stream(
     _require_admin(request, x_admin_password)
     from app.collectors.sink import STREAM_KEY, connect_redis
 
-    allowed = {part.strip() for part in (types or "").split(",") if part.strip()} or None
+    from app.collectors.sink import COLLECT_EVENT_TYPES
+
+    requested = {part.strip() for part in (types or "").split(",") if part.strip()}
+    allowed = requested & COLLECT_EVENT_TYPES if requested else set(COLLECT_EVENT_TYPES)
     start_id = last_event_id or "0-0"
     redis = connect_redis()
 
@@ -959,7 +965,7 @@ def events_stream(
                 recent = []
             for event_id, fields in recent:
                 cursor = event_id
-                if allowed and fields.get("type") not in allowed:
+                if fields.get("type") not in allowed:
                     continue
                 yield _sse_pack(event_id, fields)
         while True:
@@ -974,7 +980,7 @@ def events_stream(
             for _, entries in rows:
                 for event_id, fields in entries:
                     cursor = event_id
-                    if allowed and fields.get("type") not in allowed:
+                    if fields.get("type") not in allowed:
                         continue
                     yield _sse_pack(event_id, fields)
 

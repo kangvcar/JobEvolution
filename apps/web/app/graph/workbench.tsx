@@ -14,6 +14,9 @@ const LEVELS = [
   { value: "mid", label: "中级" },
   { value: "senior", label: "高级" },
 ] as const;
+const PROFICIENCY_LABELS: Record<string, string> = { aware: "了解", able: "熟练", expert: "精通" };
+
+const proficiencyLabel = (value?: string) => (value ? PROFICIENCY_LABELS[value] || value : "");
 
 type Domain = { id: string; name: string };
 type Job = { id: string; name: string; status?: "emerging" | "formed" };
@@ -166,8 +169,6 @@ export function Workbench() {
     const p = new URLSearchParams();
     if (domain) p.set("domain", domain);
     if (q) p.set("q", q);
-    if (category) p.set("category", category);
-    if (level) p.set("level", level);
     const suffix = p.toString();
     fetch(`${API}/jobs${suffix ? `?${suffix}` : ""}`)
       .then((r) => r.json())
@@ -179,7 +180,7 @@ export function Workbench() {
         }
       })
       .catch(() => setJobs(FALLBACK_JOBS));
-  }, [domain, q, category, level]);
+  }, [domain, q]);
 
   useEffect(() => {
     if (wanted) setSelected(wanted);
@@ -191,6 +192,7 @@ export function Workbench() {
   }, [jobs, selected]);
 
   const current = jobs.find((job) => job.id === selected) || FALLBACK_JOBS[0];
+  const currentId = current?.id;
   const visibleRequires = (slice?.requires || []).filter(
     (skill) => (!category || skill.category === category) && (!level || skill.levels?.includes(level)),
   );
@@ -207,14 +209,14 @@ export function Workbench() {
       fetch(`${API}/graph/jobs/${encodeURIComponent(selected)}`).then((r) => (r.ok ? r.json() : null)),
     ])
       .then(([job, graph]) => {
-        setDetail(job || (selected === "llm-app" ? FALLBACK_DETAIL_LLM : current ? { id: current.id, name: current.name, status: current.status, definition: [{ text: "岗位核心标准由国家技术工程体系持续追踪更新中。" }], sources: ["行业头部科技企业"] } : FALLBACK_DETAIL_LLM));
+        setDetail(job || (selected === "llm-app" ? FALLBACK_DETAIL_LLM : currentId ? { id: currentId, name: current?.name || "", status: current?.status, definition: [{ text: "岗位核心标准由国家技术工程体系持续追踪更新中。" }], sources: ["行业头部科技企业"] } : FALLBACK_DETAIL_LLM));
         setSlice(graph || FALLBACK_SLICE_LLM);
       })
       .catch(() => {
         setDetail(FALLBACK_DETAIL_LLM);
         setSlice(FALLBACK_SLICE_LLM);
       });
-  }, [selected, current]);
+  }, [selected, currentId]);
 
   const skillBadge = (skill: Requirement) => {
     const isAdded = (slice?.period_delta?.added || []).some((s) => s.skill_id === skill.skill_id);
@@ -233,7 +235,7 @@ export function Workbench() {
         }}
       >
         <span className="skill-name">{skill.name}</span>
-        {skill.proficiency && <span className="skill-level">{skill.proficiency}</span>}
+        {skill.proficiency && <span className="skill-level">{proficiencyLabel(skill.proficiency)}</span>}
         {isAdded && <span className="skill-badge-delta add">+新</span>}
         {isExpired && <span className="skill-badge-delta exp">-降</span>}
       </button>
@@ -246,15 +248,18 @@ export function Workbench() {
         requires: (slice.requires || []).map((r) => ({
           ...r,
           id: r.skill_id,
+          proficiency: proficiencyLabel(r.proficiency),
         })),
         period_delta: {
           added: (slice.period_delta?.added || []).map((r) => ({
             ...r,
             id: r.skill_id,
+            proficiency: proficiencyLabel(r.proficiency),
           })),
           expired: (slice.period_delta?.expired || []).map((r) => ({
             ...r,
             id: r.skill_id,
+            proficiency: proficiencyLabel(r.proficiency),
           })),
         },
       }
@@ -470,6 +475,7 @@ export function Workbench() {
                     name: detail?.name || current?.name || "大模型应用工程师",
                     status: detail?.status || current?.status,
                   }}
+                  watching={detail?.watching}
                   slice={flowSlice}
                   selectedSkill={selectedSkill}
                   onSkillClick={(skill) => {
@@ -564,7 +570,7 @@ export function Workbench() {
                         >
                           <div className="matrix-card-top">
                             <span className="card-category">{skill.category || "专业技能"}</span>
-                            <span className="card-level">{skill.proficiency || "熟练"}</span>
+                            <span className="card-level">{proficiencyLabel(skill.proficiency) || "熟练"}</span>
                           </div>
                           <h3 className="card-title">{skill.name}</h3>
                           <div className="card-footer">
@@ -602,7 +608,7 @@ export function Workbench() {
                         >
                           <div className="matrix-card-top">
                             <span className="card-category">{skill.category || "加分项"}</span>
-                            <span className="card-level">{skill.proficiency || "熟悉"}</span>
+                            <span className="card-level">{proficiencyLabel(skill.proficiency) || "熟悉"}</span>
                           </div>
                           <h3 className="card-title">{skill.name}</h3>
                           <div className="card-footer">
@@ -667,7 +673,7 @@ export function Workbench() {
                     <div className="docked-meta-ribbon">
                       <div>
                         <span className="meta-k">期望熟练度</span>
-                        <strong className="meta-v">{evidenceTarget.proficiency || "熟练应用"}</strong>
+                        <strong className="meta-v">{proficiencyLabel(evidenceTarget.proficiency) || "熟练应用"}</strong>
                       </div>
                       <div>
                         <span className="meta-k">所属技术领域</span>
@@ -779,6 +785,17 @@ export function Workbench() {
                         {(!slice?.categories || slice.categories.length === 0) && (
                           <div className="chips-grid">{visibleRequires.map(skillBadge)}</div>
                         )}
+                        {slice?.categories &&
+                          visibleRequires.some((skill) => !slice.categories?.some((cat) => cat.name === skill.category)) && (
+                            <div className="category-group">
+                              <h4 className="category-title">其他能力</h4>
+                              <div className="chips-grid">
+                                {visibleRequires
+                                  .filter((skill) => !slice.categories?.some((cat) => cat.name === skill.category))
+                                  .map(skillBadge)}
+                              </div>
+                            </div>
+                          )}
                       </div>
                     )}
 
