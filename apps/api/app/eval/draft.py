@@ -80,30 +80,42 @@ def _draft_file(name: str) -> dict:
     path = eval_dir() / name
     rows = read_jsonl(path)
     completed = sum(_has_current_draft(row) for row in rows)
-    _write_checkpoint(status="running", file=name, current="", completed=completed, total=len(rows))
+    failures = []
+    _write_checkpoint(status="running", file=name, current="", completed=completed, total=len(rows), failures=failures)
     for index, row in enumerate(rows):
         if _has_current_draft(row):
             continue
         current = row.get("id") or str(index)
-        _write_checkpoint(status="running", file=name, current=current, completed=completed, total=len(rows))
+        _write_checkpoint(
+            status="running", file=name, current=current, completed=completed, total=len(rows), failures=failures
+        )
         try:
             rows[index] = _draft_one(row)
             _write_jsonl(path, rows)
         except Exception as exc:
+            failures.append({"id": current, "error": f"{type(exc).__name__}: {exc}"[:300]})
             _write_checkpoint(
-                status="failed", file=name, current=current, completed=completed, total=len(rows),
-                error=f"{type(exc).__name__}: {exc}"[:300]
+                status="partial", file=name, current="", completed=completed, total=len(rows), failures=failures
             )
-            raise
+            continue
         completed += 1
-        _write_checkpoint(status="running", file=name, current="", completed=completed, total=len(rows))
+        _write_checkpoint(
+            status="running", file=name, current="", completed=completed, total=len(rows), failures=failures
+        )
     total = sum(len((row.get("notes") or {}).get("gold_draft", {}).get("skills", [])) for row in rows)
-    _write_checkpoint(status="done", file=name, current="", completed=completed, total=len(rows))
-    return {"file": name, "rows": len(rows), "draft_skills": total}
+    _write_checkpoint(
+        status="done" if not failures else "partial", file=name, current="", completed=completed,
+        total=len(rows), failures=failures
+    )
+    return {"file": name, "rows": len(rows), "draft_skills": total, "failed": len(failures)}
 
 
 def main() -> int:
+    results = []
     for name in ("jd.jsonl", "resume.jsonl"):
-        print(json.dumps(_draft_file(name), ensure_ascii=False), flush=True)
-    _write_checkpoint(status="completed", file="", current="", completed=0, total=0)
-    return 0
+        result = _draft_file(name)
+        results.append(result)
+        print(json.dumps(result, ensure_ascii=False), flush=True)
+    failed = sum(result["failed"] for result in results)
+    _write_checkpoint(status="completed" if not failed else "partial", file="", current="", completed=0, total=0, failed=failed)
+    return 1 if failed else 0

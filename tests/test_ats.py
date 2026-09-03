@@ -1,9 +1,13 @@
 import json
+import threading
+import time
 from pathlib import Path
 
 import pytest
 
 from app.collectors.ats import (
+    DEFAULT_PORTALS,
+    SEARCH_WORDS,
     fetch_beisen,
     fetch_tencent,
     keep_title,
@@ -23,6 +27,12 @@ from app.collectors.sink import (
 from test_ingest import MemoryRedis
 
 ADMIN = "change-me"
+
+
+def test_default_sources_cover_system_iot_keywords():
+    keys = {row["key"] for row in DEFAULT_PORTALS}
+    assert {"agirobot", "arashivision"} <= keys
+    assert {"嵌入式", "机器人", "硬件", "物联网"} <= set(SEARCH_WORDS)
 
 
 def test_keep_title_drops_intern_and_english():
@@ -262,13 +272,38 @@ def test_official_checkpoint_resumes_finished_portal(tmp_path, monkeypatch):
 
     monkeypatch.setattr("app.collectors.ats.fetch_portal", fake_fetch)
     with pytest.raises(KeyboardInterrupt):
-        run_official(data_dir=tmp_path, out_dir=tmp_path / "jd", redis=MemoryRedis(), sleep=lambda: None)
+        run_official(data_dir=tmp_path, out_dir=tmp_path / "jd", redis=MemoryRedis(), sleep=lambda: None, workers=1)
     checkpoint = json.loads((tmp_path / "collect.checkpoint.json").read_text(encoding="utf-8"))
     assert checkpoint["status"] == "running"
-    run = run_official(data_dir=tmp_path, out_dir=tmp_path / "jd", redis=MemoryRedis(), sleep=lambda: None)
+    run = run_official(data_dir=tmp_path, out_dir=tmp_path / "jd", redis=MemoryRedis(), sleep=lambda: None, workers=1)
     assert run["resumed"] is True
     assert calls == ["first", "second", "second"]
     assert json.loads((tmp_path / "collect.checkpoint.json").read_text(encoding="utf-8"))["status"] == "completed"
+
+
+def test_official_fetches_pending_portals_concurrently(tmp_path, monkeypatch):
+    (tmp_path / "portals.json").write_text(
+        json.dumps({"portals": [{"key": key, "type": "fake", "name": key, "enabled": True} for key in ("a", "b")]}),
+        encoding="utf-8",
+    )
+    lock = threading.Lock()
+    active = 0
+    peak = 0
+
+    def fake_fetch(portal, **kwargs):
+        nonlocal active, peak
+        with lock:
+            active += 1
+            peak = max(peak, active)
+        time.sleep(0.02)
+        with lock:
+            active -= 1
+        return []
+
+    monkeypatch.setattr("app.collectors.ats.fetch_portal", fake_fetch)
+    result = run_official(data_dir=tmp_path, out_dir=tmp_path / "jd", redis=MemoryRedis(), workers=2)
+    assert result["workers"] == 2
+    assert peak == 2
 
 
 def test_load_portals_writes_defaults(tmp_path):

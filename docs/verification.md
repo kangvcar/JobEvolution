@@ -48,7 +48,7 @@ docker compose run --rm --no-deps \
 
 确认日志中的 `extract_failed` 为 0 后，再以同样的 `JD_DIR` 和 `NEO4J_URI` 执行 `EVAL_DIR=/app/data/eval-official-only python -m app.eval build`、`python -m app.eval draft`。`draft` 只写模型建议；`adjudicate` 必须逐条回看 `path` 指向的 JD 原文后才可写入人工裁决。不要删除 `data/*.csv` 或复用产品 Neo4j 卷。
 
-官方采集会把每份快照原子写入磁盘，并在每个门户完成后刷新 Evidence；`data/official-only/collect.checkpoint.json` 记录门户完成点。进程中断后再次执行会跳过已完成门户，未完成门户安全重放。Redis 开启 AOF，DB 2 的指纹和岗位正文可跨容器重启恢复。正常增量抽取不要加 `--no-cache`：每份成功 JD 会立即写 `.extract-v4.cache` 和 `extract_completed` 检查点；失败样本下次只重试未完成项。
+官方采集以最多 8 个 worker 并发抓取门户，主线程按门户完成顺序写快照和 Evidence，避免跨线程近重复竞争；每份快照原子写入磁盘，每个门户完成后刷新 Evidence。`data/official-only/collect.checkpoint.json` 记录完成点。进程中断后再次执行会跳过已完成门户，未完成门户安全重放。Redis 开启 AOF，DB 2 的指纹和岗位正文可跨容器重启恢复。正常增量抽取不要加 `--no-cache`：每份成功 JD 会立即写 `.extract-v4.cache` 和 `extract_completed` 检查点；失败样本下次只重试未完成项。
 
 **标注。** 一人标即可。不一致以图谱技能点为准，记进 `notes`。每条标：
 

@@ -11,6 +11,8 @@
     {"key": "lixiang", "type": "feishu", "name": "理想汽车", "host": "li.jobs.feishu.cn", "enabled": true, "builtin": false},
     {"key": "xiaopeng", "type": "feishu", "name": "小鹏汽车", "host": "xiaopeng.jobs.feishu.cn", "enabled": true, "builtin": false},
     {"key": "xiaomi", "type": "feishu", "name": "小米", "host": "xiaomi.jobs.f.mioffice.cn", "enabled": true, "builtin": false},
-    {"key": "unitree", "type": "beisen", "name": "宇树科技", "host": "unitree.zhiye.com", "enabled": true, "builtin": false}
+    {"key": "unitree", "type": "beisen", "name": "宇树科技", "host": "unitree.zhiye.com", "enabled": true, "builtin": false},
+    {"key": "agirobot", "type": "feishu", "name": "智元AGIBOT", "host": "agirobot.jobs.feishu.cn", "enabled": true, "builtin": false},
+    {"key": "arashivision", "type": "feishu", "name": "影石创新", "host": "arashivision.jobs.feishu.cn", "enabled": true, "builtin": false}
   ]
 }

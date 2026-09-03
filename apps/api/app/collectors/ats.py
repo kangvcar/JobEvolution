@@ -11,6 +11,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
 
@@ -31,7 +32,10 @@ UA = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
     "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 )
-SEARCH_WORDS = ("大模型", "Agent", "智能体", "算法", "机器学习", "提示词")
+SEARCH_WORDS = (
+    "大模型", "Agent", "智能体", "算法", "机器学习", "提示词", "AI", "C++",
+    "嵌入式", "视觉", "机器人", "硬件", "物联网", "边缘计算",
+)
 FEISHU_PATHS = ("index", "experienced", "fte", "social", "recruitment", "campus")
 MAX_NEW = 200
 PAGE_SLEEP = 1.5
@@ -125,6 +129,22 @@ DEFAULT_PORTALS = [
         "type": "beisen",
         "name": "宇树科技",
         "host": "unitree.zhiye.com",
+        "enabled": True,
+        "builtin": False,
+    },
+    {
+        "key": "agirobot",
+        "type": "feishu",
+        "name": "智元AGIBOT",
+        "host": "agirobot.jobs.feishu.cn",
+        "enabled": True,
+        "builtin": False,
+    },
+    {
+        "key": "arashivision",
+        "type": "feishu",
+        "name": "影石创新",
+        "host": "arashivision.jobs.feishu.cn",
         "enabled": True,
         "builtin": False,
     },
@@ -313,6 +333,22 @@ def _sleep() -> None:
 def fetch_tencent(http=http_json, sleep=_sleep, is_new=lambda _: True) -> list[RawRecord]:
     seen: set[str] = set()
     out: list[RawRecord] = []
+
+    def fetch_detail(post):
+        jid = str(post.get("PostId") or "")
+        try:
+            detail = http(
+                "https://careers.tencent.com/tencentcareer/api/post/ByPostId?"
+                + urllib.parse.urlencode({"postId": jid, "language": "zh-cn"}),
+                headers={
+                    "Origin": "https://careers.tencent.com",
+                    "Referer": "https://careers.tencent.com/",
+                },
+            )
+        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError, ValueError):
+            return None
+        return post, (detail.get("Data") or {}) if isinstance(detail, dict) else {}
+
     for word in SEARCH_WORDS:
         page = 1
         while len(out) < MAX_NEW:
@@ -329,53 +365,50 @@ def fetch_tencent(http=http_json, sleep=_sleep, is_new=lambda _: True) -> list[R
             posts = ((data.get("Data") or {}).get("Posts")) or []
             if not posts:
                 break
+            candidates = []
             for post in posts:
                 title = post.get("RecruitPostName") or ""
                 jid = str(post.get("PostId") or "")
                 if not jid or jid in seen or not keep_title(title, from_search=True):
                     continue
                 seen.add(jid)
-                sleep()
-                try:
-                    detail = http(
-                        "https://careers.tencent.com/tencentcareer/api/post/ByPostId?"
-                        + urllib.parse.urlencode({"postId": jid, "language": "zh-cn"}),
-                        headers={
-                            "Origin": "https://careers.tencent.com",
-                            "Referer": "https://careers.tencent.com/",
-                        },
-                    )
-                except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError, ValueError):
-                    continue
-                detail_row = (detail.get("Data") or {}) if isinstance(detail, dict) else {}
-                body = strip_html(
-                    "\n\n".join(
-                        x
-                        for x in (
-                            detail_row.get("Responsibility") or post.get("Responsibility") or "",
-                            detail_row.get("Requirement") or "",
+                candidates.append(post)
+            with ThreadPoolExecutor(max_workers=min(8, len(candidates) or 1), thread_name_prefix="tencent-detail") as pool:
+                details = pool.map(fetch_detail, candidates)
+                for result in details:
+                    if result is None:
+                        continue
+                    post, detail_row = result
+                    title = post.get("RecruitPostName") or ""
+                    jid = str(post.get("PostId") or "")
+                    body = strip_html(
+                        "\n\n".join(
+                            x
+                            for x in (
+                                detail_row.get("Responsibility") or post.get("Responsibility") or "",
+                                detail_row.get("Requirement") or "",
+                            )
+                            if x
                         )
-                        if x
                     )
-                )
-                if not body:
-                    continue
-                row = RawRecord(
-                    company="腾讯",
-                    title=detail_row.get("RecruitPostName") or title,
-                    body=body,
-                    published_at=portal_time(detail_row.get("LastUpdateTime") or post.get("LastUpdateTime")),
-                    city=detail_row.get("LocationName") or post.get("LocationName") or "",
-                    channel="tencent",
-                    job_id=jid,
-                    source="ats",
-                    domain=domain_for(title),
-                    url=detail_row.get("PostURL") or post.get("PostURL") or "",
-                )
-                if is_new(row):
-                    out.append(row)
-                if len(out) >= MAX_NEW:
-                    break
+                    if not body:
+                        continue
+                    row = RawRecord(
+                        company="腾讯",
+                        title=detail_row.get("RecruitPostName") or title,
+                        body=body,
+                        published_at=portal_time(detail_row.get("LastUpdateTime") or post.get("LastUpdateTime")),
+                        city=detail_row.get("LocationName") or post.get("LocationName") or "",
+                        channel="tencent",
+                        job_id=jid,
+                        source="ats",
+                        domain=domain_for(title),
+                        url=detail_row.get("PostURL") or post.get("PostURL") or "",
+                    )
+                    if is_new(row):
+                        out.append(row)
+                    if len(out) >= MAX_NEW:
+                        break
             if len(posts) < 10:
                 break
             page += 1
@@ -657,52 +690,78 @@ def fetch_portal(portal: dict, http=http_json, sleep=_sleep, is_new=lambda _: Tr
     raise ValueError(f"unsupported type {kind}")
 
 
-def run_official(*, data_dir: Path, out_dir: Path, redis, http=http_json, sleep=_sleep, on_evidence=None) -> dict:
+def run_official(*, data_dir: Path, out_dir: Path, redis, http=http_json, sleep=_sleep, on_evidence=None, workers=None) -> dict:
     portals = [row for row in load_portals(data_dir) if row.get("enabled")]
     validate_portals(portals)
     checkpoint, resumed = _load_checkpoint(data_dir, portals)
     write_json_atomic(checkpoint_path(data_dir), checkpoint)
     emit_collect_event(redis, EVENT_COLLECT_STARTED, {"portals": [row.get("key") for row in portals]})
-    portal_stats = []
+    stats_by_key = {}
     any_ok = False
+    pending = []
+    worker_count = 0
     for portal in portals:
         key = portal.get("key") or ""
         previous = checkpoint.get("portals", {}).get(key) or {}
         if resumed and previous.get("status") == "done":
             stat = previous.get("stats") or {"key": key, "read": 0, "ingested": 0, "error": ""}
-            portal_stats.append(stat)
+            stats_by_key[key] = stat
             any_ok = True
             continue
-        checkpoint["current"] = key
-        write_json_atomic(checkpoint_path(data_dir), checkpoint)
+        pending.append(portal)
+
+    if pending:
         try:
+            limit = int(workers if workers is not None else os.environ.get("PORTAL_WORKERS", "4"))
+        except (TypeError, ValueError):
+            limit = 4
+        limit = max(1, min(8, limit, len(pending)))
+        worker_count = limit
+        remaining = {row.get("key") or "" for row in pending}
+        checkpoint["current"] = ",".join(sorted(remaining))
+        write_json_atomic(checkpoint_path(data_dir), checkpoint)
+
+        def fetch_one(portal):
             def is_new(record: RawRecord) -> bool:
                 if not record.job_id:
                     return True
                 previous = redis.hget(BODY_KEY, f"{record.source}\0{record.job_id}")
                 return previous != format_simhash(simhash64(record.body))
 
-            records = fetch_portal(portal, http=http, sleep=sleep, is_new=is_new)
-            written = ingest_records(records, out_dir=out_dir, redis=redis, on_evidence=on_evidence)
-            any_ok = True
-            stat = {"key": key, "read": len(records), **written, "error": ""}
-            portal_stats.append(stat)
-            checkpoint["portals"][key] = {"status": "done", "stats": stat}
-        except Exception as exc:
-            emit_collect_event(
-                redis,
-                EVENT_COLLECT_PORTAL_FAILED,
-                {"key": key, "error": str(exc)[:300]},
-            )
-            stat = {"key": key, "read": 0, "ingested": 0, "skipped_fingerprint": 0, "skipped_near_dup": 0, "error": str(exc)[:300]}
-            portal_stats.append(stat)
-            checkpoint["portals"][key] = {"status": "failed", "stats": stat}
-        finally:
-            _flush_evidence(on_evidence)
-            write_json_atomic(checkpoint_path(data_dir), checkpoint)
+            return fetch_portal(portal, http=http, sleep=sleep, is_new=is_new)
+
+        with ThreadPoolExecutor(max_workers=limit, thread_name_prefix="portal") as pool:
+            futures = {pool.submit(fetch_one, portal): portal for portal in pending}
+            for future in as_completed(futures):
+                portal = futures[future]
+                key = portal.get("key") or ""
+                stat = None
+                try:
+                    records = future.result()
+                    written = ingest_records(records, out_dir=out_dir, redis=redis, on_evidence=on_evidence)
+                    any_ok = True
+                    stat = {"key": key, "read": len(records), **written, "error": ""}
+                    checkpoint["portals"][key] = {"status": "done", "stats": stat}
+                except Exception as exc:
+                    error = str(exc)[:300]
+                    emit_collect_event(redis, EVENT_COLLECT_PORTAL_FAILED, {"key": key, "error": error})
+                    stat = {"key": key, "read": 0, "ingested": 0, "skipped_fingerprint": 0, "skipped_near_dup": 0, "error": error}
+                    checkpoint["portals"][key] = {"status": "failed", "stats": stat}
+                except BaseException:
+                    _flush_evidence(on_evidence)
+                    write_json_atomic(checkpoint_path(data_dir), checkpoint)
+                    raise
+                finally:
+                    if stat is not None:
+                        stats_by_key[key] = stat
+                        remaining.discard(key)
+                        checkpoint["current"] = ",".join(sorted(remaining))
+                        _flush_evidence(on_evidence)
+                        write_json_atomic(checkpoint_path(data_dir), checkpoint)
     checkpoint["status"] = "completed"
     checkpoint["current"] = ""
     checkpoint["finished_at"] = datetime.now().astimezone().isoformat()
     write_json_atomic(checkpoint_path(data_dir), checkpoint)
+    portal_stats = [stats_by_key[row.get("key") or ""] for row in portals if row.get("key") in stats_by_key]
     emit_collect_event(redis, EVENT_COLLECT_FINISHED, {"portals": portal_stats})
-    return {"ok": any_ok, "resumed": resumed, "portals": portal_stats}
+    return {"ok": any_ok, "resumed": resumed, "workers": worker_count, "portals": portal_stats}
