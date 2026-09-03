@@ -17,6 +17,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useForceLayout } from "./force-layout";
+import { useNeighborHighlight } from "./use-neighbor-highlight";
 
 export type FlowSkillData = {
   id: string;
@@ -720,27 +721,68 @@ function InnerFlowCanvas({ job, watching, slice, selectedSkill, onSkillClick }: 
 
   const finalNodes = useForceLayoutEnabled ? layoutedNodes : nodes;
 
+  // Neighbor highlight system
+  const { focusedNodeId, neighbors, setFocus, clearFocus } = useNeighborHighlight(finalNodes, edges);
+
+  // Apply neighbor highlighting to nodes
+  const highlightedNodes = useMemo(() => {
+    if (!focusedNodeId) return finalNodes;
+
+    return finalNodes.map((node) => ({
+      ...node,
+      className: neighbors.has(node.id)
+        ? `${node.className || ""} neighbor-highlighted`.trim()
+        : `${node.className || ""} neighbor-dimmed`.trim(),
+    }));
+  }, [finalNodes, focusedNodeId, neighbors]);
+
+  // Apply neighbor highlighting to edges
+  const highlightedEdges = useMemo(() => {
+    if (!focusedNodeId) return edges;
+
+    return edges.map((edge) => {
+      const sourceId = typeof edge.source === "string" ? edge.source : edge.source;
+      const targetId = typeof edge.target === "string" ? edge.target : edge.target;
+      const isHighlighted = neighbors.has(sourceId) && neighbors.has(targetId);
+
+      return {
+        ...edge,
+        className: isHighlighted
+          ? `${edge.className || ""} neighbor-highlighted`.trim()
+          : `${edge.className || ""} neighbor-dimmed`.trim(),
+      };
+    });
+  }, [edges, focusedNodeId, neighbors]);
+
   // Smooth Auto Fit View on real content nodes
   React.useEffect(() => {
-    if (finalNodes.length > 0) {
+    if (highlightedNodes.length > 0) {
       const timer = setTimeout(() => {
         fitView({
-          nodes: finalNodes,
+          nodes: highlightedNodes,
           padding: 0.14,
           duration: 400,
         });
       }, 80);
       return () => clearTimeout(timer);
     }
-  }, [finalNodes, job.id, filterMode, fitView]);
+  }, [highlightedNodes, job.id, filterMode, fitView]);
 
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
+      // Toggle neighbor highlight
+      if (focusedNodeId === node.id) {
+        clearFocus();
+      } else {
+        setFocus(node.id);
+      }
+
+      // Skill selection
       if (node.type === "skillNode") {
         onSkillClick(node.data as unknown as FlowSkillData);
       }
     },
-    [onSkillClick]
+    [onSkillClick, focusedNodeId, setFocus, clearFocus]
   );
 
   const onNodeMouseEnter = useCallback((_: React.MouseEvent, node: Node) => {
@@ -772,8 +814,8 @@ function InnerFlowCanvas({ job, watching, slice, selectedSkill, onSkillClick }: 
   return (
     <div className="flow-canvas-container">
       <ReactFlow
-        nodes={finalNodes}
-        edges={edges}
+        nodes={highlightedNodes}
+        edges={highlightedEdges}
         nodeTypes={nodeTypes}
         onNodeClick={onNodeClick}
         onNodeMouseEnter={onNodeMouseEnter}
@@ -783,6 +825,58 @@ function InnerFlowCanvas({ job, watching, slice, selectedSkill, onSkillClick }: 
         defaultEdgeOptions={{ type: "default" }}
       >
         <Background variant={BackgroundVariant.Dots} gap={32} size={1.2} color="rgba(0,0,0,0.08)" />
+
+        {/* Timeline Axis Visualization Layer */}
+        <svg className="timeline-axis-overlay" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
+          <defs>
+            {/* Timeline gradient */}
+            <linearGradient id="timeline-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="rgba(255,69,58,0.1)" />
+              <stop offset="35%" stopColor="rgba(255,69,58,0.02)" />
+              <stop offset="50%" stopColor="rgba(0,0,0,0.01)" />
+              <stop offset="65%" stopColor="rgba(48,209,88,0.02)" />
+              <stop offset="100%" stopColor="rgba(48,209,88,0.1)" />
+            </linearGradient>
+
+            {/* Edge gradients for visual flow direction */}
+            <linearGradient id="edge-gradient-growth" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="rgba(48, 209, 88, 0.9)" />
+              <stop offset="100%" stopColor="rgba(10, 132, 255, 0.5)" />
+            </linearGradient>
+
+            <linearGradient id="edge-gradient-decay" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="rgba(255, 69, 58, 0.9)" />
+              <stop offset="100%" stopColor="rgba(255, 69, 58, 0.4)" />
+            </linearGradient>
+
+            <linearGradient id="edge-gradient-core" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="rgba(29, 29, 31, 0.8)" />
+              <stop offset="100%" stopColor="rgba(142, 142, 147, 0.5)" />
+            </linearGradient>
+
+            <linearGradient id="edge-gradient-focused" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="rgba(10, 132, 255, 1)" />
+              <stop offset="100%" stopColor="rgba(10, 132, 255, 0.6)" />
+            </linearGradient>
+          </defs>
+
+          <rect x="0" y="0" width="100%" height="100%" fill="url(#timeline-gradient)" opacity="0.6" />
+
+          {/* Vertical Division Lines */}
+          <line x1="33%" y1="0" x2="33%" y2="100%" stroke="rgba(0,0,0,0.06)" strokeWidth="1" strokeDasharray="4 8" />
+          <line x1="67%" y1="0" x2="67%" y2="100%" stroke="rgba(0,0,0,0.06)" strokeWidth="1" strokeDasharray="4 8" />
+
+          {/* Timeline Labels */}
+          <text x="16.5%" y="30" textAnchor="middle" fill="var(--color-mute)" fontSize="11" fontWeight="700" opacity="0.7">
+            ◀ DEPRECATED
+          </text>
+          <text x="50%" y="30" textAnchor="middle" fill="var(--color-ink)" fontSize="11" fontWeight="700" opacity="0.8">
+            ● CORE STANDARD
+          </text>
+          <text x="83.5%" y="30" textAnchor="middle" fill="var(--color-mute)" fontSize="11" fontWeight="700" opacity="0.7">
+            GROWTH ▶
+          </text>
+        </svg>
 
         {/* Studio Floating Command Bar (Dual-Wing Evolution Dock) */}
         <div className="studio-canvas-floating-dock">
@@ -884,6 +978,21 @@ function InnerFlowCanvas({ job, watching, slice, selectedSkill, onSkillClick }: 
             </svg>
             <span>{useForceLayoutEnabled ? "智能" : "固定"}</span>
           </button>
+
+          {/* Neighbor Highlight Clear */}
+          {focusedNodeId && (
+            <button
+              type="button"
+              className="dock-tool-btn is-active"
+              onClick={clearFocus}
+              title="清除邻居高亮"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+              <span>清除高亮</span>
+            </button>
+          )}
 
           <div className="dock-separator" />
 
