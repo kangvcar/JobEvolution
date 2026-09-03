@@ -33,7 +33,9 @@ ADMIN = "change-me"
 
 def test_default_sources_cover_system_iot_keywords():
     keys = {row["key"] for row in DEFAULT_PORTALS}
-    assert {"agirobot", "arashivision", "tsingtengms", "asiainfo-sec", "lierda", "lg77oym6sy", "weikezhijia", "qianxun", "qijing", "tarsrobot", "thundersoft", "whales", "zhcomputing", "sudu"} <= keys
+    assert {"agirobot", "tsingtengms", "asiainfo-sec", "lierda", "lg77oym6sy", "weikezhijia", "qianxun", "qijing", "tarsrobot", "thundersoft", "whales", "zhcomputing", "sudu", "x2-robot", "zhongqing-robot", "sharpa", "robot-era", "modelbest", "phigentai", "roboticplus", "hesai", "desaysv", "qcraft", "landspace", "shengshu", "blacklake", "ecoflow", "dcar", "zeron", "avatr", "shenfuture", "holitech", "vast", "lilithgames", "houmo", "carizon", "leadrive", "deeplang", "shenzhi", "bluefocus", "papergames", "brightchip"} <= keys
+    assert sum(row["type"] == "feishu" and row["enabled"] for row in DEFAULT_PORTALS) == 50
+    assert "arashivision" not in keys
     assert {"嵌入式", "机器人", "硬件", "物联网"} <= set(SEARCH_WORDS)
 
 

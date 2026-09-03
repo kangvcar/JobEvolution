@@ -108,7 +108,8 @@
     "id": "skill-1eb7018a6bc267c3",
     "name": "ReAct",
     "synonyms": [
-      "ReAct"
+      "ReAct",
+      "React"
     ]
   },
   {
@@ -262,7 +263,8 @@
     "id": "skill-f1deb75fa21d3c47",
     "name": "C++",
     "synonyms": [
-      "C++"
+      "C++",
+      "c++"
     ]
   },
   {
@@ -826,7 +828,8 @@
     "name": "matlab",
     "synonyms": [
       "matlab",
-      "Matlab"
+      "Matlab",
+      "MATLAB"
     ]
   },
   {
@@ -2738,7 +2741,8 @@
     "id": "skill-af48338f0994e599",
     "name": "Hive",
     "synonyms": [
-      "Hive"
+      "Hive",
+      "HIVE"
     ]
   },
   {
@@ -6064,6 +6068,3149 @@
     "name": "ROS2框架",
     "synonyms": [
       "ROS2框架"
+    ]
+  },
+  {
+    "id": "skill-d4ceb79f6234b8cf",
+    "name": "端到端规划模型量产",
+    "synonyms": [
+      "端到端规划模型量产"
+    ]
+  },
+  {
+    "id": "skill-b1b7afa76db27145",
+    "name": "AR",
+    "synonyms": [
+      "AR"
+    ]
+  },
+  {
+    "id": "skill-c857aab38e46fa8b",
+    "name": "规划模型架构设计",
+    "synonyms": [
+      "规划模型架构设计"
+    ]
+  },
+  {
+    "id": "skill-a63a1399a9f76918",
+    "name": "规划模型架构优化",
+    "synonyms": [
+      "规划模型架构优化"
+    ]
+  },
+  {
+    "id": "skill-5b5a55a320b51d66",
+    "name": "海量数据选择",
+    "synonyms": [
+      "海量数据选择"
+    ]
+  },
+  {
+    "id": "skill-608ea912333e404d",
+    "name": "质量提升",
+    "synonyms": [
+      "质量提升"
+    ]
+  },
+  {
+    "id": "skill-6a1885d26a5cb139",
+    "name": "深度学习训练",
+    "synonyms": [
+      "深度学习训练"
+    ]
+  },
+  {
+    "id": "skill-e7b195f5e3375423",
+    "name": "模型调优",
+    "synonyms": [
+      "模型调优"
+    ]
+  },
+  {
+    "id": "skill-2024a6a89a994b99",
+    "name": "规划模型训练",
+    "synonyms": [
+      "规划模型训练"
+    ]
+  },
+  {
+    "id": "skill-a15464e0d3d79899",
+    "name": "训练策略优化",
+    "synonyms": [
+      "训练策略优化"
+    ]
+  },
+  {
+    "id": "skill-c8b94e658db040ff",
+    "name": "自动驾驶规划模型量产",
+    "synonyms": [
+      "自动驾驶规划模型量产"
+    ]
+  },
+  {
+    "id": "skill-d90e2fcaae71651f",
+    "name": "行车端到端大模型量产",
+    "synonyms": [
+      "行车端到端大模型量产"
+    ]
+  },
+  {
+    "id": "skill-efa7529dae7a23b8",
+    "name": "模型学习",
+    "synonyms": [
+      "模型学习"
+    ]
+  },
+  {
+    "id": "skill-adcc4f622ab7df6a",
+    "name": "激光雷达技术",
+    "synonyms": [
+      "激光雷达技术"
+    ]
+  },
+  {
+    "id": "skill-44f2e2b7f50110c0",
+    "name": "全系统建模分析",
+    "synonyms": [
+      "全系统建模分析"
+    ]
+  },
+  {
+    "id": "skill-f6cd91dab1f07d6d",
+    "name": "系统优化",
+    "synonyms": [
+      "系统优化"
+    ]
+  },
+  {
+    "id": "skill-7fbb38828827eaf4",
+    "name": "算法原型仿真分析",
+    "synonyms": [
+      "算法原型仿真分析"
+    ]
+  },
+  {
+    "id": "skill-bbce219fff5f0c53",
+    "name": "芯片设计",
+    "synonyms": [
+      "芯片设计"
+    ]
+  },
+  {
+    "id": "skill-95750e6e4ab5054d",
+    "name": "芯片指标分析与定义",
+    "synonyms": [
+      "芯片指标分析与定义"
+    ]
+  },
+  {
+    "id": "skill-934051dbc5ce8171",
+    "name": "芯片系统与架构方案设计",
+    "synonyms": [
+      "芯片系统与架构方案设计"
+    ]
+  },
+  {
+    "id": "skill-49a5da84e0bad8cf",
+    "name": "芯片原型系统的设计与验证",
+    "synonyms": [
+      "芯片原型系统的设计与验证"
+    ]
+  },
+  {
+    "id": "skill-d61fb6689c1c6e3b",
+    "name": "系统应用集成",
+    "synonyms": [
+      "系统应用集成"
+    ]
+  },
+  {
+    "id": "skill-a6fcd31ec6540589",
+    "name": "问题调查、分析及解决",
+    "synonyms": [
+      "问题调查、分析及解决"
+    ]
+  },
+  {
+    "id": "skill-c1f3b51cbd3052cb",
+    "name": "点云处理",
+    "synonyms": [
+      "点云处理"
+    ]
+  },
+  {
+    "id": "skill-21ba1f6852aee8b6",
+    "name": "图像处理",
+    "synonyms": [
+      "图像处理"
+    ]
+  },
+  {
+    "id": "skill-2703f41099208bfa",
+    "name": "高速DSP",
+    "synonyms": [
+      "高速DSP"
+    ]
+  },
+  {
+    "id": "skill-dcbfca4bced0a7f2",
+    "name": "FPGA",
+    "synonyms": [
+      "FPGA"
+    ]
+  },
+  {
+    "id": "skill-e6a44db96136cf93",
+    "name": "信号处理系统开发",
+    "synonyms": [
+      "信号处理系统开发"
+    ]
+  },
+  {
+    "id": "skill-86f0098751115013",
+    "name": "电子",
+    "synonyms": [
+      "电子"
+    ]
+  },
+  {
+    "id": "skill-a81a94c92a3ea2a1",
+    "name": "综合系统开发",
+    "synonyms": [
+      "综合系统开发"
+    ]
+  },
+  {
+    "id": "skill-125be9a6afabcb83",
+    "name": "大语言模型后训练（Post-Training）",
+    "synonyms": [
+      "大语言模型后训练（Post-Training）"
+    ]
+  },
+  {
+    "id": "skill-633517569c61239c",
+    "name": "奖励系统（Reward System）",
+    "synonyms": [
+      "奖励系统（Reward System）"
+    ]
+  },
+  {
+    "id": "skill-ecf09c0de7532dfc",
+    "name": "Reward Modeling (RM)",
+    "synonyms": [
+      "Reward Modeling (RM)"
+    ]
+  },
+  {
+    "id": "skill-96d8ee2d85687e00",
+    "name": "个性化（Personalization）",
+    "synonyms": [
+      "个性化（Personalization）"
+    ]
+  },
+  {
+    "id": "skill-e4b89c7bc9673f4c",
+    "name": "长期记忆（Memory）",
+    "synonyms": [
+      "长期记忆（Memory）"
+    ]
+  },
+  {
+    "id": "skill-1ee51dc69a73245b",
+    "name": "用户建模",
+    "synonyms": [
+      "用户建模"
+    ]
+  },
+  {
+    "id": "skill-b5281be2336603f7",
+    "name": "数据飞轮机制",
+    "synonyms": [
+      "数据飞轮机制"
+    ]
+  },
+  {
+    "id": "skill-c3719e97439638da",
+    "name": "Self-Instruct",
+    "synonyms": [
+      "Self-Instruct"
+    ]
+  },
+  {
+    "id": "skill-c0c62471a806feae",
+    "name": "用户多维反馈（User Feedback）",
+    "synonyms": [
+      "用户多维反馈（User Feedback）"
+    ]
+  },
+  {
+    "id": "skill-9455d338d06fd4aa",
+    "name": "信号建模",
+    "synonyms": [
+      "信号建模"
+    ]
+  },
+  {
+    "id": "skill-987b9d8d79caebbf",
+    "name": "Transformer 架构",
+    "synonyms": [
+      "Transformer 架构"
+    ]
+  },
+  {
+    "id": "skill-23af7c41e3c0cc62",
+    "name": "大语言模型训练原理",
+    "synonyms": [
+      "大语言模型训练原理"
+    ]
+  },
+  {
+    "id": "skill-fed63692cc930f65",
+    "name": "LLM Alignment",
+    "synonyms": [
+      "LLM Alignment"
+    ]
+  },
+  {
+    "id": "skill-1c93bf79d8f15c12",
+    "name": "个性化大模型（Personalized LLM）",
+    "synonyms": [
+      "个性化大模型（Personalized LLM）"
+    ]
+  },
+  {
+    "id": "skill-7500dbefc9844e92",
+    "name": "记忆机制（Memory/RAG）",
+    "synonyms": [
+      "记忆机制（Memory/RAG）"
+    ]
+  },
+  {
+    "id": "skill-c502eb3c8aed5ab0",
+    "name": "用户画像建模",
+    "synonyms": [
+      "用户画像建模"
+    ]
+  },
+  {
+    "id": "skill-6d5e9805ac3d9019",
+    "name": "超长上下文",
+    "synonyms": [
+      "超长上下文"
+    ]
+  },
+  {
+    "id": "skill-eae0788c45723861",
+    "name": "vLLM",
+    "synonyms": [
+      "vLLM"
+    ]
+  },
+  {
+    "id": "skill-d2fe6e20b558a2a7",
+    "name": "模型能力差距分析",
+    "synonyms": [
+      "模型能力差距分析"
+    ]
+  },
+  {
+    "id": "skill-1fd1a680b5c5da9d",
+    "name": "训练目标设计",
+    "synonyms": [
+      "训练目标设计"
+    ]
+  },
+  {
+    "id": "skill-8568a13243cc0bbe",
+    "name": "数据验收",
+    "synonyms": [
+      "数据验收"
+    ]
+  },
+  {
+    "id": "skill-f52dcbd4d1268e87",
+    "name": "偏好数据",
+    "synonyms": [
+      "偏好数据"
+    ]
+  },
+  {
+    "id": "skill-cb2e708bd3c55b4c",
+    "name": "Reward Model",
+    "synonyms": [
+      "Reward Model"
+    ]
+  },
+  {
+    "id": "skill-1b742781f14bb221",
+    "name": "光流",
+    "synonyms": [
+      "光流"
+    ]
+  },
+  {
+    "id": "skill-02a3e3fba0eddcc1",
+    "name": "运动控制",
+    "synonyms": [
+      "运动控制"
+    ]
+  },
+  {
+    "id": "skill-0a7027b8e768f301",
+    "name": "蒸馏",
+    "synonyms": [
+      "蒸馏"
+    ]
+  },
+  {
+    "id": "skill-ec48ab5afbe89941",
+    "name": "少步生成",
+    "synonyms": [
+      "少步生成"
+    ]
+  },
+  {
+    "id": "skill-063b8d90a6e20a64",
+    "name": "量化",
+    "synonyms": [
+      "量化"
+    ]
+  },
+  {
+    "id": "skill-981e0ed2927a2aac",
+    "name": "参考图生视频",
+    "synonyms": [
+      "参考图生视频"
+    ]
+  },
+  {
+    "id": "skill-055c7ba2f337f7d6",
+    "name": "角色定制",
+    "synonyms": [
+      "角色定制"
+    ]
+  },
+  {
+    "id": "skill-b844ff591d8c1fb5",
+    "name": "实验设计",
+    "synonyms": [
+      "实验设计"
+    ]
+  },
+  {
+    "id": "skill-5352208374ad4c64",
+    "name": "效果分析",
+    "synonyms": [
+      "效果分析"
+    ]
+  },
+  {
+    "id": "skill-b5d13b0fe5d248ed",
+    "name": "问题归因",
+    "synonyms": [
+      "问题归因"
+    ]
+  },
+  {
+    "id": "skill-fd573419411a7850",
+    "name": "模型版本迭代",
+    "synonyms": [
+      "模型版本迭代"
+    ]
+  },
+  {
+    "id": "skill-07b63586ebb57111",
+    "name": "Flow Matching",
+    "synonyms": [
+      "Flow Matching"
+    ]
+  },
+  {
+    "id": "skill-7151470ffb9910df",
+    "name": "Transformer",
+    "synonyms": [
+      "Transformer"
+    ]
+  },
+  {
+    "id": "skill-11c892f484e60f41",
+    "name": "主体一致性",
+    "synonyms": [
+      "主体一致性"
+    ]
+  },
+  {
+    "id": "skill-74ce19b2f209da7e",
+    "name": "时序稳定性",
+    "synonyms": [
+      "时序稳定性"
+    ]
+  },
+  {
+    "id": "skill-9b5470bdb7f571df",
+    "name": "运动建模",
+    "synonyms": [
+      "运动建模"
+    ]
+  },
+  {
+    "id": "skill-25aa0e7e5877b4b6",
+    "name": "模型蒸馏",
+    "synonyms": [
+      "模型蒸馏"
+    ]
+  },
+  {
+    "id": "skill-bbd9b9353fd00a5d",
+    "name": "大模型架构",
+    "synonyms": [
+      "大模型架构"
+    ]
+  },
+  {
+    "id": "skill-6cf81ff1c6f1c9d3",
+    "name": "模型算法",
+    "synonyms": [
+      "模型算法"
+    ]
+  },
+  {
+    "id": "skill-f137169053ddeb6b",
+    "name": "核心算子",
+    "synonyms": [
+      "核心算子"
+    ]
+  },
+  {
+    "id": "skill-35fc5bbf71e9fd8d",
+    "name": "混合注意力",
+    "synonyms": [
+      "混合注意力"
+    ]
+  },
+  {
+    "id": "skill-118a0a9ac7e471f3",
+    "name": "MoE创新结构",
+    "synonyms": [
+      "MoE创新结构"
+    ]
+  },
+  {
+    "id": "skill-ba21673da929ba92",
+    "name": "推理框架",
+    "synonyms": [
+      "推理框架"
+    ]
+  },
+  {
+    "id": "skill-8ebbdb219835ce43",
+    "name": "架构设计",
+    "synonyms": [
+      "架构设计"
+    ]
+  },
+  {
+    "id": "skill-322f17fa82d422cc",
+    "name": "计算模式",
+    "synonyms": [
+      "计算模式"
+    ]
+  },
+  {
+    "id": "skill-ee665eb9c0945eb2",
+    "name": "协同优化方法",
+    "synonyms": [
+      "协同优化方法"
+    ]
+  },
+  {
+    "id": "skill-c401f2cff27cfc8b",
+    "name": "原型验证",
+    "synonyms": [
+      "原型验证"
+    ]
+  },
+  {
+    "id": "skill-9afaac9b39730892",
+    "name": "实验评估",
+    "synonyms": [
+      "实验评估"
+    ]
+  },
+  {
+    "id": "skill-8f15564802663fc3",
+    "name": "大模型推理",
+    "synonyms": [
+      "大模型推理"
+    ]
+  },
+  {
+    "id": "skill-b73ba63577689651",
+    "name": "访存",
+    "synonyms": [
+      "访存"
+    ]
+  },
+  {
+    "id": "skill-e7ec7d9c610d475c",
+    "name": "算法与硬件协同优化",
+    "synonyms": [
+      "算法与硬件协同优化"
+    ]
+  },
+  {
+    "id": "skill-1fa330e271ba9b77",
+    "name": "Benchmark",
+    "synonyms": [
+      "Benchmark"
+    ]
+  },
+  {
+    "id": "skill-c3e1fced36590735",
+    "name": "性能分析",
+    "synonyms": [
+      "性能分析"
+    ]
+  },
+  {
+    "id": "skill-c2eb8cd9d9564314",
+    "name": "Attention",
+    "synonyms": [
+      "Attention"
+    ]
+  },
+  {
+    "id": "skill-c74d329b664b78ac",
+    "name": "MoE",
+    "synonyms": [
+      "MoE"
+    ]
+  },
+  {
+    "id": "skill-22ba2143872331ab",
+    "name": "GEMM",
+    "synonyms": [
+      "GEMM"
+    ]
+  },
+  {
+    "id": "skill-0303e928c5633026",
+    "name": "RMSNorm",
+    "synonyms": [
+      "RMSNorm"
+    ]
+  },
+  {
+    "id": "skill-ddd0653814e72c3c",
+    "name": "RoPE",
+    "synonyms": [
+      "RoPE"
+    ]
+  },
+  {
+    "id": "skill-02fc7694925c2fa0",
+    "name": "Softmax",
+    "synonyms": [
+      "Softmax"
+    ]
+  },
+  {
+    "id": "skill-4c35576f2c588737",
+    "name": "Triton",
+    "synonyms": [
+      "Triton"
+    ]
+  },
+  {
+    "id": "skill-8643a313b623f2ea",
+    "name": "Tilelang",
+    "synonyms": [
+      "Tilelang"
+    ]
+  },
+  {
+    "id": "skill-16899febe2d4b95e",
+    "name": "CuteDSL",
+    "synonyms": [
+      "CuteDSL"
+    ]
+  },
+  {
+    "id": "skill-80e9a280f4f54a44",
+    "name": "GPU/NPU算子开发",
+    "synonyms": [
+      "GPU/NPU算子开发"
+    ]
+  },
+  {
+    "id": "skill-aea4cf884a96a2d6",
+    "name": "论文阅读",
+    "synonyms": [
+      "论文阅读"
+    ]
+  },
+  {
+    "id": "skill-ea13c20b90754956",
+    "name": "复现",
+    "synonyms": [
+      "复现"
+    ]
+  },
+  {
+    "id": "skill-13e4261ef9c2ef47",
+    "name": "计算复杂度",
+    "synonyms": [
+      "计算复杂度"
+    ]
+  },
+  {
+    "id": "skill-156a21c9ab73c714",
+    "name": "内存访问",
+    "synonyms": [
+      "内存访问"
+    ]
+  },
+  {
+    "id": "skill-b4d8289c3333c7ef",
+    "name": "并行计算",
+    "synonyms": [
+      "并行计算"
+    ]
+  },
+  {
+    "id": "skill-b3b55cb39526a8ae",
+    "name": "机械",
+    "synonyms": [
+      "机械"
+    ]
+  },
+  {
+    "id": "skill-fdc839f6e1dd34a9",
+    "name": "系统工程",
+    "synonyms": [
+      "系统工程"
+    ]
+  },
+  {
+    "id": "skill-723351f47d0c7ba7",
+    "name": "世界模型",
+    "synonyms": [
+      "世界模型"
+    ]
+  },
+  {
+    "id": "skill-5440f7424f2865bf",
+    "name": "数据",
+    "synonyms": [
+      "数据"
+    ]
+  },
+  {
+    "id": "skill-fc9af6836017da15",
+    "name": "仿真",
+    "synonyms": [
+      "仿真"
+    ]
+  },
+  {
+    "id": "skill-2691f60cd5bb2da0",
+    "name": "真机",
+    "synonyms": [
+      "真机"
+    ]
+  },
+  {
+    "id": "skill-89174fe72eeec3ae",
+    "name": "视频生成",
+    "synonyms": [
+      "视频生成"
+    ]
+  },
+  {
+    "id": "skill-721a10fd9a84f8f4",
+    "name": "Robotics",
+    "synonyms": [
+      "Robotics"
+    ]
+  },
+  {
+    "id": "skill-d960119227cbc6d3",
+    "name": "3D Vision",
+    "synonyms": [
+      "3D Vision"
+    ]
+  },
+  {
+    "id": "skill-1f8871fc1fb642db",
+    "name": "大规模训练",
+    "synonyms": [
+      "大规模训练"
+    ]
+  },
+  {
+    "id": "skill-1a427589f39f4e47",
+    "name": "推理系统",
+    "synonyms": [
+      "推理系统"
+    ]
+  },
+  {
+    "id": "skill-01fa82cbd012bd87",
+    "name": "CoRL",
+    "synonyms": [
+      "CoRL"
+    ]
+  },
+  {
+    "id": "skill-e93f54c1ab0df7b7",
+    "name": "ICRA",
+    "synonyms": [
+      "ICRA"
+    ]
+  },
+  {
+    "id": "skill-fe88b2a1d101a62c",
+    "name": "算子优化",
+    "synonyms": [
+      "算子优化"
+    ]
+  },
+  {
+    "id": "skill-81ae2133e66b2a45",
+    "name": "推理部署",
+    "synonyms": [
+      "推理部署"
+    ]
+  },
+  {
+    "id": "skill-348ea84c60466c77",
+    "name": "英文",
+    "synonyms": [
+      "英文"
+    ]
+  },
+  {
+    "id": "skill-09eff3fd82f1d71f",
+    "name": "机器人真机开发测试",
+    "synonyms": [
+      "机器人真机开发测试"
+    ]
+  },
+  {
+    "id": "skill-ee182a3af197fb49",
+    "name": "多模态时序数据",
+    "synonyms": [
+      "多模态时序数据"
+    ]
+  },
+  {
+    "id": "skill-ca3c7b41ae962b10",
+    "name": "机器人交互数据",
+    "synonyms": [
+      "机器人交互数据"
+    ]
+  },
+  {
+    "id": "skill-80c52b920c015d2f",
+    "name": "环境建模",
+    "synonyms": [
+      "环境建模"
+    ]
+  },
+  {
+    "id": "skill-042dc278f91d9f88",
+    "name": "未来预测",
+    "synonyms": [
+      "未来预测"
+    ]
+  },
+  {
+    "id": "skill-46b00f5f04cc6b57",
+    "name": "机器人策略",
+    "synonyms": [
+      "机器人策略"
+    ]
+  },
+  {
+    "id": "skill-d431d75afe00d1da",
+    "name": "规划推演",
+    "synonyms": [
+      "规划推演"
+    ]
+  },
+  {
+    "id": "skill-1f7b7a590da0919e",
+    "name": "策略学习",
+    "synonyms": [
+      "策略学习"
+    ]
+  },
+  {
+    "id": "skill-28b6f0704c12bed3",
+    "name": "能力验证",
+    "synonyms": [
+      "能力验证"
+    ]
+  },
+  {
+    "id": "skill-a5e79b390dacec17",
+    "name": "仿真环境",
+    "synonyms": [
+      "仿真环境"
+    ]
+  },
+  {
+    "id": "skill-39b7fe9f36d6c09d",
+    "name": "3D建模",
+    "synonyms": [
+      "3D建模"
+    ]
+  },
+  {
+    "id": "skill-bce5a1c8c616e09d",
+    "name": "计算机图形学",
+    "synonyms": [
+      "计算机图形学"
+    ]
+  },
+  {
+    "id": "skill-09331d66293417db",
+    "name": "VGGT",
+    "synonyms": [
+      "VGGT"
+    ]
+  },
+  {
+    "id": "skill-1bac93dc5a903d16",
+    "name": "场景重建",
+    "synonyms": [
+      "场景重建"
+    ]
+  },
+  {
+    "id": "skill-e2ebc59779f012ed",
+    "name": "生成模型",
+    "synonyms": [
+      "生成模型"
+    ]
+  },
+  {
+    "id": "skill-0fef98d5eb588df2",
+    "name": "多模态时序建模",
+    "synonyms": [
+      "多模态时序建模"
+    ]
+  },
+  {
+    "id": "skill-fa87aff0ff06d99d",
+    "name": "机器人学习",
+    "synonyms": [
+      "机器人学习"
+    ]
+  },
+  {
+    "id": "skill-6d8aa4a9935a0ef8",
+    "name": "大规模模型训练",
+    "synonyms": [
+      "大规模模型训练"
+    ]
+  },
+  {
+    "id": "skill-11f5f02e90177d12",
+    "name": "开源项目",
+    "synonyms": [
+      "开源项目"
+    ]
+  },
+  {
+    "id": "skill-d27505e52543d0e9",
+    "name": "主动安全算法",
+    "synonyms": [
+      "主动安全算法"
+    ]
+  },
+  {
+    "id": "skill-50dcea9fed952294",
+    "name": "AEB",
+    "synonyms": [
+      "AEB"
+    ]
+  },
+  {
+    "id": "skill-7299453b621d99c8",
+    "name": "AES",
+    "synonyms": [
+      "AES"
+    ]
+  },
+  {
+    "id": "skill-cc27b25ff60078c2",
+    "name": "实车参数标定",
+    "synonyms": [
+      "实车参数标定"
+    ]
+  },
+  {
+    "id": "skill-a0182ca33ddde264",
+    "name": "算法调试",
+    "synonyms": [
+      "算法调试"
+    ]
+  },
+  {
+    "id": "skill-bcd86361ecfcca41",
+    "name": "路测反馈数据",
+    "synonyms": [
+      "路测反馈数据"
+    ]
+  },
+  {
+    "id": "skill-207611975fe09e55",
+    "name": "实车调优算法",
+    "synonyms": [
+      "实车调优算法"
+    ]
+  },
+  {
+    "id": "skill-63b51233e5258cc0",
+    "name": "主动安全",
+    "synonyms": [
+      "主动安全"
+    ]
+  },
+  {
+    "id": "skill-e01c9930823d0e62",
+    "name": "自动驾驶行车功能决策规划算法开发",
+    "synonyms": [
+      "自动驾驶行车功能决策规划算法开发"
+    ]
+  },
+  {
+    "id": "skill-182ae8ad913df730",
+    "name": "主动安全国内外相关法规标准",
+    "synonyms": [
+      "主动安全国内外相关法规标准"
+    ]
+  },
+  {
+    "id": "skill-3ea1c5193131bf14",
+    "name": "CNCAP",
+    "synonyms": [
+      "CNCAP"
+    ]
+  },
+  {
+    "id": "skill-5aadbf1789ed2871",
+    "name": "ENCAP",
+    "synonyms": [
+      "ENCAP"
+    ]
+  },
+  {
+    "id": "skill-1ce8a3f75518e8c5",
+    "name": "端到端AEB模型",
+    "synonyms": [
+      "端到端AEB模型"
+    ]
+  },
+  {
+    "id": "skill-08a9e213c37a4ec7",
+    "name": "端到端AES模型",
+    "synonyms": [
+      "端到端AES模型"
+    ]
+  },
+  {
+    "id": "skill-cd02eb259a6f77e1",
+    "name": "ADAS/AD",
+    "synonyms": [
+      "ADAS/AD"
+    ]
+  },
+  {
+    "id": "skill-7556b904d2033b7e",
+    "name": "ICA",
+    "synonyms": [
+      "ICA"
+    ]
+  },
+  {
+    "id": "skill-cc8f6dd1cbe3ac26",
+    "name": "TJP",
+    "synonyms": [
+      "TJP"
+    ]
+  },
+  {
+    "id": "skill-00662433f52557ad",
+    "name": "HWP",
+    "synonyms": [
+      "HWP"
+    ]
+  },
+  {
+    "id": "skill-b2d4743e0a3cf7ae",
+    "name": "软件架构",
+    "synonyms": [
+      "软件架构"
+    ]
+  },
+  {
+    "id": "skill-0bc1a2aade69259b",
+    "name": "预测模块",
+    "synonyms": [
+      "预测模块"
+    ]
+  },
+  {
+    "id": "skill-df9c935e0f52e0ad",
+    "name": "行为预测",
+    "synonyms": [
+      "行为预测"
+    ]
+  },
+  {
+    "id": "skill-3f7aebe1a55a5063",
+    "name": "决策规划模块",
+    "synonyms": [
+      "决策规划模块"
+    ]
+  },
+  {
+    "id": "skill-c00043d8f353e52a",
+    "name": "行为决策",
+    "synonyms": [
+      "行为决策"
+    ]
+  },
+  {
+    "id": "skill-3baaf73f5543c83f",
+    "name": "自研芯片",
+    "synonyms": [
+      "自研芯片"
+    ]
+  },
+  {
+    "id": "skill-fdfb08fa80277c2d",
+    "name": "版本管理与发布",
+    "synonyms": [
+      "版本管理与发布"
+    ]
+  },
+  {
+    "id": "skill-57d04761fad93937",
+    "name": "TJA",
+    "synonyms": [
+      "TJA"
+    ]
+  },
+  {
+    "id": "skill-dc53d561c7946289",
+    "name": "HWA",
+    "synonyms": [
+      "HWA"
+    ]
+  },
+  {
+    "id": "skill-8fd79fdaa80c00c8",
+    "name": "自动驾驶产品开发和应用",
+    "synonyms": [
+      "自动驾驶产品开发和应用"
+    ]
+  },
+  {
+    "id": "skill-3f302a2a7158a024",
+    "name": "PID",
+    "synonyms": [
+      "PID"
+    ]
+  },
+  {
+    "id": "skill-26adf35551b94c04",
+    "name": "目标跟踪",
+    "synonyms": [
+      "目标跟踪"
+    ]
+  },
+  {
+    "id": "skill-20a2e2ec887d45f3",
+    "name": "传感器融合",
+    "synonyms": [
+      "传感器融合"
+    ]
+  },
+  {
+    "id": "skill-7a7531c15b57a121",
+    "name": "决策规划",
+    "synonyms": [
+      "决策规划"
+    ]
+  },
+  {
+    "id": "skill-8ed02cf5b2f46810",
+    "name": "软件流程",
+    "synonyms": [
+      "软件流程"
+    ]
+  },
+  {
+    "id": "skill-5b1ab76bdfe7208e",
+    "name": "C1驾驶证",
+    "synonyms": [
+      "C1驾驶证"
+    ]
+  },
+  {
+    "id": "skill-1bcf6211c41b1cda",
+    "name": "全双工语音交互系统",
+    "synonyms": [
+      "全双工语音交互系统"
+    ]
+  },
+  {
+    "id": "skill-7627884179fb6325",
+    "name": "多模态交互系统",
+    "synonyms": [
+      "多模态交互系统"
+    ]
+  },
+  {
+    "id": "skill-654a661d749296d9",
+    "name": "语音识别",
+    "synonyms": [
+      "语音识别"
+    ]
+  },
+  {
+    "id": "skill-8e1307773dc474f6",
+    "name": "多模态交互",
+    "synonyms": [
+      "多模态交互"
+    ]
+  },
+  {
+    "id": "skill-16bda4ff63bf2a75",
+    "name": "语音大模型",
+    "synonyms": [
+      "语音大模型"
+    ]
+  },
+  {
+    "id": "skill-6ee8f77a1c30c70f",
+    "name": "全流程测试验证",
+    "synonyms": [
+      "全流程测试验证"
+    ]
+  },
+  {
+    "id": "skill-dce32fc961e79660",
+    "name": "语音信号处理",
+    "synonyms": [
+      "语音信号处理"
+    ]
+  },
+  {
+    "id": "skill-451722cde3b44c5c",
+    "name": "语音唤醒",
+    "synonyms": [
+      "语音唤醒"
+    ]
+  },
+  {
+    "id": "skill-36d0a244808d3fb7",
+    "name": "拒识",
+    "synonyms": [
+      "拒识"
+    ]
+  },
+  {
+    "id": "skill-0b4c86be49079d49",
+    "name": "交互意图识别",
+    "synonyms": [
+      "交互意图识别"
+    ]
+  },
+  {
+    "id": "skill-bbf57da0e8a1bc9e",
+    "name": "声纹识别",
+    "synonyms": [
+      "声纹识别"
+    ]
+  },
+  {
+    "id": "skill-0e326c88c2b52917",
+    "name": "对话管理系统",
+    "synonyms": [
+      "对话管理系统"
+    ]
+  },
+  {
+    "id": "skill-ddf7867301b5ec38",
+    "name": "技术选型",
+    "synonyms": [
+      "技术选型"
+    ]
+  },
+  {
+    "id": "skill-d1423945b29a81eb",
+    "name": "大规模语音数据",
+    "synonyms": [
+      "大规模语音数据"
+    ]
+  },
+  {
+    "id": "skill-7de106abf9c28cfe",
+    "name": "Agent架构设计",
+    "synonyms": [
+      "Agent架构设计"
+    ]
+  },
+  {
+    "id": "skill-8ffc01db97e7fc91",
+    "name": "大模型逻辑推理",
+    "synonyms": [
+      "大模型逻辑推理"
+    ]
+  },
+  {
+    "id": "skill-00d5f7450f88e691",
+    "name": "底层控制模块",
+    "synonyms": [
+      "底层控制模块"
+    ]
+  },
+  {
+    "id": "skill-23db901caf33b8ad",
+    "name": "端到端模型",
+    "synonyms": [
+      "端到端模型"
+    ]
+  },
+  {
+    "id": "skill-a7b90ee8facf0aed",
+    "name": "OpenClaw",
+    "synonyms": [
+      "OpenClaw"
+    ]
+  },
+  {
+    "id": "skill-e3b5b45953d79a15",
+    "name": "Harness",
+    "synonyms": [
+      "Harness"
+    ]
+  },
+  {
+    "id": "skill-c44a1fcb5a665ec0",
+    "name": "自然语言指令",
+    "synonyms": [
+      "自然语言指令"
+    ]
+  },
+  {
+    "id": "skill-b979acb7c70ab119",
+    "name": "调度",
+    "synonyms": [
+      "调度"
+    ]
+  },
+  {
+    "id": "skill-8b2106ca13719cb2",
+    "name": "反馈",
+    "synonyms": [
+      "反馈"
+    ]
+  },
+  {
+    "id": "skill-c0a31374c42cefc5",
+    "name": "异常处理",
+    "synonyms": [
+      "异常处理"
+    ]
+  },
+  {
+    "id": "skill-41b7bccc7a7c36f3",
+    "name": "语音交互",
+    "synonyms": [
+      "语音交互"
+    ]
+  },
+  {
+    "id": "skill-7b6b9a36e2bd8773",
+    "name": "人体感知",
+    "synonyms": [
+      "人体感知"
+    ]
+  },
+  {
+    "id": "skill-408aa78bf3e09d7c",
+    "name": "VLA操作",
+    "synonyms": [
+      "VLA操作"
+    ]
+  },
+  {
+    "id": "skill-199ed4247f6e2d7d",
+    "name": "低延迟异步交互",
+    "synonyms": [
+      "低延迟异步交互"
+    ]
+  },
+  {
+    "id": "skill-d683ef7fbec9aef1",
+    "name": "Tool Use",
+    "synonyms": [
+      "Tool Use"
+    ]
+  },
+  {
+    "id": "skill-21cc305095786cd3",
+    "name": "Planning",
+    "synonyms": [
+      "Planning"
+    ]
+  },
+  {
+    "id": "skill-b05e5d56e29ae0e8",
+    "name": "机器人导航",
+    "synonyms": [
+      "机器人导航"
+    ]
+  },
+  {
+    "id": "skill-a9f33c20dd020865",
+    "name": "路径规划",
+    "synonyms": [
+      "路径规划"
+    ]
+  },
+  {
+    "id": "skill-d7edee3f40cec853",
+    "name": "任务队列",
+    "synonyms": [
+      "任务队列"
+    ]
+  },
+  {
+    "id": "skill-68d9155b59a8ee38",
+    "name": "人形机器人开发",
+    "synonyms": [
+      "人形机器人开发"
+    ]
+  },
+  {
+    "id": "skill-99e08044072d8d70",
+    "name": "自主决策",
+    "synonyms": [
+      "自主决策"
+    ]
+  },
+  {
+    "id": "skill-4cb716c891115459",
+    "name": "Context Engineering",
+    "synonyms": [
+      "Context Engineering"
+    ]
+  },
+  {
+    "id": "skill-4bdc341f50c37767",
+    "name": "自我迭代",
+    "synonyms": [
+      "自我迭代"
+    ]
+  },
+  {
+    "id": "skill-d5edfed2ce8ebf2e",
+    "name": "需求分析",
+    "synonyms": [
+      "需求分析"
+    ]
+  },
+  {
+    "id": "skill-a3952e8c36ca4cef",
+    "name": "方案设计",
+    "synonyms": [
+      "方案设计"
+    ]
+  },
+  {
+    "id": "skill-94a243d9bfbde22a",
+    "name": "开发联调",
+    "synonyms": [
+      "开发联调"
+    ]
+  },
+  {
+    "id": "skill-5a555537fddfa477",
+    "name": "效果评估",
+    "synonyms": [
+      "效果评估"
+    ]
+  },
+  {
+    "id": "skill-6f13c3417348aa70",
+    "name": "技术预研",
+    "synonyms": [
+      "技术预研"
+    ]
+  },
+  {
+    "id": "skill-89d2ee29aa00eefe",
+    "name": "工程化落地",
+    "synonyms": [
+      "工程化落地"
+    ]
+  },
+  {
+    "id": "skill-9c6d2f9d08f7080b",
+    "name": "算法工程",
+    "synonyms": [
+      "算法工程"
+    ]
+  },
+  {
+    "id": "skill-b18a6622a4badba2",
+    "name": "Agent 应用开发",
+    "synonyms": [
+      "Agent 应用开发"
+    ]
+  },
+  {
+    "id": "skill-bdbc8f7ea9d9f3c6",
+    "name": "Agent技术原理",
+    "synonyms": [
+      "Agent技术原理"
+    ]
+  },
+  {
+    "id": "skill-c26c00f029222950",
+    "name": "Agent技术应用",
+    "synonyms": [
+      "Agent技术应用"
+    ]
+  },
+  {
+    "id": "skill-a7e43c55c0f5a29b",
+    "name": "系统设计",
+    "synonyms": [
+      "系统设计"
+    ]
+  },
+  {
+    "id": "skill-75b1ab8204872a64",
+    "name": "技术方案设计",
+    "synonyms": [
+      "技术方案设计"
+    ]
+  },
+  {
+    "id": "skill-fbcc8b328e49becd",
+    "name": "落地交付",
+    "synonyms": [
+      "落地交付"
+    ]
+  },
+  {
+    "id": "skill-848e494b4ff0ea04",
+    "name": "实时交互式视频生成模型",
+    "synonyms": [
+      "实时交互式视频生成模型"
+    ]
+  },
+  {
+    "id": "skill-7b5fa64db55a04af",
+    "name": "视频生成 Agent",
+    "synonyms": [
+      "视频生成 Agent"
+    ]
+  },
+  {
+    "id": "skill-25f26d628252c3a5",
+    "name": "用户意图理解",
+    "synonyms": [
+      "用户意图理解"
+    ]
+  },
+  {
+    "id": "skill-c314af12f3303700",
+    "name": "多模态理解",
+    "synonyms": [
+      "多模态理解"
+    ]
+  },
+  {
+    "id": "skill-5dee2245cdc52747",
+    "name": "指令遵循",
+    "synonyms": [
+      "指令遵循"
+    ]
+  },
+  {
+    "id": "skill-9cce148548686911",
+    "name": "交互决策",
+    "synonyms": [
+      "交互决策"
+    ]
+  },
+  {
+    "id": "skill-2b770fa3dd9e3627",
+    "name": "意图识别",
+    "synonyms": [
+      "意图识别"
+    ]
+  },
+  {
+    "id": "skill-29dde6e6d8b80e18",
+    "name": "上下文管理",
+    "synonyms": [
+      "上下文管理"
+    ]
+  },
+  {
+    "id": "skill-eafacf7bec12d856",
+    "name": "意图解析",
+    "synonyms": [
+      "意图解析"
+    ]
+  },
+  {
+    "id": "skill-2c4e58275f715d52",
+    "name": "指令生成",
+    "synonyms": [
+      "指令生成"
+    ]
+  },
+  {
+    "id": "skill-afcda54f2fbb6c20",
+    "name": "决策机制",
+    "synonyms": [
+      "决策机制"
+    ]
+  },
+  {
+    "id": "skill-a6fff0fc04e6062e",
+    "name": "流式交互系统",
+    "synonyms": [
+      "流式交互系统"
+    ]
+  },
+  {
+    "id": "skill-7e8dacb43c82cadf",
+    "name": "低延迟",
+    "synonyms": [
+      "低延迟"
+    ]
+  },
+  {
+    "id": "skill-a0de029b3d980a45",
+    "name": "响应速度",
+    "synonyms": [
+      "响应速度"
+    ]
+  },
+  {
+    "id": "skill-938ece32496ba5c1",
+    "name": "运行稳定性",
+    "synonyms": [
+      "运行稳定性"
+    ]
+  },
+  {
+    "id": "skill-2bc6f890600cd0e1",
+    "name": "系统集成",
+    "synonyms": [
+      "系统集成"
+    ]
+  },
+  {
+    "id": "skill-d5a28193165221ac",
+    "name": "对话系统",
+    "synonyms": [
+      "对话系统"
+    ]
+  },
+  {
+    "id": "skill-db21a8b3a1c2f9eb",
+    "name": "Agent 应用",
+    "synonyms": [
+      "Agent 应用"
+    ]
+  },
+  {
+    "id": "skill-139d244e142d3a36",
+    "name": "VLM（视觉语言模型）",
+    "synonyms": [
+      "VLM（视觉语言模型）"
+    ]
+  },
+  {
+    "id": "skill-2c7cdc65109a3cfa",
+    "name": "视频理解",
+    "synonyms": [
+      "视频理解"
+    ]
+  },
+  {
+    "id": "skill-481acc2c1413db38",
+    "name": "图像生成",
+    "synonyms": [
+      "图像生成"
+    ]
+  },
+  {
+    "id": "skill-050a5a3c941208fb",
+    "name": "VLM 训练",
+    "synonyms": [
+      "VLM 训练"
+    ]
+  },
+  {
+    "id": "skill-5888ca5e14caf52c",
+    "name": "主流 Agent 框架",
+    "synonyms": [
+      "主流 Agent 框架"
+    ]
+  },
+  {
+    "id": "skill-33be8fd2c27e5eba",
+    "name": "LLM 应用编排",
+    "synonyms": [
+      "LLM 应用编排"
+    ]
+  },
+  {
+    "id": "skill-a8004ec3121cfb61",
+    "name": "实时交互系统",
+    "synonyms": [
+      "实时交互系统"
+    ]
+  },
+  {
+    "id": "skill-e577fe093f8cb272",
+    "name": "因果自动化推断",
+    "synonyms": [
+      "因果自动化推断"
+    ]
+  },
+  {
+    "id": "skill-ec451fbd163e22b7",
+    "name": "A/B自动化测试平台",
+    "synonyms": [
+      "A/B自动化测试平台"
+    ]
+  },
+  {
+    "id": "skill-231ee19a684dc4cc",
+    "name": "流量分配",
+    "synonyms": [
+      "流量分配"
+    ]
+  },
+  {
+    "id": "skill-110eaefaaa8b1722",
+    "name": "统计分析引擎",
+    "synonyms": [
+      "统计分析引擎"
+    ]
+  },
+  {
+    "id": "skill-b4cf42bbb128a34e",
+    "name": "置信区间",
+    "synonyms": [
+      "置信区间"
+    ]
+  },
+  {
+    "id": "skill-6e71925159d7260f",
+    "name": "显著性结果",
+    "synonyms": [
+      "显著性结果"
+    ]
+  },
+  {
+    "id": "skill-ac11a0ea6baf6665",
+    "name": "测试工程化实践",
+    "synonyms": [
+      "测试工程化实践"
+    ]
+  },
+  {
+    "id": "skill-a9e69e32696ab2ba",
+    "name": "评测平台",
+    "synonyms": [
+      "评测平台"
+    ]
+  },
+  {
+    "id": "skill-3c26e7a5b744df5a",
+    "name": "CI/CD",
+    "synonyms": [
+      "CI/CD"
+    ]
+  },
+  {
+    "id": "skill-6d23f04b26967d64",
+    "name": "容器",
+    "synonyms": [
+      "容器"
+    ]
+  },
+  {
+    "id": "skill-a37d07fe30048d3a",
+    "name": "Kubernetes",
+    "synonyms": [
+      "Kubernetes"
+    ]
+  },
+  {
+    "id": "skill-01b4864355f533ae",
+    "name": "评测回归",
+    "synonyms": [
+      "评测回归"
+    ]
+  },
+  {
+    "id": "skill-ac81454d8a63a148",
+    "name": "效果评测",
+    "synonyms": [
+      "效果评测"
+    ]
+  },
+  {
+    "id": "skill-79b8259a9c67d29d",
+    "name": "对比测试",
+    "synonyms": [
+      "对比测试"
+    ]
+  },
+  {
+    "id": "skill-5f5c81a86d2fe2b7",
+    "name": "复杂运动",
+    "synonyms": [
+      "复杂运动"
+    ]
+  },
+  {
+    "id": "skill-f21a513530cda5ff",
+    "name": "多人交互",
+    "synonyms": [
+      "多人交互"
+    ]
+  },
+  {
+    "id": "skill-e8f180daad86adb9",
+    "name": "镜头运动",
+    "synonyms": [
+      "镜头运动"
+    ]
+  },
+  {
+    "id": "skill-b3ccf96f26cae212",
+    "name": "长时序",
+    "synonyms": [
+      "长时序"
+    ]
+  },
+  {
+    "id": "skill-3913f66b2dfea2c0",
+    "name": "问题归因标签",
+    "synonyms": [
+      "问题归因标签"
+    ]
+  },
+  {
+    "id": "skill-8279863f1fed9627",
+    "name": "影视制作",
+    "synonyms": [
+      "影视制作"
+    ]
+  },
+  {
+    "id": "skill-06f611b51ca697e7",
+    "name": "导演",
+    "synonyms": [
+      "导演"
+    ]
+  },
+  {
+    "id": "skill-c2ec36209f0c3d02",
+    "name": "数字媒体",
+    "synonyms": [
+      "数字媒体"
+    ]
+  },
+  {
+    "id": "skill-b4e94fc48dc1c27e",
+    "name": "AIGC工具",
+    "synonyms": [
+      "AIGC工具"
+    ]
+  },
+  {
+    "id": "skill-b941e3c5ed9656d2",
+    "name": "参数调优",
+    "synonyms": [
+      "参数调优"
+    ]
+  },
+  {
+    "id": "skill-1c432b77ce42f51e",
+    "name": "前后端全栈开发",
+    "synonyms": [
+      "前后端全栈开发"
+    ]
+  },
+  {
+    "id": "skill-1fc0c785332e80fb",
+    "name": "Node.js",
+    "synonyms": [
+      "Node.js"
+    ]
+  },
+  {
+    "id": "skill-ee67fd2314f03a40",
+    "name": "业务逻辑封装",
+    "synonyms": [
+      "业务逻辑封装"
+    ]
+  },
+  {
+    "id": "skill-f8b3a17e488fd568",
+    "name": "页面交互优化",
+    "synonyms": [
+      "页面交互优化"
+    ]
+  },
+  {
+    "id": "skill-1e2bca0fe36aadff",
+    "name": "自动驾驶数据闭环业务",
+    "synonyms": [
+      "自动驾驶数据闭环业务"
+    ]
+  },
+  {
+    "id": "skill-7bbf3dfd7fceeed6",
+    "name": "多模态数据 Pipeline",
+    "synonyms": [
+      "多模态数据 Pipeline"
+    ]
+  },
+  {
+    "id": "skill-1978e465cf41feed",
+    "name": "多传感器数据",
+    "synonyms": [
+      "多传感器数据"
+    ]
+  },
+  {
+    "id": "skill-142f6a28a552f87d",
+    "name": "地图数据",
+    "synonyms": [
+      "地图数据"
+    ]
+  },
+  {
+    "id": "skill-32a0238c75558201",
+    "name": "数据预处理",
+    "synonyms": [
+      "数据预处理"
+    ]
+  },
+  {
+    "id": "skill-e1b4f02f91a8087f",
+    "name": "切片",
+    "synonyms": [
+      "切片"
+    ]
+  },
+  {
+    "id": "skill-700677b1bd253a57",
+    "name": "抽帧",
+    "synonyms": [
+      "抽帧"
+    ]
+  },
+  {
+    "id": "skill-90d37cdc17e4d4dd",
+    "name": "送标",
+    "synonyms": [
+      "送标"
+    ]
+  },
+  {
+    "id": "skill-3cbcb1f30e8bb8b7",
+    "name": "地图场景展示",
+    "synonyms": [
+      "地图场景展示"
+    ]
+  },
+  {
+    "id": "skill-41ab2e0ecbec6674",
+    "name": "地图",
+    "synonyms": [
+      "地图"
+    ]
+  },
+  {
+    "id": "skill-6a6c4ca74dd38ebe",
+    "name": "车辆轨迹",
+    "synonyms": [
+      "车辆轨迹"
+    ]
+  },
+  {
+    "id": "skill-5b5c8e7effaf8971",
+    "name": "传感器场景数据",
+    "synonyms": [
+      "传感器场景数据"
+    ]
+  },
+  {
+    "id": "skill-5b222639e9630d04",
+    "name": "交互渲染",
+    "synonyms": [
+      "交互渲染"
+    ]
+  },
+  {
+    "id": "skill-b27ad06d123c6145",
+    "name": "JavaScript",
+    "synonyms": [
+      "JavaScript"
+    ]
+  },
+  {
+    "id": "skill-67d305a0cec4081b",
+    "name": "前端工程化开发",
+    "synonyms": [
+      "前端工程化开发"
+    ]
+  },
+  {
+    "id": "skill-456623302827aef7",
+    "name": "自动驾驶业务体系",
+    "synonyms": [
+      "自动驾驶业务体系"
+    ]
+  },
+  {
+    "id": "skill-3b9d237c474e8e35",
+    "name": "雷达",
+    "synonyms": [
+      "雷达"
+    ]
+  },
+  {
+    "id": "skill-fac308fbabb82692",
+    "name": "摄像头",
+    "synonyms": [
+      "摄像头"
+    ]
+  },
+  {
+    "id": "skill-40f232e111da2244",
+    "name": "毫米波雷达",
+    "synonyms": [
+      "毫米波雷达"
+    ]
+  },
+  {
+    "id": "skill-211906c1c32db77e",
+    "name": "MySQL",
+    "synonyms": [
+      "MySQL"
+    ]
+  },
+  {
+    "id": "skill-44368adad746bc27",
+    "name": "Postgres",
+    "synonyms": [
+      "Postgres"
+    ]
+  },
+  {
+    "id": "skill-91231ff9ab6685fa",
+    "name": "MongoDB",
+    "synonyms": [
+      "MongoDB"
+    ]
+  },
+  {
+    "id": "skill-ce344a418127968f",
+    "name": "ES",
+    "synonyms": [
+      "ES"
+    ]
+  },
+  {
+    "id": "skill-e4a2ec1d9359f770",
+    "name": "数据建模",
+    "synonyms": [
+      "数据建模"
+    ]
+  },
+  {
+    "id": "skill-5143e46fb61a3156",
+    "name": "索引优化",
+    "synonyms": [
+      "索引优化"
+    ]
+  },
+  {
+    "id": "skill-34aa2e830110e748",
+    "name": "业务数据查询优化",
+    "synonyms": [
+      "业务数据查询优化"
+    ]
+  },
+  {
+    "id": "skill-fc405798dcb7e708",
+    "name": "云服务",
+    "synonyms": [
+      "云服务"
+    ]
+  },
+  {
+    "id": "skill-bfd91a702fcdbac6",
+    "name": "Minio",
+    "synonyms": [
+      "Minio"
+    ]
+  },
+  {
+    "id": "skill-2d514a4dcfb2b595",
+    "name": "数据资产",
+    "synonyms": [
+      "数据资产"
+    ]
+  },
+  {
+    "id": "skill-9b74788ff6dd2fe8",
+    "name": "数据流水线",
+    "synonyms": [
+      "数据流水线"
+    ]
+  },
+  {
+    "id": "skill-a812df7f26e58dfd",
+    "name": "数据质量标准",
+    "synonyms": [
+      "数据质量标准"
+    ]
+  },
+  {
+    "id": "skill-53543a73098479bb",
+    "name": "自动化校验",
+    "synonyms": [
+      "自动化校验"
+    ]
+  },
+  {
+    "id": "skill-d2b3570ddfeb8294",
+    "name": "训练数据集",
+    "synonyms": [
+      "训练数据集"
+    ]
+  },
+  {
+    "id": "skill-02dd1d7070c52e8d",
+    "name": "验证数据集",
+    "synonyms": [
+      "验证数据集"
+    ]
+  },
+  {
+    "id": "skill-c0f99393123d0088",
+    "name": "测试数据集",
+    "synonyms": [
+      "测试数据集"
+    ]
+  },
+  {
+    "id": "skill-6b915078966303c2",
+    "name": "数据合规治理",
+    "synonyms": [
+      "数据合规治理"
+    ]
+  },
+  {
+    "id": "skill-d8c1726e9320db6c",
+    "name": "敏感数据脱敏",
+    "synonyms": [
+      "敏感数据脱敏"
+    ]
+  },
+  {
+    "id": "skill-6396bf57d2300f74",
+    "name": "权限管控",
+    "synonyms": [
+      "权限管控"
+    ]
+  },
+  {
+    "id": "skill-a934930f682b69a9",
+    "name": "数据工程",
+    "synonyms": [
+      "数据工程"
+    ]
+  },
+  {
+    "id": "skill-4d724d01f23e36f1",
+    "name": "大模型训练数据",
+    "synonyms": [
+      "大模型训练数据"
+    ]
+  },
+  {
+    "id": "skill-9255f43ef542f1d4",
+    "name": "数据流水线开发",
+    "synonyms": [
+      "数据流水线开发"
+    ]
+  },
+  {
+    "id": "skill-3fa77d0313b30ecb",
+    "name": "数据质量管控",
+    "synonyms": [
+      "数据质量管控"
+    ]
+  },
+  {
+    "id": "skill-ac546745f52c6438",
+    "name": "漂移分析",
+    "synonyms": [
+      "漂移分析"
+    ]
+  },
+  {
+    "id": "skill-1fd1bb608fb361d0",
+    "name": "大模型数据处理",
+    "synonyms": [
+      "大模型数据处理"
+    ]
+  },
+  {
+    "id": "skill-549da5dd610da6f6",
+    "name": "DPO",
+    "synonyms": [
+      "DPO"
+    ]
+  },
+  {
+    "id": "skill-8b59579137284245",
+    "name": "数据合规",
+    "synonyms": [
+      "数据合规"
+    ]
+  },
+  {
+    "id": "skill-2df7697dbb612878",
+    "name": "智能体",
+    "synonyms": [
+      "智能体"
+    ]
+  },
+  {
+    "id": "skill-5b3fbf55616e67db",
+    "name": "提示词结构设计",
+    "synonyms": [
+      "提示词结构设计"
+    ]
+  },
+  {
+    "id": "skill-37f64a4b3e450981",
+    "name": "文案",
+    "synonyms": [
+      "文案"
+    ]
+  },
+  {
+    "id": "skill-80258ae4417156f2",
+    "name": "AI Agent系统",
+    "synonyms": [
+      "AI Agent系统"
+    ]
+  },
+  {
+    "id": "skill-046a2565f4881975",
+    "name": "剧集生成",
+    "synonyms": [
+      "剧集生成"
+    ]
+  },
+  {
+    "id": "skill-fa32684fee285451",
+    "name": "KV策划",
+    "synonyms": [
+      "KV策划"
+    ]
+  },
+  {
+    "id": "skill-1fb47c7f13e5976b",
+    "name": "脚本初稿",
+    "synonyms": [
+      "脚本初稿"
+    ]
+  },
+  {
+    "id": "skill-36e61f61669ebf4b",
+    "name": "角色构建",
+    "synonyms": [
+      "角色构建"
+    ]
+  },
+  {
+    "id": "skill-e9a306cc0d0f22ae",
+    "name": "Prompt逻辑",
+    "synonyms": [
+      "Prompt逻辑"
+    ]
+  },
+  {
+    "id": "skill-21c7413500c91ce3",
+    "name": "分工机制",
+    "synonyms": [
+      "分工机制"
+    ]
+  },
+  {
+    "id": "skill-7daa3b38170477ca",
+    "name": "工作流结构",
+    "synonyms": [
+      "工作流结构"
+    ]
+  },
+  {
+    "id": "skill-cfbfdde93fe74d99",
+    "name": "Prompt模板库",
+    "synonyms": [
+      "Prompt模板库"
+    ]
+  },
+  {
+    "id": "skill-200acd1bf8c13b2c",
+    "name": "角色设定库",
+    "synonyms": [
+      "角色设定库"
+    ]
+  },
+  {
+    "id": "skill-75a60bca6666d6cc",
+    "name": "Agent之间的协同机制",
+    "synonyms": [
+      "Agent之间的协同机制"
+    ]
+  },
+  {
+    "id": "skill-532f28529a1d5b56",
+    "name": "AIGC内容生产",
+    "synonyms": [
+      "AIGC内容生产"
+    ]
+  },
+  {
+    "id": "skill-9c559d1ff4119e65",
+    "name": "测试应用",
+    "synonyms": [
+      "测试应用"
+    ]
+  },
+  {
+    "id": "skill-ca30c48dc0966775",
+    "name": "方法论沉淀",
+    "synonyms": [
+      "方法论沉淀"
+    ]
+  },
+  {
+    "id": "skill-3b3cab12516fdc70",
+    "name": "AI开发",
+    "synonyms": [
+      "AI开发"
+    ]
+  },
+  {
+    "id": "skill-8b7012efc779f6d5",
+    "name": "内容生成",
+    "synonyms": [
+      "内容生成"
+    ]
+  },
+  {
+    "id": "skill-24c41af32e93f424",
+    "name": "智能助手",
+    "synonyms": [
+      "智能助手"
+    ]
+  },
+  {
+    "id": "skill-232bbef97873544a",
+    "name": "API能力",
+    "synonyms": [
+      "API能力"
+    ]
+  },
+  {
+    "id": "skill-16d706b285e71714",
+    "name": "Prompt链条",
+    "synonyms": [
+      "Prompt链条"
+    ]
+  },
+  {
+    "id": "skill-02b4f6dcaba5d354",
+    "name": "多Agent协作",
+    "synonyms": [
+      "多Agent协作"
+    ]
+  },
+  {
+    "id": "skill-aa405acb655a7959",
+    "name": "多模态生成原理",
+    "synonyms": [
+      "多模态生成原理"
+    ]
+  },
+  {
+    "id": "skill-72025b5e0ac1125c",
+    "name": "图像产品开发",
+    "synonyms": [
+      "图像产品开发"
+    ]
+  },
+  {
+    "id": "skill-d1aab59df50dd67e",
+    "name": "视频产品开发",
+    "synonyms": [
+      "视频产品开发"
+    ]
+  },
+  {
+    "id": "skill-5bec8928ad651f6d",
+    "name": "文案产品开发",
+    "synonyms": [
+      "文案产品开发"
+    ]
+  },
+  {
+    "id": "skill-8411c36688aa6984",
+    "name": "Coze",
+    "synonyms": [
+      "Coze"
+    ]
+  },
+  {
+    "id": "skill-824542f077dc9149",
+    "name": "创意工作流",
+    "synonyms": [
+      "创意工作流"
+    ]
+  },
+  {
+    "id": "skill-fda21d4cc5f073df",
+    "name": "AI人机协同",
+    "synonyms": [
+      "AI人机协同"
+    ]
+  },
+  {
+    "id": "skill-9b816f4a6295f2b5",
+    "name": "GPT-4o",
+    "synonyms": [
+      "GPT-4o"
+    ]
+  },
+  {
+    "id": "skill-0615570f9ea13694",
+    "name": "Claude",
+    "synonyms": [
+      "Claude"
+    ]
+  },
+  {
+    "id": "skill-f6ece80b88d6dfbd",
+    "name": "Gemini",
+    "synonyms": [
+      "Gemini"
+    ]
+  },
+  {
+    "id": "skill-d019cd1dbe3bc3b8",
+    "name": "Midjourney",
+    "synonyms": [
+      "Midjourney"
+    ]
+  },
+  {
+    "id": "skill-b735ff99e5252936",
+    "name": "Runway",
+    "synonyms": [
+      "Runway"
+    ]
+  },
+  {
+    "id": "skill-a79736ee0559ff4e",
+    "name": "数据分析体系",
+    "synonyms": [
+      "数据分析体系"
+    ]
+  },
+  {
+    "id": "skill-e1f7562abde56c9e",
+    "name": "用户增长模型",
+    "synonyms": [
+      "用户增长模型"
+    ]
+  },
+  {
+    "id": "skill-a50c6eec653e75a0",
+    "name": "分析报告",
+    "synonyms": [
+      "分析报告"
+    ]
+  },
+  {
+    "id": "skill-d3c1482cf2e82905",
+    "name": "增长漏斗",
+    "synonyms": [
+      "增长漏斗"
+    ]
+  },
+  {
+    "id": "skill-b0ded23b548e0a88",
+    "name": "用户生命周期价值",
+    "synonyms": [
+      "用户生命周期价值"
+    ]
+  },
+  {
+    "id": "skill-3a11c09722ad9da4",
+    "name": "用户画像",
+    "synonyms": [
+      "用户画像"
+    ]
+  },
+  {
+    "id": "skill-03387f3257e5f19b",
+    "name": "活动效果",
+    "synonyms": [
+      "活动效果"
+    ]
+  },
+  {
+    "id": "skill-6c7b200541b15071",
+    "name": "流失预警",
+    "synonyms": [
+      "流失预警"
+    ]
+  },
+  {
+    "id": "skill-e85576a317ab56a1",
+    "name": "数据产品",
+    "synonyms": [
+      "数据产品"
+    ]
+  },
+  {
+    "id": "skill-3b1e94183103cb49",
+    "name": "指标监控体系",
+    "synonyms": [
+      "指标监控体系"
+    ]
+  },
+  {
+    "id": "skill-5075035ec5e579e7",
+    "name": "增长科学度量",
+    "synonyms": [
+      "增长科学度量"
+    ]
+  },
+  {
+    "id": "skill-4c49603690361681",
+    "name": "数据异动诊断分析",
+    "synonyms": [
+      "数据异动诊断分析"
+    ]
+  },
+  {
+    "id": "skill-69e5e6c1502998ea",
+    "name": "投放策略逻辑",
+    "synonyms": [
+      "投放策略逻辑"
+    ]
+  },
+  {
+    "id": "skill-2253091d11b09238",
+    "name": "媒体动态",
+    "synonyms": [
+      "媒体动态"
+    ]
+  },
+  {
+    "id": "skill-f86899825cb01294",
+    "name": "增长手段",
+    "synonyms": [
+      "增长手段"
+    ]
+  },
+  {
+    "id": "skill-cf48df7d55da4d46",
+    "name": "商业分析",
+    "synonyms": [
+      "商业分析"
+    ]
+  },
+  {
+    "id": "skill-8c34abf4abc59a5f",
+    "name": "游戏公司",
+    "synonyms": [
+      "游戏公司"
+    ]
+  },
+  {
+    "id": "skill-3a824b469961244e",
+    "name": "互联网广告数据分析",
+    "synonyms": [
+      "互联网广告数据分析"
+    ]
+  },
+  {
+    "id": "skill-2739c6b2c164106a",
+    "name": "数据分析模型",
+    "synonyms": [
+      "数据分析模型"
+    ]
+  },
+  {
+    "id": "skill-5e75c1b1381549dd",
+    "name": "游戏品类玩法设计",
+    "synonyms": [
+      "游戏品类玩法设计"
+    ]
+  },
+  {
+    "id": "skill-3e9bb6680b2b5b3e",
+    "name": "业务逻辑",
+    "synonyms": [
+      "业务逻辑"
+    ]
+  },
+  {
+    "id": "skill-4ce4f81618c0ccc5",
+    "name": "关键物料成本模型搭建",
+    "synonyms": [
+      "关键物料成本模型搭建"
+    ]
+  },
+  {
+    "id": "skill-0c5ffd6f2679e1db",
+    "name": "关键物料成本合理性审核",
+    "synonyms": [
+      "关键物料成本合理性审核"
+    ]
+  },
+  {
+    "id": "skill-ccccd9aed2626add",
+    "name": "降本方案",
+    "synonyms": [
+      "降本方案"
+    ]
+  },
+  {
+    "id": "skill-7b7effffb411af1b",
+    "name": "整机BOM成本结构搭建",
+    "synonyms": [
+      "整机BOM成本结构搭建"
+    ]
+  },
+  {
+    "id": "skill-e8079cd364950f48",
+    "name": "BOM成本",
+    "synonyms": [
+      "BOM成本"
+    ]
+  },
+  {
+    "id": "skill-8565565a39399b35",
+    "name": "供应链",
+    "synonyms": [
+      "供应链"
+    ]
+  },
+  {
+    "id": "skill-2c79407b30a3148b",
+    "name": "经营指标看板",
+    "synonyms": [
+      "经营指标看板"
+    ]
+  },
+  {
+    "id": "skill-21087896a9bf31cd",
+    "name": "日报",
+    "synonyms": [
+      "日报"
+    ]
+  },
+  {
+    "id": "skill-797f6f9c9ac852d0",
+    "name": "月报",
+    "synonyms": [
+      "月报"
+    ]
+  },
+  {
+    "id": "skill-0b2676320b936973",
+    "name": "专项分析",
+    "synonyms": [
+      "专项分析"
+    ]
+  },
+  {
+    "id": "skill-0fd950923648f7dc",
+    "name": "数据口径统一",
+    "synonyms": [
+      "数据口径统一"
+    ]
+  },
+  {
+    "id": "skill-bd8dbd5724735390",
+    "name": "预算",
+    "synonyms": [
+      "预算"
+    ]
+  },
+  {
+    "id": "skill-bc811c8bd599d1f3",
+    "name": "复盘",
+    "synonyms": [
+      "复盘"
+    ]
+  },
+  {
+    "id": "skill-51662c22910d5fd9",
+    "name": "经营决策",
+    "synonyms": [
+      "经营决策"
+    ]
+  },
+  {
+    "id": "skill-7565158073902648",
+    "name": "MI情报报告",
+    "synonyms": [
+      "MI情报报告"
+    ]
+  },
+  {
+    "id": "skill-8890b9894126d69f",
+    "name": "行业分析报告",
+    "synonyms": [
+      "行业分析报告"
+    ]
+  },
+  {
+    "id": "skill-5e4b503d1cee402a",
+    "name": "风险备料",
+    "synonyms": [
+      "风险备料"
+    ]
+  },
+  {
+    "id": "skill-dc9e002742677e9b",
+    "name": "流程优化",
+    "synonyms": [
+      "流程优化"
+    ]
+  },
+  {
+    "id": "skill-506c068a2a1eb95a",
+    "name": "财务",
+    "synonyms": [
+      "财务"
+    ]
+  },
+  {
+    "id": "skill-89abe8c6ac131464",
+    "name": "统计",
+    "synonyms": [
+      "统计"
+    ]
+  },
+  {
+    "id": "skill-a055602bd5dbe467",
+    "name": "经管",
+    "synonyms": [
+      "经管"
+    ]
+  },
+  {
+    "id": "skill-061684d3e4d5d979",
+    "name": "供应链管理",
+    "synonyms": [
+      "供应链管理"
+    ]
+  },
+  {
+    "id": "skill-715a85a789499d7b",
+    "name": "成本数据分析",
+    "synonyms": [
+      "成本数据分析"
+    ]
+  },
+  {
+    "id": "skill-26d59445bc1cc0fb",
+    "name": "大型智能硬件行业",
+    "synonyms": [
+      "大型智能硬件行业"
+    ]
+  },
+  {
+    "id": "skill-7589355fbec1385b",
+    "name": "Excel 函数",
+    "synonyms": [
+      "Excel 函数"
+    ]
+  },
+  {
+    "id": "skill-fa3cd1c4c8fd49d8",
+    "name": "数据透视表",
+    "synonyms": [
+      "数据透视表"
+    ]
+  },
+  {
+    "id": "skill-8a966ebad399935d",
+    "name": "成本核算流程",
+    "synonyms": [
+      "成本核算流程"
+    ]
+  },
+  {
+    "id": "skill-20b657df698d8bd3",
+    "name": "BI 工具",
+    "synonyms": [
+      "BI 工具"
+    ]
+  },
+  {
+    "id": "skill-c9c672ccb099cb1b",
+    "name": "数据敏感度",
+    "synonyms": [
+      "数据敏感度"
+    ]
+  },
+  {
+    "id": "skill-8247efcab392a1e6",
+    "name": "字节全域数据",
+    "synonyms": [
+      "字节全域数据"
+    ]
+  },
+  {
+    "id": "skill-57e6248712dd62e3",
+    "name": "汽车行业",
+    "synonyms": [
+      "汽车行业"
+    ]
+  },
+  {
+    "id": "skill-b22d70a21a6b4563",
+    "name": "数据能力",
+    "synonyms": [
+      "数据能力"
+    ]
+  },
+  {
+    "id": "skill-65e4c73a30456b2d",
+    "name": "度量体系",
+    "synonyms": [
+      "度量体系"
+    ]
+  },
+  {
+    "id": "skill-20df3073d6051975",
+    "name": "度量诊断",
+    "synonyms": [
+      "度量诊断"
+    ]
+  },
+  {
+    "id": "skill-ad2e7b186332a789",
+    "name": "监控迭代",
+    "synonyms": [
+      "监控迭代"
+    ]
+  },
+  {
+    "id": "skill-5bb1092e45d12cf3",
+    "name": "ROI",
+    "synonyms": [
+      "ROI"
+    ]
+  },
+  {
+    "id": "skill-5dc4b3c932018dc6",
+    "name": "商业数据产品",
+    "synonyms": [
+      "商业数据产品"
+    ]
+  },
+  {
+    "id": "skill-ccdf96a03a970732",
+    "name": "可行性验证",
+    "synonyms": [
+      "可行性验证"
+    ]
+  },
+  {
+    "id": "skill-09477dea842c20e0",
+    "name": "数据预演",
+    "synonyms": [
+      "数据预演"
+    ]
+  },
+  {
+    "id": "skill-c907cb062902312e",
+    "name": "模型交付",
+    "synonyms": [
+      "模型交付"
+    ]
+  },
+  {
+    "id": "skill-91b912cade3ba3f3",
+    "name": "经济学",
+    "synonyms": [
+      "经济学"
+    ]
+  },
+  {
+    "id": "skill-7f334965198dca77",
+    "name": "统计分析",
+    "synonyms": [
+      "统计分析"
+    ]
+  },
+  {
+    "id": "skill-6e843d5d91a87010",
+    "name": "商业数据分析",
+    "synonyms": [
+      "商业数据分析"
+    ]
+  },
+  {
+    "id": "skill-e3939fe41192d19a",
+    "name": "商业数据洞察",
+    "synonyms": [
+      "商业数据洞察"
+    ]
+  },
+  {
+    "id": "skill-bf5883ee2e47a4a1",
+    "name": "商业问题",
+    "synonyms": [
+      "商业问题"
+    ]
+  },
+  {
+    "id": "skill-573306bb6464edcb",
+    "name": "体系解决方案",
+    "synonyms": [
+      "体系解决方案"
+    ]
+  },
+  {
+    "id": "skill-d62d9100806f40ff",
+    "name": "基础平台建设",
+    "synonyms": [
+      "基础平台建设"
+    ]
+  },
+  {
+    "id": "skill-35037d7132886f5a",
+    "name": "标准库",
+    "synonyms": [
+      "标准库"
+    ]
+  },
+  {
+    "id": "skill-94996ca6223321c1",
+    "name": "升级",
+    "synonyms": [
+      "升级"
+    ]
+  },
+  {
+    "id": "skill-7dbac1c20f237bd4",
+    "name": "日志",
+    "synonyms": [
+      "日志"
+    ]
+  },
+  {
+    "id": "skill-fdc3900616980f24",
+    "name": "监控",
+    "synonyms": [
+      "监控"
+    ]
+  },
+  {
+    "id": "skill-95ed80a9188ddc42",
+    "name": "SDK",
+    "synonyms": [
+      "SDK"
+    ]
+  },
+  {
+    "id": "skill-e3401b9b20685564",
+    "name": "任务管理",
+    "synonyms": [
+      "任务管理"
+    ]
+  },
+  {
+    "id": "skill-0f82abcce10b93fa",
+    "name": "设备标定",
+    "synonyms": [
+      "设备标定"
+    ]
+  },
+  {
+    "id": "skill-0f2252faebf7f13b",
+    "name": "系统自检",
+    "synonyms": [
+      "系统自检"
+    ]
+  },
+  {
+    "id": "skill-a56ba06121a4b340",
+    "name": "安全接管",
+    "synonyms": [
+      "安全接管"
+    ]
+  },
+  {
+    "id": "skill-c5de037e53c7fad4",
+    "name": "大模型能力在机器人场景中的应用探索",
+    "synonyms": [
+      "大模型能力在机器人场景中的应用探索"
+    ]
+  },
+  {
+    "id": "skill-d6905fcb13e181c2",
+    "name": "通信架构",
+    "synonyms": [
+      "通信架构"
+    ]
+  },
+  {
+    "id": "skill-09bb2cd827ee4b9d",
+    "name": "消息中间件",
+    "synonyms": [
+      "消息中间件"
+    ]
+  },
+  {
+    "id": "skill-e6fc84759856c4be",
+    "name": "实时数据转发",
+    "synonyms": [
+      "实时数据转发"
+    ]
+  },
+  {
+    "id": "skill-846323016bdd7c94",
+    "name": "云端协同通信",
+    "synonyms": [
+      "云端协同通信"
+    ]
+  },
+  {
+    "id": "skill-d3ace457036e9486",
+    "name": "面向对象设计",
+    "synonyms": [
+      "面向对象设计"
+    ]
+  },
+  {
+    "id": "skill-fb1ba0ba7cc5f386",
+    "name": "节点通信机制",
+    "synonyms": [
+      "节点通信机制"
+    ]
+  },
+  {
+    "id": "skill-dc36f3c302d03422",
+    "name": "AI 辅助编程工具",
+    "synonyms": [
+      "AI 辅助编程工具"
+    ]
+  },
+  {
+    "id": "skill-56d6f32151ad8474",
+    "name": "HTTP",
+    "synonyms": [
+      "HTTP"
+    ]
+  },
+  {
+    "id": "skill-2adc1280d346d502",
+    "name": "WebSocket",
+    "synonyms": [
+      "WebSocket"
+    ]
+  },
+  {
+    "id": "skill-51b197a508373975",
+    "name": "MQTT",
+    "synonyms": [
+      "MQTT"
+    ]
+  },
+  {
+    "id": "skill-c56923dad50497c9",
+    "name": "TCP/IP",
+    "synonyms": [
+      "TCP/IP"
+    ]
+  },
+  {
+    "id": "skill-eac27f26fa3c1888",
+    "name": "自定义协议栈开发与优化",
+    "synonyms": [
+      "自定义协议栈开发与优化"
+    ]
+  },
+  {
+    "id": "skill-a064a6e578e285d6",
+    "name": "单元测试",
+    "synonyms": [
+      "单元测试"
+    ]
+  },
+  {
+    "id": "skill-1fa3244c050f16b1",
+    "name": "代码审查",
+    "synonyms": [
+      "代码审查"
+    ]
+  },
+  {
+    "id": "skill-02bac8ce5cfbeba9",
+    "name": "SDK 设计",
+    "synonyms": [
+      "SDK 设计"
+    ]
+  },
+  {
+    "id": "skill-eb920a79a912e13e",
+    "name": "工具链开发",
+    "synonyms": [
+      "工具链开发"
+    ]
+  },
+  {
+    "id": "skill-df6897cf5e23d8b3",
+    "name": "通用框架建设",
+    "synonyms": [
+      "通用框架建设"
     ]
   }
 ]
