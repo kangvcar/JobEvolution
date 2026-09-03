@@ -44,6 +44,27 @@ def test_next_row_preps_suspects_and_proposals(eval_tmp):
     assert row["unaligned"] == []
 
 
+def test_next_row_keeps_full_source_text_and_path(eval_tmp):
+    source = eval_tmp / "source.json"
+    body = "原文 " * 500
+    source.write_text(json.dumps({"body": body}, ensure_ascii=False), encoding="utf-8")
+    rows = [
+        {
+            "id": "jd-source",
+            "title": "官方岗位",
+            "path": str(source),
+            "skills": [],
+            "notes": {"gold_draft": {"skills": []}},
+        }
+    ]
+    (eval_tmp / "jd.jsonl").write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in rows) + "\n", encoding="utf-8")
+
+    row = adj.next_row("jd")["row"]
+
+    assert row["text"] == body
+    assert row["source_path"] == str(source)
+
+
 def test_apply_decision_writes_row_and_advances(eval_tmp):
     out = adj.apply_decision(
         {

@@ -34,15 +34,22 @@ def _names(by_id: dict, sid: str) -> list[str]:
     return [skill.get("name") or "", *(skill.get("synonyms") or [])]
 
 
-def _row_text(row: dict) -> str:
+def _source_text(row: dict) -> str:
     path = row.get("path")
     if path:
+        body = json.loads(open(path, encoding="utf-8").read()).get("body") or ""
+        return body
+    return row.get("text") or ""
+
+
+def _row_text(row: dict) -> str:
+    body = _source_text(row)
+    if row.get("path"):
         from app.pipeline.sections import split_sections
 
-        body = json.loads(open(path, encoding="utf-8").read()).get("body") or ""
         parts = split_sections(body)
         return f"{parts['duty']}\n{parts['requirement']}".strip() or body
-    return row.get("text") or ""
+    return body
 
 
 def _mark_done(row: dict, *, skipped: bool, deleted: list[str], added: list[str]) -> None:
@@ -56,6 +63,7 @@ def _mark_done(row: dict, *, skipped: bool, deleted: list[str], added: list[str]
 
 def prep_row(row: dict, index: list[dict], by_id: dict, cut: float) -> dict:
     text = _row_text(row)
+    source_text = _source_text(row)
     draft = (row.get("notes") or {}).get("gold_draft", {}).get("skills", [])
     aligned: dict[str, str] = {}
     for surf in draft:
@@ -79,7 +87,8 @@ def prep_row(row: dict, index: list[dict], by_id: dict, cut: float) -> dict:
     return {
         "id": row["id"],
         "title": row.get("title") or row.get("id"),
-        "text": text[:1500],
+        "text": source_text,
+        "source_path": row.get("path"),
         "kept": gold,
         "suspects": suspects,
         "proposals": proposals,
