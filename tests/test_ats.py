@@ -1,0 +1,190 @@
+import json
+from pathlib import Path
+
+from app.collectors.ats import (
+    fetch_tencent,
+    keep_title,
+    load_portals,
+    run_official,
+    strip_html,
+)
+from app.collectors.controller import ingest_records, list_snapshot_paths
+from app.collectors.source import RawRecord
+from app.collectors.sink import (
+    EVENT_COLLECT_FINISHED,
+    EVENT_COLLECT_STARTED,
+    STREAM_KEY,
+)
+
+from test_ingest import MemoryRedis
+
+ADMIN = "change-me"
+
+
+def test_keep_title_drops_intern_and_english():
+    assert keep_title("大模型应用工程师", from_search=True)
+    assert not keep_title("大模型实习生", from_search=True)
+    assert not keep_title("Machine Learning Engineer", from_search=True)
+
+
+def test_strip_html_plain_text():
+    assert "Python" in strip_html("<p>熟悉 <b>Python</b></p>")
+    assert "<" not in strip_html("<p>熟悉 <b>Python</b></p>")
+
+
+def test_tencent_fetches_detail_after_title_filter():
+    calls: list[str] = []
+
+    def http(url, **kwargs):
+        calls.append(url)
+        if "Query" in url:
+            return {
+                "Data": {
+                    "Posts": [
+                        {
+                            "PostId": "1",
+                            "RecruitPostName": "大模型应用工程师",
+                            "Responsibility": "列表摘要",
+                            "LocationName": "深圳",
+                            "PostURL": "https://careers.tencent.com/1",
+                            "LastUpdateTime": "2026-01-02",
+                        },
+                        {
+                            "PostId": "2",
+                            "RecruitPostName": "大模型实习",
+                            "Responsibility": "实习",
+                            "LocationName": "深圳",
+                        },
+                    ]
+                }
+            }
+        return {
+            "Data": {
+                "RecruitPostName": "大模型应用工程师",
+                "Responsibility": "负责大模型应用落地",
+                "Requirement": "Python",
+                "LocationName": "深圳",
+                "PostURL": "https://careers.tencent.com/1",
+                "LastUpdateTime": "2026-01-02",
+            }
+        }
+
+    rows = fetch_tencent(http=http, sleep=lambda: None)
+    assert len(rows) == 1
+    assert rows[0].job_id == "1"
+    assert "Python" in rows[0].body
+    assert any("ByPostId" in url for url in calls)
+    assert not any("postId=2" in url for url in calls)
+
+
+def test_ats_new_body_writes_second_snapshot(tmp_path):
+    redis = MemoryRedis()
+    out_dir = tmp_path / "jd"
+    first = RawRecord(
+        company="腾讯",
+        title="大模型应用工程师",
+        body="第一版职责要求 Python",
+        published_at="2026-01-01",
+        city="深圳",
+        channel="tencent",
+        job_id="post-1",
+        source="ats",
+        domain="ai",
+        observed_at="2026-01-01T00:00:00",
+        url="https://example.com/1",
+    )
+    second = RawRecord(
+        company="腾讯",
+        title="大模型应用工程师",
+        body="第二版职责要求 Python 与评测集",
+        published_at="2026-06-01",
+        city="深圳",
+        channel="tencent",
+        job_id="post-1",
+        source="ats",
+        domain="ai",
+        observed_at="2026-06-01T00:00:00",
+        url="https://example.com/1",
+    )
+    a = ingest_records([first], out_dir=out_dir, redis=redis)
+    b = ingest_records([first], out_dir=out_dir, redis=redis)
+    c = ingest_records([second], out_dir=out_dir, redis=redis)
+    assert a["ingested"] == 1
+    assert b["ingested"] == 0
+    assert b["skipped_fingerprint"] == 1
+    assert c["ingested"] == 1
+    paths = list_snapshot_paths(out_dir)
+    assert len(paths) == 2
+    urls = {json.loads(path.read_text(encoding="utf-8"))["url"] for path in paths}
+    assert "https://example.com/1" in urls
+
+
+def test_run_official_emits_collect_events(tmp_path):
+    redis = MemoryRedis()
+    (tmp_path / "portals.json").write_text(
+        json.dumps(
+            {
+                "portals": [
+                    {"key": "tencent", "type": "tencent", "name": "腾讯", "enabled": True, "builtin": True},
+                    {"key": "dead", "type": "feishu", "name": "坏", "host": "nope.example", "enabled": True},
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    def http(url, **kwargs):
+        if "tencentcareer" in url and "Query" in url:
+            return {
+                "Data": {
+                    "Posts": [
+                        {
+                            "PostId": "9",
+                            "RecruitPostName": "机器学习工程师",
+                            "Responsibility": "列表",
+                            "LocationName": "北京",
+                            "LastUpdateTime": "2026-02-02",
+                        }
+                    ]
+                }
+            }
+        if "ByPostId" in url:
+            return {
+                "Data": {
+                    "RecruitPostName": "机器学习工程师",
+                    "Responsibility": "训练模型",
+                    "Requirement": "PyTorch",
+                    "LocationName": "北京",
+                    "LastUpdateTime": "2026-02-02",
+                    "PostURL": "https://careers.tencent.com/9",
+                }
+            }
+        raise OSError("blocked")
+
+    stats = run_official(
+        data_dir=tmp_path,
+        out_dir=tmp_path / "jd",
+        redis=redis,
+        http=http,
+        sleep=lambda: None,
+    )
+    types = [fields["type"] for _, fields in redis._streams[STREAM_KEY]]
+    assert EVENT_COLLECT_STARTED in types
+    assert EVENT_COLLECT_FINISHED in types
+    assert "collect_portal_failed" in types
+    assert stats["ok"] is True
+    assert any(row["key"] == "tencent" and row["ingested"] == 1 for row in stats["portals"])
+
+
+def test_load_portals_writes_defaults(tmp_path):
+    rows = load_portals(tmp_path)
+    assert Path(tmp_path / "portals.json").is_file()
+    keys = {row["key"] for row in rows}
+    assert {"tencent", "bytedance", "zhipu", "minimax", "moonshot"} <= keys
+
+
+def test_events_stream_requires_admin(client):
+    assert client.get("/events/stream").status_code == 401
+    response = client.get("/admin/portals", headers={"X-Admin-Password": ADMIN})
+    assert response.status_code == 200
+    assert "portals" in response.json()

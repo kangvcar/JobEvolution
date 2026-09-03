@@ -126,7 +126,7 @@ RETURN j, r, s
 
 **幂等。** `fingerprint = sha256(source + job_id)`，没有站点 ID 时用 `规范化(公司|标题|城市)`。命中 Redis `ingest:fp` 则跳过。正文另算 64-bit simhash，Hamming ≤3 视为近重：只留 `observed_at` 最早的一条作证据，其余不计独立源。
 
-**事件。** 每入库一条 JD、每抽完一簇，`XADD jobs:events`。字段：`id`、`type`（`jd_ingested` / `cluster_ready` / `review_enqueued` / `job_promoted`）、`payload`。SSE `GET /events/stream` 给管理页可选订阅，求职者页面不接。
+**事件。** 每入库一条 JD、每抽完一簇，`XADD jobs:events`。字段：`id`、`type`（`collect_started` / `jd_ingested` / `collect_portal_failed` / `collect_finished` / `cluster_ready` / `review_enqueued` / `job_promoted`）、`payload`。SSE `GET /events/stream` 需管理会话，求职者页面不接。
 
 ## 图谱构建与幻觉防控
 

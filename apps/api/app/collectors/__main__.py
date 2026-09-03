@@ -66,10 +66,13 @@ def _evidence_writer():
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Ingest local JD tables into data/jd")
+    parser = argparse.ArgumentParser(description="Ingest local JD tables or official portals into data/jd")
     parser.add_argument("--data-dir", type=Path, default=None)
     parser.add_argument("--out-dir", type=Path, default=None)
     parser.add_argument("--redis-url", default=None)
+    parser.add_argument("--official", action="store_true", help="crawl official career portals")
+    parser.add_argument("--daily", action="store_true", help="lock, crawl official portals, then extract")
+    parser.add_argument("--then-pipeline", action="store_true")
     parser.add_argument(
         "--skip-graph",
         action="store_true",
@@ -80,6 +83,8 @@ def main(argv: list[str] | None = None) -> int:
     data_dir = args.data_dir or default_data_dir()
     out_dir = args.out_dir or (data_dir / "jd")
     redis = connect_redis(args.redis_url)
+    official = args.official or args.daily
+    then_pipeline = args.then_pipeline or args.daily
 
     on_evidence = None
     if not args.skip_graph:
@@ -88,16 +93,44 @@ def main(argv: list[str] | None = None) -> int:
         except Exception as exc:
             print(f"graph skipped: {exc}", file=sys.stderr)
 
-    stats = run_ingest(
-        data_dir=data_dir,
-        out_dir=out_dir,
-        redis=redis,
-        on_evidence=on_evidence,
-    )
-    if on_evidence is not None:
-        on_evidence.flush()
-    print(json.dumps(stats, ensure_ascii=False, indent=2))
-    return 0
+    lock = None
+    if official:
+        from app.collectors.ats import CollectLock
+
+        lock = CollectLock(data_dir)
+        if not lock.acquire():
+            print(json.dumps({"error": "collect already running"}, ensure_ascii=False))
+            return 2
+    try:
+        if official:
+            from app.collectors.ats import run_official
+            from app.ops_status import record
+
+            stats = run_official(
+                data_dir=data_dir,
+                out_dir=out_dir,
+                redis=redis,
+                on_evidence=on_evidence,
+            )
+            record("collect", "success" if stats.get("ok") else "failed", portals=stats.get("portals"))
+        else:
+            stats = run_ingest(
+                data_dir=data_dir,
+                out_dir=out_dir,
+                redis=redis,
+                on_evidence=on_evidence,
+            )
+        if on_evidence is not None:
+            on_evidence.flush()
+        print(json.dumps(stats, ensure_ascii=False, indent=2))
+        if then_pipeline:
+            from app.pipeline.__main__ import main as pipeline_main
+
+            return pipeline_main([])
+        return 0 if stats.get("ok", True) else 1
+    finally:
+        if lock is not None:
+            lock.release()
 
 
 if __name__ == "__main__":

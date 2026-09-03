@@ -39,6 +39,7 @@ class MemoryRedis:
         from collections import defaultdict
 
         self._sets = defaultdict(set)
+        self._hashes = defaultdict(dict)
         self._streams = defaultdict(list)
         self._seq = 0
 
@@ -76,6 +77,37 @@ class MemoryRedis:
         if count is not None:
             items = items[:count]
         return items
+
+    def hget(self, key: str, field: str):
+        return self._hashes.get(key, {}).get(field)
+
+    def hset(self, key: str, field: str, value: str) -> int:
+        bucket = self._hashes[key]
+        bucket[field] = value
+        return 1
+
+    def xrevrange(self, name: str, max: str = "+", min: str = "-", count: int | None = None):
+        items = list(reversed(self._streams.get(name, [])))
+        if count is not None:
+            items = items[:count]
+        return items
+
+    def xread(self, streams: dict, block: int | None = None, count: int | None = None):
+        out = []
+        for name, last in streams.items():
+            items = []
+            last_seq = -1 if last in {"0-0", "0", "-", None} else int(str(last).split("-")[-1])
+            if last == "$":
+                continue
+            for eid, fields in self._streams.get(name, []):
+                seq = int(str(eid).split("-")[-1])
+                if seq > last_seq:
+                    items.append((eid, fields))
+            if count is not None:
+                items = items[:count]
+            if items:
+                out.append((name, items))
+        return out
 
 
 def _ingest(tmp_path, redis=None):

@@ -6,6 +6,7 @@ import json
 import re
 from collections import Counter
 from datetime import datetime, timedelta
+from hashlib import sha256
 from pathlib import Path
 
 from app.collectors.domain import classify_domain
@@ -15,7 +16,7 @@ from app.collectors.normalize import (
     normalize_company,
 )
 from app.collectors.simhash import SimhashIndex, format_simhash, simhash64
-from app.collectors.sink import FP_KEY, emit_jd_ingested
+from app.collectors.sink import BODY_KEY, FP_KEY, emit_jd_ingested
 from app.collectors.source import RawRecord, discover_tables, iter_records
 
 _DATE_FORMATS = (
@@ -126,6 +127,14 @@ def snapshot_id(fingerprint: str) -> str:
     return "jd-" + fingerprint[:16]
 
 
+def posting_key(source: str, job_id: str) -> str:
+    return sha256(f"{source}\0{job_id}".encode("utf-8")).hexdigest()
+
+
+def ats_fingerprint(source: str, job_id: str, simhash: str) -> str:
+    return sha256(f"{source}{job_id}{simhash}".encode("utf-8")).hexdigest()
+
+
 def list_snapshot_paths(out_dir: Path) -> list[Path]:
     return sorted(path for path in Path(out_dir).glob("*.json") if path.is_file())
 
@@ -226,6 +235,7 @@ def _write_snapshot(out_dir: Path, record: RawRecord, body_hash: int) -> dict:
         "fingerprint": record.fingerprint,
         "simhash": format_simhash(body_hash),
         "domain": record.domain,
+        "url": record.url,
     }
     dest = Path(out_dir) / f"{sid}.json"
     tmp = dest.with_suffix(".json.tmp")
@@ -237,17 +247,19 @@ def _write_snapshot(out_dir: Path, record: RawRecord, body_hash: int) -> dict:
 def _prepare(record: RawRecord, *, ignore_parsed: bool = False) -> RawRecord | None:
     if not record.body:
         return None
-    domain = classify_domain(record.title)
-    if domain is None:
-        return None
-    record.domain = domain
-    record.fingerprint = fingerprint_for(
-        record.source,
-        record.job_id,
-        record.company,
-        record.title,
-        record.city,
-    )
+    if not record.domain:
+        domain = classify_domain(record.title)
+        if domain is None:
+            return None
+        record.domain = domain
+    if not record.fingerprint:
+        record.fingerprint = fingerprint_for(
+            record.source,
+            record.job_id,
+            record.company,
+            record.title,
+            record.city,
+        )
     record.observed_at = observed_at_for(
         record.published_at,
         record.fingerprint,
@@ -255,6 +267,79 @@ def _prepare(record: RawRecord, *, ignore_parsed: bool = False) -> RawRecord | N
         ignore_parsed=ignore_parsed,
     )
     return record
+
+
+def ingest_records(
+    records: list[RawRecord],
+    *,
+    out_dir: Path,
+    redis,
+    on_evidence=None,
+    index: SimhashIndex | None = None,
+) -> dict:
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    if index is None:
+        index = SimhashIndex()
+        _load_existing(out_dir, redis, index)
+
+    skipped_fp = 0
+    skipped_near = 0
+    ingested = 0
+    for record in records:
+        if not record.observed_at:
+            record.observed_at = record.published_at or datetime.now().isoformat()
+        body_hash = simhash64(record.body)
+        body_hex = format_simhash(body_hash)
+        if record.source == "ats" and record.job_id:
+            pkey = posting_key(record.source, record.job_id)
+            prev = redis.hget(BODY_KEY, pkey)
+            if prev == body_hex:
+                skipped_fp += 1
+                continue
+            record.fingerprint = ats_fingerprint(record.source, record.job_id, body_hex)
+        dest = _snapshot_dest(out_dir, record.fingerprint)
+        fp_known = bool(redis.sismember(FP_KEY, record.fingerprint))
+        if record.source != "ats" and dest.exists() and fp_known:
+            skipped_fp += 1
+            continue
+        if record.source != "ats" and dest.exists() and not fp_known:
+            try:
+                existing = json.loads(dest.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                existing = None
+            if existing:
+                emit_jd_ingested(redis, existing)
+                redis.sadd(FP_KEY, record.fingerprint)
+                if on_evidence is not None:
+                    on_evidence(existing)
+                skipped_fp += 1
+                continue
+        hit = index.find(body_hash)
+        if hit is not None:
+            if observed_sort_key(record.observed_at) < observed_sort_key(
+                hit.get("observed_at") or ""
+            ):
+                _replace_snapshot(out_dir, record, body_hash, redis, hit, on_evidence)
+                ingested += 1
+                if record.source == "ats" and record.job_id:
+                    redis.hset(BODY_KEY, posting_key(record.source, record.job_id), body_hex)
+                continue
+            skipped_near += 1
+            redis.sadd(FP_KEY, record.fingerprint)
+            if record.source == "ats" and record.job_id:
+                redis.hset(BODY_KEY, posting_key(record.source, record.job_id), body_hex)
+            continue
+        snapshot = _commit_snapshot(out_dir, record, body_hash, redis, on_evidence)
+        index.add(body_hash, _index_meta(snapshot))
+        ingested += 1
+        if record.source == "ats" and record.job_id:
+            redis.hset(BODY_KEY, posting_key(record.source, record.job_id), body_hex)
+    return {
+        "skipped_fingerprint": skipped_fp,
+        "skipped_near_dup": skipped_near,
+        "ingested": ingested,
+    }
 
 
 def run_ingest(*, data_dir: Path, out_dir: Path, redis, on_evidence=None) -> dict:
@@ -287,43 +372,7 @@ def run_ingest(*, data_dir: Path, out_dir: Path, redis, on_evidence=None) -> dic
             prepared.append(ready)
 
     prepared.sort(key=lambda rec: (observed_sort_key(rec.observed_at), rec.fingerprint))
-
-    skipped_fp = 0
-    skipped_near = 0
-    ingested = 0
-    for record in prepared:
-        dest = _snapshot_dest(out_dir, record.fingerprint)
-        fp_known = bool(redis.sismember(FP_KEY, record.fingerprint))
-        if dest.exists() and fp_known:
-            skipped_fp += 1
-            continue
-        if dest.exists() and not fp_known:
-            try:
-                existing = json.loads(dest.read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError):
-                existing = None
-            if existing:
-                emit_jd_ingested(redis, existing)
-                redis.sadd(FP_KEY, record.fingerprint)
-                if on_evidence is not None:
-                    on_evidence(existing)
-                skipped_fp += 1
-                continue
-        body_hash = simhash64(record.body)
-        hit = index.find(body_hash)
-        if hit is not None:
-            if observed_sort_key(record.observed_at) < observed_sort_key(
-                hit.get("observed_at") or ""
-            ):
-                _replace_snapshot(out_dir, record, body_hash, redis, hit, on_evidence)
-                ingested += 1
-                continue
-            skipped_near += 1
-            redis.sadd(FP_KEY, record.fingerprint)
-            continue
-        snapshot = _commit_snapshot(out_dir, record, body_hash, redis, on_evidence)
-        index.add(body_hash, _index_meta(snapshot))
-        ingested += 1
+    written = ingest_records(prepared, out_dir=out_dir, redis=redis, on_evidence=on_evidence, index=index)
 
     paths = list_snapshot_paths(out_dir)
     snapshots = []
@@ -342,9 +391,9 @@ def run_ingest(*, data_dir: Path, out_dir: Path, redis, on_evidence=None) -> dic
         "read": read,
         "dropped_body": dropped_body,
         "dropped_domain": dropped_domain,
-        "skipped_fingerprint": skipped_fp,
-        "skipped_near_dup": skipped_near,
-        "ingested": ingested,
+        "skipped_fingerprint": written["skipped_fingerprint"],
+        "skipped_near_dup": written["skipped_near_dup"],
+        "ingested": written["ingested"],
         "paths": len(paths),
         "by_domain": {key: by_domain[key] for key in ("ai", "data", "system", "iot")},
         "independent_sources": len(sources),

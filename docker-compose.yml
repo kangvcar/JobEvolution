@@ -93,7 +93,7 @@ services:
 
   pipeline:
     build: ./apps/api
-    command: sh -c 'while true; do python -m app.pipeline || true; sleep 86400; done'
+    command: sh -c 'while true; do python -m app.collectors --daily || true; sleep 86400; done'
     environment:
       LLM_PROVIDER: ${LLM_PROVIDER:-deepseek}
       BAI_API_KEY: ${BAI_API_KEY:-}
@@ -111,6 +111,7 @@ services:
       NEO4J_USER: ${NEO4J_USER:-neo4j}
       NEO4J_PASSWORD: ${NEO4J_PASSWORD:-jobevolution}
       REDIS_URL: redis://redis:6379/0
+      DATA_DIR: /app/data
     volumes:
       - ./data:/app/data
     depends_on:

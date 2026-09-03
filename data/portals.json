@@ -1,0 +1,9 @@
+{
+  "portals": [
+    {"key": "tencent", "type": "tencent", "name": "腾讯", "enabled": true, "builtin": true},
+    {"key": "bytedance", "type": "bytedance", "name": "字节跳动", "enabled": true, "builtin": true},
+    {"key": "zhipu", "type": "feishu", "name": "智谱", "host": "zhipu-ai.jobs.feishu.cn", "enabled": true, "builtin": false},
+    {"key": "minimax", "type": "feishu", "name": "MiniMax", "host": "vrfi1sk8a0.jobs.feishu.cn", "enabled": true, "builtin": false},
+    {"key": "moonshot", "type": "feishu", "name": "月之暗面", "host": "moonshot.jobs.feishu.cn", "enabled": true, "builtin": false}
+  ]
+}

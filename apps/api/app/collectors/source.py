@@ -39,6 +39,7 @@ class RawRecord:
     fingerprint: str = ""
     observed_at: str = ""
     table: str = ""
+    url: str = ""
 
 
 def field_map(fieldnames: list[str] | None) -> dict[str, str] | None:

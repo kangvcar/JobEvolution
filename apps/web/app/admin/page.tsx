@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { kindLabel } from "../feed-bits";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -60,7 +60,13 @@ export default function AdminPage() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
-  const [tab, setTab] = useState<"queue" | "gold">("queue");
+  const [tab, setTab] = useState<"queue" | "gold" | "collect">("queue");
+  const [portals, setPortals] = useState<{ key: string; type: string; name: string; host?: string; enabled: boolean; builtin?: boolean }[] | null>(null);
+  const [collectBusy, setCollectBusy] = useState(false);
+  const [feed, setFeed] = useState<string[]>([]);
+  const [addName, setAddName] = useState("");
+  const [addHost, setAddHost] = useState("");
+  const streamRef = useRef<EventSource | null>(null);
   const [adjFile, setAdjFile] = useState<"jd" | "resume">("jd");
   const [gold, setGold] = useState<AdjState | null>(null);
   const [bulkBusy, setBulkBusy] = useState<string | null>(null);
@@ -96,11 +102,98 @@ export default function AdminPage() {
     }
   }
 
-  function openTab(next: "queue" | "gold") {
+  async function loadPortals() {
+    const response = await fetch(`${API}/admin/portals`, { credentials: "include" });
+    if (!response.ok) throw new Error("门户名单读取失败");
+    const body = await response.json();
+    setPortals(body.portals || []);
+    setCollectBusy(Boolean(body.busy));
+  }
+
+  function openTab(next: "queue" | "gold" | "collect") {
     setTab(next);
     if (next === "gold" && gold === null) {
       loadNext(adjFile).catch(() => setError("裁决队列读取失败"));
     }
+    if (next === "collect") {
+      loadPortals().catch(() => setError("门户名单读取失败"));
+    }
+  }
+
+  useEffect(() => {
+    if (tab !== "collect") {
+      streamRef.current?.close();
+      streamRef.current = null;
+      return;
+    }
+    const types = "collect_started,jd_ingested,collect_portal_failed,collect_finished";
+    const source = new EventSource(`${API}/events/stream?types=${encodeURIComponent(types)}`, { withCredentials: true });
+    source.onmessage = (event) => {
+      try {
+        const row = JSON.parse(event.data);
+        const line = `${row.type} ${typeof row.payload === "string" ? row.payload : JSON.stringify(row.payload ?? {})}`;
+        setFeed((current) => [line, ...current].slice(0, 50));
+      } catch {
+        /* ignore malformed SSE payloads */
+      }
+    };
+    source.onerror = () => setError("采集事件流中断，刷新管理页后重试");
+    streamRef.current = source;
+    return () => {
+      source.close();
+      streamRef.current = null;
+    };
+  }, [tab]);
+
+  async function togglePortal(key: string, enabled: boolean) {
+    setError("");
+    const response = await fetch(`${API}/admin/portals/${key}`, { method: "POST", headers: { "Content-Type": "application/json", ...csrfHeaders() }, credentials: "include", body: JSON.stringify({ enabled }) });
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      setError(body.error || "无法更新门户");
+      return;
+    }
+    await loadPortals();
+  }
+
+  async function removePortal(key: string) {
+    setError("");
+    const response = await fetch(`${API}/admin/portals/${key}/delete`, { method: "POST", headers: csrfHeaders(), credentials: "include" });
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      setError(body.error || "无法删除门户");
+      return;
+    }
+    await loadPortals();
+  }
+
+  async function addPortal(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    const response = await fetch(`${API}/admin/portals`, { method: "POST", headers: { "Content-Type": "application/json", ...csrfHeaders() }, credentials: "include", body: JSON.stringify({ name: addName, host: addHost }) });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      setError(body.error || "探测失败，未保存");
+      return;
+    }
+    setAddName("");
+    setAddHost("");
+    setPortals(body.portals || []);
+  }
+
+  async function runCollect() {
+    setError("");
+    const response = await fetch(`${API}/admin/collect`, { method: "POST", headers: csrfHeaders(), credentials: "include" });
+    if (response.status === 409) {
+      setError("已有采集任务在跑");
+      return;
+    }
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      setError(body.error || "无法启动采集");
+      return;
+    }
+    setCollectBusy(true);
   }
 
   function switchAdjFile(file: "jd" | "resume") {
@@ -228,8 +321,9 @@ export default function AdminPage() {
       <div className="admin-event-head">
         <h1>管理</h1>
         <div className="admin-tabs" role="tablist">
-          <button type="button" aria-pressed={tab === "queue"} onClick={() => openTab("queue")}>待审队列</button>
-          <button type="button" aria-pressed={tab === "gold"} onClick={() => openTab("gold")}>金标裁决</button>
+          <button type="button" role="tab" aria-pressed={tab === "queue"} onClick={() => openTab("queue")}>待审队列</button>
+          <button type="button" role="tab" aria-pressed={tab === "gold"} onClick={() => openTab("gold")}>金标裁决</button>
+          <button type="button" role="tab" aria-pressed={tab === "collect"} onClick={() => openTab("collect")}>官网采集</button>
         </div>
         <button className="ghost" type="button" aria-pressed={passthrough} onClick={togglePassthrough}>
           {passthrough ? "直通开启" : "直通关闭"}
@@ -337,6 +431,44 @@ export default function AdminPage() {
               </div>
             </article>
           ) : null}
+        </section>
+      ) : null}
+
+      {tab === "collect" ? (
+        <section aria-label="官网采集">
+          <p className="hint">只打公司官网公开 JSON。立即采集与每日任务共用一把锁，当晚抽取进待审，求职者页不订这条流。</p>
+          <div className="row">
+            <button className="primary" type="button" disabled={collectBusy} onClick={runCollect}>立即采集</button>
+            {collectBusy ? <p className="hint" role="status">任务在跑或刚已启动</p> : null}
+          </div>
+          <ul className="admin-queue" aria-label="招聘门户">
+            {(portals || []).map((portal) => (
+              <li key={portal.key}>
+                <div className="admin-event-head">
+                  <strong>{portal.name}</strong>
+                  <span className="hint">{portal.type}{portal.host ? ` · ${portal.host}` : ""}</span>
+                </div>
+                <div className="row">
+                  <label>
+                    <input type="checkbox" checked={portal.enabled} onChange={(event) => togglePortal(portal.key, event.target.checked)} />
+                    启用
+                  </label>
+                  {portal.builtin ? <p className="hint">内置，不可删</p> : <button className="ghost" type="button" onClick={() => removePortal(portal.key)}>删除</button>}
+                </div>
+              </li>
+            ))}
+          </ul>
+          <form onSubmit={addPortal} aria-label="新增飞书门户">
+            <label htmlFor="portal-name">名称</label>
+            <input id="portal-name" value={addName} onChange={(event) => setAddName(event.target.value)} required />
+            <label htmlFor="portal-host">飞书域名</label>
+            <input id="portal-host" value={addHost} onChange={(event) => setAddHost(event.target.value)} placeholder="zhipu-ai.jobs.feishu.cn" required />
+            <button className="primary" type="submit">探测并保存</button>
+          </form>
+          <h2>采集事件</h2>
+          <ul className="admin-queue" aria-live="polite" aria-label="采集事件">
+            {feed.length === 0 ? <li className="empty">尚无事件</li> : feed.map((line, index) => <li key={`${index}-${line.slice(0, 24)}`}><p className="hint">{line}</p></li>)}
+          </ul>
         </section>
       ) : null}
     </main>

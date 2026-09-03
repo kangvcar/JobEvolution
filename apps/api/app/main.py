@@ -1,19 +1,22 @@
 import hmac
 import os
 import secrets
+import subprocess
+import sys
 import time
 import uuid
 import logging
 import hashlib
 import json
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from pydantic import BaseModel
 
 from fastapi import FastAPI, File, Form, Header, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from starlette.responses import Response
+from starlette.responses import Response, StreamingResponse
 
 from app import graph
 from app.matching.report import direction_report, evidence_map, market_signal_radar, migration_map, neighbor_name, recommend_jobs, simulate_job, wrap_report
@@ -817,3 +820,166 @@ def admin_ops_status(request: Request, x_admin_password: str | None = Header(def
     _require_admin(request, x_admin_password)
     from app.ops_status import read as read_ops, stale as ops_stale
     return {"status": read_ops(), "stale": ops_stale()}
+
+
+class PortalBody(BaseModel):
+    name: str
+    host: str
+
+
+class PortalPatch(BaseModel):
+    enabled: bool
+
+
+def _data_dir() -> Path:
+    from app.collectors.__main__ import default_data_dir
+
+    return default_data_dir()
+
+
+@app.get("/admin/portals")
+def admin_portals(request: Request, x_admin_password: str | None = Header(default=None, alias="X-Admin-Password")):
+    _require_admin(request, x_admin_password)
+    from app.collectors.ats import collect_busy, load_portals
+
+    data_dir = _data_dir()
+    return {"portals": load_portals(data_dir), "busy": collect_busy(data_dir)}
+
+
+@app.post("/admin/portals")
+def admin_add_portal(body: PortalBody, request: Request, x_admin_password: str | None = Header(default=None, alias="X-Admin-Password")):
+    _require_admin(request, x_admin_password)
+    from app.collectors.ats import enabled_count, load_portals, probe_feishu, save_portals
+
+    host = (body.host or "").strip().lower().removeprefix("https://").removeprefix("http://").split("/")[0]
+    name = (body.name or "").strip()
+    if not host or not name:
+        raise HTTPException(400, "name and host required")
+    data_dir = _data_dir()
+    portals = load_portals(data_dir)
+    if any((row.get("host") or "").lower() == host or row.get("key") == host for row in portals):
+        raise HTTPException(409, "portal exists")
+    if enabled_count(portals) >= 20:
+        raise HTTPException(400, "at most 20 enabled portals")
+    try:
+        probe_feishu(host)
+    except Exception as exc:
+        raise HTTPException(400, f"probe failed: {exc}") from exc
+    key = host.split(".")[0]
+    while any(row.get("key") == key for row in portals):
+        key = f"{key}-{len(portals)}"
+    portals.append({"key": key, "type": "feishu", "name": name, "host": host, "enabled": True, "builtin": False})
+    save_portals(data_dir, portals)
+    return {"portals": portals}
+
+
+@app.post("/admin/portals/{key}")
+def admin_patch_portal(key: str, body: PortalPatch, request: Request, x_admin_password: str | None = Header(default=None, alias="X-Admin-Password")):
+    _require_admin(request, x_admin_password)
+    from app.collectors.ats import enabled_count, load_portals, save_portals
+
+    data_dir = _data_dir()
+    portals = load_portals(data_dir)
+    row = next((item for item in portals if item.get("key") == key), None)
+    if row is None:
+        raise HTTPException(404, "portal not found")
+    if body.enabled and not row.get("enabled") and enabled_count(portals) >= 20:
+        raise HTTPException(400, "at most 20 enabled portals")
+    row["enabled"] = body.enabled
+    save_portals(data_dir, portals)
+    return row
+
+
+@app.post("/admin/portals/{key}/delete")
+def admin_delete_portal(key: str, request: Request, x_admin_password: str | None = Header(default=None, alias="X-Admin-Password")):
+    _require_admin(request, x_admin_password)
+    from app.collectors.ats import load_portals, save_portals
+
+    data_dir = _data_dir()
+    portals = load_portals(data_dir)
+    row = next((item for item in portals if item.get("key") == key), None)
+    if row is None:
+        raise HTTPException(404, "portal not found")
+    if row.get("builtin"):
+        raise HTTPException(400, "builtin portal cannot be deleted")
+    portals = [item for item in portals if item.get("key") != key]
+    save_portals(data_dir, portals)
+    return {"ok": True}
+
+
+@app.post("/admin/collect")
+def admin_collect(request: Request, x_admin_password: str | None = Header(default=None, alias="X-Admin-Password")):
+    _require_admin(request, x_admin_password)
+    from app.collectors.ats import collect_busy
+
+    data_dir = _data_dir()
+    if collect_busy(data_dir):
+        raise HTTPException(409, "collect already running")
+    env = os.environ.copy()
+    env["DATA_DIR"] = str(data_dir)
+    subprocess.Popen(
+        [sys.executable, "-m", "app.collectors", "--daily"],
+        env=env,
+        cwd=str(Path(__file__).resolve().parents[1]),
+        start_new_session=True,
+    )
+    return {"ok": True}
+
+
+def _sse_pack(event_id: str, fields: dict) -> str:
+    raw = fields.get("payload") or "{}"
+    try:
+        payload = json.loads(raw) if isinstance(raw, str) else raw
+    except json.JSONDecodeError:
+        payload = {}
+    body = {"id": fields.get("id"), "type": fields.get("type"), "payload": payload}
+    return f"id: {event_id}\ndata: {json.dumps(body, ensure_ascii=False)}\n\n"
+
+
+@app.get("/events/stream")
+def events_stream(
+    request: Request,
+    last_event_id: str | None = Header(default=None, alias="Last-Event-ID"),
+    types: str | None = Query(None),
+    x_admin_password: str | None = Header(default=None, alias="X-Admin-Password"),
+):
+    _require_admin(request, x_admin_password)
+    from app.collectors.sink import STREAM_KEY, connect_redis
+
+    allowed = {part.strip() for part in (types or "").split(",") if part.strip()} or None
+    start_id = last_event_id or "0-0"
+    redis = connect_redis()
+
+    def gen():
+        cursor = start_id
+        if start_id in {"0-0", "0", "-"}:
+            try:
+                recent = list(reversed(redis.xrevrange(STREAM_KEY, "+", "-", count=100)))
+            except Exception:
+                recent = []
+            for event_id, fields in recent:
+                cursor = event_id
+                if allowed and fields.get("type") not in allowed:
+                    continue
+                yield _sse_pack(event_id, fields)
+        while True:
+            try:
+                rows = redis.xread({STREAM_KEY: cursor}, block=15000, count=20)
+            except Exception:
+                yield ": ping\n\n"
+                continue
+            if not rows:
+                yield ": ping\n\n"
+                continue
+            for _, entries in rows:
+                for event_id, fields in entries:
+                    cursor = event_id
+                    if allowed and fields.get("type") not in allowed:
+                        continue
+                    yield _sse_pack(event_id, fields)
+
+    return StreamingResponse(
+        gen(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no", "Connection": "keep-alive"},
+    )
