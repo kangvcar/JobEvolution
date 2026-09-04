@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, ReactNode, useEffect, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -99,6 +99,7 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 
 export function DiagnoseForm() {
   const params = useSearchParams();
+  const router = useRouter();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [jobId, setJobId] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -220,6 +221,7 @@ export function DiagnoseForm() {
       setReportView("conclusion");
       setPhase("done");
       setStep("report");
+      router.replace(`/diagnose?session_id=${encodeURIComponent(sid)}&job_id=${encodeURIComponent(jid)}`, { scroll: false });
       if (body.groups?.explain) {
         void fetch(`${API}/diagnose/simulate`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ session_id: sid, job_id: jid, assumed_skill_ids: [], watching_skill_ids: (body.groups.explain.watching || []).map((row: Named) => row.skill_id) }) }).then((response) => response.ok ? response.json() : null).then((value) => value && setSimulation(value));
       }
@@ -316,6 +318,7 @@ export function DiagnoseForm() {
 
   function pick(next: File | null) {
     abort.current?.abort();
+    router.replace("/diagnose", { scroll: false });
     setFile(next);
     setSessionId("");
     setReport(null);
@@ -444,6 +447,20 @@ export function DiagnoseForm() {
 
   return (
     <main id="main" className="page dx" data-phase={phase} data-step={step}>
+      {phase !== "done" && (
+        <header className="dx-intro">
+          <div>
+            <span className="dx-kicker">职业迁移诊断</span>
+            <h1>用简历证据，找到更合适的岗位方向</h1>
+            <p>校对系统识别结果，再从当前可诊断岗位中选择一到两个方向对照。</p>
+          </div>
+          <div className="dx-intro-progress" aria-label={`当前为第 ${stepIndex + 1} 步，共 5 步`}>
+            <strong>{String(stepIndex + 1).padStart(2, "0")}</strong>
+            <span>/ 05</span>
+          </div>
+        </header>
+      )}
+
       <ol className="dx-steps" aria-label="诊断步骤">
         {STEPS.map((item, index) => {
           const state = index < stepIndex ? "done" : index === stepIndex ? "active" : "todo";
@@ -451,9 +468,9 @@ export function DiagnoseForm() {
           return (
             <li key={item.key} data-state={state} aria-current={state === "active" ? "step" : undefined}>
               {clickable ? (
-                <button type="button" onClick={() => goToStep(item.key)}><i>{index + 1}</i>{item.label}</button>
+                <button type="button" onClick={() => goToStep(item.key)}><i>{index + 1}</i><span className="dx-step-label">{item.label}</span></button>
               ) : (
-                <span><i>{index + 1}</i>{item.label}</span>
+                <span><i>{index + 1}</i><span className="dx-step-label">{item.label}</span></span>
               )}
             </li>
           );
@@ -464,6 +481,7 @@ export function DiagnoseForm() {
         <form className="dx-card" onSubmit={onSubmit} aria-busy={busy || phase === "run"}>
           <header className="dx-card-head">
             <div>
+              <span className="dx-stage-label">步骤 {stepIndex + 1} / 5</span>
               <h1>{step === "upload" ? "上传简历" : step === "correct" ? "校对解析结果" : step === "choose" ? "选择对照岗位" : "正在生成对照"}</h1>
               <p className="dx-sub">
                 {step === "upload" && "支持 PDF 与 docx。只发送提取文本，不保存原文件，会话保留一小时。"}
@@ -506,6 +524,11 @@ export function DiagnoseForm() {
                   <small>{file ? `${(file.size / 1024).toFixed(0)} KB · 点击可更换` : "PDF / docx · 单个文件"}</small>
                 </span>
               </label>
+              <div className="dx-assurances" role="list" aria-label="简历处理说明">
+                <span role="listitem"><b>原文件</b>解析后立即删除</span>
+                <span role="listitem"><b>诊断会话</b>最多保留一小时</span>
+                <span role="listitem"><b>岗位要求</b>均可回看证据</span>
+              </div>
             </div>
           )}
 
@@ -614,11 +637,14 @@ export function DiagnoseForm() {
           )}
 
           {step === "run" && (
-            <ol className="dx-ticker" role="status" aria-live="polite">
-              {TICKER.map((line, i) => (
-                <li key={line} data-state={i < tick ? "done" : i === tick ? "active" : "todo"}>{line}</li>
-              ))}
-            </ol>
+            <div className="dx-run-state">
+              <span className="dx-run-mark" aria-hidden="true" />
+              <ol className="dx-ticker" role="status" aria-live="polite">
+                {TICKER.map((line, i) => (
+                  <li key={line} data-state={i < tick ? "done" : i === tick ? "active" : "todo"}>{line}</li>
+                ))}
+              </ol>
+            </div>
           )}
 
           {error && <p className="dx-error" role="alert">{error}</p>}
