@@ -7,7 +7,6 @@ import { Portal, PortalTable } from "./portal-table";
 import ReleaseBoard, { ReleaseAudit } from "./release-board";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-const SHOW_ADMIN_PASSWORD = process.env.NEXT_PUBLIC_SHOW_ADMIN_PASSWORD === "1";
 
 type OpsEntry = { status: string; at?: number };
 type Ops = { status: Record<string, OpsEntry>; stale: boolean };
@@ -135,7 +134,6 @@ export default function AdminPage() {
   }
 
   useEffect(() => {
-    if (!SHOW_ADMIN_PASSWORD) return;
     fetch(`${API}/admin/password-hint`)
       .then(async (response) => (response.ok ? response.json() : null))
       .then((body: { password?: unknown } | null) => {
