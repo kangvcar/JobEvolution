@@ -7,7 +7,6 @@ import sys
 import time
 from pathlib import Path
 
-from app.collectors.controller import run_ingest
 from app.collectors.sink import connect_redis
 
 
@@ -15,17 +14,15 @@ def default_data_dir() -> Path:
     env = os.environ.get("DATA_DIR")
     if env:
         return Path(env)
-    candidates: list[Path] = []
-    docker = Path("/app/data")
-    if docker.is_dir():
-        candidates.append(docker)
+    official = Path("/app/data/official-only")
+    if official.is_dir():
+        return official
     cwd = Path.cwd()
-    candidates.extend(p / "data" for p in (cwd, *cwd.parents))
-    candidates.extend(p / "data" for p in Path(__file__).resolve().parents)
-    for candidate in candidates:
-        if candidate.is_dir() and any(candidate.glob("*.csv")):
+    for base in (cwd, *cwd.parents):
+        candidate = base / "data" / "official-only"
+        if candidate.is_dir():
             return candidate
-    return Path("data")
+    return Path("data/official-only")
 
 
 class _EvidenceBatch:
@@ -70,11 +67,10 @@ def _evidence_writer():
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Ingest local JD tables or official portals into data/jd")
+    parser = argparse.ArgumentParser(description="Crawl official career portals into data/official-only/jd")
     parser.add_argument("--data-dir", type=Path, default=None)
     parser.add_argument("--out-dir", type=Path, default=None)
     parser.add_argument("--redis-url", default=None)
-    parser.add_argument("--official", action="store_true", help="crawl official career portals")
     parser.add_argument("--daily", action="store_true", help="lock, crawl official portals, then extract")
     parser.add_argument("--then-pipeline", action="store_true")
     parser.add_argument(
@@ -87,7 +83,6 @@ def main(argv: list[str] | None = None) -> int:
     data_dir = args.data_dir or default_data_dir()
     out_dir = args.out_dir or (data_dir / "jd")
     redis = connect_redis(args.redis_url)
-    official = args.official or args.daily
     then_pipeline = args.then_pipeline or args.daily
 
     on_evidence = None
@@ -97,33 +92,23 @@ def main(argv: list[str] | None = None) -> int:
         except Exception as exc:
             print(f"graph skipped: {exc}", file=sys.stderr)
 
-    lock = None
-    if official:
-        from app.collectors.ats import CollectLock
+    from app.collectors.ats import CollectLock
 
-        lock = CollectLock(data_dir)
-        if not lock.acquire():
-            print(json.dumps({"error": "collect already running"}, ensure_ascii=False))
-            return 2
+    lock = CollectLock(data_dir)
+    if not lock.acquire():
+        print(json.dumps({"error": "collect already running"}, ensure_ascii=False))
+        return 2
     try:
-        if official:
-            from app.collectors.ats import run_official
-            from app.ops_status import record
+        from app.collectors.ats import run_official
+        from app.ops_status import record
 
-            stats = run_official(
-                data_dir=data_dir,
-                out_dir=out_dir,
-                redis=redis,
-                on_evidence=on_evidence,
-            )
-            record("collect", "success" if stats.get("ok") else "failed", portals=stats.get("portals"))
-        else:
-            stats = run_ingest(
-                data_dir=data_dir,
-                out_dir=out_dir,
-                redis=redis,
-                on_evidence=on_evidence,
-            )
+        stats = run_official(
+            data_dir=data_dir,
+            out_dir=out_dir,
+            redis=redis,
+            on_evidence=on_evidence,
+        )
+        record("collect", "success" if stats.get("ok") else "failed", portals=stats.get("portals"))
         if on_evidence is not None:
             on_evidence.flush()
         print(json.dumps(stats, ensure_ascii=False, indent=2))
@@ -133,8 +118,7 @@ def main(argv: list[str] | None = None) -> int:
             return pipeline_main([])
         return 0 if stats.get("ok", True) else 1
     finally:
-        if lock is not None:
-            lock.release()
+        lock.release()
 
 
 if __name__ == "__main__":

@@ -4,12 +4,12 @@
 
 赛题硬指标：JD 解析 / 简历提取 / 匹配均为技能点 set-based F1 ≥0.90；单测覆盖率 ≥60%；JD 测试集 ≥100 条去重。学习路径不定准确率。
 
-评测阈值冻结。`align_skill` 的余弦阈值默认 0.85，写入 `data/eval/freeze.json`，跑评测只读这个文件，不许读环境变量里的「新阈值」。
+评测阈值冻结。`align_skill` 的余弦阈值默认 0.85，写入 `data/eval-official-only/freeze.json`，跑评测只读这个文件，不许读环境变量里的「新阈值」。
 
 ## 目录
 
 ```
-data/eval/
+data/eval-official-only/
   freeze.json              对齐阈值、模型名、评测日期
   jd.jsonl                 ≥100 条 JD 金标
   resume.jsonl             100 份简历金标（可加到 200）
@@ -29,7 +29,7 @@ JSONL 一行为一条。技能点一律写图谱 `Skill.id`（归一化后），
 
 **规模。** ≥100 条，simhash 近重只留最早一条。计数按去重后的正文，不是原始抓取条数。
 
-**来源。** 官方门户快照写入 `data/official-only/jd/` 后抽取。不要手写赛题 JD，不要只抽一个门户。官方门户和必要的 ATS / NCSS / 天池补充源按同一套去重规则处理。四领域都要有；人工智能不少于 40 条，另外三个领域各不少于 12 条。17 个入谱岗每个至少 3 条；赛题那一对（Agent 工程师、大模型应用工程师）各不少于 8 条。缺岗先放宽标题词再滤一刀，仍不够则该岗不进三项分母，不要手补正文。
+**来源。** 官方门户快照写入 `data/official-only/jd/` 后抽取。不要手写赛题 JD，不要只抽一个门户。官方门户按同一套去重规则处理。四领域都要有；人工智能不少于 40 条，另外三个领域各不少于 10 条。17 个入谱岗每个至少 3 条；赛题那一对（Agent 工程师、大模型应用工程师）各不少于 8 条。缺岗先放宽标题词再滤一刀，仍不够则该岗不进三项分母，不要手补正文。
 
 官方门户复跑使用 `data/official-only/`。当前产品 Neo4j 直接使用官方数据卷；Redis 使用 DB 2。首次或需要重建时执行：
 
@@ -60,7 +60,7 @@ docker compose run --rm --no-deps \
 格式：
 
 ```
-{"id":"jd-0001","source":"local|ats|ncss|tianchi|playwright","company":"…","title":"…","path":"data/jd/jd-0001.json","job_id":"job-llm","skills":[{"id":"skill-fastapi","kind":"required","proficiency":"able"}],"mentions":[{"span":"FastAPI","skill_id":"skill-fastapi"}],"watching":[]}
+{"id":"jd-0001","source":"ats","company":"…","title":"…","path":"data/official-only/jd/jd-0001.json","job_id":"job-llm","skills":[{"id":"skill-fastapi","kind":"required","proficiency":"able"}],"mentions":[{"span":"FastAPI","skill_id":"skill-fastapi"}],"watching":[]}
 ```
 
 **流程。** 从管线入池后的 `Skill` 当词表（不是预写 60 个）。抽文本 → 标注员按词表点选技能点（可新增，新增必须进同义词）→ `align_skill` 不得在标注时改阈值 → 导出 JSONL → `pytest tests/test_eval_schema.py` 校验必填字段。
@@ -100,9 +100,9 @@ docker compose run --rm --no-deps \
 本地跑全套前先起测试库：`docker compose --profile test up -d neo4j-test`（独立卷，默认 `docker compose up` 不启动）。pytest 固定连 `TEST_NEO4J_URI`（默认 `bolt://localhost:17687`），永不写产品图；连不上就报错并提示这条命令。
 
 ```
-python -m apps.api.eval.jd        # 读 jd.jsonl，打印 P/R/F1，写 data/eval/out/jd.json
-python -m apps.api.eval.resume
-python -m apps.api.eval.match
+EVAL_DIR=data/eval-official-only PYTHONPATH=apps/api python -m app.eval jd
+EVAL_DIR=data/eval-official-only PYTHONPATH=apps/api python -m app.eval resume
+EVAL_DIR=data/eval-official-only PYTHONPATH=apps/api python -m app.eval match
 ```
 
 任一 F1 < 0.90 退出码 1。CI 跑这三条的 mock 版 + `pytest --cov -q`（阈值在 `.coveragerc`，60）。LLM 全部 mock；嵌入用预计算向量夹具。CI 的三项数字不是赛题分。`summary.md` 必须来自未 mock 的本地跑。改 prompt 或改 `freeze.json` 必须重跑未 mock 的三项。
@@ -132,11 +132,11 @@ python -m apps.api.eval.match
 新岗位 **Agent 工程师**（萌芽），既有岗位 **大模型应用工程师**（成型）。目录：
 
 ```
-data/eval/deliver/agent/
+data/eval-official-only/deliver/agent/
   job.json           岗位定义、状态、独立源、要求边
   sources.jsonl      去重后的 JD 证据（≥3 独立源）
   io.md              输入（若干 JD 摘录）→ 输出（抽出技能点、入谱结果、演化事件）
-data/eval/deliver/llm-app/
+data/eval-official-only/deliver/llm-app/
   job.json           含本周期覆盖率跨线入池的待审/已批事件
   sources.jsonl
   io.md              输入（旧快照 + 新 JD）→ 输出（旧边 valid_to、新 REQUIRES、证据）
@@ -144,8 +144,8 @@ data/eval/deliver/llm-app/
 
 `io.md` 用真字段名：`job_id`、`Skill.id`、`kind`、`proficiency`、`valid_from` / `valid_to`、`review`。不要截 UI 图当唯一提交物。诊断默认岗是大模型应用工程师，对照报告示例可附一份金标简历 → 档位与缺口集，放在 `llm-app/diagnose.example.json`。
 
-生成：`data/` 本地表跑完管线后，把这两岗的结构化结果 dump 进 `deliver/`，再人工改金标不一致处。不要手写萌芽状态或演化事件。`io.md` 必须对得上这次管线产出的 `EvolutionEvent`。别名「大模型应用开发工程师」写进 `llm-app` 的 `ALIAS_OF` 示例，证明判别不是新岗。
+生成：官方 JD 跑完管线后，把这两岗的结构化结果 dump 进 `deliver/`，再人工改金标不一致处。不要手写萌芽状态或演化事件。`io.md` 必须对得上这次管线产出的 `EvolutionEvent`。别名「大模型应用开发工程师」写进 `llm-app` 的 `ALIAS_OF` 示例，证明判别不是新岗。
 
 ## 报告
 
-每次发版在 `data/eval/out/summary.md` 写四行：三项 F1、覆盖率百分比、学习路径抽检覆盖、freeze.json 的哈希。数字来自未 mock 的本地脚本，不手填，不抄 CI。
+每次发版在 `data/eval-official-only/out/summary.md` 写四行：三项 F1、覆盖率百分比、学习路径抽检覆盖、freeze.json 的哈希。数字来自未 mock 的本地脚本，不手填，不抄 CI。

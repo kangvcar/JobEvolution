@@ -6,18 +6,18 @@ __pycache__/
 .pytest_cache/
 .coverage
 htmlcov/
-data/eval/out/*
-!data/eval/out/summary.md
-data/eval/*.jsonl.bak
 apps/web/node_modules/
 apps/web/.next/
 apps/web/tsconfig.tsbuildinfo
 apps/api/build/
 .DS_Store
 .firecrawl
+# 历史本地快照仅作为工作区缓存，正式管线只读 data/official-only/。
 data/jd/*.json
 data/jd/*.tmp
 data/jd/*.cache
+data/eval/out/*
+data/eval/*.jsonl.bak
 data/collect.lock
 data/official-only/jd/*.json
 data/official-only/jd/*.cache

@@ -18,15 +18,14 @@ from app.collectors.ats import (
     strip_html,
     valid_host,
 )
-from app.collectors.controller import ingest_records, list_snapshot_paths
-from app.collectors.source import RawRecord
+from app.collectors.controller import RawRecord, ingest_records, list_snapshot_paths
 from app.collectors.sink import (
     EVENT_COLLECT_FINISHED,
     EVENT_COLLECT_STARTED,
     STREAM_KEY,
 )
 
-from test_ingest import MemoryRedis
+from support import MemoryRedis
 
 ADMIN = "change-me"
 

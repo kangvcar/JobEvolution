@@ -15,7 +15,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
 
-from app.collectors.controller import ingest_records, parse_observed_at, write_json_atomic
+from app.collectors.controller import RawRecord, ingest_records, parse_observed_at, write_json_atomic
 from app.collectors.domain import classify_domain
 from app.collectors.simhash import format_simhash, simhash64
 from app.collectors.sink import (
@@ -25,7 +25,6 @@ from app.collectors.sink import (
     EVENT_COLLECT_STARTED,
     emit_collect_event,
 )
-from app.collectors.source import RawRecord
 from app.targets import JOB_TARGET_NAMES
 
 UA = (

@@ -90,7 +90,7 @@ GitHub 路线总工单是 [#97](https://github.com/kangvcar/JobEvolution/issues/
 
 ### #103 重建可信岗位快照并审计可诊断岗位
 
-用 #98 至 #102 的新规则重跑 `data/jd/`。任何技能点、要求边、岗位状态或岗位变化都不能手写。每个岗位输出定义、公司数、三类要求、要求组、要求等价数、变化和诊断发布校验结果。
+用 #98 至 #102 的新规则重跑 `data/official-only/jd/`。任何技能点、要求边、岗位状态或岗位变化都不能手写。每个岗位输出定义、公司数、三类要求、要求组、要求等价数、变化和诊断发布校验结果。
 
 专项检查大模型应用工程师、Agent 工程师、品牌裸提及、通用素质、CV/NLP 宽泛词和获批同义词。干净环境导入后的公开岗位、待审版本和失败岗位隔离必须与审计表一致。
 
@@ -221,7 +221,7 @@ docker compose config
 
 - 新审核快照及哈希。
 - 更新后的 [`release-checklist.md`](release-checklist.md)。
-- 更新后的 `data/eval/out/summary.md`。
+- 更新后的 `data/eval-official-only/out/summary.md`。
 - 一份脱敏双岗示例报告。
 - 发布提交 SHA、图谱发布版本和回滚目标。
 - 自动测试、HTTP、移动端、键盘与打印验收记录。

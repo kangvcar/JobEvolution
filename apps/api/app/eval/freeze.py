@@ -8,7 +8,7 @@ _cache: dict | None = None
 
 
 def load_freeze() -> dict:
-    """Eval reads only data/eval/freeze.json. Never ALIGN_THRESHOLD from the environment."""
+    """Eval reads only the selected official dataset freeze file."""
     global _cache
     if _cache is not None:
         return _cache

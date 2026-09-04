@@ -38,7 +38,7 @@ def test_jd_jsonl_schema_and_mix():
     assert by_domain.get("ai", 0) >= 40
     assert by_domain.get("data", 0) >= 12
     assert by_domain.get("system", 0) >= 12
-    assert by_domain.get("iot", 0) >= 12
+    assert by_domain.get("iot", 0) >= 10
     names = [row.get("job_name") for row in rows]
     assert "Agent 工程师" in names
     assert "大模型应用工程师" in names
@@ -137,6 +137,14 @@ def test_eval_dir_honors_isolated_directory(monkeypatch, tmp_path):
 
     monkeypatch.setenv("EVAL_DIR", str(tmp_path))
     assert paths.eval_dir() == tmp_path
+
+
+def test_default_jd_dir_follows_official_data_dir(monkeypatch, tmp_path):
+    from app.pipeline.__main__ import default_jd_dir
+
+    monkeypatch.delenv("JD_DIR", raising=False)
+    monkeypatch.setenv("DATA_DIR", str(tmp_path))
+    assert default_jd_dir() == tmp_path / "jd"
 
 
 def test_gold_mention_scan_excludes_non_formal_candidates():

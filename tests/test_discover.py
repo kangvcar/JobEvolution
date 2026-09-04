@@ -62,7 +62,7 @@ def test_candidate_dossier_visible_jobs_hidden(client):
                 {
                     "id": eid,
                     "path": f"/tmp/{eid}.json",
-                    "source": "local",
+                    "source": "ats",
                     "company": "甲",
                     "observed_at": "2024-06-01",
                     "simhash": "0" * 16,

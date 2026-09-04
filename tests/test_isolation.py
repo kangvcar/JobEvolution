@@ -22,7 +22,7 @@ def test_graph_writes_land_on_test_db():
             {
                 "id": marker,
                 "path": marker,
-                "source": "local",
+                "source": "ats",
                 "company": "隔离测试",
                 "observed_at": "2026-01-01",
                 "simhash": "0" * 16,

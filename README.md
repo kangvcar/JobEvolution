@@ -171,19 +171,20 @@ npm run build
 
 ## 管线和评测
 
-使用本地 JD 数据执行采集后的抽取、审核闸门和图谱写入：
+使用官方招聘门户采集 JD，再执行抽取、审核闸门和图谱写入：
 
 ```bash
+PYTHONPATH=apps/api .venv/bin/python -m app.collectors --daily
 PYTHONPATH=apps/api .venv/bin/python -m app.pipeline
 ```
 
 运行三项评测：
 
 ```bash
-PYTHONPATH=apps/api .venv/bin/python -m app.eval report
+EVAL_DIR=data/eval-official-only PYTHONPATH=apps/api .venv/bin/python -m app.eval report
 ```
 
-评测结果写入 `data/eval/out/summary.md`，两岗提交物写入 `data/eval/deliver/`。金标修订规则见 [docs/verification.md](docs/verification.md)。
+评测结果写入 `data/eval-official-only/out/summary.md`，两岗提交物写入 `data/eval-official-only/deliver/`。金标修订规则见 [docs/verification.md](docs/verification.md)。
 
 ## 常用 Compose 命令
 

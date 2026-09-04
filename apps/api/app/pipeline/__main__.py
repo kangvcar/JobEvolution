@@ -1,4 +1,4 @@
-"""Extract local JD snapshots into the graph. python -m app.pipeline"""
+"""Extract official JD snapshots into the graph. python -m app.pipeline"""
 
 from __future__ import annotations
 
@@ -24,15 +24,18 @@ def default_jd_dir() -> Path:
     env = os.environ.get("JD_DIR")
     if env:
         return Path(env)
-    docker = Path("/app/data/jd")
+    data_dir = os.environ.get("DATA_DIR")
+    if data_dir:
+        return Path(data_dir) / "jd"
+    docker = Path("/app/data/official-only/jd")
     if docker.is_dir():
         return docker
     cwd = Path.cwd()
     for base in (cwd, *cwd.parents):
-        candidate = base / "data" / "jd"
+        candidate = base / "data" / "official-only" / "jd"
         if candidate.is_dir():
             return candidate
-    return Path("data/jd")
+    return Path("data/official-only/jd")
 
 
 def match_target(title: str) -> str | None:

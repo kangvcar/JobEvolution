@@ -281,7 +281,7 @@ def _snaps(tmp_path, suffix, title, companies, at):
         doc = {
             "id": sid,
             "path": str(tmp_path / f"{sid}.json"),
-            "source": "local",
+            "source": "ats",
             "company": company,
             "title": title,
             "body": body,
@@ -296,7 +296,7 @@ def _snaps(tmp_path, suffix, title, companies, at):
                 {
                     "id": sid,
                     "path": doc["path"],
-                    "source": "local",
+                    "source": "ats",
                     "company": company,
                     "observed_at": doc["observed_at"],
                     "simhash": doc["simhash"],

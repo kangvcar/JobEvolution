@@ -64,7 +64,7 @@
 | 中文匹配二开 | [resume-matcher-agent-cn](https://github.com/liangdabiao/resume-matcher-agent-cn) | 抄思路 | 模块切分参考 | 英文上游，不是准确率基准 |
 | NER 老路 | pyresparser、PaddleNLP 简历 NER | 排除 | 字段级 F1 过不了 90% | 停更或不含技能项级口径 |
 
-金标自建 100 份中文简历（可加到 200），放 `data/eval/`。没有公开的中文技能项级基准。
+金标自建 100 份中文简历（可加到 200），放 `data/eval-official-only/`。没有公开的中文技能项级基准。
 
 细节：[research/resume-parsing.md](research/resume-parsing.md)
 
@@ -117,6 +117,6 @@
 2. `align_skill`、匹配分、档位、缺口集、换档条件、学习资源现查缓存
 3. 五个产品路由与原型交互（切片画布含切片差分、诊断四拍、邻近岗并排、对照链接、口令、⌘K）
 4. 技能聚类生成 `Skill` 与同义词；17 个规范岗位名对齐
-5. `data/eval/` 金标与三项 set-based F1
+5. `data/eval-official-only/` 金标与三项 set-based F1
 
 新开源库想进仓库：先对这张表。能归到「排除」或「已有直接依赖」的，不装。

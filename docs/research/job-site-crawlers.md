@@ -14,7 +14,7 @@
 
 最值得看的是 [jiyangnan/AgentMesh-JobAgent](https://github.com/jiyangnan/AgentMesh-JobAgent)(三站各有独立模块,智联 2026-08-22～23 还在修城市跳转,v0.5.40 发于 2026-08-28)和 [lastsunday/job-hunting](https://github.com/lastsunday/job-hunting)(423★ 浏览器插件,三站都列在支持表,扩展 5.0.0 发于 2026-06-30)。两者都是求职工具,不是可 `pip install` 的采集库。不要当依赖。
 
-本项目用仓库 `data/` 本地 JD 冷启动。三站只当高风险增量,自己写 `source`,分层抄 [RAYNLIU2005/-Multi-threadedCrawler](https://github.com/RAYNLIU2005/-Multi-threadedCrawler)。
+本项目使用官方招聘门户 JD 冷启动和增量采集，统一写入 `data/official-only/`。采集器按门户分层，参考 [RAYNLIU2005/-Multi-threadedCrawler](https://github.com/RAYNLIU2005/-Multi-threadedCrawler) 的幂等与解耦思路。
 
 ---
 
@@ -102,8 +102,8 @@
 ## 6. 对本项目的取舍
 
 1. **不 vendor 任何上述仓库。** AgentMesh 要云端 key 和受管 Chrome 画像;职位猎人是插件;Auto-JobHunter 许可和 OS 都不对。
-2. **冷启动不动这三站。** `data/` 里已有多份本地 JD,足够把抽取和图跑通。天池只补洞。
-3. **若赛题演示必须现场源:** 自写 Playwright,`headless=False` 或持久化 user data dir,`wait_for_response` 拦 JSON。每个站一个 `source`,互不影响。智联城市跳转抄 AgentMesh 的「失败即停、不信单独 URL 参数」;猎聘城市用 slug 路由而不是旧数字码;51job 只认 `we.51job.com`。
+2. **官方源统一走 ATS 采集器。** 采集结果写入 `data/official-only/jd/`，不再依赖本地表或第三方数据集。
+3. **若后续接入新的官方 ATS:** 每个门户保持独立适配，失败即停并保留原始 URL、岗位 ID 和抓取时间，不将第三方数据集混入正式图谱。
 4. **骨架继续抄 RAYNLIU** 的 `source/controller/sink` + fingerprint,不要抄它 2025-10 的选择器。
 5. **排除:** mcp-jobs、silie666 cookie 重放、426★ 的 2018 年 51job、一切「JS 逆向」教学仓。
 

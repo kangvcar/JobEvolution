@@ -24,14 +24,14 @@ apps/api/                 FastAPI
   app/main.py
   app/llm/client.py       多供应商 chat，唯一出口
   app/llm/embed.py        bge-m3
-  app/collectors/         data/本地表 / ATS / NCSS / Playwright
+  app/collectors/         官方 ATS 招聘门户
   app/pipeline/           抽取、消解、入谱、发现、审核闸
   app/matching/           对齐、匹配分、缺口、学习路径
   app/graph/              Cypher 封装
   app/routers/
 apps/web/                 Next.js
-data/jd/                  JD 快照原文
-data/eval/                金标 JSONL
+data/official-only/jd/    官方 JD 快照原文
+data/eval-official-only/  官方金标 JSONL
 docker-compose.yml
 ```
 
@@ -40,10 +40,10 @@ docker-compose.yml
 ## 总体架构
 
 ```
-data/本地表 / ATS / NCSS / Playwright
+官方 ATS 招聘门户
         │  fingerprint 幂等
         ▼
-  data/jd/{id}.json  +  Redis SET ingest:fp
+  data/official-only/jd/{id}.json  +  Redis SET ingest:fp
         │  XADD jobs:events（采集进度，给 worker / 可选管理页）
         ▼
   抽取 worker  ── 配置供应商 JSON ──► Pydantic
@@ -75,7 +75,7 @@ Neo4j Community，官方镜像，堆+页缓存合计约 1–2GB。社区版单�
 | `Job` | `id`，`name`，大典编码，`esco_id`，`onet_id`（三码可空），`status`（candidate / emerging / formed），`level_hint` 不分裂节点 |
 | `SkillCategory` | `id`，`name`。只导航，不对账。一期固定桶：语言 / 框架 / 平台 / 工程 / 领域知识 |
 | `Skill` | `id`，`name`，同义词列表，`embedding_ref` |
-| `Evidence` | `id`，`path`（`data/jd/...`），`source`（渠道：local / ats / ncss / tianchi / playwright），`company`（规范化公司名，独立源计票用这个），`observed_at`，`simhash` |
+| `Evidence` | `id`，`path`（`data/official-only/jd/...`），`source`（官方 ATS），`company`（规范化公司名，独立源计票用这个），`observed_at`，`simhash` |
 | `EvolutionEvent` | `id`，`kind`，`at`，`confidence`，`review`（pending / approved / auto_passed / rejected），`payload` JSON（含 `skill_id`、旧/新边字段） |
 
 预留标签 `Resource`，一期禁止 `CREATE`。学习资源只进 Redis `resource:{skill_id}`。
@@ -285,7 +285,7 @@ TUZI_REASONING_EFFORT 默认 none，降低长文本评测延迟；兼容性异�
 2. 梯子：需要吗 → 仓库里有没有 → stdlib → 已装依赖 → 一行 → 才写新代码。新 pip/npm 要在 PR 里写清梯子哪一档不够。
 3. 不要引入已排除项：KuzuDB、Kafka、GraphRAG 整包、Graphiti 当主存储、pyresparser、cytoscape/sigma 作图谱主体、Lightcast API、账户体系。
 4. 信任边界：上传 MIME 与大小、口令、LLM JSON（Pydantic）、Cypher 参数化。文件写在 `data/` 下，路径不允许 `..`。
-5. 非平凡逻辑留一个可跑检查：`tests/test_*.py` 里一个函数，或模块 `if __name__` 的 assert。三项准确率的回归放 `data/eval/`，阈值冻结。
+5. 非平凡逻辑留一个可跑检查：`tests/test_*.py` 里一个函数，或模块 `if __name__` 的 assert。三项准确率的回归放 `data/eval-official-only/`，阈值冻结。
 6. 共享函数改一处。`align_skill`、置信层、状态机升级、匹配分，禁止每个路由复制一份。
 7. 刻意简化写 `# ponytail: <天花板>，<何时升级>`。例如全局一把锁、HDBSCAN 换成更重的聚类。
 8. 一次改动只碰任务需要的文件。顺手重构旁边的模块不算完成。

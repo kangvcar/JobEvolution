@@ -119,7 +119,7 @@ def build_gold(*, index: list[dict], jobs: list[dict], jd_dir: Path | None = Non
         jd_rows.append(
             {
                 "id": f"jd-{i:04d}",
-                "source": doc.get("source") or "local",
+                "source": doc.get("source") or "ats",
                 "company": doc.get("company") or "",
                 "title": doc.get("title") or "",
                 "path": doc.get("path") or "",

@@ -104,5 +104,5 @@ Greenhouse 抽检(2026-09-03):`boards-api.greenhouse.io/v1/boards/stripe/jobs` �
 5. **海外 ATS 继续按 `docs/research.md` 抄端点,不装 ats-scrapers。** 对国内四领域覆盖帮助有限。
 6. **排除。** RecruitSpider 当依赖;career-ops-china 的 bookmarklet 当采集 worker;2017 的 brantou/crawler;把 freehire 全站当数据源(对方 ToS 和新鲜度都不在我们控制里)。
 
-冷启动仍然是仓库 `data/` 本地 JD。官网源是增量实验,不挡现有管线。
+冷启动和增量均使用官方招聘门户，统一写入仓库 `data/official-only/`，不再保留本地 JD 表作为正式管线输入。
 )

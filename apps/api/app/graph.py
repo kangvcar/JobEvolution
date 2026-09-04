@@ -1198,7 +1198,7 @@ def _pipeline_counts() -> list[dict]:
         rows = session.run(
             "MATCH (e:Evidence) RETURN e.source AS source, count(*) AS n ORDER BY n DESC"
         )
-        return [{"source": row["source"] or "local", "n": int(row["n"])} for row in rows]
+        return [{"source": row["source"] or "ats", "n": int(row["n"])} for row in rows]
 
 
 def _heat(n_public: int) -> list[dict]:

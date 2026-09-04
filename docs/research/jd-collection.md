@@ -1,6 +1,6 @@
 # 调研:招聘数据采集开源方案与公开 JD 数据集
 
-> **档案。** 定案以 `docs/product.md`、`docs/tech.md`、`docs/frontend.md` 为准。冷启动已改为仓库 `data/` 下全部本地 JD，不限智联、不限文件名；不再手录图谱、也不以天池为人手。求职者页不做实时采集动效；SSE 只给管理可选。
+> **档案。** 定案以 `docs/product.md`、`docs/tech.md`、`docs/frontend.md` 为准。冷启动已改为官方招聘门户，快照统一落在 `data/official-only/`；不再手录图谱、也不以第三方数据集为主源。求职者页不做实时采集动效；SSE 只给管理可选。
 > 关联工单:GitHub issue #2(Part of #1) · 赛题 XH-202621「多源异构数据驱动岗位和能力图谱构建与动态演化分析」
 > 技术栈约束:Python + FastAPI 优先;需要多源采集中文招聘 JD。
 > 合规:用户明示忽略 robots 等限制,本文只做技术可行性判断,不做法律/合规背书。

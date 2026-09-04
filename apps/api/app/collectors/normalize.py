@@ -17,24 +17,7 @@ _SUFFIXES = (
 )
 
 # Channel names never count as 独立源, even if they leak into company.
-CHANNEL_NAMES = frozenset(
-    {
-        "ats",
-        "ncss",
-        "greenhouse",
-        "lever",
-        "ashby",
-        "playwright",
-        "tianchi",
-        "local",
-        "智联招聘",
-        "boss直聘",
-        "boss",
-        "猎聘",
-        "拉勾",
-        "前程无忧",
-    }
-)
+CHANNEL_NAMES = frozenset({"ats", "greenhouse", "lever", "ashby"})
 
 
 def squash(value: str) -> str:

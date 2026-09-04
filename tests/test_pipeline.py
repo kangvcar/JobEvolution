@@ -1002,7 +1002,7 @@ def _jd_snaps(
         doc = {
             "id": sid,
             "path": str(path),
-            "source": "local",
+            "source": "ats",
             "company": company,
             "title": "大模型应用工程师",
             "body": body,
@@ -1018,7 +1018,7 @@ def _jd_snaps(
                 {
                     "id": sid,
                     "path": doc["path"],
-                    "source": "local",
+                    "source": "ats",
                     "company": company,
                     "observed_at": doc["observed_at"],
                     "simhash": doc["simhash"],

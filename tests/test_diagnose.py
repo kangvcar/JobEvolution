@@ -154,7 +154,7 @@ def test_parse_resume_strict_mode_surfaces_model_failure():
 
 
 def test_demo_cv_falls_back_when_model_marks_info_unknown():
-    text = extract_text(Path("data/eval/demo-cv.pdf").read_bytes(), "demo-cv.pdf")
+    text = extract_text(Path("data/eval-official-only/demo-cv.pdf").read_bytes(), "demo-cv.pdf")
     index = [{"id": "s1", "name": "Python", "synonyms": [], "embedding": embed(["Python"])[0]}]
 
     def unknown_info(messages):
