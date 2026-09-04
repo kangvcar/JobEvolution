@@ -93,7 +93,7 @@ docker compose logs -f pipeline
 docker compose down
 ```
 
-`neo4j_data` 是产品数据卷。除非确认要重置产品图，否则不要使用 `docker compose down -v`，该命令会删除 Compose 管理的数据卷。
+`neo4j_official_data` 是当前产品数据卷，里面是官方数据。旧的 `neo4j_data` 卷暂时保留用于回滚。除非确认要重置产品图，否则不要使用 `docker compose down -v`，该命令会删除 Compose 管理的数据卷。
 
 ## 前端开发
 

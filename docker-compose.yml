@@ -9,7 +9,7 @@ services:
       NEO4J_server_memory_heap_max__size: 1G
       NEO4J_server_memory_pagecache_size: 512M
     volumes:
-      - neo4j_data:/data
+      - neo4j_official_data:/data
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://localhost:7474 || exit 1"]
       interval: 10s
@@ -29,25 +29,6 @@ services:
       NEO4J_server_memory_pagecache_size: 256M
     volumes:
       - neo4j_test_data:/data
-    healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:7474 || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 12
-      start_period: 30s
-
-  neo4j-official:
-    image: neo4j:5-community
-    profiles: ["official"]
-    ports:
-      - "27687:7687"
-      - "27474:7474"
-    environment:
-      NEO4J_AUTH: ${NEO4J_USER:-neo4j}/${NEO4J_PASSWORD:-jobevolution}
-      NEO4J_server_memory_heap_max__size: 1G
-      NEO4J_server_memory_pagecache_size: 512M
-    volumes:
-      - neo4j_official_data:/data
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://localhost:7474 || exit 1"]
       interval: 10s
@@ -94,6 +75,7 @@ services:
       REDIS_URL: redis://redis:6379/0
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-change-me}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:3001}
+      DATA_DIR: /app/data/official-only
     volumes:
       - ./data:/app/data
     depends_on:
@@ -133,7 +115,7 @@ services:
       NEO4J_USER: ${NEO4J_USER:-neo4j}
       NEO4J_PASSWORD: ${NEO4J_PASSWORD:-jobevolution}
       REDIS_URL: redis://redis:6379/0
-      DATA_DIR: /app/data
+      DATA_DIR: /app/data/official-only
       COLLECT_KNOWN_PAGES: ${COLLECT_KNOWN_PAGES:-2}
     volumes:
       - ./data:/app/data

@@ -31,14 +31,14 @@ JSONL 一行为一条。技能点一律写图谱 `Skill.id`（归一化后），
 
 **来源。** 官方门户快照写入 `data/official-only/jd/` 后抽取。不要手写赛题 JD，不要只抽一个门户。官方门户和必要的 ATS / NCSS / 天池补充源按同一套去重规则处理。四领域都要有；人工智能不少于 40 条，另外三个领域各不少于 12 条。17 个入谱岗每个至少 3 条；赛题那一对（Agent 工程师、大模型应用工程师）各不少于 8 条。缺岗先放宽标题词再滤一刀，仍不够则该岗不进三项分母，不要手补正文。
 
-官方门户复跑使用 `data/official-only/`，与产品图谱隔离。Redis 使用 DB 2；Neo4j 使用 `neo4j-official` 独立卷。首次或需要重建时执行：
+官方门户复跑使用 `data/official-only/`。当前产品 Neo4j 直接使用官方数据卷；Redis 使用 DB 2。首次或需要重建时执行：
 
 ```
-docker compose --profile official up -d neo4j-official
+docker compose up -d neo4j
 docker compose run --rm --no-deps \
   -e DATA_DIR=/app/data/official-only \
   -e JD_DIR=/app/data/official-only/jd \
-  -e NEO4J_URI=bolt://neo4j-official:7687 \
+  -e NEO4J_URI=bolt://neo4j:7687 \
   -e REDIS_URL=redis://redis:6379/2 \
   pipeline python -m app.collectors --daily \
     --data-dir /app/data/official-only \
