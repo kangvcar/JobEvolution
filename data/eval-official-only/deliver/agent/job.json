@@ -1,93 +1,232 @@
 {
   "id": "job-2e05993e43fccbe5",
   "name": "Agent 工程师",
-  "status": "emerging",
+  "status": "formed",
   "domain": "ai",
   "watching": [
-    "skill-6ef47f04480e8a8e",
-    "skill-a7056a455639d1c7",
-    "skill-a7f6415749a3297a",
-    "skill-694032b7ede90d08",
-    "skill-e4a5f92fd340ecce",
+    "skill-8a791832457e0464",
+    "skill-4f1738867bad0255",
+    "skill-c7bdea3142254923",
+    "skill-3e7d2c8249c83d51",
+    "skill-2efa977998a0b4aa",
+    "skill-ad9cbdd14b8b292c",
+    "skill-495eeb95da796c9b",
+    "skill-3bb69a31fe6d5cbb",
+    "skill-bbef28c9ea693db8",
+    "skill-66249af752b27892",
+    "skill-ca6e0d133808e7af",
+    "skill-6f114bdca53b3612",
+    "skill-c7b9fb670dbb0d72",
+    "skill-401d59551643e265",
+    "skill-f235ebaeb4a7f047",
+    "skill-f27b46610bed11c3",
+    "skill-23d2632f2e636bdc",
+    "skill-639de58eb608d490",
+    "skill-15954a47a3c199ed",
+    "skill-f389c007c430285e",
+    "skill-97fd66941374e559",
+    "skill-e72622fe470d04bc",
+    "skill-7de106abf9c28cfe",
+    "skill-83408a8e06afa8c6",
+    "skill-00d5f7450f88e691",
+    "skill-23db901caf33b8ad",
+    "skill-a7b90ee8facf0aed",
+    "skill-e3b5b45953d79a15",
+    "skill-c44a1fcb5a665ec0",
+    "skill-31d4dabd0839c654",
+    "skill-c0a31374c42cefc5",
+    "skill-41b7bccc7a7c36f3",
+    "skill-7b6b9a36e2bd8773",
+    "skill-408aa78bf3e09d7c",
+    "skill-021235a57c80932b",
+    "skill-a379ec6e2a577afa",
+    "skill-199ed4247f6e2d7d",
+    "skill-d683ef7fbec9aef1",
+    "skill-21cc305095786cd3",
+    "skill-208ab6e607636cd3",
+    "skill-9f2c41aa8ecbcda9",
+    "skill-a9f33c20dd020865",
+    "skill-d7edee3f40cec853",
+    "skill-14b576166ea91471",
+    "skill-68d9155b59a8ee38",
+    "skill-fe34924d143b8145",
+    "skill-2ac8a4aa03615668",
+    "skill-45187020c9bce628",
+    "skill-a4d14414860b025b",
+    "skill-8ebbdb219835ce43",
+    "skill-6987374ee99d1e0c",
+    "skill-99e08044072d8d70",
+    "skill-70a47f8d21a9f633",
     "skill-4cb716c891115459",
-    "skill-712bdd987e5641c8",
     "skill-c49fcee408958884",
-    "skill-0feebe184fcaa584",
-    "skill-fc4df3c7c8a7e0e3",
-    "skill-b602ebce988c0bea",
-    "skill-7151470ffb9910df",
-    "skill-f10cc888eafa736e",
-    "skill-aa77889c8c35bd45",
-    "skill-d5a28193165221ac",
-    "skill-c88d4539c64d9bdb",
-    "skill-6891efa1e4185db9",
-    "skill-47f741ba6105ccce",
-    "skill-4ce266d144fe9254",
-    "skill-bba764133ac15759",
-    "skill-053c22fb733f24bd",
-    "skill-2dd9eb7d9f0c1186",
-    "skill-c0862201e27e10f5",
-    "skill-4445d918dfcf1af8",
-    "skill-c9b1ce47b2aaedec",
-    "skill-c90208efe2c4837b",
-    "skill-c5546b33eb704435",
-    "skill-4c1a0852823452e1",
-    "skill-b949c922b6ef9ffb",
-    "skill-9c300c8997a93ee3",
-    "skill-ccdd25d4230fb997",
-    "skill-e39202c32277f548",
-    "skill-0962ad68a9646edd",
-    "skill-f5d2a4c68a7578b5",
-    "skill-32fd72a0e0746043",
-    "skill-3140d22d8cb307e2",
-    "skill-a37d07fe30048d3a",
-    "skill-01fad993ff61aca9",
-    "skill-1fc0c785332e80fb",
-    "skill-60dd357bbdf2d54d",
-    "skill-806f88fc0e700c25",
+    "skill-4bdc341f50c37767",
+    "skill-d5edfed2ce8ebf2e",
+    "skill-94a243d9bfbde22a",
+    "skill-5a555537fddfa477",
+    "skill-53f13ae99ed53bd3",
+    "skill-89d2ee29aa00eefe",
+    "skill-b18a6622a4badba2",
+    "skill-bdbc8f7ea9d9f3c6",
+    "skill-c26c00f029222950",
+    "skill-75b1ab8204872a64",
+    "skill-fbcc8b328e49becd",
+    "skill-ddcc4fe6fb35bcd9",
+    "skill-84f1a53f97f12db5",
+    "skill-61d3e956d5cc9274",
+    "skill-67e8411149930f76",
+    "skill-15582fccb8b6c09f",
+    "skill-f68c126e17d4ec62",
+    "skill-68d815263b3ae8ee",
+    "skill-8f13b8c0a177d466",
+    "skill-0d512b90e5290f6b",
+    "skill-aba903587c77df81",
+    "skill-7c4f523489a9e959",
+    "skill-d91b3aa479310a35",
+    "skill-4dd71262322bac63",
+    "skill-819962fc6d3cc0a9",
+    "skill-2410622c71b8aefc",
     "skill-d9aa89fdd15ad5c4",
-    "skill-084613987a2b30a7",
-    "skill-783095dae27b6318",
-    "skill-e6dc3605f3022bff",
+    "skill-c1ba60ce13586503",
+    "skill-1729148f3f834410",
+    "skill-ab14770695813cfb",
+    "skill-11565c3b0dd3ea11",
+    "skill-2c014f8f8986f1b2",
+    "skill-49f5b0e488cfa66c",
+    "skill-246ef8c1130d56f5",
+    "skill-b844ff591d8c1fb5",
+    "skill-46c8ab675d0cb344",
+    "skill-f915058bccee4396",
+    "skill-967cd7ca720b84d8",
+    "skill-9d94d3e77c520941",
+    "skill-c06d4d3662a1d0ba",
+    "skill-bce6e03ab0b89144",
+    "skill-b982e3b55cf4bf2a",
+    "skill-3c26e7a5b744df5a",
+    "skill-e4ef33ad78616b7e",
+    "skill-2810c1ae78fdf74e",
+    "skill-6aa8f49cc992dfd7",
+    "skill-6a60a24633d41089",
+    "skill-5e42855db36df8e9",
+    "skill-1e8ddd10bafe5127",
+    "skill-063b8d90a6e20a64",
+    "skill-154723a1aa0a09a4",
+    "skill-4893e80a5416c178",
+    "skill-e6f04ffbaa424001",
+    "skill-1b5d0965ca126a2a",
+    "skill-d37a55e5fa4ebf1f",
+    "skill-b1d19e90852f36b5",
+    "skill-f0e01cdcc3492355",
+    "skill-11f5f02e90177d12",
+    "skill-848e494b4ff0ea04",
+    "skill-7b5fa64db55a04af",
+    "skill-c539cc8537acb3d1",
+    "skill-c314af12f3303700",
+    "skill-5dee2245cdc52747",
+    "skill-9cce148548686911",
+    "skill-564b2f37af83161f",
+    "skill-2b770fa3dd9e3627",
+    "skill-29dde6e6d8b80e18",
+    "skill-eafacf7bec12d856",
+    "skill-2c4e58275f715d52",
+    "skill-afcda54f2fbb6c20",
+    "skill-62ebdef866030ee2",
+    "skill-7e8dacb43c82cadf",
+    "skill-2bc6f890600cd0e1",
+    "skill-d5a28193165221ac",
+    "skill-db21a8b3a1c2f9eb",
+    "skill-f2baeaaf73e3204f",
+    "skill-2c7cdc65109a3cfa",
+    "skill-9f4b3788943435e6",
+    "skill-e2b79a47ca10d519",
+    "skill-83d55990500d724e",
+    "skill-5d7b7e77768bfdfc",
+    "skill-481acc2c1413db38",
+    "skill-89174fe72eeec3ae",
+    "skill-050a5a3c941208fb",
+    "skill-5e78ed4b99d091a0",
+    "skill-5888ca5e14caf52c",
+    "skill-33be8fd2c27e5eba",
+    "skill-a8004ec3121cfb61",
+    "skill-a6fff0fc04e6062e",
+    "skill-a29c0de140769391",
+    "skill-c20f7618d330a854",
+    "skill-dfb62ce6a43b090e",
+    "skill-6bf6d3f3d6261b75",
+    "skill-49726f09c8123a40",
+    "skill-209c47b5910f631d",
+    "skill-37e4e42c314102da",
+    "skill-4ff0f1dda80ff593",
+    "skill-8013578e5e8731a6",
+    "skill-b624a9c3c3bf143f",
+    "skill-3e02e178cb2d0186",
+    "skill-e417412475d5847c",
+    "skill-a05919027e95b8c1",
+    "skill-493c7ab19c879b30",
+    "skill-8b17e69328b3767e",
+    "skill-57ce35c68f6856ba",
+    "skill-739ad19b4ff1eeb5",
+    "skill-ac4ed01cd0b0583f",
+    "skill-6246c11190eb1de3",
+    "skill-1cb3f971917723b7",
+    "skill-8392b4d4ac074cee",
+    "skill-b9e8cf37308c6517",
+    "skill-43a706c5c775b2c0",
+    "skill-e0a742b7ad74b6dc",
+    "skill-c29cd9099a68086b",
+    "skill-4e50d903fdf7fa88",
+    "skill-b366dc0fdb9c955a",
+    "skill-1449ba3f68c18460",
+    "skill-a6b3968bf62965b0",
+    "skill-3251c7d88a6508b6",
+    "skill-64d14ca8ef2e1958",
+    "skill-887d59b7743686dd",
+    "skill-59368cfedae16624",
+    "skill-c8e5998f6a3955c2",
+    "skill-eb4f24c3e1f43307",
+    "skill-95502954bf5a82fa",
+    "skill-2dcf747298135832",
+    "skill-ab78d989ee72589c",
+    "skill-2c496d39ae56f5b4",
+    "skill-33c99fcec37b428e",
+    "skill-9c655194da5a441d",
+    "skill-c94c1687308d741a",
+    "skill-08010bc8f78aac2b",
+    "skill-c59516a01886bda6",
+    "skill-6929578ac245b804",
+    "skill-db9a4c7d4c195ebf",
+    "skill-ea49523d744c40bc",
+    "skill-e7e4363713d78173",
+    "skill-b949c922b6ef9ffb",
+    "skill-c8d61c28ed91dffc",
+    "skill-212566bc3f677b47",
+    "skill-2dd9eb7d9f0c1186",
+    "skill-fb4a6da5c7b0ca0f",
+    "skill-cab1fd148d75f05b",
+    "skill-9513c60ab00ff4e3",
+    "skill-845bbc27a312cec7",
+    "skill-e6169e958b37ce86",
     "skill-d18aca33a335a81c",
-    "skill-f31965113f17e927",
-    "skill-b8bfb9885cc6d2f1",
-    "skill-6dc38fda45c9340e",
-    "skill-38ef555f4f11f1b1",
-    "skill-8de41b07e8d593ee",
-    "skill-130f70ae5b44ed4c",
-    "skill-0f6059b2d9e48cbb",
-    "skill-b723f2bd5d265237",
-    "skill-fdeb5e3dd6feb47a"
+    "skill-0b3830053cfc0e4b",
+    "skill-cc273cdd14052963",
+    "skill-c71d0bca46eb0d78",
+    "skill-4339b5eda1811edf",
+    "skill-eae893cce34725f8",
+    "skill-22b9f0b66212809c",
+    "skill-4bb087b596ead745",
+    "skill-5c39123805ffb4e2",
+    "skill-fc00032fa6ced07b",
+    "skill-2fcf6ce8aed31515",
+    "skill-9af64ccc359b745b",
+    "skill-1a96b6acadc2d0f9",
+    "skill-32d42b97294a1365",
+    "skill-c112bfd52e71e022",
+    "skill-975b35f9c2b1148c"
   ],
   "n_sources": 6,
   "requires": [
     {
-      "skill_id": "skill-636396f02b6571e4",
-      "name": "n8n",
-      "kind": "required",
-      "category_id": "framework",
-      "category": "框架",
-      "proficiency": "able",
-      "layer": "mid",
-      "confidence": 0.9,
-      "sources": [
-        "jd-a199887680aef910",
-        "jd-da11a9e6c57eef2a"
-      ],
-      "levels": [
-        "junior",
-        "mid",
-        "senior"
-      ],
-      "weight": 1.0,
-      "excerpt": "熟悉 n8n/Make/Zapier 自动化流程设计",
-      "valid_from": "2025-08-18T18:23:03Z",
-      "valid_to": null
-    },
-    {
-      "skill_id": "skill-4f5e698fecc870d2",
-      "name": "多模态数据处理",
+      "skill_id": "skill-b48c8be327b363ef",
+      "name": "AI Agent",
       "kind": "required",
       "category_id": "domain",
       "category": "领域知识",
@@ -95,8 +234,8 @@
       "layer": "mid",
       "confidence": 0.9,
       "sources": [
-        "jd-8cee774c3708590e",
-        "jd-a199887680aef910"
+        "jd-5b822ce268cf020d",
+        "jd-68ae76dcf6f16583"
       ],
       "levels": [
         "junior",
@@ -104,22 +243,24 @@
         "senior"
       ],
       "weight": 1.0,
-      "excerpt": "熟悉多种大模型以及多模态大模型（例如 GPT-4o, o1 , o3 llama QWQ, claude等模型）",
-      "valid_from": "2025-08-19T11:13:50Z",
+      "excerpt": "AI Agent",
+      "group_id": null,
+      "min_required": null,
+      "valid_from": "2026-06-19T06:54:50Z",
       "valid_to": null
     },
     {
-      "skill_id": "skill-5e360ac275cfcd4e",
-      "name": "PromptAppGPT",
+      "skill_id": "skill-f052723e7c66826d",
+      "name": "Agent系统",
       "kind": "required",
-      "category_id": "framework",
-      "category": "框架",
+      "category_id": "engineering",
+      "category": "工程",
       "proficiency": "able",
       "layer": "mid",
       "confidence": 0.9,
       "sources": [
-        "jd-a199887680aef910",
-        "jd-b28e9ac36fc4e4c9"
+        "jd-1c69f87afdaf30a5",
+        "jd-5b822ce268cf020d"
       ],
       "levels": [
         "junior",
@@ -127,8 +268,321 @@
         "senior"
       ],
       "weight": 1.0,
-      "excerpt": "包括AutoGPT、LangChain、LangGraph等主流开发框架",
-      "valid_from": "2025-08-19T09:27:32Z",
+      "excerpt": "Agent系统",
+      "group_id": null,
+      "min_required": null,
+      "valid_from": "2026-06-19T06:54:50Z",
+      "valid_to": null
+    },
+    {
+      "skill_id": "skill-674900a77b798af1",
+      "name": "LLM",
+      "kind": "required",
+      "category_id": "domain",
+      "category": "领域知识",
+      "proficiency": "able",
+      "layer": "high",
+      "confidence": 0.9,
+      "sources": [
+        "jd-1c69f87afdaf30a5",
+        "jd-33da778d5e153f75",
+        "jd-5b822ce268cf020d",
+        "jd-7f9943ca90021cee"
+      ],
+      "levels": [
+        "junior",
+        "mid",
+        "senior"
+      ],
+      "weight": 1.0,
+      "excerpt": "基于LLM/VLM、感知、VLA、导航",
+      "group_id": null,
+      "min_required": null,
+      "valid_from": "2026-08-04T03:44:24Z",
+      "valid_to": null
+    },
+    {
+      "skill_id": "skill-053c22fb733f24bd",
+      "name": "AutoGen",
+      "kind": "required",
+      "category_id": "framework",
+      "category": "框架",
+      "proficiency": "able",
+      "layer": "high",
+      "confidence": 0.9,
+      "sources": [
+        "jd-1c69f87afdaf30a5",
+        "jd-68ae76dcf6f16583",
+        "jd-7f9943ca90021cee"
+      ],
+      "levels": [
+        "junior",
+        "mid",
+        "senior"
+      ],
+      "weight": 1.0,
+      "excerpt": "AutoGen",
+      "group_id": null,
+      "min_required": null,
+      "valid_from": "2026-05-12T05:46:41Z",
+      "valid_to": null
+    },
+    {
+      "skill_id": "skill-74e35a87342ceb0a",
+      "name": "Agent技术",
+      "kind": "required",
+      "category_id": "domain",
+      "category": "领域知识",
+      "proficiency": "able",
+      "layer": "high",
+      "confidence": 0.9,
+      "sources": [
+        "jd-1c69f87afdaf30a5",
+        "jd-68ae76dcf6f16583",
+        "jd-6e75b29bf18bd9bb"
+      ],
+      "levels": [
+        "junior",
+        "mid",
+        "senior"
+      ],
+      "weight": 1.0,
+      "excerpt": "Agent技术",
+      "group_id": null,
+      "min_required": null,
+      "valid_from": "2026-03-10T06:40:21Z",
+      "valid_to": null
+    },
+    {
+      "skill_id": "skill-6df1bb18a59ab97d",
+      "name": "Skill",
+      "kind": "required",
+      "category_id": "domain",
+      "category": "领域知识",
+      "proficiency": "able",
+      "layer": "mid",
+      "confidence": 0.95,
+      "sources": [
+        "jd-5b822ce268cf020d",
+        "jd-68ae76dcf6f16583"
+      ],
+      "levels": [
+        "junior",
+        "mid",
+        "senior"
+      ],
+      "weight": 1.0,
+      "excerpt": "对 Context Engineering、Function Calling、Skill 等技术有深入理解和实践经验",
+      "group_id": null,
+      "min_required": null,
+      "valid_from": "2026-06-19T06:54:50Z",
+      "valid_to": null
+    },
+    {
+      "skill_id": "skill-c98e118e0a43f078",
+      "name": "模型",
+      "kind": "required",
+      "category_id": "engineering",
+      "category": "工程",
+      "proficiency": "able",
+      "layer": "mid",
+      "confidence": 0.65,
+      "sources": [
+        "jd-33da778d5e153f75",
+        "jd-5b822ce268cf020d",
+        "jd-6e75b29bf18bd9bb",
+        "jd-7f9943ca90021cee"
+      ],
+      "levels": [
+        "junior",
+        "mid",
+        "senior"
+      ],
+      "weight": 1.0,
+      "excerpt": "模型",
+      "group_id": null,
+      "min_required": null,
+      "valid_from": "2026-08-04T03:44:24Z",
+      "valid_to": null
+    },
+    {
+      "skill_id": "skill-11b39c93777e8f1f",
+      "name": "Agent",
+      "kind": "required",
+      "category_id": "domain",
+      "category": "领域知识",
+      "proficiency": "able",
+      "layer": "high",
+      "confidence": 0.9,
+      "sources": [
+        "jd-1c69f87afdaf30a5",
+        "jd-33da778d5e153f75",
+        "jd-5b822ce268cf020d",
+        "jd-68ae76dcf6f16583"
+      ],
+      "levels": [
+        "junior",
+        "mid",
+        "senior"
+      ],
+      "weight": 1.0,
+      "excerpt": "熟悉 LLM / Agent 的基本原理与开发",
+      "group_id": null,
+      "min_required": null,
+      "valid_from": "2026-08-04T03:44:24Z",
+      "valid_to": null
+    },
+    {
+      "skill_id": "skill-c3963aedaac6c83c",
+      "name": "Memory",
+      "kind": "required",
+      "category_id": null,
+      "category": null,
+      "proficiency": "able",
+      "layer": "high",
+      "confidence": 0.9,
+      "sources": [
+        "jd-1c69f87afdaf30a5",
+        "jd-5b822ce268cf020d",
+        "jd-7f9943ca90021cee"
+      ],
+      "levels": [
+        "junior",
+        "mid",
+        "senior"
+      ],
+      "weight": 1.0,
+      "excerpt": "深入理解ReAct、Tool Use、Memory、Planning等核心机制",
+      "group_id": null,
+      "min_required": null,
+      "valid_from": "2026-06-19T06:54:50Z",
+      "valid_to": null
+    },
+    {
+      "skill_id": "skill-c49fcee408958884",
+      "name": "Function Calling",
+      "kind": "required",
+      "category_id": "domain",
+      "category": "领域知识",
+      "proficiency": "able",
+      "layer": "mid",
+      "confidence": 0.95,
+      "sources": [
+        "jd-1c69f87afdaf30a5",
+        "jd-68ae76dcf6f16583"
+      ],
+      "levels": [
+        "junior",
+        "mid",
+        "senior"
+      ],
+      "weight": 1.0,
+      "excerpt": "对 Context Engineering、Function Calling、Skill 等技术有深入理解和实践经验",
+      "group_id": null,
+      "min_required": null,
+      "valid_from": "2026-03-10T06:40:21Z",
+      "valid_to": null
+    },
+    {
+      "skill_id": "skill-63c34d5ded165a69",
+      "name": "LangChain",
+      "kind": "required",
+      "category_id": "framework",
+      "category": "框架",
+      "proficiency": "able",
+      "layer": "high",
+      "confidence": 0.9,
+      "sources": [
+        "jd-1c69f87afdaf30a5",
+        "jd-68ae76dcf6f16583",
+        "jd-7f9943ca90021cee"
+      ],
+      "levels": [
+        "junior",
+        "mid",
+        "senior"
+      ],
+      "weight": 1.0,
+      "excerpt": "LangChain",
+      "group_id": null,
+      "min_required": null,
+      "valid_from": "2026-05-12T05:46:41Z",
+      "valid_to": null
+    },
+    {
+      "skill_id": "skill-ed0504f70a48ffe9",
+      "name": "TypeScript",
+      "kind": "required",
+      "category_id": "language",
+      "category": "语言",
+      "proficiency": "expert",
+      "layer": "mid",
+      "confidence": 0.95,
+      "sources": [
+        "jd-1c69f87afdaf30a5",
+        "jd-68ae76dcf6f16583"
+      ],
+      "levels": [
+        "junior",
+        "mid",
+        "senior"
+      ],
+      "weight": 1.0,
+      "excerpt": "Python/TypeScript等至少一种编程语言",
+      "group_id": "group-1bb7c93fd3b2",
+      "min_required": 1,
+      "valid_from": "2026-03-10T06:40:21Z",
+      "valid_to": null
+    },
+    {
+      "skill_id": "skill-d7ba2d72a14c98f0",
+      "name": "后端开发",
+      "kind": "required",
+      "category_id": "engineering",
+      "category": "工程",
+      "proficiency": "able",
+      "layer": "mid",
+      "confidence": 0.9,
+      "sources": [
+        "jd-1c69f87afdaf30a5",
+        "jd-68ae76dcf6f16583"
+      ],
+      "levels": [
+        "junior",
+        "mid",
+        "senior"
+      ],
+      "weight": 1.0,
+      "excerpt": "后端开发",
+      "group_id": null,
+      "min_required": null,
+      "valid_from": "2026-03-10T06:40:21Z",
+      "valid_to": null
+    },
+    {
+      "skill_id": "skill-16749dc881d981c2",
+      "name": "工程能力",
+      "kind": "required",
+      "category_id": "engineering",
+      "category": "工程",
+      "proficiency": "able",
+      "layer": "mid",
+      "confidence": 0.65,
+      "sources": [
+        "jd-1c69f87afdaf30a5",
+        "jd-6e75b29bf18bd9bb",
+        "jd-7f9943ca90021cee"
+      ],
+      "levels": [
+        "junior",
+        "mid",
+        "senior"
+      ],
+      "weight": 1.0,
+      "excerpt": "工程能力",
+      "group_id": null,
+      "min_required": null,
+      "valid_from": "2026-05-12T05:46:41Z",
       "valid_to": null
     },
     {
@@ -137,58 +591,12 @@
       "kind": "required",
       "category_id": "language",
       "category": "语言",
-      "proficiency": "able",
-      "layer": "mid",
-      "confidence": 0.95,
-      "sources": [
-        "jd-a199887680aef910",
-        "jd-b28e9ac36fc4e4c9"
-      ],
-      "levels": [
-        "junior",
-        "mid",
-        "senior"
-      ],
-      "weight": 1.0,
-      "excerpt": "精通Python/Java/Go/Rust等至少一门语言",
-      "valid_from": "2025-08-19T09:27:32Z",
-      "valid_to": null
-    },
-    {
-      "skill_id": "skill-05642da1523d47de",
-      "name": "ERP",
-      "kind": "bonus",
-      "category_id": "domain",
-      "category": "领域知识",
-      "proficiency": "aware",
-      "layer": "mid",
-      "confidence": 0.6,
-      "sources": [
-        "jd-8cee774c3708590e",
-        "jd-da11a9e6c57eef2a"
-      ],
-      "levels": [
-        "junior",
-        "mid",
-        "senior"
-      ],
-      "weight": 1.0,
-      "excerpt": "对接RPA/低代码工具和其他企业级业务系统（如ERP、CRM）。",
-      "valid_from": "2025-08-19T11:13:50Z",
-      "valid_to": null
-    },
-    {
-      "skill_id": "skill-710eb4f4d7f72b0e",
-      "name": "Ubuntu",
-      "kind": "required",
-      "category_id": "platform",
-      "category": "平台",
-      "proficiency": "able",
+      "proficiency": "expert",
       "layer": "mid",
       "confidence": 0.9,
       "sources": [
-        "jd-b28e9ac36fc4e4c9",
-        "jd-da11a9e6c57eef2a"
+        "jd-1c69f87afdaf30a5",
+        "jd-6e75b29bf18bd9bb"
       ],
       "levels": [
         "junior",
@@ -196,45 +604,24 @@
         "senior"
       ],
       "weight": 1.0,
-      "excerpt": "具备Linux系统开发经验",
-      "valid_from": "2025-08-19T09:27:32Z",
+      "excerpt": "如Go/Rust/Java",
+      "group_id": "group-1bb7c93fd3b2",
+      "min_required": 1,
+      "valid_from": "2026-01-05T09:09:53Z",
       "valid_to": null
     },
     {
-      "skill_id": "skill-e6169e958b37ce86",
-      "name": "Docker",
-      "kind": "required",
-      "category_id": "platform",
-      "category": "平台",
-      "proficiency": "able",
-      "layer": "mid",
-      "confidence": 0.9,
-      "sources": [
-        "jd-a199887680aef910",
-        "jd-da11a9e6c57eef2a"
-      ],
-      "levels": [
-        "junior",
-        "mid",
-        "senior"
-      ],
-      "weight": 1.0,
-      "excerpt": "容器化（Docker/K8s）",
-      "valid_from": "2025-08-18T18:23:03Z",
-      "valid_to": null
-    },
-    {
-      "skill_id": "skill-9ecf4f6e4dc71868",
-      "name": "RAG技术",
+      "skill_id": "skill-25d7abe5864ab04a",
+      "name": "大模型",
       "kind": "required",
       "category_id": "domain",
       "category": "领域知识",
       "proficiency": "able",
       "layer": "mid",
-      "confidence": 0.95,
+      "confidence": 0.8,
       "sources": [
-        "jd-a199887680aef910",
-        "jd-da11a9e6c57eef2a"
+        "jd-5b822ce268cf020d",
+        "jd-6e75b29bf18bd9bb"
       ],
       "levels": [
         "junior",
@@ -242,165 +629,27 @@
         "senior"
       ],
       "weight": 1.0,
-      "excerpt": "熟悉RAG技术",
-      "valid_from": "2025-08-18T18:23:03Z",
+      "excerpt": "对AI技术（尤其是大模型与Agent技术）有强烈热情",
+      "group_id": null,
+      "min_required": null,
+      "valid_from": "2026-05-12T05:46:41Z",
       "valid_to": null
     },
     {
-      "skill_id": "skill-0002ac79318121b8",
-      "name": "LLM技术理解",
+      "skill_id": "skill-a8ca3c13eb75866d",
+      "name": "工具调用",
       "kind": "required",
-      "category_id": "domain",
-      "category": "领域知识",
-      "proficiency": "expert",
-      "layer": "high",
-      "confidence": 0.95,
-      "sources": [
-        "jd-003025c54a283f19",
-        "jd-a199887680aef910",
-        "jd-a88821019329fdf2"
-      ],
-      "levels": [
-        "junior",
-        "mid",
-        "senior"
-      ],
-      "weight": 1.0,
-      "excerpt": "掌握 AIGC 技术，能将 LLM 集成至 Agent 系统",
-      "valid_from": "2025-08-18T18:23:03Z",
-      "valid_to": null
-    },
-    {
-      "skill_id": "skill-c0955f7ef40c5d7a",
-      "name": "Agent流程编排",
-      "kind": "required",
-      "category_id": "framework",
-      "category": "框架",
-      "proficiency": "expert",
-      "layer": "high",
-      "confidence": 0.9,
-      "sources": [
-        "jd-003025c54a283f19",
-        "jd-8cee774c3708590e",
-        "jd-a88821019329fdf2"
-      ],
-      "levels": [
-        "junior",
-        "mid",
-        "senior"
-      ],
-      "weight": 1.0,
-      "excerpt": "熟悉大模型及AI Agent平台架构",
-      "valid_from": "2025-08-19T11:13:50Z",
-      "valid_to": null
-    },
-    {
-      "skill_id": "skill-c1ba60ce13586503",
-      "name": "Java",
-      "kind": "required",
-      "category_id": "language",
-      "category": "语言",
-      "proficiency": "expert",
-      "layer": "high",
-      "confidence": 0.95,
-      "sources": [
-        "jd-a199887680aef910",
-        "jd-a88821019329fdf2",
-        "jd-b28e9ac36fc4e4c9"
-      ],
-      "levels": [
-        "junior",
-        "mid",
-        "senior"
-      ],
-      "weight": 1.0,
-      "excerpt": "精通Python/Java/Go/Rust等至少一门语言",
-      "valid_from": "2025-08-19T09:27:32Z",
-      "valid_to": null
-    },
-    {
-      "skill_id": "skill-c7bdea3142254923",
-      "name": "Prompt Engineering",
-      "kind": "required",
-      "category_id": "domain",
-      "category": "领域知识",
-      "proficiency": "expert",
-      "layer": "high",
-      "confidence": 0.95,
-      "sources": [
-        "jd-a88821019329fdf2",
-        "jd-b28e9ac36fc4e4c9",
-        "jd-da11a9e6c57eef2a"
-      ],
-      "levels": [
-        "junior",
-        "mid",
-        "senior"
-      ],
-      "weight": 1.0,
-      "excerpt": "具有智能体开发和Prompt Engineering经验",
-      "valid_from": "2025-08-19T09:27:32Z",
-      "valid_to": null
-    },
-    {
-      "skill_id": "skill-279b44d2ab4b40c0",
-      "name": "Agents",
-      "kind": "bonus",
-      "category_id": "domain",
-      "category": "领域知识",
-      "proficiency": "aware",
-      "layer": "mid",
-      "confidence": 0.85,
-      "sources": [
-        "jd-8cee774c3708590e",
-        "jd-a88821019329fdf2"
-      ],
-      "levels": [
-        "junior",
-        "mid",
-        "senior"
-      ],
-      "weight": 1.0,
-      "excerpt": "善用复杂Agent协作模式设计系统与应用。",
-      "valid_from": "2025-08-19T11:13:50Z",
-      "valid_to": null
-    },
-    {
-      "skill_id": "skill-9513c60ab00ff4e3",
-      "name": "大语言模型应用开发",
-      "kind": "bonus",
-      "category_id": "domain",
-      "category": "领域知识",
-      "proficiency": "aware",
-      "layer": "high",
-      "confidence": 0.95,
-      "sources": [
-        "jd-8cee774c3708590e",
-        "jd-a199887680aef910",
-        "jd-a88821019329fdf2"
-      ],
-      "levels": [
-        "junior",
-        "mid",
-        "senior"
-      ],
-      "weight": 1.0,
-      "excerpt": "熟悉大模型及AI Agent平台架构，具备丰富的知识库管理、检索优化及RAG方案实施经验。",
-      "valid_from": "2025-08-19T11:13:50Z",
-      "valid_to": null
-    },
-    {
-      "skill_id": "skill-e8ddf1b78c8cd18a",
-      "name": "低代码/零代码Agent开发平台",
-      "kind": "required",
-      "category_id": "platform",
-      "category": "平台",
+      "category_id": "engineering",
+      "category": "工程",
       "proficiency": "able",
-      "layer": "mid",
+      "layer": "high",
       "confidence": 0.9,
       "sources": [
-        "jd-003025c54a283f19",
-        "jd-8cee774c3708590e"
+        "jd-1c69f87afdaf30a5",
+        "jd-33da778d5e153f75",
+        "jd-68ae76dcf6f16583",
+        "jd-6e75b29bf18bd9bb",
+        "jd-7f9943ca90021cee"
       ],
       "levels": [
         "junior",
@@ -408,8 +657,10 @@
         "senior"
       ],
       "weight": 1.0,
-      "excerpt": "对接RPA/低代码工具和其他企业级业务系统（如ERP、CRM）。",
-      "valid_from": "2025-08-19T11:13:50Z",
+      "excerpt": "具备自主决策、任务规划与工具调用能力",
+      "group_id": null,
+      "min_required": null,
+      "valid_from": "2026-05-12T05:46:41Z",
       "valid_to": null
     },
     {
@@ -420,13 +671,13 @@
       "category": "语言",
       "proficiency": "expert",
       "layer": "high",
-      "confidence": 0.95,
+      "confidence": 0.98,
       "sources": [
-        "jd-003025c54a283f19",
-        "jd-8cee774c3708590e",
-        "jd-a199887680aef910",
-        "jd-b28e9ac36fc4e4c9",
-        "jd-da11a9e6c57eef2a"
+        "jd-1c69f87afdaf30a5",
+        "jd-33da778d5e153f75",
+        "jd-68ae76dcf6f16583",
+        "jd-6e75b29bf18bd9bb",
+        "jd-7f9943ca90021cee"
       ],
       "levels": [
         "junior",
@@ -434,209 +685,310 @@
         "senior"
       ],
       "weight": 1.0,
-      "excerpt": "扎实的Python编程能力，能够独立完成代码设计、开发、测试与调优，并能合理嵌入Python代码模块于大型系统中。",
-      "valid_from": "2025-08-19T11:13:50Z",
-      "valid_to": null
-    },
-    {
-      "skill_id": "skill-260f3d5b40647ffe",
-      "name": "LangChain/LangGraph",
-      "kind": "required",
-      "category_id": "framework",
-      "category": "框架",
-      "proficiency": "able",
-      "layer": "high",
-      "confidence": 0.95,
-      "sources": [
-        "jd-a199887680aef910",
-        "jd-b28e9ac36fc4e4c9",
-        "jd-da11a9e6c57eef2a"
-      ],
-      "levels": [
-        "junior",
-        "mid",
-        "senior"
-      ],
-      "weight": 1.0,
-      "excerpt": "包括AutoGPT、LangChain、LangGraph等主流开发框架",
-      "valid_from": "2025-08-19T09:27:32Z",
+      "excerpt": "Python",
+      "group_id": "group-1bb7c93fd3b2",
+      "min_required": 1,
+      "valid_from": "2026-05-12T05:46:41Z",
       "valid_to": null
     }
   ],
   "requires_history": [
     {
-      "skill_id": "skill-636396f02b6571e4",
-      "name": "n8n",
-      "category_id": "framework",
-      "category": "框架",
-      "valid_from": "2025-08-18T18:23:03Z",
+      "skill_id": "skill-18885f27b5af9012",
+      "name": "Python",
+      "category_id": "language",
+      "category": "语言",
+      "valid_from": "2026-05-12T05:46:41Z",
       "valid_to": null,
-      "layer": "mid"
+      "layer": "high",
+      "retracted": false,
+      "curation_version": ""
     },
     {
-      "skill_id": "skill-4f5e698fecc870d2",
-      "name": "多模态数据处理",
+      "skill_id": "skill-f052723e7c66826d",
+      "name": "Agent系统",
+      "category_id": "engineering",
+      "category": "工程",
+      "valid_from": "2026-06-19T06:54:50Z",
+      "valid_to": null,
+      "layer": "mid",
+      "retracted": false,
+      "curation_version": ""
+    },
+    {
+      "skill_id": "skill-674900a77b798af1",
+      "name": "LLM",
       "category_id": "domain",
       "category": "领域知识",
-      "valid_from": "2025-08-19T11:13:50Z",
+      "valid_from": "2026-08-04T03:44:24Z",
       "valid_to": null,
-      "layer": "mid"
+      "layer": "high",
+      "retracted": false,
+      "curation_version": ""
     },
     {
-      "skill_id": "skill-5e360ac275cfcd4e",
-      "name": "PromptAppGPT",
+      "skill_id": "skill-053c22fb733f24bd",
+      "name": "AutoGen",
       "category_id": "framework",
       "category": "框架",
-      "valid_from": "2025-08-19T09:27:32Z",
+      "valid_from": "2026-05-12T05:46:41Z",
       "valid_to": null,
-      "layer": "mid"
+      "layer": "high",
+      "retracted": false,
+      "curation_version": ""
+    },
+    {
+      "skill_id": "skill-6df1bb18a59ab97d",
+      "name": "Skill",
+      "category_id": "domain",
+      "category": "领域知识",
+      "valid_from": "2026-06-19T06:54:50Z",
+      "valid_to": null,
+      "layer": "mid",
+      "retracted": false,
+      "curation_version": ""
+    },
+    {
+      "skill_id": "skill-b48c8be327b363ef",
+      "name": "AI Agent",
+      "category_id": "domain",
+      "category": "领域知识",
+      "valid_from": "2026-06-19T06:54:50Z",
+      "valid_to": null,
+      "layer": "mid",
+      "retracted": false,
+      "curation_version": ""
+    },
+    {
+      "skill_id": "skill-c98e118e0a43f078",
+      "name": "模型",
+      "category_id": "engineering",
+      "category": "工程",
+      "valid_from": "2026-08-04T03:44:24Z",
+      "valid_to": null,
+      "layer": "mid",
+      "retracted": false,
+      "curation_version": ""
+    },
+    {
+      "skill_id": "skill-c49fcee408958884",
+      "name": "Function Calling",
+      "category_id": "domain",
+      "category": "领域知识",
+      "valid_from": "2026-03-10T06:40:21Z",
+      "valid_to": null,
+      "layer": "mid",
+      "retracted": false,
+      "curation_version": ""
+    },
+    {
+      "skill_id": "skill-63c34d5ded165a69",
+      "name": "LangChain",
+      "category_id": "framework",
+      "category": "框架",
+      "valid_from": "2026-05-12T05:46:41Z",
+      "valid_to": null,
+      "layer": "high",
+      "retracted": false,
+      "curation_version": ""
+    },
+    {
+      "skill_id": "skill-ed0504f70a48ffe9",
+      "name": "TypeScript",
+      "category_id": "language",
+      "category": "语言",
+      "valid_from": "2026-03-10T06:40:21Z",
+      "valid_to": null,
+      "layer": "mid",
+      "retracted": false,
+      "curation_version": ""
+    },
+    {
+      "skill_id": "skill-d7ba2d72a14c98f0",
+      "name": "后端开发",
+      "category_id": "engineering",
+      "category": "工程",
+      "valid_from": "2026-03-10T06:40:21Z",
+      "valid_to": null,
+      "layer": "mid",
+      "retracted": false,
+      "curation_version": ""
+    },
+    {
+      "skill_id": "skill-16749dc881d981c2",
+      "name": "工程能力",
+      "category_id": "engineering",
+      "category": "工程",
+      "valid_from": "2026-05-12T05:46:41Z",
+      "valid_to": null,
+      "layer": "mid",
+      "retracted": false,
+      "curation_version": ""
+    },
+    {
+      "skill_id": "skill-11b39c93777e8f1f",
+      "name": "Agent",
+      "category_id": "domain",
+      "category": "领域知识",
+      "valid_from": "2026-05-12T05:46:41Z",
+      "valid_to": null,
+      "layer": "high",
+      "retracted": false,
+      "curation_version": ""
+    },
+    {
+      "skill_id": "skill-c3963aedaac6c83c",
+      "name": "Memory",
+      "category_id": null,
+      "category": null,
+      "valid_from": "2026-05-12T05:46:41Z",
+      "valid_to": null,
+      "layer": "high",
+      "retracted": false,
+      "curation_version": ""
+    },
+    {
+      "skill_id": "skill-74e35a87342ceb0a",
+      "name": "Agent技术",
+      "category_id": "domain",
+      "category": "领域知识",
+      "valid_from": "2026-01-05T09:09:53Z",
+      "valid_to": null,
+      "layer": "high",
+      "retracted": false,
+      "curation_version": ""
+    },
+    {
+      "skill_id": "skill-25d7abe5864ab04a",
+      "name": "大模型",
+      "category_id": "domain",
+      "category": "领域知识",
+      "valid_from": "2026-05-12T05:46:41Z",
+      "valid_to": null,
+      "layer": "mid",
+      "retracted": false,
+      "curation_version": ""
     },
     {
       "skill_id": "skill-6cc8519b91584e8b",
       "name": "Go",
       "category_id": "language",
       "category": "语言",
-      "valid_from": "2025-08-19T09:27:32Z",
+      "valid_from": "2026-01-05T09:09:53Z",
       "valid_to": null,
-      "layer": "mid"
+      "layer": "mid",
+      "retracted": false,
+      "curation_version": ""
     },
     {
-      "skill_id": "skill-05642da1523d47de",
-      "name": "ERP",
-      "category_id": "domain",
-      "category": "领域知识",
-      "valid_from": "2025-08-19T11:13:50Z",
+      "skill_id": "skill-a8ca3c13eb75866d",
+      "name": "工具调用",
+      "category_id": "engineering",
+      "category": "工程",
+      "valid_from": "2026-05-12T05:46:41Z",
       "valid_to": null,
-      "layer": "mid"
-    },
-    {
-      "skill_id": "skill-710eb4f4d7f72b0e",
-      "name": "Ubuntu",
-      "category_id": "platform",
-      "category": "平台",
-      "valid_from": "2025-08-19T09:27:32Z",
-      "valid_to": null,
-      "layer": "mid"
-    },
-    {
-      "skill_id": "skill-e6169e958b37ce86",
-      "name": "Docker",
-      "category_id": "platform",
-      "category": "平台",
-      "valid_from": "2025-08-18T18:23:03Z",
-      "valid_to": null,
-      "layer": "mid"
-    },
-    {
-      "skill_id": "skill-9ecf4f6e4dc71868",
-      "name": "RAG技术",
-      "category_id": "domain",
-      "category": "领域知识",
-      "valid_from": "2025-08-18T18:23:03Z",
-      "valid_to": null,
-      "layer": "mid"
-    },
-    {
-      "skill_id": "skill-0002ac79318121b8",
-      "name": "LLM技术理解",
-      "category_id": "domain",
-      "category": "领域知识",
-      "valid_from": "2025-08-18T18:23:03Z",
-      "valid_to": null,
-      "layer": "high"
-    },
-    {
-      "skill_id": "skill-c0955f7ef40c5d7a",
-      "name": "Agent流程编排",
-      "category_id": "framework",
-      "category": "框架",
-      "valid_from": "2025-08-19T11:13:50Z",
-      "valid_to": null,
-      "layer": "high"
-    },
-    {
-      "skill_id": "skill-c1ba60ce13586503",
-      "name": "Java",
-      "category_id": "language",
-      "category": "语言",
-      "valid_from": "2025-08-19T09:27:32Z",
-      "valid_to": null,
-      "layer": "high"
-    },
-    {
-      "skill_id": "skill-c7bdea3142254923",
-      "name": "Prompt Engineering",
-      "category_id": "domain",
-      "category": "领域知识",
-      "valid_from": "2025-08-19T09:27:32Z",
-      "valid_to": null,
-      "layer": "high"
-    },
-    {
-      "skill_id": "skill-279b44d2ab4b40c0",
-      "name": "Agents",
-      "category_id": "domain",
-      "category": "领域知识",
-      "valid_from": "2025-08-19T11:13:50Z",
-      "valid_to": null,
-      "layer": "mid"
-    },
-    {
-      "skill_id": "skill-9513c60ab00ff4e3",
-      "name": "大语言模型应用开发",
-      "category_id": "domain",
-      "category": "领域知识",
-      "valid_from": "2025-08-19T11:13:50Z",
-      "valid_to": null,
-      "layer": "high"
-    },
-    {
-      "skill_id": "skill-e8ddf1b78c8cd18a",
-      "name": "低代码/零代码Agent开发平台",
-      "category_id": "platform",
-      "category": "平台",
-      "valid_from": "2025-08-19T11:13:50Z",
-      "valid_to": null,
-      "layer": "mid"
-    },
-    {
-      "skill_id": "skill-18885f27b5af9012",
-      "name": "Python",
-      "category_id": "language",
-      "category": "语言",
-      "valid_from": "2025-08-19T11:13:50Z",
-      "valid_to": null,
-      "layer": "high"
-    },
-    {
-      "skill_id": "skill-260f3d5b40647ffe",
-      "name": "LangChain/LangGraph",
-      "category_id": "framework",
-      "category": "框架",
-      "valid_from": "2025-08-19T09:27:32Z",
-      "valid_to": null,
-      "layer": "high"
+      "layer": "high",
+      "retracted": false,
+      "curation_version": ""
     }
   ],
   "period_delta": {
     "added": [
       {
-        "skill_id": "skill-636396f02b6571e4",
-        "name": "n8n",
-        "category_id": "framework",
-        "category": "框架"
+        "skill_id": "skill-18885f27b5af9012",
+        "name": "Python",
+        "category_id": "language",
+        "category": "语言"
       },
       {
-        "skill_id": "skill-4f5e698fecc870d2",
-        "name": "多模态数据处理",
+        "skill_id": "skill-f052723e7c66826d",
+        "name": "Agent系统",
+        "category_id": "engineering",
+        "category": "工程"
+      },
+      {
+        "skill_id": "skill-674900a77b798af1",
+        "name": "LLM",
         "category_id": "domain",
         "category": "领域知识"
       },
       {
-        "skill_id": "skill-5e360ac275cfcd4e",
-        "name": "PromptAppGPT",
+        "skill_id": "skill-053c22fb733f24bd",
+        "name": "AutoGen",
         "category_id": "framework",
         "category": "框架"
+      },
+      {
+        "skill_id": "skill-6df1bb18a59ab97d",
+        "name": "Skill",
+        "category_id": "domain",
+        "category": "领域知识"
+      },
+      {
+        "skill_id": "skill-b48c8be327b363ef",
+        "name": "AI Agent",
+        "category_id": "domain",
+        "category": "领域知识"
+      },
+      {
+        "skill_id": "skill-c98e118e0a43f078",
+        "name": "模型",
+        "category_id": "engineering",
+        "category": "工程"
+      },
+      {
+        "skill_id": "skill-c49fcee408958884",
+        "name": "Function Calling",
+        "category_id": "domain",
+        "category": "领域知识"
+      },
+      {
+        "skill_id": "skill-63c34d5ded165a69",
+        "name": "LangChain",
+        "category_id": "framework",
+        "category": "框架"
+      },
+      {
+        "skill_id": "skill-ed0504f70a48ffe9",
+        "name": "TypeScript",
+        "category_id": "language",
+        "category": "语言"
+      },
+      {
+        "skill_id": "skill-d7ba2d72a14c98f0",
+        "name": "后端开发",
+        "category_id": "engineering",
+        "category": "工程"
+      },
+      {
+        "skill_id": "skill-16749dc881d981c2",
+        "name": "工程能力",
+        "category_id": "engineering",
+        "category": "工程"
+      },
+      {
+        "skill_id": "skill-11b39c93777e8f1f",
+        "name": "Agent",
+        "category_id": "domain",
+        "category": "领域知识"
+      },
+      {
+        "skill_id": "skill-c3963aedaac6c83c",
+        "name": "Memory",
+        "category_id": null,
+        "category": null
+      },
+      {
+        "skill_id": "skill-74e35a87342ceb0a",
+        "name": "Agent技术",
+        "category_id": "domain",
+        "category": "领域知识"
+      },
+      {
+        "skill_id": "skill-25d7abe5864ab04a",
+        "name": "大模型",
+        "category_id": "domain",
+        "category": "领域知识"
       },
       {
         "skill_id": "skill-6cc8519b91584e8b",
@@ -645,82 +997,10 @@
         "category": "语言"
       },
       {
-        "skill_id": "skill-05642da1523d47de",
-        "name": "ERP",
-        "category_id": "domain",
-        "category": "领域知识"
-      },
-      {
-        "skill_id": "skill-710eb4f4d7f72b0e",
-        "name": "Ubuntu",
-        "category_id": "platform",
-        "category": "平台"
-      },
-      {
-        "skill_id": "skill-e6169e958b37ce86",
-        "name": "Docker",
-        "category_id": "platform",
-        "category": "平台"
-      },
-      {
-        "skill_id": "skill-9ecf4f6e4dc71868",
-        "name": "RAG技术",
-        "category_id": "domain",
-        "category": "领域知识"
-      },
-      {
-        "skill_id": "skill-0002ac79318121b8",
-        "name": "LLM技术理解",
-        "category_id": "domain",
-        "category": "领域知识"
-      },
-      {
-        "skill_id": "skill-c0955f7ef40c5d7a",
-        "name": "Agent流程编排",
-        "category_id": "framework",
-        "category": "框架"
-      },
-      {
-        "skill_id": "skill-c1ba60ce13586503",
-        "name": "Java",
-        "category_id": "language",
-        "category": "语言"
-      },
-      {
-        "skill_id": "skill-c7bdea3142254923",
-        "name": "Prompt Engineering",
-        "category_id": "domain",
-        "category": "领域知识"
-      },
-      {
-        "skill_id": "skill-279b44d2ab4b40c0",
-        "name": "Agents",
-        "category_id": "domain",
-        "category": "领域知识"
-      },
-      {
-        "skill_id": "skill-9513c60ab00ff4e3",
-        "name": "大语言模型应用开发",
-        "category_id": "domain",
-        "category": "领域知识"
-      },
-      {
-        "skill_id": "skill-e8ddf1b78c8cd18a",
-        "name": "低代码/零代码Agent开发平台",
-        "category_id": "platform",
-        "category": "平台"
-      },
-      {
-        "skill_id": "skill-18885f27b5af9012",
-        "name": "Python",
-        "category_id": "language",
-        "category": "语言"
-      },
-      {
-        "skill_id": "skill-260f3d5b40647ffe",
-        "name": "LangChain/LangGraph",
-        "category_id": "framework",
-        "category": "框架"
+        "skill_id": "skill-a8ca3c13eb75866d",
+        "name": "工具调用",
+        "category_id": "engineering",
+        "category": "工程"
       }
     ],
     "expired": []
