@@ -19,6 +19,7 @@ const STEPS = [
   { key: "run", label: "生成对照" },
   { key: "report", label: "查看报告" },
 ] as const;
+const REPORT_VIEWS = [["conclusion", "结论"], ["locate", "定位"], ["action", "行动"], ["evidence", "依据"]] as const;
 const BAND_LEVEL: Record<string, number> = { 不匹配: 0, 有明显差距: 1, 基本匹配: 2, 高度匹配: 3 };
 const WATCHING_PREVIEW = 12;
 
@@ -248,7 +249,7 @@ export function DiagnoseForm() {
       setStep("report");
       router.replace(`/diagnose?session_id=${encodeURIComponent(sid)}&job_id=${encodeURIComponent(jid)}`, { scroll: false });
       if (body.groups?.explain) {
-        void fetch(`${API}/diagnose/simulate`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ session_id: sid, job_id: jid, assumed_skill_ids: [], watching_skill_ids: (body.groups.explain.watching || []).map((row: Named) => row.skill_id) }) }).then((response) => response.ok ? response.json() : null).then((value) => value && setSimulation(value));
+        void fetch(`${API}/diagnose/simulate`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ session_id: sid, job_id: jid, assumed_skill_ids: [], watching_skill_ids: (body.groups.explain.watching || []).map((row: Named) => row.skill_id) }) }).then((response) => response.ok ? response.json() : null).then((value) => value && setSimulation(value)).catch(() => null);
       }
     } catch (err) {
       if ((err as Error).name === "AbortError") return;
@@ -473,30 +474,29 @@ export function DiagnoseForm() {
 
   return (
     <main id="main" className="page dx" data-phase={phase} data-step={step}>
-      {phase !== "done" && (
-        <header className="dx-intro">
-          <div>
-            <span className="dx-kicker">职业迁移诊断</span>
-            <h1>用简历证据，找到更合适的岗位方向</h1>
-            <p>校对系统识别结果，再从当前可诊断岗位中选择一到两个方向对照。</p>
-          </div>
-          <div className="dx-intro-progress" aria-label={`当前为第 ${stepIndex + 1} 步，共 5 步`}>
-            <strong>{String(stepIndex + 1).padStart(2, "0")}</strong>
-            <span>/ 05</span>
-          </div>
-        </header>
-      )}
+      <header className="dx-head">
+        <h1>简历诊断</h1>
+        <dl className="dx-readout">
+          <div><dt>可诊断岗位</dt><dd>{jobs.length || "—"}</dd></div>
+          <div><dt>单次对照</dt><dd>≤ 2 岗</dd></div>
+          <div><dt>会话保留</dt><dd>60 分钟</dd></div>
+        </dl>
+        <span className="dx-head-note" aria-label={`当前为第 ${stepIndex + 1} 步，共 5 步`}>
+          步骤 <b>{stepIndex + 1}</b> / 5 · {STEPS[stepIndex].label}
+        </span>
+      </header>
 
       <ol className="dx-steps" aria-label="诊断步骤">
         {STEPS.map((item, index) => {
           const state = index < stepIndex ? "done" : index === stepIndex ? "active" : "todo";
           const clickable = canGoTo(index);
+          const num = String(index + 1).padStart(2, "0");
           return (
             <li key={item.key} data-state={state} aria-current={state === "active" ? "step" : undefined}>
               {clickable ? (
-                <button type="button" onClick={() => goToStep(item.key)}><i>{index + 1}</i><span className="dx-step-label">{item.label}</span></button>
+                <button type="button" onClick={() => goToStep(item.key)}><i>{num}</i><span className="dx-step-label">{item.label}</span></button>
               ) : (
-                <span><i>{index + 1}</i><span className="dx-step-label">{item.label}</span></span>
+                <span><i>{num}</i><span className="dx-step-label">{item.label}</span></span>
               )}
             </li>
           );
@@ -507,8 +507,7 @@ export function DiagnoseForm() {
         <form className="dx-card" onSubmit={onSubmit} aria-busy={busy || phase === "run"}>
           <header className="dx-card-head">
             <div>
-              <span className="dx-stage-label">步骤 {stepIndex + 1} / 5</span>
-              <h1>{step === "upload" ? "上传简历" : step === "correct" ? "校对解析结果" : step === "choose" ? "选择对照岗位" : "正在生成对照"}</h1>
+              <h2>{step === "upload" ? "上传简历" : step === "correct" ? "校对解析结果" : step === "choose" ? "选择对照岗位" : "正在生成对照"}</h2>
               <p className="dx-sub">
                 {step === "upload" && "支持 PDF 与 docx。只发送提取文本，不保存原文件，会话保留一小时。"}
                 {step === "correct" && "确认角色、年限、学历、技能和证据级。只保留简历原文能支持的内容。"}
@@ -523,7 +522,7 @@ export function DiagnoseForm() {
                 <div><dt>补充</dt><dd>{userAdded.length}</dd></div>
               </dl>
             )}
-            {step === "choose" && <span className="dx-counter" aria-live="polite">已选 {selectedJobIds.length}/2</span>}
+            {step === "choose" && <span className="dx-counter" aria-live="polite">已选 <b>{selectedJobIds.length}</b> / 2</span>}
           </header>
 
           {step === "upload" && (
@@ -561,7 +560,7 @@ export function DiagnoseForm() {
           {step === "correct" && parsed && (
             <div className="dx-body">
               <section className="dx-section">
-                <h2>基本信息</h2>
+                <h3>基本信息</h3>
                 <div className="dx-grid-3">
                   <Field label="当前角色"><input value={parsed.profile?.role || ""} onChange={(event) => setParsed((current) => current ? { ...current, profile: { ...(current.profile || {}), role: event.target.value } } : current)} placeholder="未标注" /></Field>
                   <Field label="工作年限"><input value={parsed.profile?.experience || ""} onChange={(event) => setParsed((current) => current ? { ...current, profile: { ...(current.profile || {}), experience: event.target.value } } : current)} placeholder="未标注" /></Field>
@@ -570,7 +569,7 @@ export function DiagnoseForm() {
               </section>
 
               <section className="dx-section" aria-label="修改技能">
-                <h2>已识别技能 <small>{parsed.skills?.length || 0} 项</small></h2>
+                <h3>已识别技能 <small>{parsed.skills?.length || 0} 项</small></h3>
                 {(parsed.skills || []).length === 0 ? <p className="dx-empty">未从简历中识别出技能，可在下方补充。</p> : (
                   <ul className="dx-skill-list">
                     {(parsed.skills || []).map((skill, index) => (
@@ -602,7 +601,7 @@ export function DiagnoseForm() {
               </section>
 
               <section className="dx-section">
-                <h2>证据级校对 <small>{parsed.evidence_fragments?.length || 0} 条</small></h2>
+                <h3>证据级校对 <small>{parsed.evidence_fragments?.length || 0} 条</small></h3>
                 {(parsed.evidence_fragments || []).length === 0 ? <p className="dx-empty">未提取到证据片段。带明确结果的经历会在报告中单独标出。</p> : (
                   <ul className="dx-evidence-list">
                     {(parsed.evidence_fragments || []).map((fragment, index) => (
@@ -624,7 +623,7 @@ export function DiagnoseForm() {
           {step === "choose" && (
             <div className="dx-body">
               <section className="dx-section">
-                <h2>推荐岗位</h2>
+                <h3>推荐岗位</h3>
                 {recommendations.length === 0 ? <p className="dx-empty">暂无推荐，请在下方直接选择岗位。</p> : (
                   <div className="dx-recs">
                     {recommendations.map((item) => {
@@ -643,7 +642,7 @@ export function DiagnoseForm() {
                 )}
               </section>
               <section className="dx-section">
-                <h2>其他岗位</h2>
+                <h3>其他岗位</h3>
                 <div className="dx-inline">
                   <select aria-label="搜索或改选岗位" value={jobId} onChange={(event) => setJobId(event.target.value)}>
                     {jobs.map((job) => <option key={job.id} value={job.id}>{job.name}</option>)}
@@ -663,9 +662,10 @@ export function DiagnoseForm() {
           )}
 
           {step === "run" && (
-            <div className="dx-run-state">
-              <span className="dx-run-mark" aria-hidden="true" />
-              <ol className="dx-ticker" role="status" aria-live="polite">
+            <div className="dx-run-state" role="status" aria-live="polite">
+              <p className="dx-run-title">正在生成对照<span className="dx-ellipsis" aria-hidden="true" /></p>
+              <span className="dx-meter" aria-hidden="true">{TICKER.map((line, i) => <i key={line} className={i <= tick ? "on" : undefined} />)}</span>
+              <ol className="dx-ticker">
                 {TICKER.map((line, i) => (
                   <li key={line} data-state={i < tick ? "done" : i === tick ? "active" : "todo"}>{line}</li>
                 ))}
@@ -694,17 +694,13 @@ export function DiagnoseForm() {
       {phase === "done" && !report && (
         <section className="dx-card" role="status" aria-live="polite">
           <div className="dx-run-state">
-            {!error && <span className="dx-run-mark" aria-hidden="true" />}
-            <div>
-              <span className="dx-stage-label">步骤 5 / 5</span>
-              <h1>恢复诊断报告</h1>
-              <p className="dx-sub">正在读取当前会话中的报告，不会重新解析简历。</p>
-              {error && (
-                <button type="button" className="dx-btn" onClick={() => void runDiagnose(sessionId, jobId, true)}>
-                  重新读取
-                </button>
-              )}
-            </div>
+            <p className="dx-run-title">{error ? "报告读取失败" : <>正在恢复诊断报告<span className="dx-ellipsis" aria-hidden="true" /></>}</p>
+            <p className="dx-sub">读取当前会话中的报告，不会重新解析简历。</p>
+            {error && (
+              <button type="button" className="dx-btn" onClick={() => void runDiagnose(sessionId, jobId, true)}>
+                重新读取
+              </button>
+            )}
           </div>
           {error && <p className="dx-error" role="alert">{error}</p>}
         </section>
@@ -715,7 +711,7 @@ export function DiagnoseForm() {
           <header className="dx-bar">
             <div className="dx-bar-title">
               <span className="dx-eyebrow">{report.direction ? "双岗位对照" : "对照岗位"}</span>
-              <h1>{report.direction ? (report.jobs || []).map((item) => item.name).join(" · ") : jobName(jobId)}</h1>
+              <h2>{report.direction ? (report.jobs || []).map((item) => item.name).join(" · ") : jobName(jobId)}</h2>
               {!report.direction && <BandBadge band={report.groups.judge.band} size="lg" />}
             </div>
             {!report.direction && (
@@ -763,8 +759,8 @@ export function DiagnoseForm() {
             <div className="dx-split">
               <aside className="dx-rail">
                 <nav className="dx-rail-nav" aria-label="报告视图">
-                  {([["conclusion", "结论"], ["locate", "定位"], ["action", "行动"], ["evidence", "依据"]] as const).map(([view, label]) => (
-                    <button key={view} type="button" aria-pressed={reportView === view} onClick={() => jumpReport(view)}>{label}</button>
+                  {REPORT_VIEWS.map(([view, label], index) => (
+                    <button key={view} type="button" aria-pressed={reportView === view} onClick={() => jumpReport(view)}><span className="mono">{String(index + 1).padStart(2, "0")}</span>{label}</button>
                   ))}
                 </nav>
                 <details className="dx-resume">
@@ -775,7 +771,7 @@ export function DiagnoseForm() {
 
               <div className="dx-content">
                 <section id="report-conclusion" className="dx-panel">
-                  <h2>结论</h2>
+                  <h2><span className="mono">01</span>结论</h2>
                   <p className="dx-verdict">{report.groups.judge.summary}</p>
                   <div className="dx-metrics">
                     <div className="dx-metric"><span>档位</span><strong><BandBadge band={report.groups.judge.band} /></strong></div>
@@ -822,7 +818,7 @@ export function DiagnoseForm() {
                 </section>
 
                 <section id="report-locate" className="dx-panel">
-                  <h2>定位</h2>
+                  <h2><span className="mono">02</span>定位</h2>
                   <div className="dx-kv-row">
                     <span className="dx-kv-key">相邻岗位</span>
                     <div className="dx-seg" role="group" aria-label="切换对照岗位">
@@ -835,7 +831,7 @@ export function DiagnoseForm() {
                 </section>
 
                 <section id="report-action" className="dx-panel">
-                  <h2>行动</h2>
+                  <h2><span className="mono">03</span>行动</h2>
                   {report.groups.act.path.length > 0 ? (
                     <>
                       <div className="dx-sim" aria-labelledby="simulator-title">
@@ -877,7 +873,7 @@ export function DiagnoseForm() {
                 </section>
 
                 <section id="report-evidence" className="dx-panel">
-                  <h2>依据</h2>
+                  <h2><span className="mono">04</span>依据</h2>
                   <div className="dx-table-wrap">
                     <table className="dx-table dx-ledger">
                       <thead>
