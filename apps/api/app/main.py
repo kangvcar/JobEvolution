@@ -9,6 +9,7 @@ import logging
 import hashlib
 import json
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from pathlib import Path
 
 from pydantic import BaseModel
@@ -488,6 +489,118 @@ def discover_one(job_id: str):
 @app.get("/feed")
 def feed():
     return graph.build_feed()
+
+
+_PULSE_INTAKE = 40
+
+
+def _pulse_collect(data_dir: Path) -> dict:
+    # 采集器状态来自 collect.checkpoint.json；锁文件说明是否正在跑。只暴露门户名与计数。
+    from app.collectors.ats import checkpoint_path, collect_busy, load_portals
+
+    names = {row.get("key"): row.get("name") or row.get("key") for row in load_portals(data_dir)}
+    try:
+        state = json.loads(checkpoint_path(data_dir).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        state = {}
+    if not isinstance(state, dict):
+        state = {}
+    portals = state.get("portals") if isinstance(state.get("portals"), dict) else {}
+    stats = [row.get("stats") or {} for row in portals.values() if isinstance(row, dict)]
+    done = sum(1 for row in portals.values() if isinstance(row, dict) and row.get("status") == "done")
+    failed = sum(1 for row in portals.values() if isinstance(row, dict) and row.get("status") == "failed")
+    try:
+        running = collect_busy(data_dir)
+    except OSError:
+        running = state.get("status") == "running"
+    current = [names.get(key, key) for key in (state.get("current") or "").split(",") if key]
+    return {
+        "running": running,
+        "status": state.get("status") or "idle",
+        "started_at": state.get("started_at") or "",
+        "finished_at": state.get("finished_at") or "",
+        "sources": len(portals) or sum(1 for row in load_portals(data_dir) if row.get("enabled")),
+        "done": done,
+        "failed": failed,
+        "read": sum(int(row.get("read") or 0) for row in stats),
+        "ingested": sum(int(row.get("ingested") or 0) for row in stats),
+        "current": current[:6],
+    }
+
+
+def _pulse_intake() -> list[dict]:
+    # jobs:events 里的公开可见部分：JD 入库、要求提案入审、抽取被拦、采集起止。
+    # 逐页倒着读，直到凑够条数；不暴露路径、指纹、证据 id 与门户地址。
+    from app.collectors import sink
+
+    try:
+        redis = sink.connect_redis()
+    except Exception:
+        return []
+    out: list[dict] = []
+    cursor = "+"
+    for _ in range(8):
+        try:
+            rows = redis.xrevrange(sink.STREAM_KEY, cursor, "-", count=500)
+        except Exception:
+            break
+        if not rows:
+            break
+        for event_id, fields in rows:
+            row = _pulse_row(str(event_id), fields)
+            if row:
+                out.append(row)
+            if len(out) >= _PULSE_INTAKE:
+                return out
+        last = str(rows[-1][0])
+        try:
+            ms, seq = last.split("-")
+            cursor = f"{ms}-{int(seq) - 1}" if int(seq) > 0 else f"{int(ms) - 1}-18446744073709551615"
+        except ValueError:
+            break
+    return out
+
+
+def _pulse_row(event_id: str, fields: dict) -> dict | None:
+    kind = fields.get("type") or ""
+    try:
+        payload = json.loads(fields.get("payload") or "{}")
+    except json.JSONDecodeError:
+        payload = {}
+    if not isinstance(payload, dict):
+        payload = {}
+    try:
+        ms = int(event_id.split("-")[0])
+    except ValueError:
+        ms = 0
+    at = datetime.fromtimestamp(ms / 1000, tz=timezone.utc).isoformat() if ms else ""
+    if kind == "jd_ingested":
+        return {"id": event_id, "at": at, "kind": "ingest", "company": payload.get("company") or "", "title": payload.get("title") or "", "domain": payload.get("domain") or ""}
+    if kind == "review_enqueued":
+        inner = payload.get("kind") or ""
+        if inner == "requires_add":
+            return {"id": event_id, "at": at, "kind": "propose", "job": payload.get("job_name") or "", "skill": payload.get("skill_name") or "", "edge": payload.get("kind_edge") or "", "sources": int(payload.get("independent_source_count") or 0), "domain": payload.get("domain") or ""}
+        if inner == "skill_merge_proposal":
+            return {"id": event_id, "at": at, "kind": "merge", "skill": payload.get("proposed_name") or ""}
+        if inner == "extract_failed":
+            return {"id": event_id, "at": at, "kind": "barred"}
+        return None
+    if kind == "collect_started":
+        return {"id": event_id, "at": at, "kind": "collect_start", "sources": len(payload.get("portals") or [])}
+    if kind == "collect_finished":
+        portals = payload.get("portals") or []
+        return {"id": event_id, "at": at, "kind": "collect_done", "sources": len(portals), "read": sum(int(p.get("read") or 0) for p in portals if isinstance(p, dict)), "ingested": sum(int(p.get("ingested") or 0) for p in portals if isinstance(p, dict))}
+    return None
+
+
+@app.get("/pulse")
+def pulse():
+    """公开的管线脉搏：采集器状态 + 最近的入库 / 入审 / 拦截事件。首页轮询用。"""
+    return {
+        "server_time": datetime.now(tz=timezone.utc).isoformat(),
+        "collect": _pulse_collect(_data_dir()),
+        "intake": _pulse_intake(),
+    }
 
 
 class ApproveBody(BaseModel):

@@ -394,12 +394,15 @@ tr:not(.hm-domain-first) .hm-job-name { margin-left: 74px; }
 }
 
 /* ---- 本周期在变什么 ---- */
+/* 五格：第一行 管线状态(2) + 最近入库(4)，第二行三格各占 2。 */
 .hm-pulse {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 16px;
   align-items: stretch;
 }
+.hm-pulse > .hm-panel { grid-column: span 2; }
+.hm-pulse > .hm-intake-panel { grid-column: span 4; }
 .hm-heat {
   list-style: none;
   margin: 0;
@@ -468,22 +471,156 @@ tr:not(.hm-domain-first) .hm-job-name { margin-left: 74px; }
   line-height: 1.6;
   flex: 1;
 }
-.hm-pulse .ev-list {
-  grid-template-columns: 1fr;
-  padding: 6px 14px 8px;
+
+/* ---- 管线状态 ---- */
+.hm-collect-status {
+  padding: 10px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
-.hm-pulse .ev {
-  height: auto;
-  min-height: 34px;
-  padding: 6px 0;
-  grid-template-columns: 40px 1fr auto;
-  align-items: start;
+.hm-collect-status dl {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin: 0;
 }
-.hm-pulse .ev .mono { line-height: 1.5; }
-.hm-pulse .ev-text { white-space: normal; line-height: 1.5; }
-.hm-pulse .ev-names { display: none; }
-.hm-pulse .ev:last-child { border-bottom: 0; }
-.hm-pulse .hint { padding: 14px; margin: 0; }
+.hm-collect-status dl > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.hm-collect-status dt {
+  font-size: 11px;
+  color: var(--color-mute);
+  font-weight: 400;
+}
+.hm-collect-status dd {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ink);
+}
+.hm-current-portals {
+  font-size: 12px;
+  color: var(--color-body);
+  padding: 6px 8px;
+  background: var(--color-card);
+  border-radius: 3px;
+  margin: 0;
+}
+.hm-collect-time {
+  font-size: 11.5px;
+  margin: 0;
+}
+.hm-panel-tag[data-live] {
+  color: var(--color-rise);
+  font-weight: 600;
+}
+
+/* ---- 流水带（跑马灯） ---- */
+.hm-tape {
+  display: flex;
+  align-items: stretch;
+  height: 34px;
+  border: 1px solid var(--color-rule);
+  border-radius: 4px;
+  background: var(--color-canvas);
+  overflow: hidden;
+  margin-top: -4px;
+}
+.hm-tape-label {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border-right: 1px solid var(--color-rule);
+  background: var(--color-surface);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--color-ink);
+}
+.hm-clock { font-weight: 500; color: var(--color-mute); letter-spacing: 0; }
+.hm-tape-viewport {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent);
+}
+.hm-tape-track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+}
+.hm-tape-half { display: flex; flex: 0 0 auto; }
+.hm-tape-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 22px 0 0;
+  margin-right: 22px;
+  border-right: 1px solid var(--color-rule);
+  font-size: 12.5px;
+  white-space: nowrap;
+  color: var(--color-body);
+}
+.hm-tape-item .mono { font-size: 11.5px; }
+.hm-tape-empty { padding: 0 14px; font-size: 12px; }
+.hm-kind {
+  font-size: 11px;
+  color: var(--color-mute);
+  border: 1px solid var(--color-rule);
+  border-radius: 3px;
+  padding: 0 5px;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+/* 实时点：缓慢呼吸，只在 tag 与流水带上出现 */
+.hm-live-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-ink);
+  animation: hm-breathe 1.8s ease-in-out infinite;
+}
+.hm-tag-live { display: inline-flex; align-items: center; gap: 6px; }
+@keyframes hm-breathe { 50% { opacity: 0.25; } }
+
+/* ---- 滚动列表（最近入库 / 最近演化事件） ---- */
+.hm-rot {
+  overflow: hidden;
+  margin: 8px 14px 10px;
+  -webkit-mask-image: linear-gradient(180deg, #000 82%, transparent);
+  mask-image: linear-gradient(180deg, #000 82%, transparent);
+}
+.hm-rot ul { list-style: none; margin: 0; padding: 0; will-change: transform; }
+.hm-rot li {
+  display: grid;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+  color: var(--color-body);
+  border-bottom: 1px solid var(--color-rule);
+  min-width: 0;
+}
+.hm-rot .mono { font-size: 11.5px; }
+.hm-rot-text {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hm-intake li { grid-template-columns: 62px auto minmax(0, 1fr); }
+.hm-events li { grid-template-columns: 40px minmax(0, 1fr) auto; }
+.hm-intake-panel .hm-empty-note { min-height: 100px; }
 
 /* ---- 为什么可信 ---- */
 .hm-trust {
@@ -532,7 +669,9 @@ tr:not(.hm-domain-first) .hm-job-name { margin-left: 74px; }
   .hm-hero { grid-template-columns: 1fr; gap: 24px; padding-top: 32px; }
   .hm-readout { align-self: stretch; }
   .hm-body { grid-template-columns: 1fr; }
-  .hm-pulse { grid-template-columns: 1fr; }
+  .hm-pulse { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hm-pulse > .hm-panel { grid-column: span 1; }
+  .hm-pulse > .hm-intake-panel { grid-column: span 2; }
   .hm-trust { grid-template-columns: 1fr; }
   .hm-trust > div + div { border-left: 0; border-top: 1px solid var(--color-rule); }
 }
@@ -541,4 +680,7 @@ tr:not(.hm-domain-first) .hm-job-name { margin-left: 74px; }
   .hm-domain { flex-basis: 52px; }
   tr:not(.hm-domain-first) .hm-job-name { margin-left: 62px; }
   .hm-actions-note { width: 100%; margin-left: 0; }
+  .hm-pulse { grid-template-columns: 1fr; }
+  .hm-pulse > .hm-panel, .hm-pulse > .hm-intake-panel { grid-column: span 1; }
+  .hm-tape-label .hm-clock { display: none; }
 }
