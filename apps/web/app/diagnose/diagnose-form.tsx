@@ -83,6 +83,17 @@ type Simulation = {
   market_signal_radar?: { skill_id: string; name: string; sample_occurrence_ratio: number; company_count: number; formal_requirement_reason: string }[];
 };
 
+const REPORT_NAV_CACHE_MS = 5 * 60_000;
+const reportNavCache = new Map<string, { report: Report; expiresAt: number }>();
+
+function cachedReport(sessionId: string, jobId: string) {
+  const key = `${sessionId}:${jobId}`;
+  const cached = reportNavCache.get(key);
+  if (cached && cached.expiresAt > Date.now()) return cached.report;
+  reportNavCache.delete(key);
+  return null;
+}
+
 function BandBadge({ band, size }: { band: string; size?: "lg" }) {
   return <span className="dx-band" data-level={BAND_LEVEL[band] ?? 0} data-size={size}>{band}</span>;
 }
@@ -100,17 +111,20 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 export function DiagnoseForm() {
   const params = useSearchParams();
   const router = useRouter();
+  const initialSessionId = params.get("session_id") || "";
+  const initialJobId = params.get("job_id") || params.get("job") || "";
+  const initialReport = cachedReport(initialSessionId, initialJobId);
   const [jobs, setJobs] = useState<Job[]>([]);
-  const [jobId, setJobId] = useState("");
+  const [jobId, setJobId] = useState(initialJobId);
   const [file, setFile] = useState<File | null>(null);
-  const [phase, setPhase] = useState<"idle" | "run" | "done">("idle");
-  const [step, setStep] = useState<Step>("upload");
+  const [phase, setPhase] = useState<"idle" | "run" | "done">(initialReport ? "done" : "idle");
+  const [step, setStep] = useState<Step>(initialReport ? "report" : "upload");
   const [tick, setTick] = useState(0);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [preview, setPreview] = useState("");
-  const [sessionId, setSessionId] = useState("");
-  const [report, setReport] = useState<Report | null>(null);
+  const [preview, setPreview] = useState(initialReport?.preview_text || "");
+  const [sessionId, setSessionId] = useState(initialSessionId);
+  const [report, setReport] = useState<Report | null>(initialReport);
   const [over, setOver] = useState(false);
   const [copied, setCopied] = useState<"" | "link" | "actions">("");
   const [parsed, setParsed] = useState<{ skills?: Named[]; profile?: Record<string, string>; education_items?: { text: string }[]; experiences?: Record<string, string>[]; projects?: Record<string, string>[]; evidence_fragments?: EvidenceFragment[] } | null>(null);
@@ -145,7 +159,16 @@ export function DiagnoseForm() {
     if (sid && jid) {
       setSessionId(sid);
       setJobId(jid);
-      void runDiagnose(sid, jid);
+      const cached = cachedReport(sid, jid);
+      if (cached) {
+        setReport(cached);
+        setPhase("done");
+        setStep("report");
+        return;
+      }
+      setPhase("done");
+      setStep("report");
+      void runDiagnose(sid, jid, true);
     }
     return () => abort.current?.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -215,6 +238,8 @@ export function DiagnoseForm() {
         throw new Error(body.error || "诊断失败");
       }
       setReport(body);
+      reportNavCache.set(`${sid}:${jid}`, { report: body, expiresAt: Date.now() + REPORT_NAV_CACHE_MS });
+      window.setTimeout(() => cachedReport(sid, jid), REPORT_NAV_CACHE_MS);
       setSimulation(null);
       setAssumedSkills([]);
       setShowAllWatching(false);
@@ -318,6 +343,7 @@ export function DiagnoseForm() {
 
   function pick(next: File | null) {
     abort.current?.abort();
+    reportNavCache.delete(`${sessionId}:${jobId}`);
     router.replace("/diagnose", { scroll: false });
     setFile(next);
     setSessionId("");
@@ -663,6 +689,25 @@ export function DiagnoseForm() {
             </footer>
           )}
         </form>
+      )}
+
+      {phase === "done" && !report && (
+        <section className="dx-card" role="status" aria-live="polite">
+          <div className="dx-run-state">
+            {!error && <span className="dx-run-mark" aria-hidden="true" />}
+            <div>
+              <span className="dx-stage-label">步骤 5 / 5</span>
+              <h1>恢复诊断报告</h1>
+              <p className="dx-sub">正在读取当前会话中的报告，不会重新解析简历。</p>
+              {error && (
+                <button type="button" className="dx-btn" onClick={() => void runDiagnose(sessionId, jobId, true)}>
+                  重新读取
+                </button>
+              )}
+            </div>
+          </div>
+          {error && <p className="dx-error" role="alert">{error}</p>}
+        </section>
       )}
 
       {phase === "done" && report && (
