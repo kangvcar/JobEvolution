@@ -1,7 +1,7 @@
 {
   "schema_version": "jobevolution.snapshot.v1",
-  "git_commit": "a5db8fe302dbc19d5a618d10e12171e69c49ab70",
-  "evidence_hash": "a14abc781829f09604cba89dd363836408b1209f742e67a134d0ac9455c88b13",
+  "git_commit": "e94ab754d19444a01846a997f1dd75cd3328ba8e",
+  "evidence_hash": "81c05e5c257a7726918f277771fc58f81484c6b9dd1200ec066b69f70cdbd8d0",
   "jobs": [
     {
       "name": "大模型应用工程师",
@@ -41034,6 +41034,38 @@
       "id": "jd-a5e4251e0c461339",
       "source": "ats",
       "simhash": "8899c1009e14ab56"
+    },
+    {
+      "observed_at": "2026-09-04T07:42:37",
+      "path": "data/official-only/jd/jd-456eafae230a6840.json",
+      "company": "小鹏汽车",
+      "id": "jd-456eafae230a6840",
+      "source": "ats",
+      "simhash": "0889c98ffae6856f"
+    },
+    {
+      "observed_at": "2026-09-04T03:55:45",
+      "path": "data/official-only/jd/jd-e80242c21a5ebe20.json",
+      "company": "智元AGIBOT",
+      "id": "jd-e80242c21a5ebe20",
+      "source": "ats",
+      "simhash": "0eae811dfdb04f67"
+    },
+    {
+      "observed_at": "2026-09-04T04:00:08",
+      "path": "data/official-only/jd/jd-ae600e98f289c709.json",
+      "company": "智元AGIBOT",
+      "id": "jd-ae600e98f289c709",
+      "source": "ats",
+      "simhash": "155f808fbe0de169"
+    },
+    {
+      "observed_at": "2026-09-04T08:06:22",
+      "path": "data/official-only/jd/jd-297d625902b1e406.json",
+      "company": "小米",
+      "id": "jd-297d625902b1e406",
+      "source": "ats",
+      "simhash": "0ab3e0a07920410c"
     }
   ],
   "events": [
