@@ -65,6 +65,17 @@ def test_empty_pdf_rejected():
         assert "扫描" in exc.detail or "文本" in exc.detail
 
 
+def test_skills_from_text_skips_generic_short_chinese_names():
+    index = [
+        {"id": "s1", "name": "FastAPI"},
+        {"id": "s2", "name": "数据"},
+        {"id": "s3", "name": "开发"},
+        {"id": "s4", "name": "意图识别"},
+    ]
+    found = skills_from_text("使用 FastAPI 做意图识别，负责数据开发", index)
+    assert {row["skill_id"] for row in found} == {"s1", "s4"}
+
+
 def test_skills_from_text_aligns_names():
     index = [
         {"id": "s1", "name": "FastAPI", "synonyms": ["starlette api"]},
@@ -76,6 +87,64 @@ def test_skills_from_text_aligns_names():
     assert {row["skill_id"] for row in found_syn} == {"s1"}
     index_c = [{"id": "c", "name": "C"}, {"id": "s1", "name": "FastAPI"}]
     assert {row["skill_id"] for row in skills_from_text("LangChain FastAPI", index_c)} == {"s1"}
+
+
+def test_parse_resume_merges_vocab_hits_when_model_returns_subset():
+    index = [
+        {"id": "s1", "name": "FastAPI", "synonyms": [], "embedding": embed(["FastAPI"])[0]},
+        {"id": "s2", "name": "Python", "synonyms": [], "embedding": embed(["Python"])[0]},
+        {"id": "s3", "name": "Neo4j", "synonyms": [], "embedding": embed(["Neo4j"])[0]},
+    ]
+
+    def subset(messages):
+        if "experience" in messages[0]["content"]:
+            return {"experience": "3年", "education": "本科"}
+        return {"skills": [{"name": "FastAPI"}]}
+
+    out = parse_resume("生产环境用 FastAPI、Python 和 Neo4j 做过接口", index, complete_json=subset)
+    assert {row["skill_id"] for row in out["skills"]} == {"s1", "s2", "s3"}
+
+
+def test_parse_resume_splits_composite_skill_names():
+    index = [
+        {"id": "s1", "name": "LangChain", "synonyms": [], "embedding": embed(["LangChain"])[0]},
+        {"id": "s2", "name": "LangGraph", "synonyms": [], "embedding": embed(["LangGraph"])[0]},
+    ]
+
+    def composite(messages):
+        if "experience" in messages[0]["content"]:
+            return {"experience": "2年", "education": "本科"}
+        return {"skills": [{"name": "LangChain/LangGraph", "excerpt": "基于 LangChain/LangGraph 做编排"}]}
+
+    out = parse_resume("基于 LangChain/LangGraph 做编排", index, complete_json=composite)
+    assert {row["skill_id"] for row in out["skills"]} == {"s1", "s2"}
+
+
+def test_evidence_fragment_prefers_result_sentence():
+    index = [{"id": "s1", "name": "FastAPI", "synonyms": [], "embedding": embed(["FastAPI"])[0]}]
+    out = parse_resume(
+        "技能：FastAPI\n负责 FastAPI 接口，延迟降低 30%",
+        index,
+        complete_json=lambda *_: {"skills": [{"name": "FastAPI"}]},
+    )
+    assert out["evidence_fragments"][0]["evidence_level"] == "result"
+    assert "30%" in out["evidence_fragments"][0]["text"]
+
+
+def test_docx_tables_are_extracted():
+    import io
+
+    from docx import Document
+
+    document = Document()
+    document.add_paragraph("简历正文")
+    table = document.add_table(rows=1, cols=2)
+    table.cell(0, 0).text = "框架"
+    table.cell(0, 1).text = "FastAPI"
+    buffer = io.BytesIO()
+    document.save(buffer)
+    text = extract_text(buffer.getvalue(), "cv.docx")
+    assert "FastAPI" in text
 
 
 def test_parse_resume_aligns_and_keeps_unmarked_proficiency():
@@ -108,6 +177,7 @@ def test_resume_evidence_levels_only_claim_visible_facts():
     assert evidence_level("FastAPI", "FastAPI") == "mention"
     assert evidence_level("使用 FastAPI 开发接口", "FastAPI") == "use"
     assert evidence_level("负责 FastAPI 接口，延迟降低 30%", "FastAPI") == "result"
+    assert evidence_level("工具调用错误率由 8.6% 降至 1.9%", "工具调用") == "result"
 
 
 def test_parse_resume_reads_explicit_info_without_model():

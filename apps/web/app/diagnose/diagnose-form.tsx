@@ -36,7 +36,8 @@ type Report = {
   preview_text?: string;
   band: string;
   direction?: string;
-  jobs?: { job_id: string; name: string; band: string; required_coverage?: { covered: number; total: number }; shift_set?: Named[]; minimum_shift_skill_count?: number; transferable_engineering?: number; job_specific_experience?: number; job_specific_evidence?: number; experience_education_risk?: boolean }[];
+  explanation?: string;
+  jobs?: { job_id: string; name: string; band: string; required_coverage?: { covered: number; total: number }; shift_set?: Named[]; minimum_shift_skill_count?: number; transferable_engineering?: number; job_specific_experience?: number; job_specific_evidence?: number; experience_education_risk?: boolean; summary?: string; covered_names?: string[]; gap_names?: string[] }[];
   groups: {
     judge: {
       summary: string;
@@ -48,6 +49,7 @@ type Report = {
     locate: {
       neighbors: { job_id: string; name: string; band: string }[];
       hits: Named[];
+      migration_map?: { job_id: string; name: string; band: string; minimum_shift_skill_count: number; shared_capabilities: string[]; unique_requirements: string[] }[];
       slice: {
         categories?: { id: string; name: string }[];
         requires?: Requirement[];
@@ -68,11 +70,15 @@ type Report = {
       analysis?: {
         one_sentence?: string;
         core_judgments?: { fit_band?: string; advantage?: string; blocker?: string };
-        strengths?: { text: string; quote?: string }[];
-        risks?: { text: string; check_scope?: string }[];
+        positioning?: { text?: string };
+        strengths?: { text: string; quote?: string; evidence_level?: string }[];
+        risks?: { text: string; check_scope?: string; excerpt?: string }[];
+        content_states?: { name?: string; state?: string; quote?: string }[];
+        keywords?: Record<string, string[]>;
+        gap_detail?: { name?: string; excerpt?: string }[];
         evidence_map?: { requirement_id?: string; requirement_name?: string; evidence_fragment_id?: string; evidence_level?: string; quote?: string }[];
-        rewrites?: { original?: string; problem?: string; suggestion?: string; facts_to_add?: string[] }[];
-        actions?: { rewrite?: unknown[]; capability?: { name?: string; why?: string }[] };
+        rewrites?: { original?: string; problem?: string; suggestion?: string; facts_used?: string[]; facts_to_add?: string[] }[];
+        actions?: { rewrite?: unknown[]; capability?: { name?: string; why?: string; excerpt?: string; url?: string; deliverable?: string }[] };
         narrative?: string;
       };
     };
@@ -396,9 +402,28 @@ export function DiagnoseForm() {
     if (!sessionId || !jobId) return;
     const requestId = ++simulationRequest.current;
     setAssumedSkills(next);
-    const res = await fetch(`${API}/diagnose/simulate`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ session_id: sessionId, job_id: jobId, assumed_skill_ids: next, watching_skill_ids: (report?.groups?.explain?.watching || []).map((row) => row.skill_id) }) });
-    const body = await res.json();
-    if (requestId === simulationRequest.current && res.ok) setSimulation(body);
+    setError("");
+    try {
+      const res = await fetch(`${API}/diagnose/simulate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: sessionId,
+          job_id: jobId,
+          assumed_skill_ids: next,
+          watching_skill_ids: (report?.groups?.explain?.watching || []).map((row) => row.skill_id).filter(Boolean),
+        }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (requestId !== simulationRequest.current) return;
+      if (!res.ok) {
+        setError(body.error || "换档模拟失败，请稍后重试");
+        return;
+      }
+      setSimulation(body);
+    } catch {
+      if (requestId === simulationRequest.current) setError("换档模拟请求失败，请检查网络后重试");
+    }
   }
 
   function jumpReport(view: ReportView) {
@@ -468,7 +493,7 @@ export function DiagnoseForm() {
   const analysis = report?.groups?.explain?.analysis;
   const watching = report?.groups?.explain?.watching || [];
   const watchingShown = showAllWatching ? watching : watching.slice(0, WATCHING_PREVIEW);
-  const currentSim = simulation?.simulations?.[0];
+  const currentSim = simulation?.simulations?.find((item) => item.job_id === jobId) || simulation?.simulations?.[0];
   const capabilities = analysis?.actions?.capability || [];
   const extraCapabilities = capabilities.filter((row) => !(report?.groups?.act?.path || []).some((item) => item.name === row.name));
 
@@ -733,7 +758,7 @@ export function DiagnoseForm() {
 
           {report.direction ? (
             <section className="dx-direction" aria-live="polite">
-              <p className="dx-verdict">{report.direction === "无法区分方向" ? "两个岗位当前没有可区分的优势，请比较各自换档条件。" : `当前更接近：${report.direction}`}</p>
+              <p className="dx-verdict">{report.explanation || (report.direction === "无法区分方向" ? "两个岗位当前没有可区分的优势，请比较各自换档条件。" : `当前更接近：${report.direction}`)}</p>
               <div className="dx-table-wrap">
                 <table className="dx-table dx-compare">
                   <thead>
@@ -748,9 +773,16 @@ export function DiagnoseForm() {
                     <tr><th scope="row">最小换档</th>{(report.jobs || []).map((item) => <td key={item.job_id}>{item.minimum_shift_skill_count ?? item.shift_set?.length ?? 0} 项</td>)}</tr>
                     <tr><th scope="row">换档条件</th>{(report.jobs || []).map((item) => <td key={item.job_id}><Chips rows={item.shift_set} state="gap" /></td>)}</tr>
                     <tr><th scope="row">经验 / 学历风险</th>{(report.jobs || []).map((item) => <td key={item.job_id}>{item.experience_education_risk ? "有" : "无"}</td>)}</tr>
+                    <tr><th scope="row">已覆盖</th>{(report.jobs || []).map((item) => <td key={item.job_id}>{(item.covered_names || []).join("、") || "无"}</td>)}</tr>
+                    <tr><th scope="row">主要缺口</th>{(report.jobs || []).map((item) => <td key={item.job_id}>{(item.gap_names || []).join("、") || "无"}</td>)}</tr>
                   </tbody>
                 </table>
               </div>
+              {(report.jobs || []).some((item) => item.summary) && (
+                <ul className="dx-list">
+                  {(report.jobs || []).map((item) => item.summary ? <li key={item.job_id}>{item.summary}</li> : null)}
+                </ul>
+              )}
               <div className="dx-inline">
                 {(report.jobs || []).map((item) => <button key={item.job_id} type="button" className="dx-btn" onClick={() => { setSelectedJobIds([item.job_id]); setJobId(item.job_id); void runDiagnose(sessionId, item.job_id); }}>查看 {item.name} 详细报告</button>)}
               </div>
@@ -786,32 +818,41 @@ export function DiagnoseForm() {
                   </div>
 
                   {analysis && (
-                    <div className="dx-analysis" aria-label="AI 简历分析">
+                    <div className="dx-analysis" aria-label="简历分析">
                       <h3>简历分析</h3>
                       {analysis.one_sentence && <p className="dx-lead">{analysis.one_sentence}</p>}
+                      {analysis.positioning?.text && (
+                        <div className="dx-note"><span className="dx-note-key">定位</span><p>{analysis.positioning.text}</p></div>
+                      )}
                       <div className="dx-grid-2">
                         <div className="dx-note"><span className="dx-note-key">优势</span><p>{analysis.core_judgments?.advantage || "—"}</p></div>
                         <div className="dx-note"><span className="dx-note-key">阻碍</span><p>{analysis.core_judgments?.blocker || "—"}</p></div>
                       </div>
                       {(analysis.strengths || []).length > 0 && (
-                        <div className="dx-kv-row"><span className="dx-kv-key">有依据</span><ul className="dx-list">{(analysis.strengths || []).map((item) => <li key={item.text}>{item.quote || item.text}</li>)}</ul></div>
+                        <div className="dx-kv-row"><span className="dx-kv-key">有依据</span><ul className="dx-list">{(analysis.strengths || []).map((item) => <li key={item.text}>{item.quote || item.text}{item.evidence_level && <small> · {item.evidence_level === "result" ? "结果" : item.evidence_level === "use" ? "使用" : "提及"}</small>}</li>)}</ul></div>
                       )}
                       {(analysis.risks || []).length > 0 && (
-                        <div className="dx-kv-row"><span className="dx-kv-key">待核对</span><ul className="dx-list">{(analysis.risks || []).map((item) => <li key={item.text}>{item.text}{item.check_scope && <small> · {item.check_scope}</small>}</li>)}</ul></div>
+                        <div className="dx-kv-row"><span className="dx-kv-key">待核对</span><ul className="dx-list">{(analysis.risks || []).map((item) => <li key={item.text}>{item.text}{item.excerpt && <small> · 岗位原文：{item.excerpt}</small>}{item.check_scope && <small> · {item.check_scope}</small>}</li>)}</ul></div>
                       )}
-                      {(analysis.rewrites || []).length > 0 && (
-                        <div className="dx-rewrites">
-                          {(analysis.rewrites || []).slice(0, 5).map((item, index) => (
-                            <details key={`${item.original}-${index}`}>
-                              <summary>表达建议 {index + 1}<small>{item.problem}</small></summary>
-                              <dl className="dx-rewrite">
-                                <dt>原文</dt><dd>{item.original}</dd>
-                                <dt>建议</dt><dd>{item.suggestion}</dd>
-                                <dt>仍需补充</dt><dd>{(item.facts_to_add || []).join("、") || "无需补充"}</dd>
-                              </dl>
-                            </details>
+                      {(analysis.gap_detail || []).length > 0 && (
+                        <div className="dx-kv-row"><span className="dx-kv-key">缺口详情</span><ul className="dx-list">{(analysis.gap_detail || []).map((item) => <li key={item.name}>{item.name}{item.excerpt && <small> · {item.excerpt}</small>}</li>)}</ul></div>
+                      )}
+                      {analysis.keywords && (
+                        <div className="dx-kv">
+                          {Object.entries(analysis.keywords).map(([label, names]) => (
+                            <div key={label} className="dx-kv-row"><span className="dx-kv-key">{label}</span><Chips rows={(names || []).map((name) => ({ name }))} state={label === "已有证据" ? "covered" : label === "只有提及" ? "half" : "gap"} empty="无" /></div>
                           ))}
                         </div>
+                      )}
+                      {(analysis.content_states || []).length > 0 && (
+                        <details className="dx-details">
+                          <summary>内容状态<small>{(analysis.content_states || []).length} 项要求</small></summary>
+                          <ul className="dx-list">
+                            {(analysis.content_states || []).map((item, index) => (
+                              <li key={`${item.name}-${index}`}><b>{item.name}</b> · {item.state}{item.quote && <small> · {item.quote}</small>}</li>
+                            ))}
+                          </ul>
+                        </details>
                       )}
                     </div>
                   )}
@@ -827,6 +868,18 @@ export function DiagnoseForm() {
                       ))}
                     </div>
                   </div>
+                  {(report.groups.locate.migration_map || []).length > 0 && (
+                    <div className="dx-mig" aria-label="邻近岗位对照">
+                      {(report.groups.locate.migration_map || []).map((item) => (
+                        <article key={item.job_id} className="dx-mig-card" data-active={item.job_id === jobId ? "1" : undefined}>
+                          <header><b>{item.name}</b><BandBadge band={item.band} /></header>
+                          <p>最小换档 {item.minimum_shift_skill_count} 项</p>
+                          <p><span>共享</span>{item.shared_capabilities.join("、") || "无"}</p>
+                          <p><span>独有要求</span>{item.unique_requirements.join("、") || "无"}</p>
+                        </article>
+                      ))}
+                    </div>
+                  )}
                   <RequirementMap />
                 </section>
 
@@ -857,8 +910,9 @@ export function DiagnoseForm() {
                             <li key={item.skill_id}>
                               <span className="dx-actions-index">{index + 1}</span>
                               <div>
-                                <div className="dx-actions-head"><b>{item.name}</b><span className="dx-tag">{item.why}</span>{capability?.why && <span className="dx-muted">{capability.why}</span>}{item.url ? <a href={item.url} rel="noreferrer" target="_blank">学习资源 ↗</a> : null}</div>
+                                <div className="dx-actions-head"><b>{item.name}</b><span className="dx-tag">{item.why}</span>{capability?.why && <span className="dx-muted">{capability.why}</span>}{(item.url || capability?.url) ? <a href={item.url || capability?.url} rel="noreferrer" target="_blank">学习资源 ↗</a> : null}</div>
                                 {item.excerpt && <p>岗位原文：{item.excerpt}</p>}
+                                {capability?.deliverable && <p>可写入简历：{capability.deliverable}</p>}
                               </div>
                             </li>
                           );
@@ -867,9 +921,30 @@ export function DiagnoseForm() {
                     </>
                   ) : <p className="dx-empty">当前档位没有待补的正式缺口。</p>}
                   {extraCapabilities.length > 0 && (
-                    <div className="dx-kv-row"><span className="dx-kv-key">能力轨</span><ul className="dx-list">{extraCapabilities.map((item) => <li key={item.name}><b>{item.name}</b> · {item.why}</li>)}</ul></div>
+                    <div className="dx-kv-row"><span className="dx-kv-key">能力轨</span><ul className="dx-list">{extraCapabilities.map((item) => <li key={item.name}><b>{item.name}</b> · {item.why}{item.deliverable && <small> · {item.deliverable}</small>}</li>)}</ul></div>
                   )}
-                  {analysis?.narrative && <details className="dx-details"><summary>面试自我介绍草稿</summary><p>{analysis.narrative}</p></details>}
+                  {(analysis?.rewrites || []).length > 0 && (
+                    <div className="dx-rewrites">
+                      <h3>表达建议</h3>
+                      {(analysis?.rewrites || []).slice(0, 5).map((item, index) => (
+                        <details key={`${item.original}-${index}`} open={index === 0}>
+                          <summary>表达建议 {index + 1}<small>{item.problem}</small></summary>
+                          <dl className="dx-rewrite">
+                            <dt>原文</dt><dd>{item.original}</dd>
+                            <dt>建议</dt><dd>{item.suggestion}</dd>
+                            {(item.facts_used || []).length > 0 && <><dt>用到的事实</dt><dd>{(item.facts_used || []).join("、")}</dd></>}
+                            <dt>仍需补充</dt><dd>{(item.facts_to_add || []).join("、") || "无需补充"}</dd>
+                          </dl>
+                        </details>
+                      ))}
+                    </div>
+                  )}
+                  {analysis?.narrative && (
+                    <details className="dx-details" open>
+                      <summary>面试自我介绍草稿</summary>
+                      <p className="dx-narrative">{analysis.narrative}</p>
+                    </details>
+                  )}
                 </section>
 
                 <section id="report-evidence" className="dx-panel">

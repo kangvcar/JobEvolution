@@ -158,6 +158,7 @@ def test_recommendation_is_structured_and_direction_can_be_indistinguishable():
     assert len(recommendations[0]["reasons"]) == 2
     report = direction_report(jobs, resume)
     assert report["direction"] == "无法区分方向"
+    assert "不足以判断" in report["explanation"]
     assert len(report["jobs"][0]["shift_set"]) <= 5
     assert report["jobs"][0]["minimum_shift_skill_count"] == 0
 
@@ -194,12 +195,41 @@ def test_resume_analysis_cites_only_resume_evidence_and_limits_actions():
     ]
     analysis = resume_analysis(job={"name": "大模型应用工程师"}, requires=requires, resume=resume)
     assert analysis["one_sentence"]
+    assert "Python" in analysis["one_sentence"]
+    assert "必备覆盖" in analysis["one_sentence"]
     assert analysis["strengths"][0]["evidence_fragment_id"] == "ev-python"
     assert len(analysis["risks"]) == 3
     assert len(analysis["actions"]["capability"]) == 3
     assert len(analysis["actions"]["rewrite"]) <= 5
     assert analysis["project_evidence_prompts"][0]["evidence_fragment_id"] == "ev-python"
     assert "87" not in str(analysis)
+    for item in analysis["rewrites"]:
+        assert item["suggestion"] != item["original"]
+    assert "Python" in analysis["narrative"]
+    assert analysis["positioning"]["text"]
+
+
+def test_resume_analysis_uses_experiences_in_narrative_and_rewrites():
+    resume = {
+        "skills": [{"skill_id": "python", "name": "Python"}],
+        "evidence_fragments": [
+            {"id": "ev-python", "skill_id": "python", "text": "使用 Python 构建服务", "evidence_level": "use", "section": "experience"},
+        ],
+        "profile": {"role": "后端工程师", "experience": "4年"},
+        "experience": "4年",
+        "education": "硕士",
+        "experiences": [{"company": "甲科技", "title": "后端工程师", "start": "2021-01", "end": "2024-01", "summary": "负责 Python 服务"}],
+        "projects": [{"name": "推荐系统", "summary": "构建离线评测"}],
+    }
+    analysis = resume_analysis(
+        job={"name": "大模型应用工程师"},
+        requires=[{"skill_id": "python", "name": "Python", "kind": "required", "proficiency": "able"}],
+        resume=resume,
+    )
+    assert "甲科技" in analysis["narrative"]
+    assert "推荐系统" in analysis["narrative"]
+    assert "后端工程师" in analysis["narrative"]
+    assert any("构建服务" in (item.get("suggestion") or "") and item.get("suggestion") != item.get("original") for item in analysis["rewrites"])
 
 
 def test_simulation_uses_only_formal_gap_and_keeps_watching_out_of_score():

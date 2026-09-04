@@ -226,7 +226,7 @@ async def create_session(request: Request, file: UploadFile = File(...), consent
         raise HTTPException(503, "简历解析服务暂时不可用，请稍后重试") from exc
     session_id = save_session(
         {
-            "preview_text": text[:4000],
+            "preview_text": text,
             "profile": parsed.get("profile") or {},
             "education_items": parsed.get("education_items") or [],
             "experiences": parsed.get("experiences") or [],
@@ -444,39 +444,44 @@ def diagnose_simulate(body: SimulateBody):
         if job is None or not graph.diagnostic_release(job_id)["ok"]:
             raise HTTPException(409, "岗位数据正在校验，暂不可模拟")
         selected.append({**job, "requires": graph.list_requires(job_id), "sources": graph.list_job_evidence(job_id)})
+    assumed = [str(sid) for sid in body.assumed_skill_ids if sid]
     allowed = set()
     simulations = []
     for job in selected:
         original = simulate_job(job["requires"], resume, [])
-        allowed.update(original.get("allowed_skill_ids") or [])
-    invalid = sorted(set(body.assumed_skill_ids) - allowed)
+        allowed.update(str(sid) for sid in (original.get("allowed_skill_ids") or []))
+    invalid = sorted(set(assumed) - allowed)
     if invalid:
         raise HTTPException(400, "只能模拟当前缺口、熟练级不足或要求组候选技能")
     for job in selected:
-        simulations.append({"job_id": job["id"], "name": job.get("name") or job["id"], **simulate_job(job["requires"], resume, body.assumed_skill_ids)})
-    index = {row["id"]: row for row in graph.list_skills(with_embed=False)}
-    watching_ids = set(body.watching_skill_ids)
-    watching = [{"skill_id": sid, "name": (index.get(sid) or {}).get("name") or sid} for sid in watching_ids]
-    all_jobs = []
-    for job in graph.list_jobs(domain=None, status=None, q=None):
-        if not graph.diagnostic_release(job["id"])["ok"]:
-            continue
-        all_jobs.append({**job, "requires": graph.list_requires(job["id"]), "sources": graph.list_job_evidence(job["id"])})
+        simulations.append({"job_id": job["id"], "name": job.get("name") or job["id"], **simulate_job(job["requires"], resume, assumed)})
     related = list(selected)
-    for job in all_jobs:
-        if job["id"] not in {item["id"] for item in related}:
-            related.append(job)
+    seen = {item["id"] for item in related}
+    for job in selected:
+        other = neighbor_name(job.get("name") or "")
+        if not other:
+            continue
+        oid = job_id_for(other)
+        if oid in seen:
+            continue
+        row = graph.get_public_job(oid)
+        if row is None:
+            continue
+        related.append({**row, "requires": graph.list_requires(oid), "sources": graph.list_job_evidence(oid)})
+        seen.add(oid)
         if len(related) == 3:
             break
-    evidence = evidence_map(selected[0]["requires"], resume)
+    watching_ids = [str(sid) for sid in body.watching_skill_ids if sid]
+    index = {row["id"]: row for row in graph.list_skills(with_embed=False)} if watching_ids else {}
+    watching = [{"skill_id": sid, "name": (index.get(sid) or {}).get("name") or sid} for sid in watching_ids]
     return {
         "session_id": body.session_id,
         "graph_release": resume.get("graph_release"),
         "simulations": simulations,
-        "evidence_map": {"job_id": selected[0]["id"], "relations": evidence},
+        "evidence_map": {"job_id": selected[0]["id"], "relations": evidence_map(selected[0]["requires"], resume)},
         "migration_map": migration_map(related, resume),
-        "market_signal_radar": market_signal_radar(watching, all_jobs, selected[0]["id"]),
-        "watching_skill_ids": sorted(watching_ids),
+        "market_signal_radar": market_signal_radar(watching, related, selected[0]["id"]),
+        "watching_skill_ids": sorted(set(watching_ids)),
     }
 
 

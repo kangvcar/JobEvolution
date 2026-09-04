@@ -5,7 +5,7 @@ import hashlib
 import re
 from concurrent.futures import ThreadPoolExecutor
 
-from app.pipeline.align import align_skill
+from app.pipeline.align import align_skill, split_composite
 from app.pipeline.extract import _PROF, _alias
 
 
@@ -45,7 +45,11 @@ def _docx_text(data: bytes) -> str:
     import docx
 
     document = docx.Document(io.BytesIO(data))
-    text = "\n".join(p.text for p in document.paragraphs).strip()
+    parts = [p.text for p in document.paragraphs]
+    for table in document.tables:
+        for row in table.rows:
+            parts.append(" ".join(cell.text for cell in row.cells))
+    text = "\n".join(part for part in parts if part and part.strip()).strip()
     if not text:
         raise ResumeError("文档没有可提取的文本")
     if len(text) > 50_000:
@@ -55,20 +59,28 @@ def _docx_text(data: bytes) -> str:
 
 def _name_in_text(name: str, blob: str) -> bool:
     needle = (name or "").casefold()
+    haystack = (blob or "").casefold()
     if not needle:
         return False
     if re.search(r"[\u4e00-\u9fff]", needle):
-        return needle in blob
-    return re.search(rf"(?<![a-z0-9_]){re.escape(needle)}(?![a-z0-9_])", blob) is not None
+        return needle in haystack
+    return re.search(rf"(?<![a-z0-9_]){re.escape(needle)}(?![a-z0-9_])", haystack) is not None
+
+
+_SENTENCE_SPLIT = re.compile(r"[\n。！!]+|(?<!\d)\.(?!\d)")
+
+
+def _split_sentences(text: str) -> list[str]:
+    return [part.strip() for part in _SENTENCE_SPLIT.split(text or "") if part.strip()]
 
 
 def evidence_level(text: str, name: str) -> str:
     """Classify only what the sentence visibly proves."""
-    sentence = next((part.strip() for part in re.split(r"[\n。.!！]", text or "") if _name_in_text(name, part)), "") or (text or "").strip()
+    sentence = next((part for part in _split_sentences(text) if _name_in_text(name, part)), "") or (text or "").strip()
     if not sentence:
         return "mention"
     has_result = bool(re.search(r"\d+(?:\.\d+)?\s*(?:%|ms|秒|万|qps|次)?", sentence, re.I)) and bool(
-        re.search(r"负责|主导|交付|实现|提升|降低|built|led|delivered|improv|reduc", sentence, re.I)
+        re.search(r"负责|主导|交付|实现|提升|降低|下降|降至|压缩|built|led|delivered|improv|reduc", sentence, re.I)
     )
     if has_result:
         return "result"
@@ -77,11 +89,15 @@ def evidence_level(text: str, name: str) -> str:
     return "mention"
 
 
-def _sentence_for(text: str, names: list[str]) -> str:
-    for sentence in re.split(r"[\n。.!！]", text or ""):
+_LEVEL_RANK = {"mention": 0, "use": 1, "result": 2}
+
+
+def _sentences_for(text: str, names: list[str]) -> list[str]:
+    found = []
+    for sentence in _split_sentences(text):
         if any(_name_in_text(name, sentence) for name in names if name):
-            return sentence.strip()
-    return ""
+            found.append(sentence)
+    return found
 
 
 def _evidence_fragments(text: str, skills: list[dict], index: list[dict]) -> list[dict]:
@@ -90,11 +106,14 @@ def _evidence_fragments(text: str, skills: list[dict], index: list[dict]) -> lis
     for skill in skills:
         vocab = by_id.get(skill.get("skill_id"), {})
         names = [vocab.get("name") or skill.get("name") or "", *(vocab.get("synonyms") or [])]
-        excerpt = skill.get("llm_excerpt") or _sentence_for(text, names)
-        if excerpt and excerpt not in text:
-            excerpt = _sentence_for(text, names)
-        if not excerpt:
+        candidates = _sentences_for(text, names)
+        llm_excerpt = str(skill.get("llm_excerpt") or "").strip()
+        if llm_excerpt and llm_excerpt in text:
+            candidates.append(llm_excerpt)
+        if not candidates:
             continue
+        candidates.sort(key=lambda sentence: (_LEVEL_RANK.get(evidence_level(sentence, names[0]), 0), len(sentence)), reverse=True)
+        excerpt = candidates[0]
         fragments.append(
             {
                 "id": "resume-evidence-" + hashlib.sha256(f"{skill['skill_id']}:{excerpt}".encode()).hexdigest()[:16],
@@ -116,10 +135,13 @@ INFO_PROMPT = (
     "Keep only facts visible in the resume, omit unknown fields, and do not invent."
 )
 SKILL_PROMPT = (
-    "Extract resume skills JSON: {skills:[{name, proficiency}]}. "
+    "Extract resume skills JSON: {skills:[{name, proficiency, excerpt}]}. "
+    "List every technical skill, tool, framework, platform, protocol, and domain method visible in the resume. "
+    "Split composite names such as LangChain/LangGraph into separate items. "
+    "excerpt is the shortest resume sentence that shows the skill; copy it verbatim. "
     "Omit proficiency unless the resume explicitly marks a level "
     "(了解/aware, 熟练/able, 精通/expert). Do not guess. "
-    "Prefer names from this vocabulary.\n"
+    "Prefer names from this vocabulary when the resume uses a synonym.\n"
     "vocabulary: "
 )
 
@@ -134,7 +156,7 @@ def parse_resume(
 ) -> dict:
     if complete_json is None:
         from app.llm.client import complete_json as complete_json
-    blob = (text or "")[:8000]
+    blob = (text or "")[:16000]
     vocab = "、".join(row.get("name") or "" for row in index if row.get("name"))
     info_messages = [
         {"role": "system", "content": INFO_PROMPT},
@@ -159,9 +181,10 @@ def parse_resume(
         skill_f = pool.submit(_call, skill_messages)
         info = info_f.result()
         raw_skills = skill_f.result()
-    skills = _align_skills(raw_skills.get("skills") or [], index, threshold=threshold)
-    if not skills:
-        skills = skills_from_text(text, index, threshold=threshold)
+    skills = _merge_skills(
+        _align_skills(raw_skills.get("skills") or [], index, threshold=threshold),
+        skills_from_text(text, index, threshold=threshold),
+    )
     for row in skills:
         if not _marks_level_for_skill(text, row.get("name") or ""):
             row["proficiency"] = None
@@ -243,6 +266,27 @@ def _resume_info_from_text(text: str) -> dict:
     }
 
 
+def _skill_name_parts(name: str, index: list[dict]) -> list[str]:
+    parts = []
+    for chunk in re.split(r"[,，、;；|]", name or ""):
+        chunk = chunk.strip()
+        if chunk:
+            parts.extend(split_composite(chunk, index))
+    return parts or ([name] if name else [])
+
+
+def _merge_skills(primary: list[dict], extra: list[dict]) -> list[dict]:
+    found = []
+    seen: set[str] = set()
+    for row in (*primary, *extra):
+        sid = str(row.get("skill_id") or "")
+        if not sid or sid in seen:
+            continue
+        seen.add(sid)
+        found.append(row)
+    return found
+
+
 def _align_skills(rows: list, index: list[dict], *, threshold: float | None = None) -> list[dict]:
     found = []
     seen: set[str] = set()
@@ -254,23 +298,34 @@ def _align_skills(rows: list, index: list[dict], *, threshold: float | None = No
         name = str(raw.get("name") or "").strip()
         if not name:
             continue
-        hit = align_skill(name, index, threshold=threshold)
-        if hit is None or hit["id"] in seen:
-            continue
-        seen.add(hit["id"])
         marked = str(raw.get("proficiency") or "").strip()
         proficiency = _alias(_PROF, marked, "") if marked else ""
         if proficiency not in ("aware", "able", "expert"):
             proficiency = None
-        found.append(
-            {
-                "skill_id": hit["id"],
-                "name": hit.get("name") or name,
-                "proficiency": proficiency,
-                "llm_excerpt": str(raw.get("evidence") or raw.get("excerpt") or "").strip(),
-            }
-        )
+        excerpt = str(raw.get("evidence") or raw.get("excerpt") or "").strip()
+        for part in _skill_name_parts(name, index):
+            hit = align_skill(part, index, threshold=threshold)
+            if hit is None or hit["id"] in seen:
+                continue
+            seen.add(hit["id"])
+            found.append(
+                {
+                    "skill_id": hit["id"],
+                    "name": hit.get("name") or part,
+                    "proficiency": proficiency,
+                    "llm_excerpt": excerpt,
+                }
+            )
     return found
+
+
+def _usable_surface(name: str) -> bool:
+    text = (name or "").strip()
+    if not text:
+        return False
+    if re.search(r"[A-Za-z]{2,}", text) or "+" in text:
+        return True
+    return len(text) >= 3
 
 
 def skills_from_text(text: str, index: list[dict], *, threshold: float | None = None) -> list[dict]:
@@ -279,7 +334,7 @@ def skills_from_text(text: str, index: list[dict], *, threshold: float | None = 
     found = []
     seen: set[str] = set()
     for skill in index:
-        names = [skill.get("name") or "", *(skill.get("synonyms") or [])]
+        names = [n for n in [skill.get("name") or "", *(skill.get("synonyms") or [])] if _usable_surface(n)]
         if not any(_name_in_text(n, blob) for n in names):
             continue
         sid = skill["id"]

@@ -2167,6 +2167,13 @@ a.dx-chip:hover, .dx-chip-btn:hover { border-color: var(--color-ink); color: var
 .dx-rewrite { display: grid; grid-template-columns: 72px 1fr; gap: 6px 10px; margin: 0; padding: 0 12px 12px; font-size: var(--dx-fs-sm); }
 .dx-rewrite dt { color: var(--color-mute); }
 .dx-rewrite dd { color: var(--color-body); }
+.dx-narrative { white-space: pre-wrap; line-height: 1.7; max-width: 62ch; }
+.dx-mig { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.dx-mig-card { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border: 1px solid var(--color-rule); border-radius: 4px; background: var(--color-canvas); }
+.dx-mig-card[data-active="1"] { border-color: var(--color-ink); }
+.dx-mig-card header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.dx-mig-card p { font-size: var(--dx-fs-sm); color: var(--color-body); }
+.dx-mig-card p span { display: block; font-size: 11px; color: var(--color-mute); }
 
 /* 相邻岗位切换 */
 .dx-seg { display: inline-flex; flex-wrap: wrap; width: fit-content; border: 1px solid var(--color-rule-2); border-radius: 4px; overflow: hidden; }
