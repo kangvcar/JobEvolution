@@ -366,7 +366,7 @@ export function DiagnoseForm() {
     if (!sessionId || !jobId) return;
     const requestId = ++simulationRequest.current;
     setAssumedSkills(next);
-    const res = await fetch(`${API}/diagnose/simulate`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ session_id: sessionId, job_id: jobId, assumed_skill_ids: next, watching_skill_ids: (report?.groups.explain.watching || []).map((row) => row.skill_id) }) });
+    const res = await fetch(`${API}/diagnose/simulate`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ session_id: sessionId, job_id: jobId, assumed_skill_ids: next, watching_skill_ids: (report?.groups?.explain?.watching || []).map((row) => row.skill_id) }) });
     const body = await res.json();
     if (requestId === simulationRequest.current && res.ok) setSimulation(body);
   }
@@ -435,12 +435,12 @@ export function DiagnoseForm() {
     );
   }
 
-  const analysis = report?.groups.explain.analysis;
-  const watching = report?.groups.explain.watching || [];
+  const analysis = report?.groups?.explain?.analysis;
+  const watching = report?.groups?.explain?.watching || [];
   const watchingShown = showAllWatching ? watching : watching.slice(0, WATCHING_PREVIEW);
   const currentSim = simulation?.simulations?.[0];
   const capabilities = analysis?.actions?.capability || [];
-  const extraCapabilities = capabilities.filter((row) => !(report?.groups.act.path || []).some((item) => item.name === row.name));
+  const extraCapabilities = capabilities.filter((row) => !(report?.groups?.act?.path || []).some((item) => item.name === row.name));
 
   return (
     <main id="main" className="page dx" data-phase={phase} data-step={step}>
