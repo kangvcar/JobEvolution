@@ -29,6 +29,7 @@ export type FlowSkillData = {
   confidence?: number;
   layer?: string;
   valid_from?: string | null;
+  added?: boolean;
 };
 
 export type Neighbor = {
@@ -43,12 +44,13 @@ type SkillNodeData = FlowSkillData & {
   selected: boolean;
   dim: boolean;
   recent: boolean;
+  strength: number;
   firstSeen?: string;
   sharedWithNeighbor: boolean;
 };
 
-const SECTOR_ORDER = ["语言", "框架", "平台", "工程", "领域知识", "其他"] as const;
-const SECTOR_COLOR: Record<string, string> = {
+export const SECTOR_ORDER = ["语言", "框架", "平台", "工程", "领域知识", "其他"] as const;
+export const SECTOR_COLOR: Record<string, string> = {
   语言: "var(--cat-lang)",
   框架: "var(--cat-frwk)",
   平台: "var(--cat-plat)",
@@ -56,17 +58,21 @@ const SECTOR_COLOR: Record<string, string> = {
   领域知识: "var(--cat-know)",
   其他: "var(--cat-other)",
 };
-const CARD_W = 196;
-const RECENT_DAYS = 90;
+const CARD_W = 172;
+const CARD_H = 64;
+export const RECENT_DAYS = 90;
 const MAX_TICKS = 360;
-const LEVEL_LABEL: Record<string, string> = { junior: "初", mid: "中", senior: "高" };
+const PROF_LABEL: Record<string, string> = { aware: "了解", able: "熟练", expert: "精通" };
 const LAYER_LABEL: Record<string, string> = { high: "高置信", mid: "中置信", low: "低置信" };
 
 const proficiencyLevel = (p?: string) =>
   !p ? 0 : /精通|expert/.test(p) ? 3 : /熟练|able/.test(p) ? 2 : /了解|aware/.test(p) ? 1 : 0;
+const proficiencyLabel = (p?: string) => (p ? PROF_LABEL[p] || p : "");
 
-const sectorOf = (category?: string | null) =>
+export const sectorOf = (category?: string | null) =>
   (SECTOR_ORDER as readonly string[]).includes(category || "") ? (category as string) : "其他";
+
+const fmtDate = (s?: string | null) => (s ? s.slice(0, 10) : "");
 
 // 所有节点只用一个居中的隐藏 handle，直线边就从卡片中心连到岗位中心，卡片本身盖住重叠段。
 function CenterHandle({ type }: { type: "source" | "target" }) {
@@ -79,8 +85,8 @@ function JobNode({ data }: NodeProps<Node<{ label: string; status?: string; nSou
     <div className={`ring-job${formed ? " is-formed" : " is-emerging"}`}>
       <CenterHandle type="source" />
       <div className="ring-job-head">
-        <span className={`ring-status ${formed ? "formed" : "emerging"}`}>{formed ? "成型" : "萌芽"}</span>
-        {data.period && <span className="ring-job-period">发布 {data.period}</span>}
+        <span className="ring-status">{formed ? "成型" : "萌芽"}</span>
+        {data.period && <span className="ring-job-period">图谱 {fmtDate(data.period)}</span>}
       </div>
       <div className="ring-job-title">{data.label}</div>
       <div className="ring-job-stats">
@@ -88,7 +94,7 @@ function JobNode({ data }: NodeProps<Node<{ label: string; status?: string; nSou
           <strong>{data.nSources ?? "–"}</strong> 独立源
         </span>
         <span>
-          90 天窗 <strong>{data.nWindow ?? "–"}</strong> 家
+          90 天 <strong>{data.nWindow ?? "–"}</strong> 家
         </span>
       </div>
     </div>
@@ -99,7 +105,7 @@ function SkillNode({ data }: NodeProps<Node<SkillNodeData>>) {
   const bonus = data.kind === "bonus";
   const prof = proficiencyLevel(data.proficiency);
   const sources = data.sources?.length ?? 0;
-  const layer = data.layer ? LAYER_LABEL[data.layer] || data.layer : data.confidence != null ? `置信 ${data.confidence.toFixed(2)}` : "";
+  const layer = data.layer ? LAYER_LABEL[data.layer] || data.layer : "";
   return (
     <div
       className={`ring-skill${bonus ? " is-bonus" : ""}${data.selected ? " is-selected" : ""}${data.dim ? " is-dim" : ""}${
@@ -113,28 +119,21 @@ function SkillNode({ data }: NodeProps<Node<SkillNodeData>>) {
           {data.name}
         </span>
         {bonus && <span className="ring-tag">加分</span>}
-        {data.recent && <span className="ring-tag recent">近 {RECENT_DAYS} 天</span>}
+        {!bonus && data.added && <span className="ring-tag new">新</span>}
       </div>
-      <div className="ring-skill-meters">
-        <span className="ring-meter" title={`熟练级 ${data.proficiency || "未标"}`}>
+      <div className="ring-skill-meta">
+        <span className="ring-meter" title={`熟练级 ${proficiencyLabel(data.proficiency) || "未标"}`}>
           {[1, 2, 3].map((n) => (
             <i key={n} className={n <= prof ? "on" : ""} />
           ))}
-          <em>{data.proficiency || "未标"}</em>
+          <em>{proficiencyLabel(data.proficiency) || "未标"}</em>
         </span>
-        <span className="ring-levels" title="适用级别">
-          {Object.entries(LEVEL_LABEL).map(([key, label]) => (
-            <b key={key} className={data.levels?.includes(key) ? "on" : ""}>
-              {label}
-            </b>
-          ))}
+        <span className="ring-src" title={layer ? `${sources} 个独立源 · ${layer}` : `${sources} 个独立源`}>
+          {sources} 源
         </span>
       </div>
-      <div className="ring-skill-foot">
-        <span>
-          {sources} 源{layer ? ` · ${layer}` : ""}
-        </span>
-        <span className="ring-skill-cta">查证据</span>
+      <div className="ring-skill-bar" aria-hidden="true">
+        <i style={{ width: `${Math.round(data.strength * 100)}%` }} />
       </div>
       {(data.excerpt || data.firstSeen) && (
         <div className="ring-excerpt">
@@ -159,12 +158,12 @@ function SectorNode({ data }: NodeProps<Node<{ label: string; count: number; col
 function WatchingNode({ data }: NodeProps<Node<{ items: string[] }>>) {
   return (
     <div className="ring-watching">
-      <span className="ring-watching-pill">观测中 · {data.items.length} 项</span>
+      <span className="ring-watching-pill">观测中 · {data.items.length}</span>
       <div className="ring-watching-peek">
-        {data.items.slice(0, 12).map((name) => (
+        {data.items.slice(0, 10).map((name) => (
           <span key={name}>{name}</span>
         ))}
-        {data.items.length > 12 && <em>点击查看全部 {data.items.length} 项</em>}
+        {data.items.length > 10 && <em>点击查看全部 {data.items.length} 项</em>}
       </div>
     </div>
   );
@@ -186,8 +185,6 @@ function NeighborNode({ data }: NodeProps<Node<{ neighbor: Neighbor }>>) {
 
 const nodeTypes = { job: JobNode, skill: SkillNode, sector: SectorNode, watching: WatchingNode, neighbor: NeighborNode };
 
-export type CanvasFilterMode = "all" | "required" | "bonus" | "recent";
-
 interface FlowCanvasProps {
   job: { id: string; name: string; status?: string };
   stats?: { n_sources?: number; n_window?: number } | null;
@@ -195,7 +192,9 @@ interface FlowCanvasProps {
   watching?: string[];
   evidence?: { id: string; observed_at?: string }[];
   period?: string;
-  slice: { requires?: FlowSkillData[] } | null;
+  skills: FlowSkillData[];
+  /** 通过工具栏过滤后仍可见的技能 id；null 表示全部可见。被过滤掉的节点变淡而不是消失，位置保持稳定。 */
+  visibleIds: Set<string> | null;
   selectedSkill: string;
   onSkillClick: (skill: FlowSkillData) => void;
   onWatchingClick: () => void;
@@ -223,27 +222,23 @@ const widestGap = (angles: number[]) => {
 };
 
 function InnerFlowCanvas(props: FlowCanvasProps) {
-  const { job, stats, neighbor, watching, evidence, period, slice, selectedSkill, onSkillClick, onWatchingClick, onNeighborClick } = props;
+  const { job, stats, neighbor, watching, evidence, period, skills, visibleIds, selectedSkill, onSkillClick, onWatchingClick, onNeighborClick } = props;
   const { fitView, zoomIn, zoomOut } = useReactFlow();
   const [hoverSector, setHoverSector] = useState<string | null>(null);
   const [hoverSkill, setHoverSkill] = useState<string | null>(null);
-  const [filter, setFilter] = useState<CanvasFilterMode>("all");
   const [showMinimap, setShowMinimap] = useState(false);
   const [cursor, setCursor] = useState<number | null>(null);
   const [playing, setPlaying] = useState(false);
 
-  const skills = useMemo(() => slice?.requires || [], [slice]);
-  const dates = useMemo(
-    () => Array.from(new Set(skills.map((s) => (s.valid_from || "").slice(0, 10)).filter(Boolean))).sort(),
-    [skills],
-  );
+  const dates = useMemo(() => Array.from(new Set(skills.map((s) => fmtDate(s.valid_from)).filter(Boolean))).sort(), [skills]);
   const latest = dates[dates.length - 1];
   // 以图谱发布日为准算"近期"，没有发布日就用今天；不用最晚那条边，否则数据扎堆时全都算近期。
   const recentSince = new Date(new Date(period || Date.now()).getTime() - RECENT_DAYS * 86400000).toISOString().slice(0, 10);
   const cursorDate = cursor == null ? null : dates[cursor];
+  const maxSources = useMemo(() => Math.max(1, ...skills.map((s) => s.sources?.length ?? 0)), [skills]);
 
   const firstSeen = useMemo(() => {
-    const byEvidence = new Map((evidence || []).map((e) => [e.id, (e.observed_at || "").slice(0, 10)]));
+    const byEvidence = new Map((evidence || []).map((e) => [e.id, fmtDate(e.observed_at)]));
     const out = new Map<string, string>();
     for (const s of skills) {
       const stamps = (s.sources || []).map((id) => byEvidence.get(id)).filter(Boolean) as string[];
@@ -251,6 +246,11 @@ function InnerFlowCanvas(props: FlowCanvasProps) {
     }
     return out;
   }, [skills, evidence]);
+
+  useEffect(() => {
+    setCursor(null);
+    setPlaying(false);
+  }, [job.id]);
 
   useEffect(() => {
     if (!playing) return;
@@ -269,13 +269,13 @@ function InnerFlowCanvas(props: FlowCanvasProps) {
       (s) => s.items.length,
     );
     const total = skills.length || 1;
-    const base = Math.max(300, (total * 200) / (2 * Math.PI));
-    const required: Ring = { rx: base * 1.3, ry: base * 0.85, items: [], label: "必备要求" };
-    const bonus: Ring = { rx: required.rx + 240, ry: required.ry + 150, items: [], label: "加分要求" };
+    const base = Math.max(240, (total * 176) / (2 * Math.PI));
+    const required: Ring = { rx: base * 1.32, ry: base * 0.82, items: [], label: "必备要求" };
+    const bonus: Ring = { rx: required.rx + 220, ry: required.ry + 130, items: [], label: "加分要求" };
     const hasBonus = skills.some((s) => s.kind === "bonus");
     const outer = hasBonus ? bonus : required;
-    const halo = { rx: outer.rx + 110, ry: outer.ry + 80 };
-    const labelRing = { rx: required.rx * 0.6, ry: required.ry * 0.6 };
+    const halo = { rx: outer.rx + 100, ry: outer.ry + 70 };
+    const labelRing = { rx: required.rx * 0.58, ry: required.ry * 0.58 };
 
     const placed: { skill: FlowSkillData; x: number; y: number; angle: number; ring: Ring }[] = [];
     const sectorNodes: { name: string; count: number; x: number; y: number }[] = [];
@@ -308,10 +308,8 @@ function InnerFlowCanvas(props: FlowCanvasProps) {
 
   const { nodes, edges } = useMemo(() => {
     const visible = (s: FlowSkillData) => {
-      if (filter === "required" && s.kind === "bonus") return false;
-      if (filter === "bonus" && s.kind !== "bonus") return false;
-      const from = (s.valid_from || "").slice(0, 10);
-      if (filter === "recent" && !(from && from >= recentSince)) return false;
+      if (visibleIds && !visibleIds.has(s.id)) return false;
+      const from = fmtDate(s.valid_from);
       if (cursorDate && !(from && from <= cursorDate)) return false;
       return true;
     };
@@ -322,8 +320,8 @@ function InnerFlowCanvas(props: FlowCanvasProps) {
         id: "job",
         type: "job",
         position: { x: 0, y: 0 },
-        initialWidth: 244,
-        initialHeight: 117,
+        initialWidth: 236,
+        initialHeight: 110,
         draggable: false,
         data: { label: job.name, status: job.status, nSources: stats?.n_sources, nWindow: stats?.n_window, period },
       },
@@ -332,7 +330,7 @@ function InnerFlowCanvas(props: FlowCanvasProps) {
         type: "sector",
         position: { x: s.x, y: s.y },
         initialWidth: 80,
-        initialHeight: 27,
+        initialHeight: 26,
         draggable: false,
         data: { label: s.name, count: s.count, color: SECTOR_COLOR[s.name], dim: Boolean(hoverSector && hoverSector !== s.name) },
       })),
@@ -341,7 +339,7 @@ function InnerFlowCanvas(props: FlowCanvasProps) {
     for (const { skill, x, y } of layout.placed) {
       const sector = sectorOf(skill.category);
       const color = SECTOR_COLOR[sector];
-      const from = (skill.valid_from || "").slice(0, 10);
+      const from = fmtDate(skill.valid_from);
       const recent = Boolean(from && recentSince && from >= recentSince);
       const dim = !visible(skill) || Boolean(hoverSector && hoverSector !== sector);
       const active = activeSkill === skill.id;
@@ -350,11 +348,20 @@ function InnerFlowCanvas(props: FlowCanvasProps) {
         id: `skill-${skill.id}`,
         type: "skill",
         initialWidth: CARD_W,
-        initialHeight: 89,
+        initialHeight: CARD_H,
         position: { x, y },
         draggable: false,
         className: active ? "is-front" : undefined,
-        data: { ...skill, color, selected: active, dim, recent, firstSeen: firstSeen.get(skill.id), sharedWithNeighbor: sharedNames.has(skill.name) } satisfies SkillNodeData,
+        data: {
+          ...skill,
+          color,
+          selected: active,
+          dim,
+          recent,
+          strength: sources / maxSources,
+          firstSeen: firstSeen.get(skill.id),
+          sharedWithNeighbor: sharedNames.has(skill.name),
+        } satisfies SkillNodeData,
       });
       edges.push({
         id: `e-${skill.id}`,
@@ -362,14 +369,14 @@ function InnerFlowCanvas(props: FlowCanvasProps) {
         target: `skill-${skill.id}`,
         type: "straight",
         className: `ring-edge${recent ? " is-recent" : ""}${dim ? " is-dim" : ""}${active ? " is-active" : ""}`,
-        style: { stroke: color, strokeWidth: Math.min(5, 1 + sources / 4), strokeDasharray: skill.kind === "bonus" ? "6 5" : undefined },
+        style: { stroke: color, strokeWidth: Math.min(5, 1 + sources / 3), strokeDasharray: skill.kind === "bonus" ? "6 5" : undefined },
       });
     }
     if (watching?.length) {
-      nodes.push({ id: "watching", type: "watching", position: { x: -(layout.halo.rx + 80), y: 0 }, initialWidth: 120, initialHeight: 28, draggable: false, data: { items: watching } });
+      nodes.push({ id: "watching", type: "watching", position: { x: -(layout.halo.rx + 70), y: 0 }, initialWidth: 110, initialHeight: 26, draggable: false, data: { items: watching } });
     }
     if (neighbor) {
-      nodes.push({ id: "neighbor", type: "neighbor", position: { x: 0, y: layout.halo.ry + 90 }, initialWidth: 200, initialHeight: 81, draggable: false, data: { neighbor } });
+      nodes.push({ id: "neighbor", type: "neighbor", position: { x: 0, y: layout.halo.ry + 80 }, initialWidth: 200, initialHeight: 76, draggable: false, data: { neighbor } });
       for (const { skill } of layout.placed) {
         if (!sharedNames.has(skill.name)) continue;
         edges.push({
@@ -383,12 +390,29 @@ function InnerFlowCanvas(props: FlowCanvasProps) {
       }
     }
     return { nodes, edges };
-  }, [layout, job, stats, period, hoverSector, activeSkill, filter, recentSince, cursorDate, firstSeen, watching, neighbor, sharedNames]);
+  }, [layout, job, stats, period, hoverSector, activeSkill, visibleIds, recentSince, cursorDate, firstSeen, watching, neighbor, sharedNames, maxSources]);
 
+  const containerRef = React.useRef<HTMLDivElement | null>(null);
   useEffect(() => {
-    const timer = setTimeout(() => fitView({ padding: 0.18, duration: 400 }), 60);
+    const timer = setTimeout(() => fitView({ padding: 0.06, duration: 400 }), 120);
     return () => clearTimeout(timer);
   }, [job.id, layout, fitView]);
+
+  // 面板开合、窗口缩放后重新适配，画布不会留在角落。
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const ro = new ResizeObserver(() => {
+      clearTimeout(timer);
+      timer = setTimeout(() => fitView({ padding: 0.06, duration: 250 }), 120);
+    });
+    ro.observe(el);
+    return () => {
+      clearTimeout(timer);
+      ro.disconnect();
+    };
+  }, [fitView]);
 
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
@@ -407,16 +431,10 @@ function InnerFlowCanvas(props: FlowCanvasProps) {
     setHoverSkill(null);
   }, []);
 
-  const visibleCount = cursorDate ? skills.filter((s) => (s.valid_from || "").slice(0, 10) <= cursorDate).length : skills.length;
-  const filters: { key: CanvasFilterMode; label: string }[] = [
-    { key: "all", label: "全部" },
-    { key: "required", label: "必备" },
-    { key: "bonus", label: "加分" },
-    { key: "recent", label: `近 ${RECENT_DAYS} 天生效` },
-  ];
+  const visibleCount = cursorDate ? skills.filter((s) => fmtDate(s.valid_from) <= cursorDate).length : skills.length;
 
   return (
-    <div className="flow-canvas-container ring-canvas">
+    <div className="flow-canvas-container ring-canvas" ref={containerRef}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -429,6 +447,8 @@ function InnerFlowCanvas(props: FlowCanvasProps) {
         elementsSelectable={false}
         minZoom={0.15}
         maxZoom={1.8}
+        fitView
+        fitViewOptions={{ padding: 0.06 }}
         proOptions={{ hideAttribution: true }}
       >
         <Background variant={BackgroundVariant.Dots} gap={28} size={1} color="rgba(32,29,29,0.09)" />
@@ -467,7 +487,7 @@ function InnerFlowCanvas(props: FlowCanvasProps) {
           <div className={`ring-timeline${cursor != null ? " is-on" : ""}`}>
             <button
               type="button"
-              className="dock-tool-btn"
+              className="gw-btn sm"
               onClick={() => {
                 if (playing) return setPlaying(false);
                 setCursor(cursor == null || cursor >= dates.length - 1 ? 0 : cursor);
@@ -490,12 +510,12 @@ function InnerFlowCanvas(props: FlowCanvasProps) {
             />
             <span className="ring-timeline-date">{latest}</span>
             <span className="ring-timeline-readout">
-              {cursorDate ? `${cursorDate} · 已生效 ${visibleCount} / ${skills.length}` : `${skills.length} 条要求 · ${dates.length} 个生效日`}
+              {cursorDate ? `${cursorDate} · 已生效 ${visibleCount} / ${skills.length}` : `${dates.length} 个生效日`}
             </span>
             {cursor != null && (
               <button
                 type="button"
-                className="dock-tool-btn"
+                className="gw-btn sm"
                 onClick={() => {
                   setPlaying(false);
                   setCursor(null);
@@ -507,35 +527,24 @@ function InnerFlowCanvas(props: FlowCanvasProps) {
           </div>
         )}
 
-        <div className="studio-canvas-floating-dock">
-          <div className="dock-button-group">
-            <button type="button" className="dock-tool-btn" onClick={() => zoomIn({ duration: 200 })} aria-label="放大">
-              +
-            </button>
-            <button type="button" className="dock-tool-btn" onClick={() => zoomOut({ duration: 200 })} aria-label="缩小">
-              −
-            </button>
-            <button type="button" className="dock-tool-btn" onClick={() => fitView({ padding: 0.18, duration: 300 })}>
-              全景
-            </button>
-          </div>
-          <div className="dock-separator" />
-          <div className="dock-filter-pills" role="radiogroup" aria-label="要求过滤">
-            {filters.map((f) => (
-              <button
-                key={f.key}
-                type="button"
-                role="radio"
-                aria-checked={filter === f.key}
-                className={`dock-filter-chip${filter === f.key ? " active" : ""}`}
-                onClick={() => setFilter(f.key)}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-          <div className="dock-separator" />
-          <button type="button" className={`dock-minimap-btn${showMinimap ? " is-active" : ""}`} onClick={() => setShowMinimap((v) => !v)}>
+        <div className="ring-dock" role="toolbar" aria-label="画布工具">
+          <button type="button" className="ring-dock-btn" onClick={() => zoomIn({ duration: 200 })} aria-label="放大" title="放大">
+            +
+          </button>
+          <button type="button" className="ring-dock-btn" onClick={() => zoomOut({ duration: 200 })} aria-label="缩小" title="缩小">
+            −
+          </button>
+          <button type="button" className="ring-dock-btn" onClick={() => fitView({ padding: 0.06, duration: 300 })} title="适应窗口">
+            全景
+          </button>
+          <span className="ring-dock-sep" />
+          <button
+            type="button"
+            className={`ring-dock-btn${showMinimap ? " is-active" : ""}`}
+            aria-pressed={showMinimap}
+            onClick={() => setShowMinimap((v) => !v)}
+            title="显示鹰眼"
+          >
             鹰眼
           </button>
         </div>

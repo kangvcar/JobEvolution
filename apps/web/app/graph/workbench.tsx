@@ -1,25 +1,44 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import { FlowWorkbenchCanvas, type Neighbor } from "./flow-canvas";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FlowWorkbenchCanvas, RECENT_DAYS, SECTOR_COLOR, SECTOR_ORDER, sectorOf, type FlowSkillData, type Neighbor } from "./flow-canvas";
+import "./graph.css";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
+/* ---------- 词表 ---------- */
 const CATEGORIES = ["语言", "框架", "平台", "工程", "领域知识"] as const;
 const LEVELS = [
-  { value: "", label: "全部级别" },
   { value: "junior", label: "初级" },
   { value: "mid", label: "中级" },
   { value: "senior", label: "高级" },
 ] as const;
-const PROFICIENCY_LABELS: Record<string, string> = { aware: "了解", able: "熟练", expert: "精通" };
+const PROF: Record<string, { label: string; n: number }> = {
+  aware: { label: "了解", n: 1 },
+  able: { label: "熟练", n: 2 },
+  expert: { label: "精通", n: 3 },
+};
+const LAYER: Record<string, string> = { high: "高置信", mid: "中置信", low: "低置信" };
+const STATUS: Record<string, string> = { formed: "成型", emerging: "萌芽", candidate: "候选" };
+const KINDS = [
+  { value: "", label: "全部" },
+  { value: "required", label: "必备" },
+  { value: "bonus", label: "加分" },
+] as const;
+const WATCHING_PAGE = 40;
 
-const proficiencyLabel = (value?: string) => (value ? PROFICIENCY_LABELS[value] || value : "");
+const profLabel = (v?: string) => (v ? PROF[v]?.label || v : "");
+const profN = (v?: string) => (v ? PROF[v]?.n || 0 : 0);
+const fmtDate = (s?: string | null) => (s ? s.slice(0, 10) : "");
+const statusLabel = (s?: string) => (s ? STATUS[s] || s : "");
 
+/* ---------- 类型 ---------- */
 type Domain = { id: string; name: string };
-type Job = { id: string; name: string; status?: "emerging" | "formed" };
+type Job = { id: string; name: string; status?: string; domain?: string };
+type JobStat = { id: string; n_sources?: number; n_added?: number; n_expired?: number; last_change?: string };
+type JobRow = Job & JobStat;
 type Requirement = {
   skill_id: string;
   name: string;
@@ -33,865 +52,991 @@ type Requirement = {
   confidence?: number;
   layer?: string;
   valid_from?: string | null;
+  group_id?: string | null;
+  min_required?: number | null;
 };
-type Dossier = { n_sources?: number; n_window?: number; neighbor?: Neighbor | null };
+type Evidence = { id: string; company?: string; observed_at?: string; source?: string; retracted?: boolean };
+type JobEvent = { id: string; kind?: string; at?: string; review?: string; skill_name?: string; excerpt?: string };
 type JobDetail = Job & {
   sources?: string[];
-  definition?: { text?: string; type?: string; sources?: string[] }[];
+  definition?: { text?: string; type?: string }[];
   watching?: string[];
+  events?: JobEvent[];
 };
 type Slice = {
   categories?: { id: string; name: string }[];
   requires?: Requirement[];
-  evidence?: { id: string; company?: string; observed_at?: string; source?: string }[];
+  evidence?: Evidence[];
   period_delta?: { added?: Requirement[]; expired?: Requirement[] };
 };
+type Dossier = { n_sources?: number; n_window?: number; neighbor?: Neighbor | null };
+type JobBundle = { detail: JobDetail; slice: Slice; dossier: Dossier | null };
 
-type EvidenceTarget = Requirement & { expired?: boolean };
+type SortKey = "name" | "category" | "proficiency" | "sources" | "confidence" | "valid_from";
 
-const FALLBACK_DOMAINS: Domain[] = [
-  { id: "ai", name: "人工智能" },
-  { id: "bigdata", name: "大数据" },
-  { id: "sys", name: "智能系统" },
-  { id: "iot", name: "物联网" },
-];
-
-const FALLBACK_JOBS: Job[] = [
-  { id: "llm-app", name: "大模型应用工程师", status: "formed" },
-  { id: "embodied-ai", name: "具身智能算法工程师", status: "emerging" },
-  { id: "cloud-bigdata", name: "云原生大数据架构师", status: "formed" },
-  { id: "iot-sys", name: "物联网嵌入式系统专家", status: "formed" },
-];
-
-const FALLBACK_SLICE_LLM: Slice = {
-  categories: [
-    { id: "lang", name: "语言" },
-    { id: "framework", name: "框架" },
-    { id: "platform", name: "平台" },
-    { id: "engineering", name: "工程" },
-    { id: "domain", name: "领域知识" },
-  ],
-  requires: [
-    { skill_id: "s1", name: "Python 异步高并发", category: "语言", category_id: "lang", proficiency: "精通", levels: ["mid", "senior"], sources: ["ev-01", "ev-02"], layer: "high", valid_from: "2026-01-12", excerpt: "精通 Python，有高并发服务开发经验" },
-    { skill_id: "s2", name: "PyTorch 深度学习", category: "框架", category_id: "framework", proficiency: "熟练", levels: ["junior", "mid"], sources: ["ev-01"] },
-    { skill_id: "s3", name: "LangChain / LlamaIndex", category: "框架", category_id: "framework", proficiency: "熟练", levels: ["mid"], sources: ["ev-02"] },
-    { skill_id: "s4", name: "vLLM / Triton 推理加速", category: "平台", category_id: "platform", proficiency: "精通", levels: ["senior"], sources: ["ev-01", "ev-03"], layer: "high", valid_from: "2026-02-20", excerpt: "熟悉 vLLM、Triton 等推理加速框架" },
-    { skill_id: "s5", name: "Hybrid Search 多路召回", category: "工程", category_id: "engineering", proficiency: "熟练", levels: ["mid", "senior"], sources: ["ev-03"] },
-    { skill_id: "s6", name: "LoRA / QLoRA 微调实战", category: "领域知识", category_id: "domain", proficiency: "熟练", levels: ["mid"], sources: ["ev-02"] },
-    { skill_id: "s7", name: "Docker / K8s 容器编排", category: "工程", category_id: "engineering", proficiency: "熟悉", levels: ["junior", "mid"], sources: ["ev-01"] },
-    { skill_id: "s8", name: "CUDA 核心性能算子优化", category: "领域知识", category_id: "domain", kind: "bonus", proficiency: "了解", levels: ["senior"], sources: ["ev-03"], layer: "mid", valid_from: "2026-03-01" },
-  ],
-  period_delta: {
-    added: [
-      { skill_id: "s4", name: "vLLM / Triton 推理加速", category: "平台", proficiency: "精通" },
-      { skill_id: "s5", name: "Hybrid Search 多路召回", category: "工程", proficiency: "熟练" },
-    ],
-    expired: [
-      { skill_id: "s99", name: "传统单机模型简单部署", category: "工程", proficiency: "了解" },
-    ],
-  },
-  evidence: [
-    { id: "ev-01", company: "头部AI科技公司", observed_at: "2026-03-01", source: "招聘实时管道" },
-    { id: "ev-02", company: "新一代大模型研发中心", observed_at: "2026-02-28", source: "企业直聘数据流" },
-    { id: "ev-03", company: "智能云计算先锋企业", observed_at: "2026-03-02", source: "行业公开招聘监测" },
-  ],
+const fetchJson = async <T,>(url: string, signal?: AbortSignal): Promise<T> => {
+  const r = await fetch(url, { signal });
+  if (!r.ok) throw new Error(`${r.status} ${url}`);
+  return r.json() as Promise<T>;
 };
 
-const FALLBACK_DETAIL_LLM: JobDetail = {
-  id: "llm-app",
-  name: "大模型应用工程师",
-  status: "formed",
-  sources: ["头部AI科技公司", "新一代大模型研发中心", "智能云计算先锋企业"],
-  definition: [
-    { text: "负责以开源和私有化 LLM 为核心的生产级 AI 原生系统架构设计与落地。", type: "core" },
-    { text: "主导知识库 RAG 检索增强架构演进，落地高吞吐高并发模型推理服务优化。", type: "engineering" },
-    { text: "构建完整的提示词工程、自动化评估与业务对齐评估流水线。", type: "evaluation" },
-  ],
-  watching: ["Agentic Workflow 自主代理工作流", "MCP 协议标准化集成", "端侧小模型量化剪枝"],
-};
+/* ---------- 小组件 ---------- */
+function StatusTag({ status }: { status?: string }) {
+  return <span className={`gw-tag is-${status || "unknown"}`}>{statusLabel(status) || "未知"}</span>;
+}
 
+function Meter({ value, label }: { value?: string; label?: boolean }) {
+  const n = profN(value);
+  return (
+    <span className="gw-meter" title={`熟练级 ${profLabel(value) || "未标"}`}>
+      {[1, 2, 3].map((i) => (
+        <i key={i} className={i <= n ? "on" : ""} />
+      ))}
+      {label !== false && <em>{profLabel(value) || "未标"}</em>}
+    </span>
+  );
+}
+
+function CatDot({ category }: { category?: string | null }) {
+  return <i className="gw-cat-dot" style={{ background: SECTOR_COLOR[sectorOf(category)] }} aria-hidden="true" />;
+}
+
+function SortIcon({ active, dir }: { active: boolean; dir: "asc" | "desc" }) {
+  return (
+    <span className={`gw-sort${active ? " on" : ""}`} aria-hidden="true">
+      {active ? (dir === "asc" ? "↑" : "↓") : "↕"}
+    </span>
+  );
+}
+
+/* ---------- 主组件 ---------- */
 export function Workbench() {
+  const router = useRouter();
+  const pathname = usePathname();
   const params = useSearchParams();
-  const wanted = params.get("job") || params.get("job_id") || "";
-  const wantedSkill = params.get("skill_id") || "";
 
-  const [domains, setDomains] = useState<Domain[]>([]);
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [domain, setDomain] = useState("");
-  const [category, setCategory] = useState("");
-  const [level, setLevel] = useState("");
-  const [q, setQ] = useState("");
-  const [selected, setSelected] = useState(wanted);
-  const [selectedSkill, setSelectedSkill] = useState(wantedSkill);
-  const [detail, setDetail] = useState<JobDetail | null>(null);
-  const [slice, setSlice] = useState<Slice | null>(null);
-  const [dossier, setDossier] = useState<Dossier | null>(null);
-  const [period, setPeriod] = useState("");
-  const [evidenceTarget, setEvidenceTarget] = useState<EvidenceTarget | null>(null);
-  const [view, setView] = useState<"graph" | "list">("graph");
-  const [inspectorOpen, setInspectorOpen] = useState(true);
-  const [activeTab, setActiveTab] = useState<"skills" | "definition" | "delta" | "watching">("skills");
-  const [pickerOpen, setPickerOpen] = useState(false);
+  // URL 是视图状态的唯一来源：岗位、技能、视图、过滤条件都能分享和后退。
+  const urlJob = params.get("job") || params.get("job_id") || "";
+  const urlSkill = params.get("skill") || params.get("skill_id") || "";
+  const view = params.get("view") === "table" ? "table" : "graph";
+  const cat = params.get("cat") || "";
+  const level = params.get("level") || "";
+  const kind = params.get("kind") || "";
+  const recent = params.get("recent") === "1";
 
-  const opener = useRef<HTMLElement | null>(null);
-  const closeEvidence = () => {
-    setEvidenceTarget(null);
-  };
-
-  useEffect(() => {
-    const saved = window.sessionStorage.getItem("job-view");
-    if (saved === "graph" || saved === "list") setView(saved);
-    else if (window.matchMedia("(max-width: 960px)").matches) setView("list");
-  }, []);
-
-  useEffect(() => {
-    window.sessionStorage.setItem("job-view", view);
-  }, [view]);
-
-  useEffect(() => {
-    if (!evidenceTarget) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") closeEvidence();
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [evidenceTarget]);
-
-  useEffect(() => {
-    if (!evidenceTarget) {
-      opener.current?.focus();
-    }
-  }, [evidenceTarget]);
-
-  useEffect(() => {
-    fetch(`${API}/meta`)
-      .then((r) => r.json())
-      .then((body: { domains?: Domain[]; graph_release?: { period?: string } }) => {
-        setDomains(Array.isArray(body.domains) && body.domains.length ? body.domains : FALLBACK_DOMAINS);
-        setPeriod(body.graph_release?.period || "");
-      })
-      .catch(() => setDomains(FALLBACK_DOMAINS));
-  }, []);
-
-  useEffect(() => {
-    const p = new URLSearchParams();
-    if (domain) p.set("domain", domain);
-    if (q) p.set("q", q);
-    const suffix = p.toString();
-    fetch(`${API}/jobs${suffix ? `?${suffix}` : ""}`)
-      .then((r) => r.json())
-      .then((rows: Job[]) => {
-        if (Array.isArray(rows) && rows.length) {
-          setJobs(rows);
-        } else {
-          setJobs(FALLBACK_JOBS);
-        }
-      })
-      .catch(() => setJobs(FALLBACK_JOBS));
-  }, [domain, q]);
-
-  useEffect(() => {
-    if (wanted) setSelected(wanted);
-    if (wantedSkill) setSelectedSkill(wantedSkill);
-  }, [wanted, wantedSkill]);
-
-  useEffect(() => {
-    if (jobs[0] && !jobs.some((job) => job.id === selected)) setSelected(jobs[0].id);
-  }, [jobs, selected]);
-
-  const current = jobs.find((job) => job.id === selected) || FALLBACK_JOBS[0];
-  const currentId = current?.id;
-  const visibleRequires = (slice?.requires || []).filter(
-    (skill) => (!category || skill.category === category) && (!level || skill.levels?.includes(level)),
+  const setParams = useCallback(
+    (patch: Record<string, string | null>) => {
+      const next = new URLSearchParams(params.toString());
+      next.delete("job_id");
+      next.delete("skill_id");
+      for (const [k, v] of Object.entries(patch)) {
+        if (v) next.set(k, v);
+        else next.delete(k);
+      }
+      const qs = next.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    },
+    [params, pathname, router],
   );
 
+  const [domains, setDomains] = useState<Domain[]>([]);
+  const [period, setPeriod] = useState("");
+  const [jobs, setJobs] = useState<JobRow[] | null>(null);
+  const [jobsError, setJobsError] = useState("");
+  const [domain, setDomain] = useState("");
+  const [q, setQ] = useState("");
+  const [skillQuery, setSkillQuery] = useState("");
+  const [bundle, setBundle] = useState<JobBundle | null>(null);
+  const [bundleFor, setBundleFor] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const [tab, setTab] = useState<"requires" | "evidence" | "watching">("requires");
+  const [watchingLimit, setWatchingLimit] = useState(WATCHING_PAGE);
+  const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>({ key: "sources", dir: "desc" });
+  const [narrow, setNarrow] = useState(false);
+  const [railOpen, setRailOpen] = useState(false);
+  const [inspectorOpen, setInspectorOpen] = useState(true);
+
+  const railSearch = useRef<HTMLInputElement | null>(null);
+  const skillOpener = useRef<HTMLElement | null>(null);
+
+  /* 窄屏：岗位列表与检查面板改为抽屉 */
   useEffect(() => {
-    if (!selected) {
-      setDetail(FALLBACK_DETAIL_LLM);
-      setSlice(FALLBACK_SLICE_LLM);
-      return;
-    }
-    setEvidenceTarget(null);
-    Promise.all([
-      fetch(`${API}/jobs/${encodeURIComponent(selected)}`).then((r) => (r.ok ? r.json() : null)),
-      fetch(`${API}/graph/jobs/${encodeURIComponent(selected)}`).then((r) => (r.ok ? r.json() : null)),
-      fetch(`${API}/discover/${encodeURIComponent(selected)}`).then((r) => (r.ok ? r.json() : null)),
-    ])
-      .then(([job, graph, dossier]) => {
-        setDossier(dossier);
-        setDetail(job || (selected === "llm-app" ? FALLBACK_DETAIL_LLM : currentId ? { id: currentId, name: current?.name || "", status: current?.status, definition: [{ text: "岗位核心标准由国家技术工程体系持续追踪更新中。" }], sources: ["行业头部科技企业"] } : FALLBACK_DETAIL_LLM));
-        setSlice(graph || FALLBACK_SLICE_LLM);
+    const mq = window.matchMedia("(max-width: 960px)");
+    const apply = () => {
+      setNarrow(mq.matches);
+      if (mq.matches) setInspectorOpen(false);
+    };
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+
+  /* 元信息 + 岗位列表（带卷宗统计） */
+  useEffect(() => {
+    const ac = new AbortController();
+    fetchJson<{ domains?: Domain[]; graph_release?: { period?: string } }>(`${API}/meta`, ac.signal)
+      .then((body) => {
+        setDomains(body.domains || []);
+        setPeriod(body.graph_release?.period || "");
       })
-      .catch(() => {
-        setDetail(FALLBACK_DETAIL_LLM);
-        setSlice(FALLBACK_SLICE_LLM);
-        setDossier(null);
+      .catch(() => {});
+    Promise.all([
+      fetchJson<Job[]>(`${API}/jobs`, ac.signal),
+      fetchJson<{ formed?: JobStat[]; emerging?: JobStat[] }>(`${API}/discover`, ac.signal).catch(() => ({}) as { formed?: JobStat[]; emerging?: JobStat[] }),
+    ])
+      .then(([rows, disc]) => {
+        const stats = new Map<string, JobStat>();
+        for (const s of [...(disc.formed || []), ...(disc.emerging || [])]) stats.set(s.id, s);
+        setJobs(rows.map((j) => ({ ...j, ...stats.get(j.id) })));
+        setJobsError("");
+      })
+      .catch((e: Error) => {
+        if (e.name === "AbortError") return;
+        setJobs([]);
+        setJobsError("岗位列表加载失败，请确认 API 服务已启动。");
       });
-  }, [selected, currentId]);
+    return () => ac.abort();
+  }, []);
 
-  const skillBadge = (skill: Requirement) => {
-    const isAdded = (slice?.period_delta?.added || []).some((s) => s.skill_id === skill.skill_id);
-    const isExpired = (slice?.period_delta?.expired || []).some((s) => s.skill_id === skill.skill_id);
-    const isSelected = skill.skill_id === selectedSkill;
+  const filteredJobs = useMemo(() => {
+    const list = jobs || [];
+    const needle = q.trim().toLowerCase();
+    return list.filter((j) => (!domain || j.domain === domain) && (!needle || j.name.toLowerCase().includes(needle)));
+  }, [jobs, domain, q]);
 
+  const selected = useMemo(() => {
+    if (!jobs) return urlJob;
+    if (urlJob && jobs.some((j) => j.id === urlJob)) return urlJob;
+    return filteredJobs[0]?.id || jobs[0]?.id || "";
+  }, [jobs, urlJob, filteredJobs]);
+  const currentRow = jobs?.find((j) => j.id === selected);
+
+  /* 岗位卷宗 */
+  useEffect(() => {
+    if (!selected) return;
+    const ac = new AbortController();
+    setLoading(true);
+    setLoadError("");
+    Promise.all([
+      fetchJson<JobDetail>(`${API}/jobs/${encodeURIComponent(selected)}`, ac.signal),
+      fetchJson<Slice>(`${API}/graph/jobs/${encodeURIComponent(selected)}`, ac.signal),
+      fetchJson<Dossier>(`${API}/discover/${encodeURIComponent(selected)}`, ac.signal).catch(() => null),
+    ])
+      .then(([detail, slice, dossier]) => {
+        setBundle({ detail, slice, dossier });
+        setBundleFor(selected);
+        setWatchingLimit(WATCHING_PAGE);
+        setLoading(false);
+      })
+      .catch((e: Error) => {
+        if (e.name === "AbortError") return;
+        setLoadError("岗位数据加载失败。");
+        setLoading(false);
+      });
+    return () => ac.abort();
+  }, [selected]);
+
+  const stale = bundleFor !== selected;
+  const detail = bundle?.detail;
+  const slice = bundle?.slice;
+  const dossier = bundle?.dossier;
+
+  const requires = useMemo(() => slice?.requires || [], [slice]);
+  const addedIds = useMemo(() => new Set((slice?.period_delta?.added || []).map((r) => r.skill_id)), [slice]);
+  const expiredIds = useMemo(() => new Set((slice?.period_delta?.expired || []).map((r) => r.skill_id)), [slice]);
+  const evidenceById = useMemo(() => new Map((slice?.evidence || []).map((e) => [e.id, e])), [slice]);
+  const recentSince = useMemo(
+    () => new Date(new Date(period || Date.now()).getTime() - RECENT_DAYS * 86400000).toISOString().slice(0, 10),
+    [period],
+  );
+
+  const visible = useMemo(() => {
+    const needle = skillQuery.trim().toLowerCase();
+    return requires.filter(
+      (r) =>
+        (!cat || sectorOf(r.category) === cat) &&
+        (!level || r.levels?.includes(level)) &&
+        (!kind || (kind === "bonus" ? r.kind === "bonus" : r.kind !== "bonus")) &&
+        (!recent || fmtDate(r.valid_from) >= recentSince) &&
+        (!needle || r.name.toLowerCase().includes(needle)),
+    );
+  }, [requires, cat, level, kind, recent, recentSince, skillQuery]);
+  const filtersActive = Boolean(cat || level || kind || recent || skillQuery);
+  const visibleIds = useMemo(() => (filtersActive ? new Set(visible.map((r) => r.skill_id)) : null), [visible, filtersActive]);
+
+  const requiredCount = requires.filter((r) => r.kind !== "bonus").length;
+  const bonusCount = requires.length - requiredCount;
+  const selectedReq = useMemo(() => requires.find((r) => r.skill_id === urlSkill) || null, [requires, urlSkill]);
+
+  const groups = useMemo(() => {
+    const m = new Map<string, Requirement[]>();
+    for (const r of requires) if (r.group_id) m.set(r.group_id, [...(m.get(r.group_id) || []), r]);
+    return m;
+  }, [requires]);
+
+  const sorted = useMemo(() => {
+    const dir = sort.dir === "asc" ? 1 : -1;
+    const val = (r: Requirement): string | number => {
+      switch (sort.key) {
+        case "name":
+          return r.name;
+        case "category":
+          return SECTOR_ORDER.indexOf(sectorOf(r.category) as (typeof SECTOR_ORDER)[number]);
+        case "proficiency":
+          return profN(r.proficiency);
+        case "sources":
+          return r.sources?.length ?? 0;
+        case "confidence":
+          return r.confidence ?? 0;
+        case "valid_from":
+          return fmtDate(r.valid_from);
+      }
+    };
+    return [...visible].sort((a, b) => {
+      const va = val(a);
+      const vb = val(b);
+      const c = typeof va === "number" && typeof vb === "number" ? va - vb : String(va).localeCompare(String(vb), "zh-Hans-CN");
+      return c !== 0 ? c * dir : a.name.localeCompare(b.name, "zh-Hans-CN");
+    });
+  }, [visible, sort]);
+
+  const watchingRanked = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const e of detail?.events || []) if (e.skill_name) counts.set(e.skill_name, (counts.get(e.skill_name) || 0) + 1);
+    return (detail?.watching || [])
+      .map((name) => ({ name, n: counts.get(name) || 0 }))
+      .sort((a, b) => b.n - a.n || a.name.localeCompare(b.name, "zh-Hans-CN"));
+  }, [detail]);
+
+  const eventStats = useMemo(() => {
+    const ev = detail?.events || [];
+    return { total: ev.length, approved: ev.filter((e) => e.review === "approved").length, rejected: ev.filter((e) => e.review === "rejected").length };
+  }, [detail]);
+
+  const flowSkills = useMemo<FlowSkillData[]>(
+    () => requires.map((r) => ({ ...r, id: r.skill_id, added: addedIds.has(r.skill_id) })),
+    [requires, addedIds],
+  );
+
+  /* 交互 */
+  const pickJob = (id: string) => {
+    setParams({ job: id, skill: null });
+    setRailOpen(false);
+  };
+  const pickSkill = (id: string, opener?: HTMLElement | null) => {
+    skillOpener.current = opener || null;
+    setParams({ skill: id });
+    setInspectorOpen(true);
+  };
+  const closeSkill = useCallback(() => {
+    setParams({ skill: null });
+    const el = skillOpener.current;
+    skillOpener.current = null;
+    requestAnimationFrame(() => el?.focus());
+  }, [setParams]);
+  const clearFilters = () => {
+    setSkillQuery("");
+    setParams({ cat: null, level: null, kind: null, recent: null });
+  };
+  const toggleSort = (key: SortKey) =>
+    setSort((s) => (s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: key === "name" || key === "category" ? "asc" : "desc" }));
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const typing = target && (target.tagName === "INPUT" || target.tagName === "SELECT" || target.tagName === "TEXTAREA");
+      if (e.key === "Escape") {
+        if (railOpen) setRailOpen(false);
+        else if (urlSkill) closeSkill();
+        else if (narrow && inspectorOpen) setInspectorOpen(false);
+      } else if (e.key === "/" && !typing) {
+        e.preventDefault();
+        if (narrow) setRailOpen(true);
+        requestAnimationFrame(() => railSearch.current?.focus());
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [railOpen, urlSkill, narrow, inspectorOpen, closeSkill]);
+
+  const onRailKey = (e: React.KeyboardEvent<HTMLUListElement>) => {
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    e.preventDefault();
+    const idx = filteredJobs.findIndex((j) => j.id === selected);
+    const next = filteredJobs[Math.min(filteredJobs.length - 1, Math.max(0, idx + (e.key === "ArrowDown" ? 1 : -1)))];
+    if (next && next.id !== selected) {
+      pickJob(next.id);
+      requestAnimationFrame(() => (e.currentTarget.querySelector(`[data-id="${next.id}"]`) as HTMLElement | null)?.focus());
+    }
+  };
+
+  const domainName = (id?: string) => domains.find((d) => d.id === id)?.name || id || "";
+  const jobName = detail?.name || currentRow?.name || "";
+  const jobStatus = detail?.status || currentRow?.status;
+  const jobsCount = jobs?.length ?? 0;
+
+  /* ---------- 渲染 ---------- */
+  const rail = (
+    <aside className="gw-rail" aria-label="岗位列表">
+      <div className="gw-rail-head">
+        <label className="gw-search">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.5-3.5" />
+          </svg>
+          <input
+            ref={railSearch}
+            type="search"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="搜索岗位"
+            aria-label="搜索岗位"
+          />
+          <kbd aria-hidden="true">/</kbd>
+        </label>
+        <select className="gw-select" aria-label="技术领域" value={domain} onChange={(e) => setDomain(e.target.value)}>
+          <option value="">全部领域</option>
+          {domains.map((d) => (
+            <option key={d.id} value={d.id}>
+              {d.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="gw-rail-count">
+        {jobs === null ? "载入中" : `${filteredJobs.length} / ${jobsCount} 个岗位`}
+      </div>
+      {jobsError && <p className="gw-error">{jobsError}</p>}
+      <ul className="gw-joblist" role="listbox" aria-label="岗位" onKeyDown={onRailKey}>
+        {jobs === null &&
+          Array.from({ length: 6 }, (_, i) => (
+            <li key={i} className="gw-skel-row" aria-hidden="true">
+              <span />
+              <span />
+            </li>
+          ))}
+        {filteredJobs.map((j) => {
+          const on = j.id === selected;
+          return (
+            <li key={j.id} role="presentation">
+              <button
+                type="button"
+                role="option"
+                aria-selected={on}
+                data-id={j.id}
+                tabIndex={on ? 0 : -1}
+                className={`gw-jobrow${on ? " on" : ""}`}
+                onClick={() => pickJob(j.id)}
+              >
+                <span className="gw-jobrow-top">
+                  <span className="gw-jobrow-name">{j.name}</span>
+                  <StatusTag status={j.status} />
+                </span>
+                <span className="gw-jobrow-meta mono">
+                  <span>{j.n_sources ?? "–"} 源</span>
+                  <span>本期 {j.n_added != null ? `+${j.n_added}` : "–"}</span>
+                  <span>{domainName(j.domain)}</span>
+                </span>
+              </button>
+            </li>
+          );
+        })}
+        {jobs && filteredJobs.length === 0 && <li className="gw-empty">没有匹配的岗位</li>}
+      </ul>
+    </aside>
+  );
+
+  const evidenceRows = (ids?: string[]) => {
+    const all = slice?.evidence || [];
+    const rows = ids?.length ? all.filter((e) => ids.includes(e.id)) : all;
+    return [...rows].sort((a, b) => (b.observed_at || "").localeCompare(a.observed_at || ""));
+  };
+
+  const renderEvidence = (ids?: string[], compact?: boolean) => {
+    const rows = evidenceRows(ids);
+    if (!rows.length) return <p className="gw-empty">暂无 JD 快照。</p>;
     return (
-      <button
-        key={skill.skill_id}
-        type="button"
-        className={`modern-skill-chip${isSelected ? " is-active" : ""}${isAdded ? " is-added" : ""}${isExpired ? " is-expired" : ""}`}
-        onClick={(e) => {
-          opener.current = e.currentTarget;
-          setSelectedSkill(skill.skill_id);
-          setEvidenceTarget(skill);
-        }}
-      >
-        <span className="skill-name">{skill.name}</span>
-        {skill.proficiency && <span className="skill-level">{proficiencyLabel(skill.proficiency)}</span>}
-        {isAdded && <span className="skill-badge-delta add">+新</span>}
-        {isExpired && <span className="skill-badge-delta exp">-降</span>}
-      </button>
+      <ol className={`gw-evlist${compact ? " compact" : ""}`}>
+        {rows.map((e) => (
+          <li key={e.id} className={e.retracted ? "is-retracted" : ""}>
+            <span className="gw-ev-company">{e.company || "未知企业"}</span>
+            <span className="gw-ev-date mono">{fmtDate(e.observed_at) || "—"}</span>
+            <span className="gw-ev-id mono" title={e.id}>
+              {e.source || "ats"} · {e.id.replace(/^jd-/, "").slice(0, 8)}
+              {e.retracted ? " · 已撤回" : ""}
+            </span>
+          </li>
+        ))}
+      </ol>
     );
   };
 
-  const flowSlice = slice
-    ? { requires: (slice.requires || []).map((r) => ({ ...r, id: r.skill_id, proficiency: proficiencyLabel(r.proficiency) })) }
-    : null;
-  const requiredCount = (slice?.requires || []).filter((s) => s.kind !== "bonus").length;
-  const bonusCount = (slice?.requires || []).length - requiredCount;
+  const skillPane = selectedReq && (
+    <div className="gw-skill" key={selectedReq.skill_id}>
+      <div className="gw-pane-head">
+        <button type="button" className="gw-back" onClick={closeSkill}>
+          ← {jobName}
+        </button>
+      </div>
+      <div className="gw-pane-body">
+        <p className="gw-eyebrow">
+          <CatDot category={selectedReq.category} />
+          {sectorOf(selectedReq.category)}
+          <span className="gw-dot" />
+          {selectedReq.kind === "bonus" ? "加分要求" : "必备要求"}
+          {addedIds.has(selectedReq.skill_id) && (
+            <>
+              <span className="gw-dot" />
+              <span className="gw-new">本期新增</span>
+            </>
+          )}
+          {expiredIds.has(selectedReq.skill_id) && (
+            <>
+              <span className="gw-dot" />
+              <span className="gw-exp">本期失效</span>
+            </>
+          )}
+        </p>
+        <h2 className="gw-skill-title">{selectedReq.name}</h2>
 
-  return (
-    <>
-      <main id="main" className="graph-studio">
-        {/* Studio Dual-Tier Navigation & Control Masthead */}
-        <header className="studio-topbar-container">
-          {/* Tier 1: Workspace Breadcrumb & Global View Actions */}
-          <div className="studio-masthead">
-            <div className="masthead-left">
-              <span className="masthead-crumb">岗位图谱</span>
-              <span className="masthead-slash">/</span>
-              {/* Active Job Selector Pill */}
-              <div className="job-picker-anchor">
-                <button
-                  type="button"
-                  className="job-active-pill"
-                  onClick={() => setPickerOpen((v) => !v)}
-                  aria-haspopup="listbox"
-                  aria-expanded={pickerOpen}
-                >
-                  <span className="status-indicator-dot" data-status={detail?.status || current?.status} />
-                  <span className="job-name-display">{detail?.name || current?.name || "选择岗位"}</span>
-                  <span className="job-badge-status">
-                    {detail?.status === "formed" ? "成型" : "萌芽"}
-                  </span>
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="chevron-icon">
-                    <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg>
-                </button>
+        <dl className="gw-kv">
+          <div>
+            <dt>熟练级</dt>
+            <dd>
+              <Meter value={selectedReq.proficiency} />
+            </dd>
+          </div>
+          <div>
+            <dt>置信</dt>
+            <dd className="mono">
+              {selectedReq.layer ? LAYER[selectedReq.layer] || selectedReq.layer : "—"}
+              {selectedReq.confidence != null ? ` · ${selectedReq.confidence.toFixed(2)}` : ""}
+            </dd>
+          </div>
+          <div>
+            <dt>独立源</dt>
+            <dd className="mono">{selectedReq.sources?.length ?? 0} 家</dd>
+          </div>
+          <div>
+            <dt>生效自</dt>
+            <dd className="mono">{fmtDate(selectedReq.valid_from) || "—"}</dd>
+          </div>
+          <div>
+            <dt>适用级别</dt>
+            <dd>
+              {selectedReq.levels?.length
+                ? selectedReq.levels.map((l) => LEVELS.find((x) => x.value === l)?.label || l).join(" / ")
+                : "—"}
+            </dd>
+          </div>
+        </dl>
 
-              {pickerOpen && (
-                <div className="job-picker-popover" role="listbox">
-                  <div className="job-picker-header">
-                    <span>切换知识图谱目标 ({jobs.length} 个岗位)</span>
-                    <button type="button" className="close-btn" onClick={() => setPickerOpen(false)}>✕</button>
-                  </div>
-                  <div className="job-picker-search">
-                    <input
-                      type="search"
-                      placeholder="快速过滤岗位名称..."
-                      value={q}
-                      onChange={(e) => setQ(e.target.value)}
-                      autoFocus
-                    />
-                  </div>
-                  <ul className="job-picker-list">
-                    {jobs.map((job) => (
-                      <li key={job.id}>
+        {selectedReq.excerpt && (
+          <blockquote className="gw-quote">
+            <span className="gw-eyebrow">JD 原文摘录</span>
+            <p>{selectedReq.excerpt}</p>
+          </blockquote>
+        )}
+
+        {selectedReq.group_id && (groups.get(selectedReq.group_id)?.length || 0) > 1 && (
+          <section className="gw-section">
+            <h3>
+              同组任选 {selectedReq.min_required || 1} 项
+            </h3>
+            <ul className="gw-alt">
+              {groups.get(selectedReq.group_id)!.map((r) => (
+                <li key={r.skill_id}>
+                  {r.skill_id === selectedReq.skill_id ? (
+                    <strong>{r.name}</strong>
+                  ) : (
+                    <button type="button" className="gw-link" onClick={(e) => pickSkill(r.skill_id, e.currentTarget)}>
+                      {r.name}
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        <section className="gw-section">
+          <h3>
+            支持此要求的 JD 快照 <span className="mono mute">{selectedReq.sources?.length ?? 0}</span>
+          </h3>
+          {renderEvidence(selectedReq.sources)}
+        </section>
+      </div>
+      <div className="gw-pane-foot">
+        <Link className="gw-btn solid block" href={`/diagnose?job_id=${encodeURIComponent(selected)}`}>
+          对照我的简历 →
+        </Link>
+      </div>
+    </div>
+  );
+
+  const jobPane = (
+    <div className="gw-job">
+      <div className="gw-pane-head gw-job-head">
+        <div className="gw-job-title-row">
+          <h2>{jobName || "岗位"}</h2>
+          <StatusTag status={jobStatus} />
+        </div>
+        <p className="gw-job-meta mono">
+          {domainName(detail?.domain || currentRow?.domain)}
+          <span className="gw-dot" />
+          {dossier?.n_sources ?? currentRow?.n_sources ?? "–"} 独立源
+          <span className="gw-dot" />
+          90 天 {dossier?.n_window ?? "–"} 家
+          {currentRow?.last_change ? (
+            <>
+              <span className="gw-dot" />
+              最近变化 {currentRow.last_change}
+            </>
+          ) : null}
+        </p>
+        {narrow && (
+          <button type="button" className="gw-icon-btn gw-pane-close" aria-label="收起面板" onClick={() => setInspectorOpen(false)}>
+            ✕
+          </button>
+        )}
+      </div>
+
+      <dl className="gw-stats">
+        <div>
+          <dt>必备</dt>
+          <dd className="mono">{requiredCount}</dd>
+        </div>
+        <div>
+          <dt>加分</dt>
+          <dd className="mono">{bonusCount}</dd>
+        </div>
+        <div>
+          <dt>本期</dt>
+          <dd className="mono">
+            +{slice?.period_delta?.added?.length ?? 0}
+            {slice?.period_delta?.expired?.length ? ` / −${slice.period_delta.expired.length}` : ""}
+          </dd>
+        </div>
+        <div>
+          <dt>观测中</dt>
+          <dd className="mono">{detail?.watching?.length ?? 0}</dd>
+        </div>
+      </dl>
+
+      <div className="gw-tabs" role="tablist" aria-label="岗位信息">
+        {(
+          [
+            ["requires", `要求 ${visible.length}${filtersActive ? ` / ${requires.length}` : ""}`],
+            ["evidence", `证据 ${slice?.evidence?.length ?? 0}`],
+            ["watching", `观测中 ${detail?.watching?.length ?? 0}`],
+          ] as const
+        ).map(([key, label]) => (
+          <button key={key} type="button" role="tab" aria-selected={tab === key} className={tab === key ? "on" : ""} onClick={() => setTab(key)}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <div className="gw-pane-body" role="tabpanel">
+        {tab === "requires" && (
+          <>
+            {requires.length === 0 && !loading && (
+              <p className="gw-empty">
+                该岗位还没有通过审核的要求边。候选要求会在达到簇内覆盖率门槛并经双源验证后进入图谱。
+              </p>
+            )}
+            {SECTOR_ORDER.map((sector) => {
+              const rows = visible.filter((r) => sectorOf(r.category) === sector);
+              if (!rows.length) return null;
+              return (
+                <section key={sector} className="gw-group">
+                  <h3>
+                    <CatDot category={sector} />
+                    {sector}
+                    <span className="mono mute">{rows.length}</span>
+                  </h3>
+                  <ul className="gw-reqlist">
+                    {rows.map((r) => (
+                      <li key={r.skill_id}>
                         <button
                           type="button"
-                          className={`job-option-item${job.id === selected ? " selected" : ""}`}
-                          onClick={() => {
-                            setSelected(job.id);
-                            setPickerOpen(false);
-                          }}
+                          className={`gw-req${r.skill_id === urlSkill ? " on" : ""}${r.kind === "bonus" ? " is-bonus" : ""}`}
+                          onClick={(e) => pickSkill(r.skill_id, e.currentTarget)}
                         >
-                          <span className="job-option-name">{job.name}</span>
-                          <span className={`pill ${job.status === "formed" ? "ok" : "hot"}`}>
-                            {job.status === "formed" ? "成型" : "萌芽"}
+                          <span className="gw-req-name">
+                            {r.name}
+                            {r.kind === "bonus" && <span className="gw-mini">加分</span>}
+                            {addedIds.has(r.skill_id) && <span className="gw-mini new">新</span>}
+                            {expiredIds.has(r.skill_id) && <span className="gw-mini exp">失效</span>}
                           </span>
+                          <Meter value={r.proficiency} label={false} />
+                          <span className="gw-req-src mono">{r.sources?.length ?? 0} 源</span>
                         </button>
                       </li>
                     ))}
                   </ul>
-                </div>
-              )}
-            </div>
-          </div>
+                </section>
+              );
+            })}
+            {requires.length > 0 && visible.length === 0 && (
+              <p className="gw-empty">
+                当前过滤条件下没有要求。
+                <button type="button" className="gw-link" onClick={clearFilters}>
+                  清除过滤
+                </button>
+              </p>
+            )}
+          </>
+        )}
 
-          <div className="masthead-right">
-            {/* View Mode Toggle */}
-            <div className="view-mode-group">
-              <button
-                type="button"
-                className={`mode-btn${view === "graph" ? " is-active" : ""}`}
-                onClick={() => setView("graph")}
-                title="拓扑大图视图"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="6" cy="6" r="3" />
-                  <circle cx="18" cy="18" r="3" />
-                  <circle cx="18" cy="6" r="3" />
-                  <path d="M8.5 8.5L15.5 15.5M8.5 6h7M18 8.5v7" />
-                </svg>
-                <span>拓扑大图</span>
-              </button>
-              <button
-                type="button"
-                className={`mode-btn${view === "list" ? " is-active" : ""}`}
-                onClick={() => setView("list")}
-                title="能力矩阵清单视图"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="3" y="4" width="18" height="16" rx="2" />
-                  <line x1="3" y1="10" x2="21" y2="10" />
-                  <line x1="10" y1="4" x2="10" y2="20" />
-                </svg>
-                <span>矩阵清单</span>
-              </button>
-            </div>
+        {tab === "evidence" && (
+          <>
+            {detail?.definition && detail.definition.length > 0 && (
+              <section className="gw-section">
+                <h3>岗位定义</h3>
+                <ol className="gw-def">
+                  {detail.definition.map((d, i) => (
+                    <li key={i}>{d.text}</li>
+                  ))}
+                </ol>
+              </section>
+            )}
+            <section className="gw-section">
+              <h3>
+                来源企业 <span className="mono mute">{detail?.sources?.length ?? 0}</span>
+              </h3>
+              {detail?.sources?.length ? <p className="gw-companies">{detail.sources.join("、")}</p> : <p className="gw-empty">暂无来源企业。</p>}
+            </section>
+            <section className="gw-section">
+              <h3>
+                JD 快照 <span className="mono mute">{slice?.evidence?.length ?? 0}</span>
+              </h3>
+              {renderEvidence()}
+            </section>
+            {eventStats.total > 0 && (
+              <section className="gw-section">
+                <h3>要求事件审核</h3>
+                <p className="gw-note mono">
+                  共 {eventStats.total} 条 · 通过 {eventStats.approved} · 驳回 {eventStats.rejected}
+                </p>
+              </section>
+            )}
+          </>
+        )}
 
-            {/* Inspector Toggle Button */}
-            <button
-              type="button"
-              className={`inspector-toggle-btn${inspectorOpen ? " is-active" : ""}`}
-              onClick={() => setInspectorOpen((v) => !v)}
-              title={inspectorOpen ? "收起右侧检查面板" : "展开右侧检查面板"}
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="3" width="18" height="18" rx="2" />
-                <line x1="15" y1="3" x2="15" y2="21" />
-              </svg>
-              <span>{inspectorOpen ? "收起面板" : "展开面板"}</span>
+        {tab === "watching" && (
+          <>
+            <p className="gw-note">市场开始提及但尚未达到要求门槛的技能，不计入缺口。按招聘流中的提及次数排序。</p>
+            {watchingRanked.length === 0 ? (
+              <p className="gw-empty">暂无观测中的技能。</p>
+            ) : (
+              <ol className="gw-watch">
+                {watchingRanked.slice(0, watchingLimit).map((w) => (
+                  <li key={w.name}>
+                    <span className="gw-watch-name">{w.name}</span>
+                    <span className="gw-watch-n mono">{w.n ? `${w.n} 次` : ""}</span>
+                  </li>
+                ))}
+              </ol>
+            )}
+            {watchingRanked.length > watchingLimit && (
+              <button type="button" className="gw-btn sm" onClick={() => setWatchingLimit((n) => n + WATCHING_PAGE * 2)}>
+                展开更多（剩余 {watchingRanked.length - watchingLimit}）
+              </button>
+            )}
+          </>
+        )}
+      </div>
+
+      <div className="gw-pane-foot">
+        <Link className="gw-btn solid block" href={`/diagnose?job_id=${encodeURIComponent(selected)}`}>
+          对照我的简历，计算换档条件 →
+        </Link>
+      </div>
+    </div>
+  );
+
+  const inspector = (
+    <aside className={`gw-inspector${loading || stale ? " is-loading" : ""}`} aria-label="岗位详情" aria-busy={loading || stale}>
+      {loadError ? (
+        <div className="gw-pane-body">
+          <p className="gw-error">{loadError}</p>
+          <button type="button" className="gw-btn sm" onClick={() => setParams({ job: selected })}>
+            重试
+          </button>
+        </div>
+      ) : !bundle ? (
+        <div className="gw-pane-body gw-skel" aria-hidden="true">
+          <span className="w60" />
+          <span className="w40" />
+          <span className="w90" />
+          <span className="w70" />
+          <span className="w80" />
+        </div>
+      ) : selectedReq ? (
+        skillPane
+      ) : (
+        jobPane
+      )}
+    </aside>
+  );
+
+  const legend = (
+    <ul className="gw-legend" aria-label="类目图例">
+      {CATEGORIES.map((c) => (
+        <li key={c}>
+          <CatDot category={c} />
+          {c}
+        </li>
+      ))}
+    </ul>
+  );
+
+  return (
+    <main id="main" className="gw">
+      <div className="gw-bar">
+        <div className="gw-bar-left">
+          {narrow ? (
+            <button type="button" className="gw-btn sm" aria-expanded={railOpen} onClick={() => setRailOpen(true)}>
+              岗位 ▾
+            </button>
+          ) : (
+            <span className="gw-crumb">岗位图谱</span>
+          )}
+          <span className="gw-dot" />
+          <span className="gw-crumb-job">{jobName || "—"}</span>
+          {jobStatus && <StatusTag status={jobStatus} />}
+        </div>
+        <div className="gw-bar-right">
+          <span className="gw-version mono" title="当前图谱发布版本">
+            {period ? `图谱 ${fmtDate(period)}` : "未发布版本"}
+          </span>
+          <div className="gw-seg" role="group" aria-label="视图">
+            <button type="button" className={view === "graph" ? "on" : ""} aria-pressed={view === "graph"} onClick={() => setParams({ view: null })}>
+              拓扑
+            </button>
+            <button type="button" className={view === "table" ? "on" : ""} aria-pressed={view === "table"} onClick={() => setParams({ view: "table" })}>
+              表格
             </button>
           </div>
+          <button
+            type="button"
+            className={`gw-btn sm${inspectorOpen ? " on" : ""}`}
+            aria-pressed={inspectorOpen}
+            onClick={() => setInspectorOpen((v) => !v)}
+          >
+            详情面板
+          </button>
         </div>
+      </div>
 
-        {/* Tier 2: Domain Navigation & Filter Strip */}
-        <div className="studio-subbar">
-          <div className="subbar-left">
-            {/* Segmented Domain Filter Pills */}
-            <nav className="domain-segmented-pills" aria-label="技术领域过滤">
-              <button
-                type="button"
-                className={`domain-pill${domain === "" ? " active" : ""}`}
-                onClick={() => setDomain("")}
-              >
-                全部领域
-              </button>
-              {domains.map((d) => (
-                <button
-                  key={d.id}
-                  type="button"
-                  className={`domain-pill${domain === d.id ? " active" : ""}`}
-                  onClick={() => setDomain(d.id)}
-                >
-                  {d.name}
+      <div className={`gw-body${inspectorOpen ? "" : " no-inspector"}`}>
+        {!narrow && rail}
+        {narrow && railOpen && (
+          <div className="gw-drawer-mask" onClick={() => setRailOpen(false)}>
+            <div className="gw-drawer left" onClick={(e) => e.stopPropagation()}>
+              {rail}
+            </div>
+          </div>
+        )}
+
+        <section className="gw-stage" aria-label="岗位要求">
+          <div className="gw-tools">
+            <label className="gw-search sm">
+              <input
+                type="search"
+                value={skillQuery}
+                onChange={(e) => setSkillQuery(e.target.value)}
+                placeholder="筛选要求"
+                aria-label="筛选要求名称"
+              />
+            </label>
+            <select className="gw-select" aria-label="类目" value={cat} onChange={(e) => setParams({ cat: e.target.value || null })}>
+              <option value="">全部类目</option>
+              {CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+              <option value="其他">其他</option>
+            </select>
+            <select className="gw-select" aria-label="适用级别" value={level} onChange={(e) => setParams({ level: e.target.value || null })}>
+              <option value="">全部级别</option>
+              {LEVELS.map((l) => (
+                <option key={l.value} value={l.value}>
+                  {l.label}
+                </option>
+              ))}
+            </select>
+            <div className="gw-seg" role="group" aria-label="要求类型">
+              {KINDS.map((k) => (
+                <button key={k.value} type="button" className={kind === k.value ? "on" : ""} aria-pressed={kind === k.value} onClick={() => setParams({ kind: k.value || null })}>
+                  {k.label}
                 </button>
               ))}
-            </nav>
-          </div>
-
-          <div className="subbar-right">
-            <span className="subbar-metric-chip">
-              共 {visibleRequires.length} 项标准要求
-            </span>
-
-            {/* Filter Dropdowns */}
-            <div className="filter-dropdown-pair">
-              <select
-                aria-label="技能类目"
-                className="studio-select"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-              >
-                <option value="">全部类目</option>
-                {CATEGORIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                aria-label="适用级别"
-                className="studio-select"
-                value={level}
-                onChange={(e) => setLevel(e.target.value)}
-              >
-                <option value="">全部级别</option>
-                {LEVELS.map((l) => (
-                  <option key={l.value} value={l.value}>
-                    {l.label}
-                  </option>
-                ))}
-              </select>
             </div>
-
-            {(category || level) && (
-              <button
-                type="button"
-                className="filter-reset-btn"
-                onClick={() => {
-                  setCategory("");
-                  setLevel("");
-                }}
-                title="重置类目与级别过滤"
-              >
-                重置
+            <button type="button" className={`gw-chip${recent ? " on" : ""}`} aria-pressed={recent} onClick={() => setParams({ recent: recent ? null : "1" })}>
+              近 {RECENT_DAYS} 天生效
+            </button>
+            <span className="gw-tools-count mono">
+              {filtersActive ? `${visible.length} / ${requires.length}` : requires.length} 项
+            </span>
+            {filtersActive && (
+              <button type="button" className="gw-link" onClick={clearFilters}>
+                清除
               </button>
             )}
           </div>
-        </div>
-      </header>
 
-        {/* Main Stage: Integrated Split-Pane Workspace (Docked Architecture) */}
-        <div className="studio-viewport">
-          {view === "graph" ? (
-            <div className="studio-canvas-area">
-              <div
-                className="studio-canvas-surface"
-                tabIndex={0}
-                role="application"
-                aria-label="岗位能力拓扑关系画布"
-              >
-                <FlowWorkbenchCanvas
-                  job={{
-                    id: selected || current?.id || "llm-app",
-                    name: detail?.name || current?.name || "大模型应用工程师",
-                    status: detail?.status || current?.status,
-                  }}
-                  stats={dossier}
-                  neighbor={dossier?.neighbor}
-                  watching={detail?.watching}
-                  evidence={slice?.evidence}
-                  period={period}
-                  slice={flowSlice}
-                  selectedSkill={selectedSkill}
-                  onSkillClick={(skill) => {
-                    opener.current = null;
-                    setSelectedSkill(skill.id);
-                    setEvidenceTarget((slice?.requires || []).find((item) => item.skill_id === skill.id) || { ...skill, skill_id: skill.id });
-                    setInspectorOpen(true);
-                  }}
-                  onWatchingClick={() => {
-                    setEvidenceTarget(null);
-                    setActiveTab("watching");
-                    setInspectorOpen(true);
-                  }}
-                  onNeighborClick={(jobId) => {
-                    setSelectedSkill("");
-                    setSelected(jobId);
-                  }}
-                />
-              </div>
-
-              {/* Integrated Docked Statusbar (No floating bubbles) */}
-              <footer className="studio-docked-statusbar" aria-label="图谱运行态数据">
-                <div className="statusbar-left">
-                  <div className="status-metric">
-                    <span className="status-label">必备</span>
-                    <strong className="status-val">{requiredCount}</strong>
-                  </div>
-                  <div className="status-metric">
-                    <span className="status-label">加分</span>
-                    <strong className="status-val">{bonusCount}</strong>
-                  </div>
-                  <div className="status-metric">
-                    <span className="status-label">观测中</span>
-                    <strong className="status-val">{detail?.watching?.length || 0}</strong>
-                  </div>
-                  <div className="status-metric">
-                    <span className="status-label">独立源</span>
-                    <strong className="status-val">{dossier?.n_sources ?? detail?.sources?.length ?? 0}</strong>
-                  </div>
-                  <div className="status-divider" />
-                  <span className="status-tip">边越粗，支持它的独立源越多 · 虚线为加分 · 悬停卡片看原文摘录</span>
-                </div>
-                <div className="statusbar-right">
-                  <span className="status-tip">{period ? `图谱版本 ${period}` : "本地预览数据"}</span>
-                </div>
-              </footer>
-            </div>
-          ) : (
-            /* Bento Requirement Matrix View */
-            <div className="studio-bento-matrix" aria-label="能力矩阵清单">
-              <div className="matrix-hero-bar">
-                <div>
-                  <h2>{detail?.name || current?.name} 能力矩阵对账单</h2>
-                  <p className="matrix-sub">
-                    共收录 {visibleRequires.length} 项规范能力要求，已通过双独立源交叉验证。
-                  </p>
-                </div>
-                <Link
-                  className="matrix-cta-btn"
-                  href={`/diagnose?job_id=${encodeURIComponent(selected)}`}
-                >
-                  对照我的简历 →
-                </Link>
-              </div>
-
-              <div className="matrix-grid">
-                {/* Required Core Section */}
-                <div className="matrix-column core">
-                  <div className="matrix-column-head">
-                    <span className="col-badge core">必备核心能力</span>
-                    <span className="col-count">
-                      {visibleRequires.filter((s) => s.kind !== "bonus").length} 项
+          <div className="gw-stage-body">
+            {view === "graph" ? (
+              <div className="gw-canvas" role="application" aria-label="岗位能力拓扑画布" tabIndex={0}>
+                {bundle && (
+                  <FlowWorkbenchCanvas
+                    job={{ id: selected, name: jobName, status: jobStatus }}
+                    stats={dossier}
+                    neighbor={dossier?.neighbor}
+                    watching={detail?.watching}
+                    evidence={slice?.evidence}
+                    period={period}
+                    skills={flowSkills}
+                    visibleIds={visibleIds}
+                    selectedSkill={urlSkill}
+                    onSkillClick={(s) => pickSkill(s.id)}
+                    onWatchingClick={() => {
+                      setParams({ skill: null });
+                      setTab("watching");
+                      setInspectorOpen(true);
+                    }}
+                    onNeighborClick={(id) => pickJob(id)}
+                  />
+                )}
+                {bundle && requires.length === 0 && !loading && (
+                  <div className="gw-canvas-empty">
+                    <strong>尚无要求边</strong>
+                    <span>
+                      已收录 {slice?.evidence?.length ?? 0} 份 JD 快照，{detail?.watching?.length ?? 0} 项观测中技能。要求边需双独立源验证后才会出现。
                     </span>
                   </div>
-                  <div className="matrix-cards-stack">
-                    {visibleRequires
-                      .filter((s) => s.kind !== "bonus")
-                      .map((skill) => (
-                        <div
-                          key={skill.skill_id}
-                          className="matrix-item-card"
-                          onClick={(e) => {
-                            opener.current = e.currentTarget;
-                            setSelectedSkill(skill.skill_id);
-                            setEvidenceTarget(skill);
-                            setInspectorOpen(true);
-                          }}
-                        >
-                          <div className="matrix-card-top">
-                            <span className="card-category">{skill.category || "专业技能"}</span>
-                            <span className="card-level">{proficiencyLabel(skill.proficiency) || "熟练"}</span>
-                          </div>
-                          <h3 className="card-title">{skill.name}</h3>
-                          <div className="card-footer">
-                            <span className="card-sources">
-                              {skill.sources?.length || 2} 家企业在招
-                            </span>
-                            <span className="card-inspect-hint">查看证据 ↗</span>
-                          </div>
-                        </div>
-                      ))}
+                )}
+                {(loading || stale || loadError) && (
+                  <div className="gw-canvas-veil" aria-live="polite">
+                    {loadError ? loadError : "载入岗位数据"}
                   </div>
-                </div>
-
-                {/* Bonus Section */}
-                <div className="matrix-column bonus">
-                  <div className="matrix-column-head">
-                    <span className="col-badge bonus">加分与进阶</span>
-                    <span className="col-count">
-                      {visibleRequires.filter((s) => s.kind === "bonus").length} 项
-                    </span>
-                  </div>
-                  <div className="matrix-cards-stack">
-                    {visibleRequires
-                      .filter((s) => s.kind === "bonus")
-                      .map((skill) => (
-                        <div
-                          key={skill.skill_id}
-                          className="matrix-item-card bonus-card"
-                          onClick={(e) => {
-                            opener.current = e.currentTarget;
-                            setSelectedSkill(skill.skill_id);
-                            setEvidenceTarget(skill);
-                            setInspectorOpen(true);
-                          }}
-                        >
-                          <div className="matrix-card-top">
-                            <span className="card-category">{skill.category || "加分项"}</span>
-                            <span className="card-level">{proficiencyLabel(skill.proficiency) || "熟悉"}</span>
-                          </div>
-                          <h3 className="card-title">{skill.name}</h3>
-                          <div className="card-footer">
-                            <span className="card-sources">
-                              {skill.sources?.length || 2} 家企业提及
-                            </span>
-                            <span className="card-inspect-hint">查看证据 ↗</span>
-                          </div>
-                        </div>
-                      ))}
-                    {visibleRequires.filter((s) => s.kind === "bonus").length === 0 && (
-                      <p className="empty-notice">暂无加分要求项</p>
-                    )}
-                  </div>
-                </div>
+                )}
               </div>
-
-              {/* Watching Market Radar Section */}
-              {detail?.watching && detail.watching.length > 0 && (
-                <div className="matrix-radar-section">
-                  <div className="radar-head">
-                    <h3>市场前沿观测中技能</h3>
-                    <p>市场招聘流中已高频涌现，但尚未确立为正式必备标准的萌芽技术点。</p>
-                  </div>
-                  <div className="radar-chips-wrap">
-                    {detail.watching.map((w, idx) => (
-                      <span key={idx} className="radar-chip">
-                        {w}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Integrated Docked Inspector Panel (Firm 1px Left Border, No Floating) */}
-          {inspectorOpen && (
-            <aside className="studio-docked-inspector" aria-label="岗位详细规范">
-              {evidenceTarget ? (
-                /* Evidence Detail View docked right inside the panel */
-                <div className="docked-evidence-pane">
-                  <div className="docked-evidence-header">
-                    <button
-                      type="button"
-                      className="docked-back-btn"
-                      onClick={closeEvidence}
-                    >
-                      ← 返回岗位概览
-                    </button>
-                    <span className="pill mid">
-                      {evidenceTarget.kind === "bonus" ? "加分要求" : "必备核心"}
-                    </span>
-                  </div>
-
-                  <div className="docked-evidence-body">
-                    <div className="evidence-title-section">
-                      <span className="evidence-eyebrow">招聘证据</span>
-                      <h3 className="evidence-skill-title">{evidenceTarget.name}</h3>
-                    </div>
-
-                    <div className="docked-meta-ribbon">
-                      <div>
-                        <span className="meta-k">熟练级</span>
-                        <strong className="meta-v">{proficiencyLabel(evidenceTarget.proficiency) || "未标"}</strong>
-                      </div>
-                      <div>
-                        <span className="meta-k">技能类目</span>
-                        <strong className="meta-v">{evidenceTarget.category || "其他"}</strong>
-                      </div>
-                      {evidenceTarget.valid_from && (
-                        <div>
-                          <span className="meta-k">生效自</span>
-                          <strong className="meta-v">{evidenceTarget.valid_from.slice(0, 10)}</strong>
-                        </div>
-                      )}
-                    </div>
-
-                    {evidenceTarget.excerpt && (
-                      <blockquote className="evidence-excerpt">
-                        <span className="evidence-eyebrow">JD 原文摘录</span>
-                        <p>{evidenceTarget.excerpt}</p>
-                      </blockquote>
-                    )}
-
-                    <div className="evidence-history-section">
-                      <h4>JD 快照</h4>
-                      {(() => {
-                        const all = slice?.evidence || [];
-                        const ids = evidenceTarget.sources || [];
-                        const matched = ids.length ? all.filter((item) => ids.includes(item.id)) : all;
-                        const rows = matched.length ? matched : all;
-                        return rows.length ? (
-                          <div className="evidence-timeline">
-                            {rows.map((item) => (
-                              <div key={item.id} className="timeline-node">
-                                <div className="timeline-company-row">
-                                  <strong className="comp-name">{item.company || "头部企业招聘数据源"}</strong>
-                                  <span className="comp-date">{(item.observed_at || "2026-03").slice(0, 10)}</span>
-                                </div>
-                                <div className="timeline-id-tag">
-                                  <span>凭证: {item.id}</span>
-                                  <span>渠道: {item.source || "自研招聘流管道"}</span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="empty-notice">已核实进入官方图谱，暂无快照原文</p>
-                        );
-                      })()}
-                    </div>
-                  </div>
-
-                  <div className="docked-evidence-footer">
-                    <button type="button" className="docked-finish-btn" onClick={closeEvidence}>
-                      完成查阅并返回
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                /* Standard Inspector View */
-                <>
-                  <div className="inspector-head">
-                    <div className="inspector-title-wrap">
-                      <div className="inspector-title-row">
-                        <h2>{detail?.name || current?.name || "岗位详情"}</h2>
-                        <span className={`pill ${detail?.status === "formed" ? "ok" : "hot"}`}>
-                          {detail?.status === "formed" ? "成型标准" : "萌芽演化"}
-                        </span>
-                      </div>
-                      <p className="inspector-sources-meta">
-                        来源企业: {detail?.sources?.slice(0, 3).join("、") || "行业头部企业"}
-                        {detail?.sources && detail.sources.length > 3 ? ` 等 ${detail.sources.length} 家` : ""}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      className="inspector-close-btn"
-                      onClick={() => setInspectorOpen(false)}
-                      aria-label="收起面板"
-                      title="收起右侧面板"
-                    >
-                      ✕
-                    </button>
-                  </div>
-
-                  {/* Inspector Tabs */}
-                  <div className="inspector-tabs">
-                    <button
-                      type="button"
-                      className={`tab-btn${activeTab === "skills" ? " active" : ""}`}
-                      onClick={() => setActiveTab("skills")}
-                    >
-                      技能分类 ({visibleRequires.length})
-                    </button>
-                    <button
-                      type="button"
-                      className={`tab-btn${activeTab === "definition" ? " active" : ""}`}
-                      onClick={() => setActiveTab("definition")}
-                    >
-                      岗位定义
-                    </button>
-                    <button
-                      type="button"
-                      className={`tab-btn${activeTab === "delta" ? " active" : ""}`}
-                      onClick={() => setActiveTab("delta")}
-                    >
-                      演化动态
-                    </button>
-                    <button
-                      type="button"
-                      className={`tab-btn${activeTab === "watching" ? " active" : ""}`}
-                      onClick={() => setActiveTab("watching")}
-                    >
-                      观测中 ({detail?.watching?.length || 0})
-                    </button>
-                  </div>
-
-                  {/* Inspector Tab Content */}
-                  <div className="inspector-body">
-                    {activeTab === "skills" && (
-                      <div className="inspector-skills-view">
-                        {slice?.categories?.map((cat) => {
-                          const skills = visibleRequires.filter((s) => s.category === cat.name);
-                          if (skills.length === 0) return null;
-                          return (
-                            <div key={cat.id} className="category-group">
-                              <h4 className="category-title">{cat.name}</h4>
-                              <div className="chips-grid">{skills.map(skillBadge)}</div>
-                            </div>
-                          );
-                        })}
-                        {(!slice?.categories || slice.categories.length === 0) && (
-                          <div className="chips-grid">{visibleRequires.map(skillBadge)}</div>
-                        )}
-                        {slice?.categories &&
-                          visibleRequires.some((skill) => !slice.categories?.some((cat) => cat.name === skill.category)) && (
-                            <div className="category-group">
-                              <h4 className="category-title">其他能力</h4>
-                              <div className="chips-grid">
-                                {visibleRequires
-                                  .filter((skill) => !slice.categories?.some((cat) => cat.name === skill.category))
-                                  .map(skillBadge)}
-                              </div>
-                            </div>
+            ) : (
+              <div className="gw-table-wrap">
+                <table className="gw-table">
+                  <colgroup>
+                    <col />
+                    <col className="w-cat" />
+                    <col className="w-kind" />
+                    <col className="w-prof" />
+                    <col className="w-src" />
+                    <col className="w-conf" />
+                    <col className="w-date" />
+                  </colgroup>
+                  <thead>
+                    <tr>
+                      {(
+                        [
+                          ["name", "能力", ""],
+                          ["category", "类目", ""],
+                          [null, "类型", ""],
+                          ["proficiency", "熟练级", ""],
+                          ["sources", "独立源", "num"],
+                          ["confidence", "置信", "num"],
+                          ["valid_from", "生效日", "num"],
+                        ] as const
+                      ).map(([key, label, cls]) => (
+                        <th key={label} className={cls || undefined} aria-sort={key && sort.key === key ? (sort.dir === "asc" ? "ascending" : "descending") : undefined}>
+                          {key ? (
+                            <button type="button" className="gw-th" onClick={() => toggleSort(key)}>
+                              {label}
+                              <SortIcon active={sort.key === key} dir={sort.dir} />
+                            </button>
+                          ) : (
+                            label
                           )}
-                      </div>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sorted.map((r) => (
+                      <tr
+                        key={r.skill_id}
+                        className={r.skill_id === urlSkill ? "on" : ""}
+                        tabIndex={0}
+                        onClick={(e) => pickSkill(r.skill_id, e.currentTarget)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            pickSkill(r.skill_id, e.currentTarget);
+                          }
+                        }}
+                      >
+                        <td className="gw-td-name">
+                          <span>{r.name}</span>
+                          {addedIds.has(r.skill_id) && <span className="gw-mini new">新</span>}
+                          {expiredIds.has(r.skill_id) && <span className="gw-mini exp">失效</span>}
+                          {r.group_id && (groups.get(r.group_id)?.length || 0) > 1 && (
+                            <span className="gw-mini" title="同组任选">组</span>
+                          )}
+                        </td>
+                        <td>
+                          <CatDot category={r.category} />
+                          {sectorOf(r.category)}
+                        </td>
+                        <td className="mute">{r.kind === "bonus" ? "加分" : "必备"}</td>
+                        <td>
+                          <Meter value={r.proficiency} />
+                        </td>
+                        <td className="num">
+                          <span className="gw-bar-cell">
+                            <i style={{ width: `${Math.min(100, ((r.sources?.length ?? 0) / Math.max(1, ...requires.map((x) => x.sources?.length ?? 0))) * 100)}%` }} />
+                            <b>{r.sources?.length ?? 0}</b>
+                          </span>
+                        </td>
+                        <td className="num mute">{r.confidence != null ? r.confidence.toFixed(2) : "—"}</td>
+                        <td className="num mute">{fmtDate(r.valid_from) || "—"}</td>
+                      </tr>
+                    ))}
+                    {sorted.length === 0 && (
+                      <tr>
+                        <td colSpan={7} className="gw-empty">
+                          {requires.length === 0 ? "该岗位尚无通过审核的要求边。" : "当前过滤条件下没有要求。"}
+                        </td>
+                      </tr>
                     )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
 
-                    {activeTab === "definition" && (
-                      <div className="inspector-definition-view">
-                        {detail?.definition && detail.definition.length > 0 ? (
-                          <div className="definition-claims">
-                            {detail.definition.map((def, idx) => (
-                              <div key={idx} className="definition-item">
-                                <span className="claim-idx">0{idx + 1}</span>
-                                <p className="claim-text">{def.text}</p>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="empty-hint">当前岗位定义正在由双独立源交叉验证审核中。</p>
-                        )}
-                      </div>
-                    )}
+          <footer className="gw-status" aria-label="图例与读数">
+            <div className="gw-status-left">
+              {legend}
+              <span className="gw-status-tip">线越粗独立源越多 · 虚线为加分 · 悬停卡片看原文</span>
+            </div>
+            <span className="gw-status-right mono">
+              必备 {requiredCount} · 加分 {bonusCount} · 独立源 {dossier?.n_sources ?? currentRow?.n_sources ?? "–"}
+            </span>
+          </footer>
+        </section>
 
-                    {activeTab === "watching" && (
-                      <div className="inspector-watching-view">
-                        <p className="empty-hint">市场开始提，还没进要求，不算缺口。达到簇内覆盖率门槛后才会成为要求边。</p>
-                        <div className="chips-grid">
-                          {(detail?.watching || []).map((name) => (
-                            <span key={name} className="radar-chip">
-                              {name}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {activeTab === "delta" && (
-                      <div className="inspector-delta-view">
-                        <div className="delta-stats-row">
-                          <div className="delta-stat-block add">
-                            <span className="num">+{slice?.period_delta?.added?.length || 0}</span>
-                            <span className="label">本周期新增要求</span>
-                          </div>
-                          <div className="delta-stat-block exp">
-                            <span className="num">-{slice?.period_delta?.expired?.length || 0}</span>
-                            <span className="label">本周期失效要求</span>
-                          </div>
-                        </div>
-
-                        {slice?.period_delta?.added && slice.period_delta.added.length > 0 && (
-                          <div className="delta-sublist">
-                            <h5>最新增量技术栈</h5>
-                            <div className="chips-grid">
-                              {slice.period_delta.added.map(skillBadge)}
-                            </div>
-                          </div>
-                        )}
-
-                        {slice?.period_delta?.expired && slice.period_delta.expired.length > 0 && (
-                          <div className="delta-sublist">
-                            <h5>淘汰或降权技术点</h5>
-                            <div className="chips-grid">
-                              {slice.period_delta.expired.map(skillBadge)}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Inspector Footer CTA */}
-                  <div className="inspector-footer">
-                    <Link
-                      className="studio-diagnose-cta"
-                      href={`/diagnose?job_id=${encodeURIComponent(selected)}`}
-                    >
-                      对照我的简历计算换档条件 →
-                    </Link>
-                  </div>
-                </>
-              )}
-            </aside>
-          )}
-        </div>
-      </main>
-    </>
+        {inspectorOpen && !narrow && inspector}
+        {inspectorOpen && narrow && (
+          <div className="gw-drawer-mask" onClick={() => setInspectorOpen(false)}>
+            <div className="gw-drawer right" onClick={(e) => e.stopPropagation()}>
+              {inspector}
+            </div>
+          </div>
+        )}
+      </div>
+    </main>
   );
 }
