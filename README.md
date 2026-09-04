@@ -222,6 +222,7 @@ docker compose down -v
 | `ADMIN_PASSWORD` | 管理后台口令 |
 | `NEO4J_USER` / `NEO4J_PASSWORD` | Neo4j 登录信息 |
 | `NEXT_PUBLIC_API_URL` | 前端请求 API 的地址 |
+| `NEXT_PUBLIC_SHOW_ADMIN_PASSWORD` | 设为 `1` 时，管理页在输入框下方显示明文口令，默认 `0` |
 | `CORS_ORIGINS` | 允许访问 API 的前端来源，多个来源用逗号分隔 |
 
 不要把 `.env` 提交到 Git。API Key、管理员口令和 Cookie 不应写入日志或公开页面。

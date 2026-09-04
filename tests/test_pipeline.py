@@ -393,6 +393,15 @@ def test_queue_requires_admin_password(client):
     assert isinstance(ok.json(), list)
 
 
+def test_admin_password_hint_requires_demo_flag(client, monkeypatch):
+    monkeypatch.delenv("NEXT_PUBLIC_SHOW_ADMIN_PASSWORD", raising=False)
+    assert client.get("/admin/password-hint").status_code == 404
+    monkeypatch.setenv("NEXT_PUBLIC_SHOW_ADMIN_PASSWORD", "1")
+    response = client.get("/admin/password-hint")
+    assert response.status_code == 200
+    assert response.json()["password"] == ADMIN
+
+
 def test_passthrough_default_off_and_low_never_auto(tmp_path, client):
     from app import graph
 

@@ -74,6 +74,7 @@ services:
       NEO4J_PASSWORD: ${NEO4J_PASSWORD:-jobevolution}
       REDIS_URL: redis://redis:6379/0
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-change-me}
+      NEXT_PUBLIC_SHOW_ADMIN_PASSWORD: ${NEXT_PUBLIC_SHOW_ADMIN_PASSWORD:-0}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:3001}
       DATA_DIR: /app/data/official-only
       JD_DIR: /app/data/official-only/jd
@@ -129,7 +130,11 @@ services:
         condition: service_healthy
 
   web:
-    build: ./apps/web
+    build:
+      context: ./apps/web
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+        NEXT_PUBLIC_SHOW_ADMIN_PASSWORD: ${NEXT_PUBLIC_SHOW_ADMIN_PASSWORD:-0}
     ports:
       - "3000:3000"
     environment:

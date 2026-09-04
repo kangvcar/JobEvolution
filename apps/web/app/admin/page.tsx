@@ -7,6 +7,7 @@ import { Portal, PortalTable } from "./portal-table";
 import ReleaseBoard, { ReleaseAudit } from "./release-board";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const SHOW_ADMIN_PASSWORD = process.env.NEXT_PUBLIC_SHOW_ADMIN_PASSWORD === "1";
 
 type OpsEntry = { status: string; at?: number };
 type Ops = { status: Record<string, OpsEntry>; stale: boolean };
@@ -39,6 +40,7 @@ function feedText(type: string, payload: unknown) {
 
 export default function AdminPage() {
   const [password, setPassword] = useState("");
+  const [passwordHint, setPasswordHint] = useState<string | null>(null);
   const [queue, setQueue] = useState<QueueEvent[] | null>(null);
   const [passthrough, setPassthrough] = useState(false);
   const [error, setError] = useState("");
@@ -131,6 +133,16 @@ export default function AdminPage() {
       setError("口令错误");
     }
   }
+
+  useEffect(() => {
+    if (!SHOW_ADMIN_PASSWORD) return;
+    fetch(`${API}/admin/password-hint`)
+      .then(async (response) => (response.ok ? response.json() : null))
+      .then((body: { password?: unknown } | null) => {
+        if (typeof body?.password === "string" && body.password) setPasswordHint(body.password);
+      })
+      .catch(() => null);
+  }, []);
 
   function openTab(next: "queue" | "gold" | "collect" | "release") {
     setTab(next);
@@ -329,6 +341,7 @@ export default function AdminPage() {
           <form onSubmit={enter}>
             <label htmlFor="admin-password">口令</label>
             <input id="admin-password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoFocus required />
+            {passwordHint ? <p className="hint" role="status">演示口令：<code>{passwordHint}</code></p> : null}
             <div className="row">
               <button className="primary" type="submit">进入待审队列</button>
               <button className="ghost" type="button" onClick={() => window.history.back()}>取消</button>

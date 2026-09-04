@@ -701,6 +701,13 @@ def _require_admin(
     raise HTTPException(401, "unauthorized")
 
 
+@app.get("/admin/password-hint")
+def admin_password_hint():
+    if os.environ.get("NEXT_PUBLIC_SHOW_ADMIN_PASSWORD", "0") != "1":
+        raise HTTPException(404, "not found")
+    return {"password": os.environ.get("ADMIN_PASSWORD", "change-me")}
+
+
 @app.post("/admin/login")
 def admin_login(body: LoginBody, request: Request, response: Response):
     now = time.time()
