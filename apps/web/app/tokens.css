@@ -50,7 +50,7 @@
   --color-overlay: rgba(32, 29, 29, 0.42);
 
   /* OpenCode Typography - Berkeley Mono only */
-  --font-mono: var(--font-plex-mono), "Berkeley Mono", "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-mono: "Berkeley Mono", "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --font-mono-stack: var(--font-mono);
   --font-display: var(--font-mono);
   --font-primary: var(--font-mono);

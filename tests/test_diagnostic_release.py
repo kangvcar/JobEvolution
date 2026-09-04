@@ -76,6 +76,34 @@ def test_admin_release_endpoint_returns_structured_codes(client):
             session.run("MATCH (j:Job {id: $id}) DETACH DELETE j", id=job_id)
 
 
+def test_admin_can_rerun_public_curation(client, monkeypatch):
+    from app.pipeline import curate_public
+
+    monkeypatch.setattr(curate_public, "curate_public_jobs", lambda **kwargs: {"version": "test", "release": None, "jobs": []})
+
+    response = client.post("/admin/public-curation", headers={"X-Admin-Password": "change-me"}, json={})
+
+    assert response.status_code == 200
+    assert response.json()["version"] == "test"
+
+
+def test_approved_events_do_not_replace_a_missing_job_definition():
+    job_id = "job-definition-required"
+    event_id = "event-definition-required"
+    graph.init_graph()
+    graph.upsert_job(id=job_id, name="定义门槛岗", domain="ai", status="emerging")
+    graph.upsert_event(
+        {"id": event_id, "kind": "requires_add", "review": "approved", "payload": {"job_id": job_id}},
+        job_id,
+    )
+    try:
+        assert graph.definition_passed(job_id) is False
+    finally:
+        with graph._driver.session() as session:
+            session.run("MATCH (j:Job {id: $id}) DETACH DELETE j", id=job_id)
+            session.run("MATCH (e:EvolutionEvent {id: $id}) DETACH DELETE e", id=event_id)
+
+
 def test_bulk_approval_is_idempotent_and_does_not_call_review_model(client, monkeypatch):
     from app import main
 

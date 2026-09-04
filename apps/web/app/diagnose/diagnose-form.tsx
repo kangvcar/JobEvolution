@@ -126,14 +126,14 @@ export function DiagnoseForm() {
   const copyTimer = useRef<number | null>(null);
 
   useEffect(() => {
-    fetch(`${API}/jobs`)
+    fetch(`${API}/jobs?diagnosable=true`)
       .then((r) => r.json())
       .then((rows: Job[]) => {
         const list = Array.isArray(rows) ? rows : [];
         setJobs(list);
         const fromQuery = params.get("job_id") || params.get("job");
         const fallback = list.find((j) => j.name === DEFAULT_JOB)?.id || list[0]?.id || "";
-        setJobId(fromQuery || fallback);
+        setJobId(list.some((job) => job.id === fromQuery) ? fromQuery! : fallback);
       })
       .catch(() => setJobs([]));
   }, [params]);

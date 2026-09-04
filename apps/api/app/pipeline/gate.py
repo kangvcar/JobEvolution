@@ -234,6 +234,18 @@ def apply_event(event_id: str, *, review: str, payload: dict | None = None) -> d
     graph.record_review_decision(event_id, review=review, payload=data, reason=str(data.get("review_reason") or ""))
     graph.upsert_event(event, job_id=data.get("job_id"))
     if data.get("job_id"):
+        if review in ("approved", "auto_passed") and not graph.current_definition(data["job_id"]):
+            from app.pipeline.curate_public import _definition_claim
+
+            job = graph.get_any_job(data["job_id"]) or {}
+            evidence_ids = {
+                str(row["id"])
+                for row in graph.list_job_evidence(data["job_id"])
+                if row.get("id")
+            }
+            claims = _definition_claim(job.get("name") or "该岗位", graph.list_job_events(data["job_id"]), evidence_ids)
+            if claims:
+                graph.apply_definition_claims(data["job_id"], claims, event_id=f"auto-definition-{data['job_id']}")
         refresh_job_status(data["job_id"])
     return event
 

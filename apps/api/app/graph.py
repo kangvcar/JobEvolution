@@ -337,7 +337,8 @@ def apply_requires(payload: dict) -> None:
             SET v.signature = $signature, v.job_id = $job_id, v.skill_id = $skill_id,
                 v.kind = $kind, v.proficiency = $proficiency, v.weight = $weight,
                 v.levels = $levels, v.layer = $layer, v.confidence = $confidence,
-                v.valid_to = null, v.sources = $sources, v.excerpt = $excerpt
+                v.valid_to = null, v.sources = $sources, v.excerpt = $excerpt,
+                v.curation_version = $curation_version
             WITH v
             MATCH (j:Job {id: $job_id})
             MATCH (s:Skill {id: $skill_id})
@@ -361,6 +362,7 @@ def apply_requires(payload: dict) -> None:
             confidence=float(payload.get("confidence") or 0),
             sources=list(payload.get("sources") or []),
             excerpt=payload.get("excerpt") or "",
+            curation_version=payload.get("curation_version") or "",
             valid_from=valid_from,
             group_id=payload.get("group_id"), min_required=int(payload.get("min_required") or 1),
         )
@@ -385,7 +387,8 @@ def apply_requires(payload: dict) -> None:
                 r.confidence = $confidence,
                 r.sources = $sources,
                 r.excerpt = $excerpt,
-                r.valid_to = null
+                r.valid_to = null,
+                r.curation_version = $curation_version
             """,
             job_id=payload["job_id"],
             job_name=payload.get("job_name") or "",
@@ -400,6 +403,7 @@ def apply_requires(payload: dict) -> None:
             confidence=float(payload.get("confidence") or 0),
             sources=list(payload.get("sources") or []),
             excerpt=payload.get("excerpt") or "",
+            curation_version=payload.get("curation_version") or "",
             valid_from=payload.get("valid_from") or datetime.now().isoformat(),
         )
         evidence_ids = list(payload.get("sources") or [])
@@ -829,15 +833,7 @@ def definition_passed(job_id: str) -> bool:
                 id=job_id,
             ).single()
             return bool(row and row["ok"])
-        row = session.run(
-            """
-            MATCH (e:EvolutionEvent)-[:AFFECTS]->(j:Job {id: $id})
-            WHERE e.review IN ['approved', 'auto_passed']
-            RETURN count(*) AS n
-            """,
-            id=job_id,
-        ).single()
-    return bool(row and row["n"])
+    return False
 
 
 def diagnostic_release(job_id: str, *, override_reason: str = "") -> dict:
@@ -871,21 +867,36 @@ def set_job_fields(job_id: str, **fields) -> None:
         session.run(f"MATCH (j:Job {{id: $id}}) SET {sets}", **params)
 
 
-def expire_absent_requires(job_id: str, keep_ids: list[str], at_iso: str) -> None:
+def expire_absent_requires(job_id: str, keep_ids: list[str], at_iso: str, curation_version: str = "") -> None:
     if _driver is None:
         return
     with _driver.session() as session:
+        session.run(
+            """
+            MATCH (j:Job {id: $id})-[rv:REQUIRES_VERSION {active: true}]->(v:RequirementVersion)
+            WHERE NOT v.skill_id IN $keep
+              AND (v.valid_from IS NULL OR v.valid_from <= datetime($at))
+            SET rv.active = false, v.valid_to = datetime($at),
+                v.curation_version = CASE WHEN $version = '' THEN coalesce(v.curation_version, '') ELSE $version END
+            """,
+            id=job_id,
+            keep=keep_ids,
+            at=at_iso or datetime.now().isoformat(),
+            version=curation_version or "",
+        )
         session.run(
             """
             MATCH (j:Job {id: $id})-[r:REQUIRES]->(s:Skill)
             WHERE r.valid_to IS NULL
               AND NOT s.id IN $keep
               AND (r.valid_from IS NULL OR r.valid_from <= datetime($at))
-            SET r.valid_to = datetime($at)
+            SET r.valid_to = datetime($at),
+                r.curation_version = CASE WHEN $version = '' THEN coalesce(r.curation_version, '') ELSE $version END
             """,
             id=job_id,
             keep=keep_ids,
             at=at_iso or datetime.now().isoformat(),
+            version=curation_version or "",
         )
 
 
@@ -895,13 +906,32 @@ def list_requires_history(job_id: str) -> list[dict]:
     with _driver.session() as session:
         rows = session.run(
             """
+            MATCH (j:Job {id: $id})-[rv:REQUIRES_VERSION]->(v:RequirementVersion)-[:FOR_SKILL]->(s:Skill)
+            OPTIONAL MATCH (s)-[:IN_CATEGORY]->(c:SkillCategory)
+            OPTIONAL MATCH (v)-[:IN_GROUP]->(g:RequirementGroup)
+            RETURN v.skill_id AS skill_id, s.name AS name,
+                   c.id AS category_id, c.name AS category,
+                   toString(v.valid_from) AS valid_from,
+                   toString(v.valid_to) AS valid_to,
+                   v.kind AS kind, g.id AS group_id, g.min_required AS min_required,
+                   coalesce(v.retracted, false) AS retracted,
+                   coalesce(v.curation_version, '') AS curation_version
+            """,
+            id=job_id,
+        )
+        versioned = [dict(row) for row in rows]
+        if versioned:
+            return versioned
+        rows = session.run(
+            """
             MATCH (j:Job {id: $id})-[r:REQUIRES]->(s:Skill)
             OPTIONAL MATCH (s)-[:IN_CATEGORY]->(c:SkillCategory)
             RETURN s.id AS skill_id, s.name AS name,
                    c.id AS category_id, c.name AS category,
                    toString(r.valid_from) AS valid_from,
                    toString(r.valid_to) AS valid_to,
-                   r.layer AS layer, coalesce(r.retracted, false) AS retracted,
+                   r.layer AS layer, r.kind AS kind,
+                   coalesce(r.retracted, false) AS retracted,
                    coalesce(r.curation_version, '') AS curation_version
             """,
             id=job_id,

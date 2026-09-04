@@ -2,28 +2,11 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import QueueBoard, { QueueEvent } from "./queue-board";
+import GoldBoard, { AdjDecision, AdjState } from "./gold-board";
 import { Portal, PortalTable } from "./portal-table";
+import ReleaseBoard, { ReleaseAudit } from "./release-board";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-
-type AdjRow = {
-  id: string;
-  title: string;
-  text: string;
-  source_path?: string;
-  kept: { id: string; name: string }[];
-  suspects: { id: string; name: string }[];
-  proposals: { skill_id: string; name: string; span: string }[];
-  unaligned: string[];
-};
-
-type AdjState = {
-  file: "jd" | "resume";
-  total: number;
-  done: number;
-  row: AdjRow | null;
-  draft_missing?: boolean;
-};
 
 type OpsEntry = { status: string; at?: number };
 type Ops = { status: Record<string, OpsEntry>; stale: boolean };
@@ -31,16 +14,6 @@ type Stats = { today: Record<string, number>; total: Record<string, number>; pas
 type FeedLine = { at: string; type: string; text: string };
 
 const OPS_LABEL: Record<string, string> = { pipeline: "管线", backup: "备份", publish: "发布" };
-
-function highlight(text: string, terms: string[]) {
-  const clean = [...new Set(terms.filter((t) => t && t.length > 1))].map((t) =>
-    t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
-  );
-  if (!clean.length) return text;
-  return text.split(new RegExp(`(${clean.join("|")})`, "gi")).map((part, i) =>
-    clean.some((c) => part.toLowerCase() === c.toLowerCase()) ? <mark key={i}>{part}</mark> : part,
-  );
-}
 
 function ago(at?: number) {
   if (!at) return "无记录";
@@ -70,18 +43,22 @@ export default function AdminPage() {
   const [passthrough, setPassthrough] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
-  const [tab, setTab] = useState<"queue" | "gold" | "collect">("queue");
+  const [tab, setTab] = useState<"queue" | "gold" | "collect" | "release">("queue");
   const [portals, setPortals] = useState<Portal[] | null>(null);
   const [collectBusy, setCollectBusy] = useState(false);
   const [feed, setFeed] = useState<FeedLine[]>([]);
   const streamRef = useRef<EventSource | null>(null);
   const [adjFile, setAdjFile] = useState<"jd" | "resume">("jd");
   const [gold, setGold] = useState<AdjState | null>(null);
+  const [goldBusy, setGoldBusy] = useState<"load" | "decide" | null>(null);
+  const [goldFlash, setGoldFlash] = useState<string | null>(null);
   const [ops, setOps] = useState<Ops | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [skillNames, setSkillNames] = useState<Record<string, string>>({});
   const [bulkBusy, setBulkBusy] = useState<string | null>(null);
   const [bulkResult, setBulkResult] = useState<Record<string, string>>({});
+  const [release, setRelease] = useState<ReleaseAudit | null>(null);
+  const [releaseBusy, setReleaseBusy] = useState(false);
 
   const csrfHeaders = (): Record<string, string> => {
     const token = document.cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith("admin_csrf="))?.split("=")[1];
@@ -107,9 +84,14 @@ export default function AdminPage() {
   }
 
   async function loadNext(file: "jd" | "resume") {
-    const response = await fetch(`${API}/admin/adjudicate/next?file=${file}`, { credentials: "include" });
-    if (!response.ok) throw new Error("裁决队列读取失败");
-    setGold(await response.json());
+    setGoldBusy("load");
+    try {
+      const response = await fetch(`${API}/admin/adjudicate/next?file=${file}`, { credentials: "include" });
+      if (!response.ok) throw new Error("裁决队列读取失败");
+      setGold(await response.json());
+    } finally {
+      setGoldBusy(null);
+    }
   }
 
   async function loadPortals() {
@@ -125,6 +107,12 @@ export default function AdminPage() {
     if (response.ok) setOps(await response.json());
   }
 
+  async function loadRelease() {
+    const response = await fetch(`${API}/admin/diagnostic-release`, { credentials: "include" });
+    if (!response.ok) throw new Error("发布校验读取失败");
+    setRelease(await response.json());
+  }
+
   async function enter(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
@@ -138,16 +126,18 @@ export default function AdminPage() {
       loadNext("jd").catch(() => null);
       loadOps().catch(() => null);
       loadStats().catch(() => null);
+      loadRelease().catch(() => null);
     } catch {
       setError("口令错误");
     }
   }
 
-  function openTab(next: "queue" | "gold" | "collect") {
+  function openTab(next: "queue" | "gold" | "collect" | "release") {
     setTab(next);
     setError("");
     if (next === "gold" && gold === null) loadNext(adjFile).catch(() => setError("裁决队列读取失败"));
     if (next === "collect") loadPortals().catch(() => setError("门户名单读取失败"));
+    if (next === "release") loadRelease().catch(() => setError("发布校验读取失败"));
   }
 
   useEffect(() => {
@@ -232,37 +222,55 @@ export default function AdminPage() {
     setCollectBusy(true);
   }
 
+  async function runCuration() {
+    setReleaseBusy(true);
+    setError("");
+    try {
+      const response = await post("/admin/public-curation", {});
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setError(body.error || "公开校准失败，公开版本未更新");
+        return;
+      }
+      await loadRelease();
+    } catch {
+      setError("公开校准失败，网络或服务异常");
+    } finally {
+      setReleaseBusy(false);
+    }
+  }
+
   function switchAdjFile(file: "jd" | "resume") {
+    if (goldBusy) return;
     setAdjFile(file);
+    setGoldFlash(null);
     loadNext(file).catch(() => setError("裁决队列读取失败"));
   }
 
-  async function decide(payload: { deleted?: string[]; added?: { skill_id: string; span: string }[]; skip?: boolean }) {
-    if (!gold?.row) return;
-    const response = await post("/admin/adjudicate/decide", { file: gold.file, row_id: gold.row.id, ...payload });
-    if (!response.ok) {
-      setError("裁决写回失败");
-      return;
-    }
-    await loadNext(gold.file);
-  }
-
-  useEffect(() => {
-    if (tab !== "gold" || !gold?.row) return;
-    function onKey(event: KeyboardEvent) {
-      const target = event.target as HTMLElement;
-      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return;
-      if (event.key === "d" && gold?.row?.suspects.length) {
-        decide({ deleted: gold.row.suspects.map((s) => s.id) });
-      } else if (event.key === "a" && gold?.row?.proposals.length) {
-        decide({ added: gold.row.proposals.map((p) => ({ skill_id: p.skill_id, span: p.span })) });
-      } else if (event.key === "s" || event.key === "ArrowRight") {
-        decide({ skip: true });
+  // 写回是同步文件改写，按键或点击后先锁住界面并给出状态，成功后闪一条结果再换行。
+  async function decide(payload: AdjDecision): Promise<boolean> {
+    if (!gold?.row || goldBusy) return false;
+    setGoldBusy("decide");
+    setGoldFlash(null);
+    try {
+      const response = await post("/admin/adjudicate/decide", { file: gold.file, row_id: gold.row.id, ...payload });
+      if (!response.ok) {
+        setError((await response.json().catch(() => ({}))).detail || "裁决写回失败，这一行没有改动，可重试");
+        return false;
       }
+      const deleted = payload.deleted?.length ?? 0;
+      const added = payload.added?.length ?? 0;
+      const what = payload.skip ? "已跳过" : deleted || added ? `已写回：删 ${deleted} · 加 ${added}` : "已写回：全部保留";
+      setGoldFlash(what);
+      await loadNext(gold.file);
+      return true;
+    } catch {
+      setError("裁决写回失败，网络或服务异常，可重试");
+      return false;
+    } finally {
+      setGoldBusy(null);
     }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  });
+  }
 
   async function togglePassthrough() {
     setError("");
@@ -332,7 +340,6 @@ export default function AdminPage() {
     );
   }
 
-  const terms = gold?.row ? [...gold.row.kept.map((k) => k.name), ...gold.row.proposals.map((p) => p.span)] : [];
   const enabledPortals = portals?.filter((p) => p.enabled).length;
   const today = stats ? Object.values(stats.today).reduce((a, b) => a + b, 0) : null;
   const statsTitle = stats ? `今日批准 ${stats.today.approved ?? 0} · 驳回 ${stats.today.rejected ?? 0} · 自动通过 ${stats.today.auto_passed ?? 0}；通过率按历史人工裁决算` : undefined;
@@ -350,6 +357,9 @@ export default function AdminPage() {
           </button>
           <button type="button" role="tab" aria-selected={tab === "collect"} onClick={() => openTab("collect")} data-busy={collectBusy || undefined}>
             采集 <b>{portals ? `${enabledPortals}/${portals.length}` : "–"}</b>
+          </button>
+          <button type="button" role="tab" aria-selected={tab === "release"} onClick={() => openTab("release")} data-busy={releaseBusy || undefined}>
+            发布 <b>{release ? `${release.jobs.filter((job) => job.diagnostic_release.ok).length}/${release.jobs.length}` : "–"}</b>
           </button>
         </nav>
         <ul className="ops-dots" aria-label="运维状态" title={ops?.stale ? "管线超过 48 小时没有成功记录" : undefined}>
@@ -378,61 +388,7 @@ export default function AdminPage() {
       ) : null}
 
       {tab === "gold" ? (
-        <section className="adj" aria-label="金标裁决">
-          <div className="adj-head">
-            <div className="seg" role="group" aria-label="金标文件">
-              <button type="button" aria-pressed={adjFile === "jd"} onClick={() => switchAdjFile("jd")}>JD 金标</button>
-              <button type="button" aria-pressed={adjFile === "resume"} onClick={() => switchAdjFile("resume")}>简历金标</button>
-            </div>
-            <p className="hint">自动留的是原文或草稿可溯的金标，只裁存疑与提案。<kbd>d</kbd> 全删存疑 <kbd>a</kbd> 全收提案 <kbd>s</kbd> 跳过</p>
-          </div>
-          {gold?.draft_missing ? <p className="empty">这一行还没有草稿，先在主机跑 python -m app.eval draft。</p> : null}
-          {gold && !gold.row && !gold.draft_missing ? <p className="empty">该文件已全部裁决。</p> : null}
-          {gold?.row ? (
-            <article className="adj-card">
-              <div className="adj-text">
-                <h2>{gold.row.title}</h2>
-                {gold.row.source_path ? <p className="adj-source">证据：{gold.row.source_path}</p> : null}
-                <p className="adj-original">{highlight(gold.row.text, terms)}</p>
-              </div>
-              <div className="adj-side">
-                <section>
-                  <h3>自动留 <b>{gold.row.kept.length}</b></h3>
-                  <p className="hint">{gold.row.kept.map((k) => k.name).join("、") || "（无）"}</p>
-                </section>
-                <section>
-                  <h3>存疑 <b>{gold.row.suspects.length}</b>{gold.row.suspects.length ? <button className="ghost small" type="button" onClick={() => decide({ deleted: gold.row!.suspects.map((s) => s.id) })}>全删 d</button> : null}</h3>
-                  {gold.row.suspects.length ? (
-                    <ul className="adj-list">
-                      {gold.row.suspects.map((s) => (
-                        <li key={s.id}>
-                          <span>{s.name}</span>
-                          <button className="primary small" type="button" onClick={() => decide({ deleted: [s.id] })}>删</button>
-                          <button className="ghost small" type="button" onClick={() => decide({})}>留</button>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : <p className="hint">原文与草稿都能找到，无存疑。</p>}
-                </section>
-                <section>
-                  <h3>提案加 <b>{gold.row.proposals.length}</b>{gold.row.proposals.length ? <button className="ghost small" type="button" onClick={() => decide({ added: gold.row!.proposals.map((p) => ({ skill_id: p.skill_id, span: p.span })) })}>全收 a</button> : null}</h3>
-                  {gold.row.proposals.length ? (
-                    <ul className="adj-list">
-                      {gold.row.proposals.map((p) => (
-                        <li key={p.skill_id}>
-                          <span>{p.name} <small>草稿 {p.span}</small></span>
-                          <button className="primary small" type="button" onClick={() => decide({ added: [p] })}>加</button>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : <p className="hint">草稿没有新增提案。</p>}
-                </section>
-                {gold.row.unaligned.length ? <p className="hint">草稿未对齐（不入金标）：{gold.row.unaligned.join("、")}</p> : null}
-                <button className="ghost small" type="button" onClick={() => decide({ skip: true })}>跳过此行 s</button>
-              </div>
-            </article>
-          ) : null}
-        </section>
+        <GoldBoard gold={gold} file={adjFile} busy={goldBusy} flash={goldFlash} onSwitchFile={switchAdjFile} onDecide={decide} />
       ) : null}
 
       {tab === "collect" ? (
@@ -446,6 +402,8 @@ export default function AdminPage() {
           onAdd={addPortal}
         />
       ) : null}
+
+      {tab === "release" ? <ReleaseBoard audit={release} busy={releaseBusy} onRefresh={() => loadRelease().catch(() => setError("发布校验读取失败"))} onRun={runCuration} /> : null}
     </main>
   );
 }

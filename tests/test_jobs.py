@@ -14,6 +14,22 @@ def test_candidate_filter_empty_without_password(client):
     assert response.json() == []
 
 
+def test_diagnosable_jobs_filter_uses_the_release_gate(client, monkeypatch):
+    from app import graph
+
+    monkeypatch.setattr(
+        graph,
+        "list_jobs",
+        lambda **_: [{"id": "ok", "name": "可诊断岗"}, {"id": "blocked", "name": "校验中岗位"}],
+    )
+    monkeypatch.setattr(graph, "diagnostic_release", lambda job_id: {"ok": job_id == "ok", "errors": []})
+
+    response = client.get("/jobs", params={"diagnosable": "true"})
+
+    assert response.status_code == 200
+    assert response.json() == [{"id": "ok", "name": "可诊断岗"}]
+
+
 def test_unknown_job_is_404(client):
     response = client.get("/jobs/no-such-job")
     assert response.status_code == 404

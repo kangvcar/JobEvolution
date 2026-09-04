@@ -1,15 +1,8 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono } from "next/font/google";
 import Link from "next/link";
 import { Nav } from "./nav";
 import { Logo } from "./logo";
 import "./globals.css";
-
-const plexMono = IBM_Plex_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-plex-mono",
-});
 
 export const metadata: Metadata = {
   title: "智演 (JobEvolution) | 开源 AI 职业能力图谱",
@@ -23,7 +16,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="zh-Hans" className={plexMono.variable} suppressHydrationWarning>
+    <html lang="zh-Hans" suppressHydrationWarning>
       <body suppressHydrationWarning>
         <a className="skip-link" href="#main">
           跳到主内容

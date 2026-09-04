@@ -131,15 +131,28 @@ def main(argv: list[str] | None = None) -> int:
     failed = sum(1 for e in events if e.get("kind") == "extract_failed")
     record("pipeline", "failed" if failed else "success", events=len(events), failed=failed)
     release = None
+    curation = None
     if failed == 0:
-        release = graph.publish_graph_release(period=max((row.get("observed_at") or "" for row in snaps), default=""))
+        period = max((row.get("observed_at") or "" for row in snaps), default="")
+        try:
+            from app.pipeline.curate_public import curate_public_jobs
+
+            curation = curate_public_jobs(period=period, publish_release=False)
+        except Exception as exc:
+            record("pipeline", "failed", events=len(events), failed=1, error=str(exc)[:300])
+            print(json.dumps({"events": len(events), "pending": pending, "auto_passed": auto, "extract_failed": failed, "error": str(exc)[:300]}, ensure_ascii=False))
+            return 1
+        release = graph.publish_graph_release(
+            period=period,
+            metadata={"curation_version": curation.get("version") if curation else ""},
+        )
         record("publish", "success", release=release.get("id"))
     with graph._driver.session() as session:
         jobs = session.run(
             "MATCH (j:Job) RETURN j.name AS name, j.status AS status ORDER BY j.name"
         ).data()
         skills = session.run("MATCH (s:Skill) RETURN count(s) AS n").single()["n"]
-        req = session.run("MATCH ()-[r:REQUIRES]->() RETURN count(r) AS n").single()["n"]
+        req = session.run("MATCH ()-[r:REQUIRES_VERSION {active: true}]->() RETURN count(r) AS n").single()["n"]
     print(
         json.dumps(
             {
@@ -150,6 +163,7 @@ def main(argv: list[str] | None = None) -> int:
                 "jobs": jobs,
                 "skills": skills,
                 "requires": req,
+                "curation": curation,
                 "release": release,
             },
             ensure_ascii=False,

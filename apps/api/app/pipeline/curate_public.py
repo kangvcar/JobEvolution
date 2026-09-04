@@ -6,6 +6,7 @@ import json
 from datetime import datetime, timezone
 
 from app.pipeline.extract import BRAND_NAMES, BROAD_DOMAIN_NAMES, GENERIC_SKILL_NAMES
+from app.pipeline.diagnostic_release import equivalent_count
 
 CURATION_VERSION = "public-curation-v1"
 MAX_REQUIRED = 12
@@ -65,20 +66,27 @@ def rank_requirements(
             best[name] = (score, candidate)
 
     ordered = [item[1] for item in sorted(best.values(), key=lambda item: item[0], reverse=True)]
-    selected: list[dict] = []
-    for index, row in enumerate(ordered):
-        if index < max_required:
-            selected.append({**row, "kind": "required"})
-        elif index < max_formal:
-            selected.append({**row, "kind": "bonus"})
+    required = [row for row in ordered if row.get("kind") == "required"]
+    bonus = [row for row in ordered if row.get("kind") == "bonus"]
+    selected_required = required[:max_required]
+    selected = [{**row, "kind": "required"} for row in selected_required]
+    overflow = required[max_required:] + bonus
+    remaining = max(0, max_formal - equivalent_count(selected, kinds={"required", "bonus"}))
+    for row in overflow:
+        candidate = {**row, "kind": "bonus"}
+        cost = equivalent_count([candidate], kinds={"required", "bonus"})
+        if cost > remaining:
+            continue
+        selected.append(candidate)
+        remaining -= cost
     selected_ids = {row["skill_id"] for row in selected}
     expired = [row for row in rows if str(row.get("skill_id") or "") not in selected_ids]
     return {
         "selected": selected,
         "expired": expired,
         "counts": {
-            "required": sum(row["kind"] == "required" for row in selected),
-            "formal": len(selected),
+            "required": equivalent_count(selected, kinds={"required"}),
+            "formal": equivalent_count(selected, kinds={"required", "bonus"}),
         },
     }
 
@@ -105,13 +113,13 @@ def _definition_claim(job_name: str, events: list[dict], evidence_ids: set[str])
     return [{"type": "responsibility", "text": text[:360], "sources": sorted(sources)}]
 
 
-def curate_public_jobs(*, dry_run: bool = False, period: str = "") -> dict:
+def curate_public_jobs(*, dry_run: bool = False, period: str = "", publish_release: bool = True) -> dict:
     from app import graph
 
     graph.init_graph()
     with graph._driver.session() as session:
         jobs = session.run(
-            "MATCH (j:Job) WHERE j.status IN ['emerging', 'formed'] RETURN j.id AS id, j.name AS name ORDER BY j.name"
+            "MATCH (j:Job)-[:IN_DOMAIN]->(d:Domain) WHERE j.status IN ['emerging', 'formed'] RETURN j.id AS id, j.name AS name, d.id AS domain ORDER BY j.name"
         ).data()
     at = datetime.now(timezone.utc).isoformat()
     report: list[dict] = []
@@ -125,33 +133,51 @@ def curate_public_jobs(*, dry_run: bool = False, period: str = "") -> dict:
         item = {
             "job_id": job_id,
             "name": job["name"],
-            "before": {"formal": len(rows)},
+            "before": {
+                "required": equivalent_count(rows, kinds={"required"}),
+                "formal": equivalent_count(rows, kinds={"required", "bonus"}),
+            },
             "after": ranked["counts"],
             "definition_claims": len(claims),
         }
         report.append(item)
         if dry_run:
             continue
-        with graph._driver.session() as session:
-            for row in ranked["selected"]:
-                session.run(
-                    "MATCH (j:Job {id: $job_id})-[r:REQUIRES]->(s:Skill {id: $skill_id}) "
-                    "SET s.name = $name, r.kind = $kind, r.sources = $sources, "
-                    "r.curation_version = $version, r.valid_to = null",
-                    job_id=job_id, skill_id=row["skill_id"], name=row["name"], kind=row["kind"],
-                    sources=row["sources"], version=CURATION_VERSION,
-                )
-            for row in ranked["expired"]:
-                session.run(
-                    "MATCH (j:Job {id: $job_id})-[r:REQUIRES]->(s:Skill {id: $skill_id}) "
-                    "WHERE r.valid_to IS NULL SET r.valid_to = datetime($at), r.curation_version = $version",
-                    job_id=job_id, skill_id=row.get("skill_id") or "", at=at, version=CURATION_VERSION,
-                )
-        if claims:
+        for row in ranked["selected"]:
+            graph.apply_requires({
+                "job_id": job_id,
+                "job_name": job["name"],
+                "domain": job.get("domain") or "ai",
+                "skill_id": row["skill_id"],
+                "skill_name": row["name"],
+                "kind_edge": row["kind"],
+                "proficiency": row.get("proficiency"),
+                "weight": row.get("weight"),
+                "levels": row.get("levels"),
+                "layer": row.get("layer"),
+                "confidence": row.get("confidence"),
+                "sources": row["sources"],
+                "excerpt": row.get("excerpt"),
+                "group_id": row.get("group_id"),
+                "min_required": row.get("min_required"),
+                "valid_from": at,
+                "curation_version": CURATION_VERSION,
+            })
+        graph.expire_absent_requires(
+            job_id,
+            [row["skill_id"] for row in ranked["selected"]],
+            at,
+            CURATION_VERSION,
+        )
+        current_definition = graph.current_definition(job_id)
+        if claims and claims[0].get("text") not in {row.get("text") for row in current_definition}:
             event_id = f"curation-{CURATION_VERSION}-{job_id}"
             graph.apply_definition_claims(job_id, claims, event_id=event_id)
+        from app.pipeline.status import refresh_job_status
+
+        refresh_job_status(job_id)
     release = None
-    if not dry_run:
+    if not dry_run and publish_release:
         release = graph.publish_graph_release(period=period or at[:10], metadata={"curation_version": CURATION_VERSION})
     return {"version": CURATION_VERSION, "dry_run": dry_run, "jobs": report, "release": release}
 

@@ -94,13 +94,15 @@ def jobs(
     q: str | None = Query(None),
     category: str | None = Query(None),
     level: str | None = Query(None, pattern="^(junior|mid|senior)$"),
+    diagnosable: bool = Query(False),
 ):
-    return graph.list_jobs(domain=domain, status=status, q=q, category=category, level=level)
+    rows = graph.list_jobs(domain=domain, status=status, q=q, category=category, level=level)
+    return [row for row in rows if not diagnosable or graph.diagnostic_release(row["id"])["ok"]]
 
 
 @app.get("/v1/jobs")
-def v1_jobs(domain: str | None = None, status: str | None = None, q: str | None = Query(None), category: str | None = Query(None), level: str | None = Query(None, pattern="^(junior|mid|senior)$")):
-    return jobs(domain=domain, status=status, q=q, category=category, level=level)
+def v1_jobs(domain: str | None = None, status: str | None = None, q: str | None = Query(None), category: str | None = Query(None), level: str | None = Query(None, pattern="^(junior|mid|senior)$"), diagnosable: bool = Query(False)):
+    return jobs(domain=domain, status=status, q=q, category=category, level=level, diagnosable=diagnosable)
 
 
 @app.get("/jobs/{job_id}")
@@ -174,6 +176,24 @@ class SimulateBody(BaseModel):
     job_id: str | None = None
     assumed_skill_ids: list[str] = []
     watching_skill_ids: list[str] = []
+
+
+def _diagnostic_reason(check: dict) -> str:
+    labels = {
+        "definition_missing": "岗位定义尚未生成",
+        "required_group_missing": "没有有效必备要求",
+        "evidence_missing": "要求缺少有效证据",
+        "evidence_retracted": "要求引用了已撤回证据",
+        "duplicate_requirement": "要求存在重复技能",
+        "required_count_exceeded": "必备要求超过 12 个等价项",
+        "formal_count_exceeded": "正式要求超过 24 个等价项",
+        "required_delta_anomaly": "必备要求增量异常",
+        "formal_delta_anomaly": "正式要求增量异常",
+    }
+    errors = check.get("errors") or []
+    if not errors:
+        return "岗位数据尚未通过发布校验"
+    return "；".join(labels.get(item.get("code"), item.get("code", "数据校验失败")) for item in errors[:2])
 
 
 @app.post("/sessions")
@@ -340,12 +360,14 @@ def diagnose(body: DiagnoseBody, request: Request):
         raise HTTPException(404, "session expired")
     release_check = graph.diagnostic_release(selected_ids[0])
     if not release_check["ok"]:
-        raise HTTPException(409, "岗位数据正在校验，暂不可诊断")
+        raise HTTPException(409, f"{job.get('name') or '该岗位'}暂不可诊断：{_diagnostic_reason(release_check)}")
     resume["session_id"] = body.session_id
     if len(selected_ids) == 2:
         second = graph.get_any_job(selected_ids[1])
-        if second is None or second.get("status") == "candidate" or not graph.diagnostic_release(selected_ids[1])["ok"]:
-            raise HTTPException(409, "第二个岗位正在校验，暂不可诊断")
+        second_check = graph.diagnostic_release(selected_ids[1]) if second else {"errors": []}
+        if second is None or second.get("status") == "candidate" or not second_check["ok"]:
+            name = second.get("name") if second else "第二个岗位"
+            raise HTTPException(409, f"{name}暂不可诊断：{_diagnostic_reason(second_check)}")
         report = direction_report(
             [{"id": selected_ids[0], "name": job.get("name"), "requires": graph.list_requires(selected_ids[0])}, {"id": selected_ids[1], "name": second.get("name"), "requires": graph.list_requires(selected_ids[1])}],
             resume,
@@ -636,6 +658,10 @@ class BulkApproveBody(BaseModel):
     override_reason: str = ""
 
 
+class CurationBody(BaseModel):
+    period: str = ""
+
+
 class LoginBody(BaseModel):
     password: str
 
@@ -746,6 +772,35 @@ def admin_override_diagnostic_release(
     if result["ok"]:
         graph.set_job_fields(job_id, diagnostic_override_reason=reason, diagnostic_override_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
     return result
+
+
+@app.get("/admin/diagnostic-release")
+def admin_diagnostic_release_overview(
+    request: Request,
+    x_admin_password: str | None = Header(default=None, alias="X-Admin-Password"),
+):
+    _require_admin(request, x_admin_password)
+    rows = []
+    for job in graph.list_jobs(domain=None, status=None, q=None):
+        check = graph.diagnostic_release(job["id"])
+        rows.append({
+            **job,
+            "diagnostic_release": check,
+            "definition_count": len(graph.current_definition(job["id"])),
+        })
+    return {"release": graph.public_release(), "jobs": rows}
+
+
+@app.post("/admin/public-curation")
+def admin_public_curation(
+    request: Request,
+    body: CurationBody | None = None,
+    x_admin_password: str | None = Header(default=None, alias="X-Admin-Password"),
+):
+    _require_admin(request, x_admin_password)
+    from app.pipeline.curate_public import curate_public_jobs
+
+    return curate_public_jobs(period=(body.period if body else ""))
 
 
 @app.post("/admin/queue/{event_id}/approve")
