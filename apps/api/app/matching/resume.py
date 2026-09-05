@@ -198,7 +198,9 @@ def parse_resume(
         info = info_f.result()
         raw_skills = skill_f.result()
     skills = _align_skills(raw_skills.get("skills") or [], index, threshold=threshold)
-    # 词表命中不能直接证明技能。只保留模型识别且能定位到简历原文的项。
+    # 模型结果可以是子集，正文中的明确词表命中需要合并进来，再统一做证据校验。
+    skills = _merge_skills(skills, skills_from_text(text, index, threshold=threshold))
+    # 词表命中不能直接证明技能。只保留能定位到简历原文的项。
     grounded = {row["skill_id"] for row in _evidence_fragments(text, skills, index)}
     skills = [row for row in skills if row["skill_id"] in grounded]
     for row in skills:
@@ -208,8 +210,9 @@ def parse_resume(
     profile_raw = info.get("profile") if isinstance(info.get("profile"), dict) else {}
     experience = str(info.get("experience") or "").strip()
     education = str(info.get("education") or "").strip()
-    experience = ("" if experience == "简历未标" else experience) or fallback["experience"] or "简历未标"
-    education = ("" if education == "简历未标" else education) or fallback["education"] or "简历未标"
+    unknown = {"简历未标", "unknown", "未标注", "未提供", "n/a", "na"}
+    experience = ("" if experience.casefold() in unknown else experience) or fallback["experience"] or "简历未标"
+    education = ("" if education.casefold() in unknown else education) or fallback["education"] or "简历未标"
     role = str(profile_raw.get("role") or info.get("role") or "").strip()
     profile_experience = str(profile_raw.get("experience") or "").strip()
     if profile_experience and profile_experience != "简历未标":
