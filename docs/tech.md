@@ -2,7 +2,7 @@
 
 智演后端怎么搭、数据怎么流、图怎么存、接口怎么开。拿到本文和 [`product.md`](product.md)、根目录 [`CONTEXT.md`](../CONTEXT.md) 就可以开工。页面视觉以原型 [`prototypes/signature-ui.html`](prototypes/signature-ui.html) 为准。
 
-术语只准用 `CONTEXT.md` 里的词。选型理由在 `docs/research/`，本文只写定案。
+术语只准用 `CONTEXT.md` 里的词。本文只写定案，选型调研原稿不随提交源码分发。
 
 一期不做代码之外的事：不自建学习内容库，不把资源节点写进谱，不上 Kafka，不把采集流墙和演化时间轴做成前端交互。切片差分要做，对照链接要做。
 
@@ -116,7 +116,7 @@ RETURN j, r, s
 
 ## 数据采集
 
-分层：`source` 产出原始记录，`controller` 去重与落盘，`sink` 写 Redis Stream。参考结构见 [`research/jd-collection.md`](research/jd-collection.md)，不要去 pip 装那些已失效的 Scrapy 站群。
+分层：`source` 产出原始记录，`controller` 去重与落盘，`sink` 写 Redis Stream。不要去 pip 装那些已失效的 Scrapy 站群。
 
 **冷启动。** 官方招聘门户是唯一主数据源。各门户先映射到统一记录：公司、岗位名、正文、发布日、渠道。缺正文的行丢掉。标题用领域词粗滤四领域（人工智能优先），去近重后写入 `data/official-only/jd/`，再跑抽取。不要手写赛题 JD，不要先灌 `bootstrap.py`。天池人岗匹配只补条数或字段缺口。
 
@@ -170,7 +170,7 @@ PDF：`pdfplumber` 取文本层。`.docx`：`python-docx`。支持中英文混�
 
 上传前页面必须告知必要简历文本会发送给当前配置的模型服务商,产品数据库不保存简历,匿名会话最长保留一小时。选择文件或拖放即表示确认本次处理范围,不增加单独 checkbox。原文件仍按 ADR-0032 在解析完成或失败后立即删除；服务商没有经合同和配置验证的数据承诺时,页面不得写"绝不留存"。
 
-双栏版式掉点时再引入 SmartResume 版面重建，见 [`research/resume-parsing.md`](research/resume-parsing.md)。一期不做。
+双栏版式掉点时再引入 SmartResume 版面重建。一期不做。
 
 ### 对齐与匹配分
 
@@ -291,4 +291,4 @@ TUZI_REASONING_EFFORT 默认 none，降低长文本评测延迟；兼容性异�
 8. 一次改动只碰任务需要的文件。顺手重构旁边的模块不算完成。
 9. 单测覆盖率目标 ≥60% 是赛题硬指标，优先盖 `pipeline/` 与 `matching/`，路由烟测即可。
 
-调研原文与竞品链接留在 `docs/research/`，实现时按需打开，不要把调研段落粘进代码注释。
+不要把调研段落粘进代码注释。

@@ -611,7 +611,7 @@ H(2, "11.3  前端实现")
 P("前端采用“纸面工作台”设计系统：IBM Plex 字体、直角、发丝分割线、单一强调色，所有颜色与字体只引用设计令牌；动效只动 transform 与 opacity。主导航为首页、图谱工作台、市场演化、管理后台与“开始诊断”主按钮。图谱画布基于 React Flow，力导向布局在 layout.worker.ts 中以 d3-force 计算；诊断页为受控向导，五步状态保存在组件内并支持对照链接直达；管理后台包含审核队列、岗位版本发布、金标裁决与门户管理四个看板。构建通过 npm run typecheck 与 npm run build，图谱页首屏 JS 约 174 KB。")
 H(2, "11.4  部署")
 FIGURE(f"{FIG}/fig_deploy.png", "容器化部署拓扑", 6.0)
-P("部署只需三步：复制 .env.example 为 .env 并填写模型供应商密钥与管理口令；执行 docker compose up -d --build；访问前端 3000 端口、API 8000 端口与 Neo4j 7474 控制台。首次启动会构建 api 与 web 镜像并启动每日管线容器。图谱数据有两种填充方式：默认由每日管线采集、抽取并发布（需模型密钥与门户访问）；演示或冷启动时在 .env 中设置 SNAPSHOT_PATH=/app/data/snapshot/reviewed.json，API 启动检测到空图会自动导入 data/snapshot/reviewed.json（与 release-2026-09-05.json 字节一致，2026-09-05 由产品图以 --slim 方式导出，含公开 release 预计算快照、审核提案与决定），已在临时空 Neo4j 卷上验证恢复后 /meta、/jobs、/discover、/graph/jobs/{id} 均正常。")
+P("部署只需三步：复制 .env.example 为 .env 并填写模型供应商密钥与管理口令；执行 docker compose up -d --build；访问前端 3000 端口、API 8000 端口与 Neo4j 7474 控制台。首次启动会构建 api 与 web 镜像并启动每日管线容器。图谱数据有两种填充方式：默认由每日管线采集、抽取并发布（需模型密钥与门户访问）；演示或冷启动时在 .env 中设置 SNAPSHOT_PATH=/app/data/snapshot/reviewed.json，API 启动检测到空图会自动导入 data/snapshot/reviewed.json（2026-09-05 由产品图以 --slim 方式导出，含公开 release 预计算快照、审核提案与决定），已在临时空 Neo4j 卷上验证恢复后 /meta、/jobs、/discover、/graph/jobs/{id} 均正常。")
 CODE("cp .env.example .env            # LLM_PROVIDER=deepseek  DEEPSEEK_API_KEY=...  ADMIN_PASSWORD=...\ndocker compose up -d --build     # web :3000  api :8000  neo4j :7474/7687  redis :6379  pipeline\ndocker compose ps                # 健康检查：/meta、redis-cli ping、Neo4j 7474\n# 冷启动可选：.env 追加 SNAPSHOT_PATH=/app/data/snapshot/reviewed.json 后再 up，空图自动导入\n\n# 手动运行管线与评测\nPYTHONPATH=apps/api python -m app.collectors --daily\nPYTHONPATH=apps/api python -m app.pipeline\nEVAL_DIR=data/eval-official-only PYTHONPATH=apps/api python -m app.eval report")
 TABLE("主要环境变量", ["变量", "作用"], [
     ["LLM_PROVIDER / *_API_KEY / *_MODEL", "选择 deepseek、bai 或 tuzi 供应商及对应密钥与模型"],
@@ -662,7 +662,7 @@ TABLE("最近一次完整验证结果", ["项目", "结果", "口径 / 备注"],
     ["单元测试", "179 passed，1 skipped", "2026-09-05 在干净 python:3.12 容器内运行，22 个测试文件，连接独立测试库"],
     ["行覆盖率", "69.67%", "pytest-cov，分母排除 collectors 与 client.py 网络分支；门禁 60%"],
     ["前端", "typecheck 通过，build 通过", "Next.js 15 生产构建"],
-    ["Compose", "五容器 healthy", "docker compose ps；2026-09-05 空卷导入 data/snapshot/release-2026-09-05.json 成功，API 公开接口正常"],
+    ["Compose", "五容器 healthy", "docker compose ps；2026-09-05 空卷导入 data/snapshot/reviewed.json 成功，API 公开接口正常"],
     ["浏览器验收", "首页、图谱、发现、诊断、管理均 200，无 4xx/5xx", "系统 Chrome + Playwright；PDF 与 docx 上传完成单岗 / 双岗报告；.doc 返回 400；320px 与 200% 缩放无溢出；键盘 Esc、focus-visible、reduced-motion 复核"],
 ], widths=[3.6, 3.6, 8.3], font_size=9.5)
 P("JD 解析 F1 从 2026-09-02 的 0.814 提升到 0.930，主要改进为：单段抽取取代两段式（两段式实测召回从 0.729 降至 0.604 后回退）、原文词表候选召回只接受精确命中并复用生产管线、评测并发降至 2 至 4 路避免长 JSON 截断。剩余差距集中在领域知识类技能的召回，后续在不改金标的前提下继续调整提示词与召回策略，并按规程重跑。")

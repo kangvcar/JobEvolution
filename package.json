@@ -1,9 +1,0 @@
-{
-  "dependencies": {
-    "@tanstack/react-virtual": "^3.14.10",
-    "d3-force": "^3.0.0",
-    "d3-hierarchy": "^3.1.2",
-    "dagre": "^0.8.5",
-    "recharts": "^3.10.1"
-  }
-}

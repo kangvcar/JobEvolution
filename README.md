@@ -7,7 +7,6 @@
 - [产品口径](docs/product.md)
 - [技术方案](docs/tech.md)
 - [验收与评测](docs/verification.md)
-- [开工路线](docs/plan.md)
 
 ## 项目组成
 

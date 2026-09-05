@@ -25,5 +25,5 @@
 ## 2026-09-05 快照重导出记录
 
 - 原因：`release-2026-09-02.json` 早于 09-05 导入器的关系端点校验，`proposals` / `decisions` 集合为空但关系引用它们，按当前代码导入报 `snapshot relationship has invalid type or missing endpoint`，已从仓库移除。
-- 新快照：`data/snapshot/release-2026-09-05.json` 与 `data/snapshot/reviewed.json` 字节一致，由产品图 `python -m app.graph_snapshot export <path> --slim` 导出；`--slim` 只保留公开指针指向那一份 GraphRelease 的预计算快照，其余 11 个历史 release 清空 `snapshot` 字段，文件约 87 MB。内含 12 个岗位、1646 项技能、3593 条证据、3905 个事件、223 个要求版本、9 个岗位定义、9 条声明、3757 个审核提案、3435 个审核决定、13778 条关系。
+- 新快照：`data/snapshot/reviewed.json`（同内容的 `release-2026-09-05.json` 副本已于提交前删除），由产品图 `python -m app.graph_snapshot export <path> --slim` 导出；`--slim` 只保留公开指针指向那一份 GraphRelease 的预计算快照，其余 11 个历史 release 清空 `snapshot` 字段，文件约 87 MB。内含 12 个岗位、1646 项技能、3593 条证据、3905 个事件、223 个要求版本、9 个岗位定义、9 条声明、3757 个审核提案、3435 个审核决定、13778 条关系。
 - 验证：临时 Neo4j 空卷（堆 2G）导入成功；API 指向该卷后 `/meta` 解析公开 release `release-5a60dff52dd80ac49c151be2`（period 2026-09-04），`/jobs` 9 个公开岗位，`/discover` 候选 3 / 新兴 2 / 成型 7，`/graph/jobs/{id}` 返回要求边与 `period_delta`。导入要求目标图为空；Compose 默认 1G 堆已验证可导入，全量（非 --slim）快照才需要 2G。
