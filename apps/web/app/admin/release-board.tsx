@@ -43,7 +43,7 @@ export default function ReleaseBoard({ audit, busy, onRefresh, onRun }: Props) {
           <button type="button" onClick={onRun} disabled={busy}>{busy ? "校准中…" : "运行公开校准"}</button>
         </div>
       </header>
-      <p className="release-note">岗位定义根据已审核证据自动生成并批准。先看每个岗位的失败原因，再运行公开校准；只有通过校验的岗位才会进入诊断页，校准失败时当前公开版本不会更新。</p>
+      <p className="release-note">先看失败原因，再运行公开校准。只有通过校验的岗位进入诊断页，失败时当前公开版本不变。</p>
       {!audit ? <p className="release-empty">暂无发布校验结果。</p> : audit.jobs.length === 0 ? <p className="release-empty">暂无公开岗位。</p> : (
         <table className="qb-table release-table">
           <thead><tr><th>岗位</th><th>状态</th><th className="num">定义</th><th className="num">必备等价</th><th className="num">正式等价</th><th>结果</th></tr></thead>

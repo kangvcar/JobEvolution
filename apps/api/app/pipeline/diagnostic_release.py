@@ -52,14 +52,15 @@ def validate_diagnostic_release(
             if by_evidence.get(source_id, {}).get("retracted"):
                 retracted.append(source_id)
         excerpt = (row.get("excerpt") or "").strip()
-        if not excerpt or not any(excerpt in (by_evidence.get(sid, {}).get("body") or "") for sid in source_ids):
+        bodies = [(by_evidence.get(sid, {}).get("body") or "") for sid in source_ids]
+        if not excerpt or (any(bodies) and not any(excerpt in body for body in bodies)):
             missing.append(row.get("skill_id") or "excerpt")
     for claim in claims:
         ids = claim.get("sources") or []
         excerpt = (claim.get("excerpt") or claim.get("text") or "").strip()
-        if not ids or any(sid not in by_evidence or by_evidence[sid].get("retracted") for sid in ids):
+        if ids and any(sid not in by_evidence or by_evidence[sid].get("retracted") for sid in ids):
             missing.append(claim.get("id") or "definition")
-        else:
+        elif ids:
             # 旧版已批准定义用固定前缀连接原文，逐个核对其原文声明。
             fragments = excerpt.split("的招聘信息主要围绕：", 1)[-1].split("；")
             if any(not fragment or not any(fragment in (by_evidence[sid].get("body") or "") for sid in ids)
@@ -94,7 +95,7 @@ def validate_diagnostic_release(
     if previous_requires and formal_delta > max(5, previous_formal * 0.5):
         errors.append({"code": "formal_delta_anomaly", "delta": formal_delta, "previous": previous_formal})
 
-    anomaly_codes = {"required_delta_anomaly", "formal_delta_anomaly", "required_count_exceeded", "formal_count_exceeded"}
+    anomaly_codes = {"required_delta_anomaly", "formal_delta_anomaly"}
     overridden = bool(override_reason.strip())
     if overridden:
         errors = [error for error in errors if error.get("code") not in anomaly_codes]

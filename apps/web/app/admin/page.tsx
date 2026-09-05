@@ -335,7 +335,7 @@ export default function AdminPage() {
       <main id="main" className="page admin-page">
         <section className="admin-gate" aria-labelledby="admin-gate-title">
           <h1 id="admin-gate-title">管理</h1>
-          <p className="hint">输入口令进入数据管理区。这里的批准、驳回和发布操作会影响公开岗位要求，请先查看证据和校验结果。</p>
+          <p className="hint">批准、驳回和发布会影响公开岗位要求，请先查看证据。</p>
           <form onSubmit={enter}>
             <label htmlFor="admin-password">口令</label>
             <input id="admin-password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoFocus required />

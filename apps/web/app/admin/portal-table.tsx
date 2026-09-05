@@ -44,7 +44,7 @@ export function PortalTable({ portals, collectBusy, feed, onRunCollect, onToggle
           <h2>官网采集 <span className="hint">只打公司官网公开 JSON，与每日任务共用一把锁</span></h2>
           <button className="primary small" type="button" disabled={collectBusy} onClick={onRunCollect}>{collectBusy ? "采集中…" : "立即采集"}</button>
         </header>
-        <p className="hint">启用的门户会进入采集任务。添加门户时会先探测域名，探测成功才保存；删除只适用于自定义门户，内置门户不能删除。</p>
+        <p className="hint">启用的门户进入采集任务。添加会先探测域名，内置门户不能删除。</p>
         <form onSubmit={submit}>
           <table className="qb-table pt-table">
             <colgroup><col className="w-l" /><col className="w-m" /><col /><col className="w-s" /><col className="w-ops" /></colgroup>

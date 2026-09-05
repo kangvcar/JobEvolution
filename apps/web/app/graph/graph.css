@@ -364,6 +364,7 @@
 .gw-tools-count { margin-left: auto; font-size: 12px; color: var(--color-mute); white-space: nowrap; }
 .gw-tools .gw-link { font-size: 12px; white-space: nowrap; }
 .gw-tools > * { flex-shrink: 0; }
+.gw-tools-note { margin: 0; padding: 7px 12px; border-bottom: 1px solid var(--color-rule); }
 .gw-stage-body { flex: 1; min-height: 0; position: relative; }
 .gw-canvas { position: absolute; inset: 0; outline: none; }
 .gw-canvas:focus-visible { box-shadow: inset 0 0 0 2px var(--color-focus); }

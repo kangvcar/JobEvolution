@@ -190,7 +190,7 @@ export default function QueueBoard({ queue, skillNames, busy, bulkBusy, bulkResu
             </span>
           ) : null}
         </header>
-        <p className="hint">点一行展开原文和证据，再决定批准或驳回。只有确认过证据的岗位要求才会进入公开版本；“一键批准本版本”会提交当前岗位的全部条目。</p>
+        <p className="hint">点一行查看原文，再批准或驳回。批量批准会提交当前版本的全部条目。</p>
 
         <table className="qb-table">
           <colgroup>
