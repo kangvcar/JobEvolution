@@ -161,6 +161,7 @@ export default function GoldBoard({ gold, file, busy, flash, onSwitchFile, onDec
           <div className="adj-text">
             <h2>{row.title}</h2>
             {row.source_path ? <p className="adj-source">证据：{row.source_path}</p> : null}
+            <p className="hint">先读原文，再勾选要删除的存疑技能或要加入的提案。勾选只改变本行决定，点击“提交”后才会写回金标；不确定时可以跳过。</p>
             <p className="adj-original">{highlight(row.text, terms, selAdd)}</p>
             <p className="adj-legend" aria-hidden="true">
               <mark data-kind="kept">自动留</mark>

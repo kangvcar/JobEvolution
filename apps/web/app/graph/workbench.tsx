@@ -848,7 +848,7 @@ export function Workbench() {
                 type="search"
                 value={skillQuery}
                 onChange={(e) => setSkillQuery(e.target.value)}
-                placeholder="筛选要求"
+                placeholder="按技能名称筛选"
                 aria-label="筛选要求名称"
               />
             </label>
@@ -888,6 +888,7 @@ export function Workbench() {
               </button>
             )}
           </div>
+          <p className="gw-note">先选一个要求查看右侧详情。拓扑适合看要求分组，表格适合逐项核对。必备、加分和观测中的技能口径不同，观测中的技能不会计入缺口。</p>
 
           <div className="gw-stage-body">
             {view === "graph" ? (

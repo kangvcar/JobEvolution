@@ -223,6 +223,7 @@ export function DiscoverBoard() {
     <main id="main" className="page discover-page">
       <header className="disc-bar">
         <h1>市场演化</h1>
+        <p className="hint">先在左侧筛选岗位状态或领域，再点一行查看卷宗。卷宗里的要求、公司和变化记录都来自已采集的招聘证据，候选岗位还不能用于简历对照。</p>
         {feed ? (
           <dl className="disc-readout">
             <div title="候选、萌芽、成型岗位合计，别名不计">
@@ -264,6 +265,10 @@ export function DiscoverBoard() {
             <button key={d} type="button" aria-pressed={domain === d} onClick={() => setDomain(d)}>{DOMAIN[d] || d}</button>
           ))}
         </div>
+        <p className="hint" role="status" aria-live="polite">
+          显示 {rows.length} / {all.length} 个岗位{q.trim() ? `，正在搜索“${q.trim()}”` : ""}。
+          {(stage !== "all" || domain !== "all" || q.trim()) && <button type="button" className="disc-more" onClick={() => { setStage("all"); setDomain("all"); setQ(""); }}>清除筛选</button>}
+        </p>
       </div>
 
       <div className="disc-board">
