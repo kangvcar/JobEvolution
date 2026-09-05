@@ -210,6 +210,7 @@ def _diagnostic_reason(check: dict) -> str:
     labels = {
         "definition_missing": "岗位定义尚未生成",
         "required_group_missing": "没有有效必备要求",
+        "invalid_requirement_group": "要求组不完整",
         "evidence_missing": "要求缺少有效证据",
         "evidence_retracted": "要求引用了已撤回证据",
         "duplicate_requirement": "要求存在重复技能",
@@ -722,6 +723,23 @@ class DiagnosticOverrideBody(BaseModel):
     reason: str = ""
 
 
+class GroupRepairBody(BaseModel):
+    action: str
+    kind: str | None = None
+    min_required: int | None = None
+    reason: str = ""
+
+
+class ClaimRepairBody(BaseModel):
+    action: str
+    text: str = ""
+    reason: str = ""
+
+
+class RequirementExpireBody(BaseModel):
+    reason: str = ""
+
+
 class BulkApproveBody(BaseModel):
     override_reason: str = ""
 
@@ -847,6 +865,113 @@ def admin_override_diagnostic_release(
     if result["ok"]:
         graph.set_job_fields(job_id, diagnostic_override_reason=reason, diagnostic_override_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
     return result
+
+
+def _admin_actor(request: Request) -> str:
+    return request.cookies.get("admin_session") or "shared-admin"
+
+
+@app.post("/admin/jobs/{job_id}/requirement-groups/{group_id}")
+def admin_repair_requirement_group(
+    job_id: str,
+    group_id: str,
+    body: GroupRepairBody,
+    request: Request,
+    x_admin_password: str | None = Header(default=None, alias="X-Admin-Password"),
+):
+    """修正诊断发布校验里的 invalid_requirement_group：拆分、统一 kind、改最低数量或解散。"""
+    _require_admin(request, x_admin_password)
+    if graph.get_any_job(job_id) is None:
+        raise HTTPException(404, "not found")
+    if body.action not in {"split_by_kind", "set_kind", "set_min_required", "dissolve"}:
+        raise HTTPException(400, "未知操作")
+    try:
+        detail = graph.repair_requirement_group(job_id, group_id, action=body.action, kind=body.kind, min_required=body.min_required)
+    except KeyError:
+        raise HTTPException(404, "该岗位当前要求里没有这个要求组") from None
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from None
+    graph.record_correction(job_id=job_id, action=f"group:{body.action}", target=group_id, actor=_admin_actor(request), reason=body.reason.strip(), detail=detail)
+    return {"ok": True, "detail": detail, "check": graph.diagnostic_release(job_id)}
+
+
+@app.post("/admin/jobs/{job_id}/requirements/{skill_id}/expire")
+def admin_expire_requirement(
+    job_id: str,
+    skill_id: str,
+    body: RequirementExpireBody,
+    request: Request,
+    x_admin_password: str | None = Header(default=None, alias="X-Admin-Password"),
+):
+    """把缺证据或重复的正式要求移出当前有效集合，写失效时间，不删历史。"""
+    _require_admin(request, x_admin_password)
+    if graph.get_any_job(job_id) is None:
+        raise HTTPException(404, "not found")
+    reason = body.reason.strip()
+    if not reason:
+        raise HTTPException(400, "移出理由不能为空")
+    if not graph.expire_requirement(job_id, skill_id):
+        raise HTTPException(404, "该岗位当前没有这条有效要求")
+    graph.record_correction(job_id=job_id, action="requirement:expire", target=skill_id, actor=_admin_actor(request), reason=reason)
+    return {"ok": True, "check": graph.diagnostic_release(job_id)}
+
+
+@app.post("/admin/jobs/{job_id}/definition-claims/{claim_id}")
+def admin_repair_definition_claim(
+    job_id: str,
+    claim_id: str,
+    body: ClaimRepairBody,
+    request: Request,
+    x_admin_password: str | None = Header(default=None, alias="X-Admin-Password"),
+):
+    """修正定义声明的证据缺口：去掉无证据片段、按证据重新生成，或人工改写并逐片段核对。"""
+    from app.pipeline.diagnostic_release import DEFINITION_PREFIX, check_claim_fragments, claim_fragments
+
+    _require_admin(request, x_admin_password)
+    job = graph.get_any_job(job_id)
+    if job is None:
+        raise HTTPException(404, "not found")
+    actor = _admin_actor(request)
+    reason = body.reason.strip()
+    if body.action == "regenerate":
+        from app.pipeline.curate_public import _definition_claim, evidence_bodies
+
+        claims = _definition_claim(job.get("name") or job_id, graph.list_job_events(job_id), evidence_bodies(job_id))
+        if not claims:
+            raise HTTPException(409, "已批准提案里找不到能逐字对上证据原文的片段，请人工改写")
+        stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
+        graph.apply_definition_claims(job_id, claims, event_id=f"admin-regenerate-{stamp}")
+        graph.record_correction(job_id=job_id, action="claim:regenerate", target=claim_id, actor=actor, reason=reason, detail={"claims": claims})
+        return {"ok": True, "check": graph.diagnostic_release(job_id)}
+
+    claim = next((row for row in graph.current_definition(job_id) if row.get("id") == claim_id), None)
+    if claim is None:
+        raise HTTPException(404, "当前定义里没有这条声明")
+    by_evidence = {str(row["id"]): row for row in graph.evidence_for_validation(job_id) if row.get("id")}
+    prefix, _ = claim_fragments(claim)
+    if body.action == "drop_unsupported":
+        fragments = check_claim_fragments(claim, by_evidence)
+        kept = [fragment["text"] for fragment in fragments if fragment["supported"]]
+        if not kept:
+            raise HTTPException(409, "没有任何片段能对上证据原文，请重新生成或人工改写")
+        text = prefix + "；".join(dict.fromkeys(kept))
+    elif body.action == "edit":
+        text = body.text.strip()
+        if not text:
+            raise HTTPException(400, "定义声明不能为空")
+        if DEFINITION_PREFIX not in text and prefix:
+            text = prefix + text
+    else:
+        raise HTTPException(400, "未知操作")
+    candidate = {**claim, "text": text, "excerpt": text}
+    fragments = check_claim_fragments(candidate, by_evidence)
+    unsupported = [fragment["text"] for fragment in fragments if not fragment["supported"]]
+    if not fragments or unsupported:
+        raise HTTPException(409, json.dumps({"code": "fragment_not_in_evidence", "items": unsupported}, ensure_ascii=False))
+    sources = [str(sid) for sid in claim.get("sources") or [] if sid]
+    graph.update_definition_claim(job_id, claim_id, text=text, sources=sources, reason=reason)
+    graph.record_correction(job_id=job_id, action=f"claim:{body.action}", target=claim_id, actor=actor, reason=reason, detail={"before": claim.get("text"), "after": text})
+    return {"ok": True, "check": graph.diagnostic_release(job_id)}
 
 
 @app.get("/admin/diagnostic-release")

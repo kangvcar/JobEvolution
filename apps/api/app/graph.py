@@ -301,19 +301,23 @@ def set_watching(job_id: str, skill_ids: list[str]) -> None:
         )
 
 
+def requirement_signature(payload: dict) -> str:
+    """Business fields define identity; evidence can change without creating a new fact."""
+    signature_payload = {
+        key: payload.get(key)
+        for key in ("job_id", "skill_id", "kind_edge", "proficiency", "weight", "levels", "layer", "group_id", "min_required")
+    }
+    return hashlib.sha256(
+        json.dumps(signature_payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()[:24]
+
+
 def apply_requires(payload: dict) -> None:
     if _driver is None:
         return
     with _driver.session() as session:
         valid_from = payload.get("valid_from") or datetime.now().isoformat()
-        # Business fields define identity; evidence can change without creating a new fact.
-        signature_payload = {
-            key: payload.get(key)
-            for key in ("job_id", "skill_id", "kind_edge", "proficiency", "weight", "levels", "layer", "group_id", "min_required")
-        }
-        signature = hashlib.sha256(
-            json.dumps(signature_payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
-        ).hexdigest()[:24]
+        signature = requirement_signature(payload)
         session.run(
             "MERGE (j:Job {id: $job_id}) SET j.name = coalesce($job_name, j.name) "
             "MERGE (s:Skill {id: $skill_id}) SET s.name = coalesce($skill_name, s.name)",
@@ -637,7 +641,9 @@ def get_bulk_decision(batch_id: str) -> dict | None:
 def apply_definition_claims(job_id: str, claims: list[dict], *, event_id: str) -> None:
     if _driver is None or not claims:
         return
-    version_id = "defv-" + hashlib.sha256(f"{job_id}:{event_id}".encode()).hexdigest()[:24]
+    # 版本身份包含声明内容：同一来源事件生成了不同文本时开新版本并移动指针，而不是往旧版本里追加声明。
+    content = json.dumps([claim for claim in claims if isinstance(claim, dict)], ensure_ascii=False, sort_keys=True)
+    version_id = "defv-" + hashlib.sha256(f"{job_id}:{event_id}:{content}".encode()).hexdigest()[:24]
     with _driver.session() as session:
         session.run(
             "MERGE (v:JobDefinitionVersion {id: $id}) ON CREATE SET v.job_id = $job_id, v.created_at = datetime(), v.status = 'approved' "
@@ -667,7 +673,8 @@ def current_definition(job_id: str) -> list[dict]:
         rows = session.run(
             "MATCH (j:Job {id: $id})-[:HAS_DEFINITION]->(v:JobDefinitionVersion {status: 'approved'})-[:HAS_CLAIM]->(c:DefinitionClaim) "
             "WHERE v.id = j.definition_id OR (j.definition_id IS NULL AND NOT EXISTS { MATCH (j)-[:HAS_DEFINITION]->(newer:JobDefinitionVersion) WHERE newer.created_at > v.created_at }) "
-            "RETURN c.id AS id, c.text AS text, c.excerpt AS excerpt, c.type AS type, c.sources AS sources ORDER BY c.type, c.id",
+            "RETURN c.id AS id, c.text AS text, c.excerpt AS excerpt, c.type AS type, c.sources AS sources, "
+            "toString(c.corrected_at) AS corrected_at ORDER BY c.type, c.id",
             id=job_id,
         )
         return [dict(row) for row in rows]
@@ -895,6 +902,183 @@ def set_job_fields(job_id: str, **fields) -> None:
     params = {"id": job_id, **fields}
     with _driver.session() as session:
         session.run(f"MATCH (j:Job {{id: $id}}) SET {sets}", **params)
+
+
+# ---- 诊断发布校验的管理修复 ------------------------------------------------
+# 这些是对抽取/校准结果的数据订正，不是市场变化：不进演化事件，只记 GraphCorrection 供审计。
+
+
+def record_correction(*, job_id: str, action: str, target: str, actor: str, reason: str = "", detail: dict | None = None) -> str | None:
+    if _driver is None:
+        return None
+    stamp = datetime.now().isoformat()
+    correction_id = "corr-" + hashlib.sha256(f"{job_id}:{action}:{target}:{stamp}".encode()).hexdigest()[:24]
+    with _driver.session() as session:
+        session.run(
+            """
+            MERGE (c:GraphCorrection {id: $id})
+            ON CREATE SET c.job_id = $job_id, c.action = $action, c.target = $target, c.actor = $actor,
+                          c.reason = $reason, c.detail = $detail, c.at = datetime($at)
+            WITH c MATCH (j:Job {id: $job_id}) MERGE (c)-[:CORRECTS]->(j)
+            """,
+            id=correction_id, job_id=job_id, action=action, target=target, actor=actor, reason=reason,
+            detail=json.dumps(detail or {}, ensure_ascii=False, default=str), at=stamp,
+        )
+    return correction_id
+
+
+def requirement_group_members(job_id: str, group_id: str) -> list[dict]:
+    """岗位当前有效要求里属于该要求组的成员（含重算签名所需字段）。"""
+    if _driver is None:
+        return []
+    with _driver.session() as session:
+        rows = session.run(
+            """
+            MATCH (j:Job {id: $job_id})-[:REQUIRES_VERSION {active: true}]->(v:RequirementVersion)-[:IN_GROUP]->(g:RequirementGroup {id: $group_id})
+            MATCH (v)-[:FOR_SKILL]->(s:Skill)
+            WHERE coalesce(v.retracted, false) = false
+            RETURN v.id AS version_id, v.skill_id AS skill_id, s.name AS name, v.kind AS kind,
+                   v.proficiency AS proficiency, v.weight AS weight, v.levels AS levels, v.layer AS layer,
+                   g.min_required AS min_required
+            ORDER BY s.name
+            """,
+            job_id=job_id, group_id=group_id,
+        )
+        return [dict(row) for row in rows]
+
+
+def _resign_versions(session, job_id: str, members: list[dict], *, group_id: str | None, min_required: int | None, kind: str | None = None) -> None:
+    """成员改组或改 kind 后重算签名，否则下次校准会把同一事实当成新版本再开一条。"""
+    for member in members:
+        payload = {
+            "job_id": job_id,
+            "skill_id": member["skill_id"],
+            "kind_edge": kind or member.get("kind") or "required",
+            "proficiency": member.get("proficiency"),
+            "weight": float(member.get("weight") or 1),
+            "levels": member.get("levels") or ["junior", "mid", "senior"],
+            "layer": member.get("layer") or "low",
+            "group_id": group_id,
+            "min_required": int(min_required or 1),
+        }
+        session.run(
+            "MATCH (v:RequirementVersion {id: $id}) SET v.signature = $signature, v.corrected_at = datetime()",
+            id=member["version_id"], signature=requirement_signature(payload),
+        )
+
+
+def repair_requirement_group(job_id: str, group_id: str, *, action: str, kind: str | None = None, min_required: int | None = None) -> dict:
+    """修正无效要求组。action: split_by_kind | set_kind | set_min_required | dissolve。"""
+    members = requirement_group_members(job_id, group_id)
+    if not members:
+        raise KeyError(group_id)
+    if _driver is None:
+        return {"members": members}
+    with _driver.session() as session:
+        def detach(rows: list[dict]) -> None:
+            session.run(
+                "UNWIND $ids AS id MATCH (v:RequirementVersion {id: id})-[ig:IN_GROUP]->(:RequirementGroup {id: $group_id}) DELETE ig",
+                ids=[row["version_id"] for row in rows], group_id=group_id,
+            )
+            _resign_versions(session, job_id, rows, group_id=None, min_required=None)
+
+        def attach(rows: list[dict], gid: str, minimum: int) -> None:
+            session.run(
+                """
+                MERGE (g:RequirementGroup {id: $gid}) SET g.min_required = $minimum
+                WITH g UNWIND $ids AS id
+                MATCH (v:RequirementVersion {id: id})
+                OPTIONAL MATCH (v)-[old:IN_GROUP]->(:RequirementGroup) DELETE old
+                MERGE (v)-[:IN_GROUP]->(g)
+                """,
+                gid=gid, minimum=minimum, ids=[row["version_id"] for row in rows],
+            )
+            _resign_versions(session, job_id, rows, group_id=gid, min_required=minimum)
+
+        current_min = int(members[0].get("min_required") or 1)
+        if action == "dissolve":
+            detach(members)
+            return {"action": action, "group_id": group_id, "members": members}
+        if action == "set_min_required":
+            minimum = int(min_required or 0)
+            if not 1 <= minimum <= len(members):
+                raise ValueError(f"min_required 必须在 1 到 {len(members)} 之间")
+            attach(members, group_id, minimum)
+            return {"action": action, "group_id": group_id, "min_required": minimum, "members": members}
+        if action == "set_kind":
+            if kind not in {"required", "bonus"}:
+                raise ValueError("kind 只能是 required 或 bonus")
+            session.run(
+                """
+                UNWIND $ids AS id
+                MATCH (j:Job {id: $job_id})-[:REQUIRES_VERSION]->(v:RequirementVersion {id: id})-[:FOR_SKILL]->(s:Skill)
+                SET v.kind = $kind, v.corrected_at = datetime()
+                WITH j, s
+                OPTIONAL MATCH (j)-[r:REQUIRES]->(s)
+                SET r.kind = $kind
+                """,
+                ids=[row["version_id"] for row in members], job_id=job_id, kind=kind,
+            )
+            minimum = max(1, min(current_min, len(members)))
+            attach(members, group_id, minimum)
+            for row in members:
+                row["kind"] = kind
+            return {"action": action, "group_id": group_id, "kind": kind, "members": members}
+        if action == "split_by_kind":
+            by_kind: dict[str, list[dict]] = {}
+            for row in members:
+                by_kind.setdefault(row.get("kind") or "required", []).append(row)
+            # 成员最多的 kind 保留原组 id（并列时必备优先），其余 kind 各成一组；单成员退回独立要求。
+            keeper = sorted(by_kind, key=lambda k: (-len(by_kind[k]), k != "required"))[0]
+            result = []
+            for group_kind, rows in by_kind.items():
+                gid = group_id if group_kind == keeper else f"{group_id}-{group_kind}"
+                if len(rows) == 1:
+                    detach(rows)
+                    result.append({"group_id": None, "kind": group_kind, "members": rows})
+                    continue
+                minimum = max(1, min(current_min, len(rows)))
+                attach(rows, gid, minimum)
+                result.append({"group_id": gid, "kind": group_kind, "min_required": minimum, "members": rows})
+            return {"action": action, "group_id": group_id, "groups": result}
+    raise ValueError(f"未知操作 {action}")
+
+
+def expire_requirement(job_id: str, skill_id: str, *, at_iso: str = "") -> bool:
+    """把一条正式要求移出当前有效集合：写失效时间而不是删除。"""
+    if _driver is None:
+        return False
+    at = at_iso or datetime.now().isoformat()
+    with _driver.session() as session:
+        row = session.run(
+            """
+            MATCH (j:Job {id: $job_id})-[rv:REQUIRES_VERSION {active: true}]->(v:RequirementVersion {skill_id: $skill_id})
+            SET rv.active = false, v.valid_to = datetime($at), v.corrected_at = datetime($at)
+            WITH j, count(v) AS n
+            OPTIONAL MATCH (j)-[r:REQUIRES]->(:Skill {id: $skill_id})
+            SET r.valid_to = datetime($at)
+            RETURN n
+            """,
+            job_id=job_id, skill_id=skill_id, at=at,
+        ).single()
+    return bool(row and row["n"])
+
+
+def update_definition_claim(job_id: str, claim_id: str, *, text: str, sources: list[str], reason: str = "") -> bool:
+    """人工订正当前定义声明的原文片段；调用方已逐片段核对证据。"""
+    if _driver is None:
+        return False
+    with _driver.session() as session:
+        row = session.run(
+            """
+            MATCH (j:Job {id: $job_id})-[:HAS_DEFINITION]->(:JobDefinitionVersion)-[:HAS_CLAIM]->(c:DefinitionClaim {id: $claim_id})
+            SET c.text = $text, c.excerpt = $text, c.sources = $sources,
+                c.corrected_at = datetime(), c.correction_reason = $reason
+            RETURN count(c) AS n
+            """,
+            job_id=job_id, claim_id=claim_id, text=text, sources=sources, reason=reason,
+        ).single()
+    return bool(row and row["n"])
 
 
 def expire_absent_requires(job_id: str, keep_ids: list[str], at_iso: str, curation_version: str = "") -> None:

@@ -4,7 +4,7 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import QueueBoard, { QueueEvent } from "./queue-board";
 import GoldBoard, { AdjDecision, AdjState } from "./gold-board";
 import { Portal, PortalTable } from "./portal-table";
-import ReleaseBoard, { ReleaseAudit } from "./release-board";
+import ReleaseBoard, { ReleaseAudit, ReleaseCheck } from "./release-board";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -232,6 +232,11 @@ export default function AdminPage() {
     setCollectBusy(true);
   }
 
+  // 修复接口回传该岗位的最新校验结果，只替换那一行，不整表重拉。
+  function applyCheck(jobId: string, check: ReleaseCheck) {
+    setRelease((current) => current ? { ...current, jobs: current.jobs.map((job) => (job.id === jobId ? { ...job, diagnostic_release: check } : job)) } : current);
+  }
+
   async function runCuration() {
     setReleaseBusy(true);
     setError("");
@@ -414,7 +419,16 @@ export default function AdminPage() {
         />
       ) : null}
 
-      {tab === "release" ? <ReleaseBoard audit={release} busy={releaseBusy} onRefresh={() => loadRelease().catch(() => setError("发布校验读取失败"))} onRun={runCuration} /> : null}
+      {tab === "release" ? (
+        <ReleaseBoard
+          audit={release}
+          busy={releaseBusy}
+          onRefresh={() => loadRelease().catch(() => setError("发布校验读取失败"))}
+          onRun={runCuration}
+          onRepair={post}
+          onChecked={applyCheck}
+        />
+      ) : null}
     </main>
   );
 }

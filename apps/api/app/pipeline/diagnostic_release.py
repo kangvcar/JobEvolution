@@ -22,6 +22,36 @@ def equivalent_count(rows: list[dict], *, kinds: set[str] | None = None) -> int:
     )
 
 
+DEFINITION_PREFIX = "的招聘信息主要围绕："
+
+
+def claim_fragments(claim: dict) -> tuple[str, list[str]]:
+    """把定义声明拆成可逐条核对的原文片段，返回 (前缀, 片段列表)。
+
+    旧版已批准定义用固定前缀连接原文片段，前缀本身不是证据原文。
+    """
+    excerpt = (claim.get("excerpt") or claim.get("text") or "").strip()
+    prefix = ""
+    body = excerpt
+    if DEFINITION_PREFIX in excerpt:
+        head, body = excerpt.split(DEFINITION_PREFIX, 1)
+        prefix = head + DEFINITION_PREFIX
+    fragments = [fragment.strip() for fragment in body.split("；")]
+    return prefix, [fragment for fragment in fragments if fragment]
+
+
+def check_claim_fragments(claim: dict, by_evidence: dict[str, dict]) -> list[dict]:
+    """逐片段核对定义声明：每个片段至少要在一个未撤回来源的原文里逐字出现。"""
+    ids = [str(sid) for sid in claim.get("sources") or [] if sid]
+    bodies = {sid: (by_evidence.get(sid, {}).get("body") or "") for sid in ids}
+    _, fragments = claim_fragments(claim)
+    out = []
+    for fragment in fragments:
+        supported_by = [sid for sid, body in bodies.items() if body and fragment in body]
+        out.append({"text": fragment, "supported": bool(supported_by), "sources": supported_by})
+    return out
+
+
 def validate_diagnostic_release(
     *,
     job_id: str,
@@ -41,46 +71,96 @@ def validate_diagnostic_release(
         errors.append({"code": "required_group_missing", "message": "没有有效必备要求"})
     by_evidence = {str(row.get("id")): row for row in evidence if row.get("id")}
     missing = []
+    missing_details: list[dict] = []
     retracted = []
     for row in requires:
+        label = row.get("skill_id") or row.get("name") or ""
+        reasons: list[str] = []
         source_ids = [str(source) for source in row.get("sources") or [] if source]
         if not source_ids:
-            missing.append(row.get("skill_id") or row.get("name") or "")
+            missing.append(label)
+            reasons.append("no_sources")
         for source_id in source_ids:
             if source_id not in by_evidence:
                 missing.append(row.get("skill_id") or source_id)
+                reasons.append("source_unknown")
             if by_evidence.get(source_id, {}).get("retracted"):
                 retracted.append(source_id)
         excerpt = (row.get("excerpt") or "").strip()
         bodies = [(by_evidence.get(sid, {}).get("body") or "") for sid in source_ids]
-        if not excerpt or (any(bodies) and not any(excerpt in body for body in bodies)):
+        if not excerpt:
             missing.append(row.get("skill_id") or "excerpt")
+            reasons.append("excerpt_missing")
+        elif any(bodies) and not any(excerpt in body for body in bodies):
+            missing.append(row.get("skill_id") or "excerpt")
+            reasons.append("excerpt_not_in_evidence")
+        if reasons:
+            missing_details.append({
+                "target": "requirement",
+                "id": row.get("skill_id") or "",
+                "name": row.get("name") or row.get("skill_id") or "",
+                "kind": row.get("kind"),
+                "excerpt": excerpt,
+                "reasons": sorted(set(reasons)),
+            })
     for claim in claims:
-        ids = claim.get("sources") or []
-        excerpt = (claim.get("excerpt") or claim.get("text") or "").strip()
+        ids = [str(sid) for sid in claim.get("sources") or [] if sid]
+        claim_id = claim.get("id") or "definition"
         if ids and any(sid not in by_evidence or by_evidence[sid].get("retracted") for sid in ids):
-            missing.append(claim.get("id") or "definition")
+            missing.append(claim_id)
+            missing_details.append({
+                "target": "claim",
+                "id": claim_id,
+                "text": claim.get("text") or "",
+                "reasons": ["source_unavailable"],
+                "fragments": check_claim_fragments(claim, by_evidence),
+            })
         elif ids:
-            # 旧版已批准定义用固定前缀连接原文，逐个核对其原文声明。
-            fragments = excerpt.split("的招聘信息主要围绕：", 1)[-1].split("；")
-            if any(not fragment or not any(fragment in (by_evidence[sid].get("body") or "") for sid in ids)
-                   for fragment in fragments):
+            fragments = check_claim_fragments(claim, by_evidence)
+            if not fragments or any(not fragment["supported"] for fragment in fragments):
                 missing.append(claim.get("id") or "definition_excerpt")
+                missing_details.append({
+                    "target": "claim",
+                    "id": claim_id,
+                    "text": claim.get("text") or "",
+                    "reasons": ["fragment_not_in_evidence"],
+                    "fragments": fragments,
+                })
     groups = defaultdict(list)
     for row in requires:
         if row.get("group_id"):
             groups[row["group_id"]].append(row)
     for gid, rows in groups.items():
         minima = {int(row.get("min_required") or 1) for row in rows}
-        if len(minima) != 1 or not 1 <= next(iter(minima)) <= len(rows) or len({row.get("kind") for row in rows}) != 1:
-            errors.append({"code": "invalid_requirement_group", "group_id": gid})
+        kinds = {row.get("kind") for row in rows}
+        reasons = []
+        if len(kinds) != 1:
+            reasons.append("mixed_kind")
+        if len(minima) != 1 or not 1 <= next(iter(minima)) <= len(rows):
+            reasons.append("min_required_out_of_range")
+        if reasons:
+            errors.append({
+                "code": "invalid_requirement_group",
+                "group_id": gid,
+                "reasons": reasons,
+                "min_required": sorted(minima)[0] if len(minima) == 1 else None,
+                "members": [
+                    {"skill_id": row.get("skill_id"), "name": row.get("name") or row.get("skill_id"), "kind": row.get("kind")}
+                    for row in rows
+                ],
+            })
     if missing:
-        errors.append({"code": "evidence_missing", "items": sorted(set(missing))})
+        errors.append({"code": "evidence_missing", "items": sorted(set(missing)), "details": missing_details})
     if retracted:
         errors.append({"code": "evidence_retracted", "items": sorted(set(retracted))})
+    names = {row.get("skill_id"): row.get("name") for row in requires if row.get("skill_id")}
     duplicates = [sid for sid, count in Counter(row.get("skill_id") for row in requires if row.get("skill_id")).items() if count > 1]
     if duplicates:
-        errors.append({"code": "duplicate_requirement", "items": sorted(duplicates)})
+        errors.append({
+            "code": "duplicate_requirement",
+            "items": sorted(duplicates),
+            "details": [{"skill_id": sid, "name": names.get(sid) or sid} for sid in sorted(duplicates)],
+        })
     if required > MAX_REQUIRED_EQUIVALENT:
         errors.append({"code": "required_count_exceeded", "count": required, "limit": MAX_REQUIRED_EQUIVALENT})
     if formal > MAX_FORMAL_EQUIVALENT:
