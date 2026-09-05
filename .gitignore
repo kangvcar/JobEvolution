@@ -38,3 +38,4 @@ data/official-only/ops-status.lock
 video-promo/ink-press/out/qa/
 # WPS / Office 编辑锁文件
 .~*
+dist/
