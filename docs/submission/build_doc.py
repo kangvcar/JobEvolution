@@ -311,8 +311,8 @@ TABLE("赛题要求与系统功能对应表", ["赛题要求", "系统功能与�
     ["④人岗匹配度诊断与差距分析", "PDF / docx 简历解析 → 技能点对齐 → 用户校对 → 岗位推荐序 → 双岗对照报告：匹配档位、缺口集、简历证据级、换档条件、双轨行动清单、学习路径", "matching/resume.py、score.py、bands.py、report.py；/diagnose 五步流程"],
     ["创新①多源异构数据清洗与交叉验证", "fingerprint 幂等 + 64 位 simhash 近重去重解决“抄袭”；独立源按规范化公司名计票；覆盖率随周期重算；要求判定票 60% 且≥2 独立源；要求等价数上限与岗位要求异常拦截“通胀”", "collectors/simhash.py、normalize.py；pipeline/gate.py、diagnostic_release.py"],
     ["创新②能力“幻觉”防控", "十道闸门（见第 9 章）；抽取模型不得审核自身输出；低置信永不自动入谱；报告中每条判断必须携带证据 ID", "pipeline/*、matching/report.py、docs/adr"],
-    ["可验证性：≥100 条 JD 与测试用例，三项准确率可量化", "100 条 JD 金标、100 份简历金标、100 对匹配金标，阈值冻结于 freeze.json；set-based F1 自动评测；pytest 覆盖率 70.69%（≥60%）", "data/eval-official-only/、app/eval/、tests/、.github/workflows/ci.yml"],
-    ["提交形式：源码、Docker 部署、单测、测试数据", "开源仓库 + docker compose 一键部署 + 24 个测试文件 167 个用例 + 两岗提交物（Agent 工程师 / 大模型应用工程师）", "docker-compose.yml、tests/、data/eval-official-only/deliver/"],
+    ["可验证性：≥100 条 JD 与测试用例，三项准确率可量化", "100 条 JD 金标、100 份简历金标、100 对匹配金标，阈值冻结于 freeze.json；set-based F1 自动评测；pytest 覆盖率 69.67%（≥60%）", "data/eval-official-only/、app/eval/、tests/、.github/workflows/ci.yml"],
+    ["提交形式：源码、Docker 部署、单测、测试数据", "开源仓库 + docker compose 一键部署 + 22 个测试文件 180 个用例 + 两岗提交物（Agent 工程师 / 大模型应用工程师）", "docker-compose.yml、tests/、data/eval-official-only/deliver/"],
 ], widths=[4.2, 7.3, 4.0], font_size=9.5)
 
 # ================================================================== 2 需求分析
@@ -404,7 +404,7 @@ CODE("官方招聘门户 ─fingerprint 幂等─▶ data/official-only/jd/{id}.
 # ================================================================== 4 采集
 H(1, "4  多源异构数据采集与清洗")
 H(2, "4.1  数据源")
-P("系统以企业官方招聘门户作为主数据源，而非第三方招聘网站的二次转载。官方门户的 JD 由企业直接发布，发布时间可信、正文完整、不存在平台代理商的批量复制，是解决“抄袭”与“时滞”问题的第一道保障。当前配置 54 个门户（53 个启用），覆盖智谱、月之暗面、MiniMax、小米、蔚来、小鹏、理想、字节跳动、腾讯、生数科技、深言、众擎机器人、轻舟智航、鉴智机器人、叠纸游戏、蓝箭航天、后摩智能等企业，门户类型包括飞书招聘（51 个）、腾讯招聘、字节跳动招聘与北森。累计去重 JD 快照 3,580 条，覆盖人工智能、大数据、智能系统、物联网四个领域。")
+P("系统以企业官方招聘门户作为主数据源，而非第三方招聘网站的二次转载。官方门户的 JD 由企业直接发布，发布时间可信、正文完整、不存在平台代理商的批量复制，是解决“抄袭”与“时滞”问题的第一道保障。当前配置 54 个门户（53 个启用），覆盖智谱、月之暗面、MiniMax、小米、蔚来、小鹏、理想、字节跳动、腾讯、生数科技、深言、众擎机器人、轻舟智航、鉴智机器人、叠纸游戏、蓝箭航天、后摩智能等企业，门户类型包括飞书招聘（51 个）、腾讯招聘、字节跳动招聘与北森。累计去重 JD 快照 3,595 条，覆盖人工智能、大数据、智能系统、物联网四个领域。")
 TABLE("采集门户类型与适配方式", ["门户类型", "数量", "接口形态", "适配要点"], [
     ["飞书招聘（jobs.feishu.cn）", "51", "公开 JSON 列表 + 详情接口", "自动解析门户路径；分页扫描；按关键词命中四领域标题；过滤实习岗"],
     ["腾讯招聘", "1", "公开 JSON", "关键词搜索 + 分页；正文 HTML 去标签"],
@@ -584,7 +584,7 @@ P("所有生成调用经过唯一出口 complete_json(messages) -> dict，抽取
 # ================================================================== 11 实现
 H(1, "11  系统实现")
 H(2, "11.1  代码结构与规模")
-CODE("apps/api/                 FastAPI 后端（约 9,000 行 Python）\n  app/main.py             路由：公开只读、诊断、管理、SSE\n  app/graph.py            Neo4j Cypher 封装：岗位 / 技能 / 要求边 / 事件 / 发布版本 / 审核决定\n  app/llm/client.py       多供应商 chat 唯一出口   app/llm/embed.py  bge-m3 嵌入\n  app/collectors/         ats.py 门户适配 · controller.py 去重落盘 · simhash.py · normalize.py · sink.py\n  app/pipeline/           sections 切段 · extract 抽取 · align 归一 · gate 入池/判定/置信/审核 · discover 簇判别\n                          status 状态机 · diagnostic_release 发布校验 · curate_public 公开校准 · constants\n  app/matching/           resume 解析 · score 匹配 · bands 档位/换档 · report 报告 · session 会话\n  app/eval/               f1 · run 三项评测 · draft 金标起草 · adjudicate 裁决 · deliver 两岗提交物\napps/web/                 Next.js 前端（约 6,000 行 TS/TSX）\n  app/page.tsx home.tsx   首页总览      app/graph/    图谱工作台（flow-canvas、workbench）\n  app/diagnose/           五步诊断      app/discover/ 市场演化    app/admin/  审核 / 裁决 / 发布 / 门户\ntests/                    24 个测试文件，167 个用例\ndata/official-only/jd/    官方 JD 快照（3,580 条）      data/eval-official-only/  金标与提交物\ndata/snapshot/            图谱发布快照（reviewed.json / release-*.json）\ndocs/                     product.md · tech.md · verification.md · frontend.md · 55 篇 ADR · 调研\ndocker-compose.yml · .github/workflows/ci.yml · CONTEXT.md（领域术语）")
+CODE("apps/api/                 FastAPI 后端（约 9,000 行 Python）\n  app/main.py             路由：公开只读、诊断、管理、SSE\n  app/graph.py            Neo4j Cypher 封装：岗位 / 技能 / 要求边 / 事件 / 发布版本 / 审核决定\n  app/llm/client.py       多供应商 chat 唯一出口   app/llm/embed.py  bge-m3 嵌入\n  app/collectors/         ats.py 门户适配 · controller.py 去重落盘 · simhash.py · normalize.py · sink.py\n  app/pipeline/           sections 切段 · extract 抽取 · align 归一 · gate 入池/判定/置信/审核 · discover 簇判别\n                          status 状态机 · diagnostic_release 发布校验 · curate_public 公开校准 · constants\n  app/matching/           resume 解析 · score 匹配 · bands 档位/换档 · report 报告 · session 会话\n  app/eval/               f1 · run 三项评测 · draft 金标起草 · adjudicate 裁决 · deliver 两岗提交物\napps/web/                 Next.js 前端（约 6,000 行 TS/TSX）\n  app/page.tsx home.tsx   首页总览      app/graph/    图谱工作台（flow-canvas、workbench）\n  app/diagnose/           五步诊断      app/discover/ 市场演化    app/admin/  审核 / 裁决 / 发布 / 门户\ntests/                    22 个测试文件，180 个用例\ndata/official-only/jd/    官方 JD 快照（3,595 条）      data/eval-official-only/  金标与提交物\ndata/snapshot/            图谱发布快照（reviewed.json / release-*.json）\ndocs/                     product.md · tech.md · verification.md · frontend.md · 55 篇 ADR · 调研\ndocker-compose.yml · .github/workflows/ci.yml · CONTEXT.md（领域术语）")
 H(2, "11.2  后端接口")
 TABLE("主要 API 接口", ["方法", "路径", "用途"], [
     ["GET", "/meta、/v1/meta", "四领域、当前图谱发布版本、模型供应商、会话保留时长、运行状态、数据陈旧标记"],
@@ -640,7 +640,7 @@ TABLE("测试数据集规模与构成", ["数据集", "规模", "构成与要求
     ["简历金标 resume.jsonl", "100 份", "覆盖单栏 / 双栏、应届 / 社招、PDF / docx；标技能点集合与姓名 / 教育 / 经历；双栏样本打 layout: split 标签"],
     ["匹配金标 match_pairs.jsonl", "100 对", "金标简历 × 目标岗位的交叉抽样，人工标缺口集 gap_ids；半档只在简历带熟练级且低于岗位时计入"],
     ["两岗提交物 deliver/", "Agent 工程师、大模型应用工程师", "job.json（定义、状态、独立源、要求边）、sources.jsonl（≥3 独立源证据）、io.md（输入 JD 摘录 → 输出技能点、入谱结果、演化事件）、diagnose.example.json、dual-diagnose.redacted.json"],
-    ["JD 快照 data/official-only/jd/", "3,580 条", "管线原始输入，每条含公司、岗位名、正文、观察时间、渠道、来源 URL、simhash"],
+    ["JD 快照 data/official-only/jd/", "3,595 条", "管线原始输入，每条含公司、岗位名、正文、观察时间、渠道、来源 URL、simhash"],
 ], widths=[4.0, 3.2, 8.3], font_size=9.5)
 P("金标建立遵循“LLM 起草、人工裁决”规程（ADR-0011）：模型只读原文起草草稿并留痕；修订分两段，第一段盲改只看原文与技能词表，第二段允许用系统预测找分歧，但结论只认原文证据并把理由写进 notes，禁止以预测为唯一依据改金标；修订后必须重跑未 mock 的三项评测。")
 H(2, "12.2  指标口径")
@@ -656,16 +656,16 @@ CODE("docker compose --profile test up -d neo4j-test      # 独立测试库\nEVA
 P("任一 F1 低于 0.90 时评测脚本退出码为 1。GitHub Actions 在每次推送时以 mock 模型运行三项评测与全部单元测试并执行覆盖率门禁；正式报告中的数字只来自未 mock 的本地运行，summary.md 记录三项 F1、覆盖率、学习路径抽检覆盖与 freeze.json 哈希。改动提示词或 freeze.json 必须重跑未 mock 的三项。")
 H(2, "12.4  当前验证结果")
 TABLE("最近一次完整验证结果", ["项目", "结果", "口径 / 备注"], [
-    ["JD 解析 F1", "0.814", "2026-09-02 未 mock 完整运行，100 条；低于 0.90，差距样本与复跑要求记录于 summary.md，未修改金标伪造达标"],
+    ["JD 解析 F1", "0.930", "2026-09-05 未 mock 完整运行，100 条；达标，差距样本与复跑记录于 summary.md，未修改金标"],
     ["简历提取 F1", "1.000", "同上，100 份"],
     ["人岗匹配（缺口集）F1", "1.000", "同上，100 对，喂金标不喂解析输出"],
-    ["单元测试", "166 passed，1 skipped", "2026-09-04 本地运行，24 个测试文件，连接独立测试库"],
-    ["行覆盖率", "70.69%", "pytest-cov，分母排除 collectors 与 client.py 网络分支；门禁 60%"],
+    ["单元测试", "179 passed，1 skipped", "2026-09-05 在干净 python:3.12 容器内运行，22 个测试文件，连接独立测试库"],
+    ["行覆盖率", "69.67%", "pytest-cov，分母排除 collectors 与 client.py 网络分支；门禁 60%"],
     ["前端", "typecheck 通过，build 通过", "Next.js 15 生产构建"],
     ["Compose", "五容器 healthy", "docker compose ps；2026-09-05 空卷导入 data/snapshot/release-2026-09-05.json 成功，API 公开接口正常"],
     ["浏览器验收", "首页、图谱、发现、诊断、管理均 200，无 4xx/5xx", "系统 Chrome + Playwright；PDF 与 docx 上传完成单岗 / 双岗报告；.doc 返回 400；320px 与 200% 缩放无溢出；键盘 Esc、focus-visible、reduced-motion 复核"],
 ], widths=[3.6, 3.6, 8.3], font_size=9.5)
-P("JD 解析 F1 未达 0.90 的主要原因是模型召回不足与长 JSON 截断：金标平均每条 JD 标注技能点较多，模型在 40 条上限与紧凑输出约束下漏掉部分领域知识类技能。已落地的改进包括：单段抽取取代两段式（两段式实测召回从 0.729 降至 0.604 后回退）、原文词表候选召回只接受精确命中并复用生产管线、评测并发降至 2 至 4 路避免截断。后续计划在不改金标的前提下继续调整提示词与召回策略，并按规程重跑。")
+P("JD 解析 F1 从 2026-09-02 的 0.814 提升到 0.930，主要改进为：单段抽取取代两段式（两段式实测召回从 0.729 降至 0.604 后回退）、原文词表候选召回只接受精确命中并复用生产管线、评测并发降至 2 至 4 路避免长 JSON 截断。剩余差距集中在领域知识类技能的召回，后续在不改金标的前提下继续调整提示词与召回策略，并按规程重跑。")
 H(2, "12.5  单元测试")
 TABLE("单元测试覆盖重点与模块覆盖率", ["模块", "覆盖率", "重点用例"], [
     ["pipeline/extract.py", "94%", "JSON 字段归一、枚举容错、要求判定票、并列拆分、通用素质与品牌边界、原文词表召回"],
@@ -732,9 +732,9 @@ TABLE("提交物与赛题要求对照", ["赛题要求", "提交物", "位置"],
     ["10 分钟以内演示视频", "含新岗位（Agent 工程师）发现与既有岗位（大模型应用工程师）能力更新的图谱演示", "随压缩包提交"],
     ["源代码", "开源仓库（私有仓库开放评审权限）", "GitHub kangvcar/JobEvolution"],
     ["部署说明", "README.md、docker-compose.yml、apps/api/Dockerfile、apps/web/Dockerfile、.env.example", "仓库根目录与 apps/"],
-    ["单元测试用例（覆盖率≥60%）", "24 个测试文件、167 个用例，覆盖率 70.69%，.coveragerc 门禁 60%，CI 工作流", "tests/、.coveragerc、.github/workflows/ci.yml"],
+    ["单元测试用例（覆盖率≥60%）", "22 个测试文件、180 个用例，覆盖率 69.67%，.coveragerc 门禁 60%，CI 工作流", "tests/、.coveragerc、.github/workflows/ci.yml"],
     ["测试数据：1 个新岗位与 1 个既有岗位的能力图谱及数据源（含输入输出示例）", "deliver/agent/ 与 deliver/llm-app/（job.json、sources.jsonl、io.md、diagnose.example.json）", "data/eval-official-only/deliver/"],
-    ["≥100 条岗位 JD 及测试用例", "jd.jsonl（100）、resume.jsonl（100）、match_pairs.jsonl（100）、freeze.json、skills.json；官方 JD 快照 3,580 条", "data/eval-official-only/、data/official-only/jd/"],
+    ["≥100 条岗位 JD 及测试用例", "jd.jsonl（100）、resume.jsonl（100）、match_pairs.jsonl（100）、freeze.json、skills.json；官方 JD 快照 3,595 条", "data/eval-official-only/、data/official-only/jd/"],
 ], widths=[4.4, 6.6, 4.5], font_size=9.5)
 
 # ================================================================== 附录
