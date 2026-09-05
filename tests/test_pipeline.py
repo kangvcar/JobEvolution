@@ -774,8 +774,9 @@ def test_skill_ingest_writes_category_edge(tmp_path):
     with graph._driver.session() as session:
         row = session.run(
             """
-            MATCH (:Job {id: $jid})-[r:REQUIRES]->(:Skill)-[:IN_CATEGORY]->(c:SkillCategory)
-            WHERE r.valid_to IS NULL
+            MATCH (:Job {id: $jid})-[:REQUIRES_VERSION {active: true}]->(v:RequirementVersion)
+                  -[:FOR_SKILL]->(:Skill)-[:IN_CATEGORY]->(c:SkillCategory)
+            WHERE v.valid_to IS NULL
             RETURN c.id AS cid, c.name AS cname
             """,
             jid=job_id,
@@ -809,8 +810,9 @@ def test_gate_iron_name_vetoes_category(tmp_path):
     with graph._driver.session() as session:
         row = session.run(
             """
-            MATCH (:Job {id: $jid})-[r:REQUIRES]->(:Skill)-[:IN_CATEGORY]->(c:SkillCategory)
-            WHERE r.valid_to IS NULL
+            MATCH (:Job {id: $jid})-[:REQUIRES_VERSION {active: true}]->(v:RequirementVersion)
+                  -[:FOR_SKILL]->(:Skill)-[:IN_CATEGORY]->(c:SkillCategory)
+            WHERE v.valid_to IS NULL
             RETURN c.id AS cid
             """,
             jid=job_id,
@@ -876,9 +878,9 @@ def test_expire_never_writes_valid_to_before_valid_from(tmp_path):
     with graph._driver.session() as session:
         rows = session.run(
             """
-            MATCH (:Job {id: $jid})-[r:REQUIRES]->(s:Skill)
+            MATCH (:Job {id: $jid})-[:REQUIRES_VERSION]->(v:RequirementVersion)-[:FOR_SKILL]->(s:Skill)
             WHERE s.name IN ['OldSkill', 'NewSkill']
-            RETURN s.name AS name, r.valid_from AS vf, r.valid_to AS vt
+            RETURN s.name AS name, v.valid_from AS vf, v.valid_to AS vt
             """,
             jid=job_id,
         ).data()
@@ -949,9 +951,10 @@ def test_empty_keep_leaves_active_requires_untouched(tmp_path):
     with graph._driver.session() as session:
         row = session.run(
             """
-            MATCH (:Job {id: $jid})-[r:REQUIRES]->(:Skill {name: 'StableSkill'})
-            WHERE r.valid_to IS NULL
-            RETURN count(r) AS n
+            MATCH (:Job {id: $jid})-[rv:REQUIRES_VERSION {active: true}]->(v:RequirementVersion)
+                  -[:FOR_SKILL]->(:Skill {name: 'StableSkill'})
+            WHERE v.valid_to IS NULL
+            RETURN count(rv) AS n
             """,
             jid=job_id,
         ).single()
@@ -1036,3 +1039,40 @@ def _jd_snaps(
         )
         snaps.append(doc)
     return snaps
+
+
+def test_unresolved_vote_blocks_passthrough_but_not_manual_approval(tmp_path):
+    """判定票未形成性质：自动直通不落边；管理员手工批准按 kind_edge 落边。"""
+    suffix = uuid.uuid4().hex[:8]
+    snaps = _jd_snaps(
+        tmp_path,
+        suffix,
+        excerpt="熟悉 VoteSkill",
+        confidence=0.9,
+        body="任职要求：熟悉 VoteSkill。",
+    )
+    events = run_extract_and_gate(
+        snaps,
+        complete_json=_extract_fn("熟悉 VoteSkill", 0.9, "requirement", name="VoteSkill"),
+        workers=1,
+    )
+    pending = [e for e in events if e.get("review") == "pending"]
+    assert pending and pending[0]["payload"]["proposed_kind"] is None
+    job_id = pending[0]["payload"]["job_id"]
+
+    def active_kinds():
+        with graph._driver.session() as session:
+            return session.run(
+                """
+                MATCH (:Job {id: $jid})-[:REQUIRES_VERSION {active: true}]->(v:RequirementVersion)
+                      -[:FOR_SKILL]->(:Skill {name: 'VoteSkill'})
+                RETURN collect(v.kind) AS kinds
+                """,
+                jid=job_id,
+            ).single()["kinds"]
+
+    apply_event(pending[0]["id"], review="auto_passed")
+    assert active_kinds() == []
+    apply_event(pending[0]["id"], review="approved")
+    assert active_kinds() == ["required"]
+    graph_clean(suffix)

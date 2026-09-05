@@ -231,7 +231,15 @@ def apply_event(event_id: str, *, review: str, payload: dict | None = None) -> d
         graph.apply_skill_merge(data)
     if data.get("approved_kind") in ("required", "bonus"):
         data["kind_edge"] = data["approved_kind"]
-    vote_blocked = data.get("kind") == "requires_add" and "proposed_kind" in data and not data.get("proposed_kind") and not data.get("approved_kind")
+    # 判定票未形成 required / bonus 时，只拦自动直通；人工批准是明确的管理员决定，
+    # 按 payload 里的 kind_edge（或 approved_kind）落要求边，否则会出现"已批准却没写图"的假成功。
+    vote_blocked = (
+        review == "auto_passed"
+        and data.get("kind") == "requires_add"
+        and "proposed_kind" in data
+        and not data.get("proposed_kind")
+        and not data.get("approved_kind")
+    )
     if data.get("kind") != "extract_failed" and data.get("skill_id") and review in ("approved", "auto_passed") and not vote_blocked:
         graph.apply_requires(data)
     if data.get("definition_claims") and review in ("approved", "auto_passed"):
