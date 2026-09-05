@@ -898,7 +898,8 @@ def set_job_fields(job_id: str, **fields) -> None:
 
 
 def expire_absent_requires(job_id: str, keep_ids: list[str], at_iso: str, curation_version: str = "") -> None:
-    if _driver is None:
+    # An empty extraction is inconclusive. Never expire every requirement.
+    if _driver is None or not keep_ids:
         return
     with _driver.session() as session:
         session.run(
