@@ -462,7 +462,6 @@ def list_requires(job_id: str) -> list[dict]:
             rows = session.run(
                 """
             MATCH (j:Job {id: $id})-[r:REQUIRES]->(s:Skill)
-            WHERE r.valid_to IS NULL AND coalesce(r.retracted, false) = false
             OPTIONAL MATCH (s)-[:IN_CATEGORY]->(c:SkillCategory)
             RETURN s.id AS skill_id, s.name AS name, r.kind AS kind,
                    c.id AS category_id, c.name AS category,
@@ -475,7 +474,7 @@ def list_requires(job_id: str) -> list[dict]:
             """,
             id=job_id,
             )
-            out = [dict(row) for row in rows]
+            out = [dict(row) for row in rows if not row.get("valid_to") and not row.get("retracted")]
     if any(not (row.get("excerpt") or "").strip() for row in out):
         by_skill: dict[str, str] = {}
         for event in list_job_events(job_id):
