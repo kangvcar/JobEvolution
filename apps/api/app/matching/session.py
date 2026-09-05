@@ -14,12 +14,14 @@ _mem: dict[str, tuple[float, str]] = {}
 
 
 def _redis(key: str = ""):
+    is_session = key.startswith(PREFIX)
     try:
-        client = connect_redis(os.environ.get("SESSION_REDIS_URL") if key.startswith(PREFIX) else None)
+        client = connect_redis(os.environ.get("SESSION_REDIS_URL") if is_session else None)
         client.ping()
         return client
     except Exception:
-        if os.environ.get("NEO4J_TEST") != "1":
+        # 会话丢了用户会直接感知，必须报错；其他键只是查询缓存，Redis 不在就退回进程内存。
+        if is_session and os.environ.get("NEO4J_TEST") != "1":
             raise RuntimeError("临时存储不可用，请稍后重试")
         return None
 
