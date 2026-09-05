@@ -192,6 +192,8 @@ interface FlowCanvasProps {
   watching?: string[];
   evidence?: { id: string; observed_at?: string }[];
   period?: string;
+  /** 计算"近期"的基准时刻（毫秒），由工作台按 period / 发布时间解析好；period 本身只是展示标签 */
+  anchor?: number;
   skills: FlowSkillData[];
   /** 通过工具栏过滤后仍可见的技能 id；null 表示全部可见。被过滤掉的节点变淡而不是消失，位置保持稳定。 */
   visibleIds: Set<string> | null;
@@ -222,7 +224,7 @@ const widestGap = (angles: number[]) => {
 };
 
 function InnerFlowCanvas(props: FlowCanvasProps) {
-  const { job, stats, neighbor, watching, evidence, period, skills, visibleIds, selectedSkill, onSkillClick, onWatchingClick, onNeighborClick } = props;
+  const { job, stats, neighbor, watching, evidence, period, anchor, skills, visibleIds, selectedSkill, onSkillClick, onWatchingClick, onNeighborClick } = props;
   const { fitView, zoomIn, zoomOut } = useReactFlow();
   const [hoverSector, setHoverSector] = useState<string | null>(null);
   const [hoverSkill, setHoverSkill] = useState<string | null>(null);
@@ -233,7 +235,8 @@ function InnerFlowCanvas(props: FlowCanvasProps) {
   const dates = useMemo(() => Array.from(new Set(skills.map((s) => fmtDate(s.valid_from)).filter(Boolean))).sort(), [skills]);
   const latest = dates[dates.length - 1];
   // 以图谱发布日为准算"近期"，没有发布日就用今天；不用最晚那条边，否则数据扎堆时全都算近期。
-  const recentSince = new Date(new Date(period || Date.now()).getTime() - RECENT_DAYS * 86400000).toISOString().slice(0, 10);
+  // period 可能不是日期（"initial"、"2026Q3"），这里只用工作台解析好的 anchor，不再自己 new Date(period)。
+  const recentSince = new Date((anchor ?? Date.now()) - RECENT_DAYS * 86400000).toISOString().slice(0, 10);
   const cursorDate = cursor == null ? null : dates[cursor];
   const maxSources = useMemo(() => Math.max(1, ...skills.map((s) => s.sources?.length ?? 0)), [skills]);
 

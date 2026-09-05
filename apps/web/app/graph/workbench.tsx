@@ -32,6 +32,15 @@ const WATCHING_PAGE = 40;
 const profLabel = (v?: string) => (v ? PROF[v]?.label || v : "");
 const profN = (v?: string) => (v ? PROF[v]?.n || 0 : 0);
 const fmtDate = (s?: string | null) => (s ? s.slice(0, 10) : "");
+// 发布 period 是自由文本标签：流水线写观测日期，首次启动写 "initial"，管理端可能写 "2026Q3"，
+// 不能直接 new Date() 后 toISOString（Invalid Date 会抛 RangeError）。依次尝试候选值，都解析不了就用今天。
+const anchorTime = (...candidates: (string | null | undefined)[]) => {
+  for (const c of candidates) {
+    const t = c ? new Date(c).getTime() : NaN;
+    if (!Number.isNaN(t)) return t;
+  }
+  return Date.now();
+};
 const statusLabel = (s?: string) => (s ? STATUS[s] || s : "");
 
 /* ---------- 类型 ---------- */
@@ -141,6 +150,7 @@ export function Workbench() {
 
   const [domains, setDomains] = useState<Domain[]>([]);
   const [period, setPeriod] = useState("");
+  const [publishedAt, setPublishedAt] = useState("");
   const [jobs, setJobs] = useState<JobRow[] | null>(null);
   const [jobsError, setJobsError] = useState("");
   const [domain, setDomain] = useState("");
@@ -175,10 +185,11 @@ export function Workbench() {
   /* 元信息 + 岗位列表（带卷宗统计） */
   useEffect(() => {
     const ac = new AbortController();
-    fetchJson<{ domains?: Domain[]; graph_release?: { period?: string } }>(`${API}/meta`, ac.signal)
+    fetchJson<{ domains?: Domain[]; graph_release?: { period?: string; published_at?: string | null } }>(`${API}/meta`, ac.signal)
       .then((body) => {
         setDomains(body.domains || []);
         setPeriod(body.graph_release?.period || "");
+        setPublishedAt(body.graph_release?.published_at || "");
       })
       .catch(() => {});
     Promise.all([
@@ -246,10 +257,8 @@ export function Workbench() {
   const addedIds = useMemo(() => new Set((slice?.period_delta?.added || []).map((r) => r.skill_id)), [slice]);
   const expiredIds = useMemo(() => new Set((slice?.period_delta?.expired || []).map((r) => r.skill_id)), [slice]);
   const evidenceById = useMemo(() => new Map((slice?.evidence || []).map((e) => [e.id, e])), [slice]);
-  const recentSince = useMemo(
-    () => new Date(new Date(period || Date.now()).getTime() - RECENT_DAYS * 86400000).toISOString().slice(0, 10),
-    [period],
-  );
+  const anchor = useMemo(() => anchorTime(period, publishedAt), [period, publishedAt]);
+  const recentSince = useMemo(() => new Date(anchor - RECENT_DAYS * 86400000).toISOString().slice(0, 10), [anchor]);
 
   const visible = useMemo(() => {
     const needle = skillQuery.trim().toLowerCase();
@@ -901,6 +910,7 @@ export function Workbench() {
                     watching={detail?.watching}
                     evidence={slice?.evidence}
                     period={period}
+                    anchor={anchor}
                     skills={flowSkills}
                     visibleIds={visibleIds}
                     selectedSkill={urlSkill}
