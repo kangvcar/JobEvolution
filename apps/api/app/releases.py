@@ -1,4 +1,5 @@
 """发布快照和请求读取上下文。后台仍编辑工作图，公开请求只读发布 JSON。"""
+from collections import OrderedDict
 from contextvars import ContextVar
 from copy import deepcopy
 from functools import wraps
@@ -6,6 +7,7 @@ import json
 import fcntl
 import os
 from pathlib import Path
+import threading
 
 view = ContextVar("graph_release_view", default=None)
 writing = ContextVar("graph_writing", default=False)
@@ -46,7 +48,13 @@ def snapshot_read(fn):
                 value = {"ok": False, "errors": []} if name == "diagnostic_release" else []
         else:
             value = snapshot[name]
-        value = deepcopy(value)
+        if name == "list_skills":
+            # 技能向量占快照大头，整表 deepcopy 一次要上秒；不要向量时先剔掉，要向量时只拷行、向量只读共享。
+            keep_embed = kwargs.get("with_embed", True)
+            value = [{k: (v if k == "embedding" else deepcopy(v)) for k, v in row.items() if keep_embed or k != "embedding"}
+                     for row in value]
+        else:
+            value = deepcopy(value)
         if name == "list_jobs":
             for field in ("domain", "status"):
                 if kwargs.get(field):
@@ -58,9 +66,6 @@ def snapshot_read(fn):
                     (not kwargs.get("category") or edge.get("category_id") == kwargs["category"])
                     and (not kwargs.get("level") or kwargs["level"] in (edge.get("levels") or []))
                     for edge in snapshot["list_requires"].get(row["id"], []))]
-        if name == "list_skills" and kwargs.get("with_embed") is False:
-            for row in value:
-                row.pop("embedding", None)
         if name == "list_job_evidence" and not kwargs.get("include_retracted"):
             value = [row for row in value if not row.get("retracted")]
         return value
@@ -79,11 +84,40 @@ def capture() -> dict:
     return data
 
 
-def load(release_id: str | None = None) -> dict | None:
+# 快照 JSON 有几十 MB（技能向量占大头），每个请求都拉一遍再 json.loads 要 2~3 秒，并发几个请求就把线程池和
+# Neo4j 连接一起拖死。release 一经发布不可变（MERGE ... ON CREATE SET），按 id 缓存解析结果即可；
+# 指针切换、回滚只是换 id，天然失效。留两份是为了让绑定旧版本的诊断会话不和公开版本互相挤出。
+_CACHE_LIMIT = 2
+_cache: "OrderedDict[str, dict]" = OrderedDict()
+_cache_lock = threading.Lock()
+
+
+def _resolve_release_id(release_id: str | None) -> str | None:
     from app import graph
     with graph._driver.session() as session:
         row = session.run(
-            "MATCH (p:GraphPointer {id:'public'}) MATCH (r:GraphRelease) "
-            "WHERE r.id = coalesce($id,p.release_id) RETURN r.snapshot AS snapshot",
+            "MATCH (p:GraphPointer {id:'public'}) RETURN coalesce($id, p.release_id) AS id",
             id=release_id).single()
-    return json.loads(row["snapshot"]) if row and row["snapshot"] else None
+    return row["id"] if row else None
+
+
+def load(release_id: str | None = None) -> dict | None:
+    from app import graph
+    rid = _resolve_release_id(release_id)
+    if rid is None:
+        return None
+    cached = _cache.get(rid)
+    if cached is not None:
+        return cached
+    with _cache_lock:
+        cached = _cache.get(rid)
+        if cached is not None:
+            return cached
+        with graph._driver.session() as session:
+            row = session.run("MATCH (r:GraphRelease {id: $id}) RETURN r.snapshot AS snapshot", id=rid).single()
+        snapshot = json.loads(row["snapshot"]) if row and row["snapshot"] else None
+        if snapshot is not None:
+            _cache[rid] = snapshot
+            while len(_cache) > _CACHE_LIMIT:
+                _cache.popitem(last=False)
+        return snapshot
