@@ -198,8 +198,10 @@ def parse_resume(
         info = info_f.result()
         raw_skills = skill_f.result()
     skills = _align_skills(raw_skills.get("skills") or [], index, threshold=threshold)
-    # 模型结果可以是子集，正文中的明确词表命中需要合并进来，再统一做证据校验。
-    skills = _merge_skills(skills, skills_from_text(text, index, threshold=threshold))
+    # 模型结果可以是子集，正文中的词表命中需要合并进来，再统一做证据校验。
+    # 只补英文 / 符号类名称（FastAPI、LangChain、C++）：这类子串命中可靠；
+    # 中文概念词（"大模型""机器人""运动控制"）子串命中在评测集上约三分之一是误报，交给模型判断。
+    skills = _merge_skills(skills, skills_from_text(text, index, threshold=threshold, latin_only=True))
     # 词表命中不能直接证明技能。只保留能定位到简历原文的项。
     grounded = {row["skill_id"] for row in _evidence_fragments(text, skills, index)}
     skills = [row for row in skills if row["skill_id"] in grounded]
@@ -347,13 +349,21 @@ def _usable_surface(name: str) -> bool:
     return len(text) >= 3
 
 
-def skills_from_text(text: str, index: list[dict], *, threshold: float | None = None) -> list[dict]:
+_LATIN_SURFACE = re.compile(r"[A-Za-z]{2,}|\+")
+
+
+def skills_from_text(
+    text: str, index: list[dict], *, threshold: float | None = None, latin_only: bool = False
+) -> list[dict]:
     # ponytail: name+synonym substring; cosine via align_skill when resume phrases diverge from Skill.name
+    # latin_only 时只用含英文字母或 "+" 的名称 / 别名做子串匹配，跳过纯中文概念词。
     blob = (text or "").casefold()
     found = []
     seen: set[str] = set()
     for skill in index:
         names = [n for n in [skill.get("name") or "", *(skill.get("synonyms") or [])] if _usable_surface(n)]
+        if latin_only:
+            names = [n for n in names if _LATIN_SURFACE.search(n)]
         if not any(_name_in_text(n, blob) for n in names):
             continue
         sid = skill["id"]
