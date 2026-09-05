@@ -1,0 +1,17 @@
+import puppeteer from 'puppeteer';
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
+const page = await browser.newPage();
+await page.setViewport({ width: 1920, height: 1080 });
+page.on('response', async r => { if (r.url().includes('8000') && r.request().method() === 'PATCH') console.log('PATCH', r.status(), await r.text()); });
+await page.goto('http://localhost:3000/diagnose', { waitUntil: 'networkidle2' });
+await sleep(1000);
+await (await page.$('input[type=file]')).uploadFile('/Users/kangvcar/Documents/code/JobEvolution/docs/resume/柯蝶旋_Agent工程师_简历.pdf');
+await sleep(500); await page.click('button.dx-btn.dx-primary');
+await page.waitForFunction(() => document.body.innerText.includes('校对解析结果'), { timeout: 180000 });
+await sleep(1000);
+await page.evaluate(() => [...document.querySelectorAll('button.dx-btn.dx-primary')].find(b => b.textContent.includes('确认并选择岗位')).click());
+await sleep(4000);
+console.log('error text:', await page.evaluate(() => document.querySelector('.dx-error')?.innerText));
+console.log('url', page.url());
+await browser.close();

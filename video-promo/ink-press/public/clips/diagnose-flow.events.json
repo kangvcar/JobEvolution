@@ -1,0 +1,90 @@
+{
+ "events": [
+  {
+   "t": 0.094,
+   "label": "seg1-start"
+  },
+  {
+   "t": 1.486,
+   "label": "file-chosen"
+  },
+  {
+   "t": 2.924,
+   "label": "click-upload"
+  },
+  {
+   "t": 6.549,
+   "label": "seg1-stop {\"frames\":103,\"dur\":4.666667,\"wall\":3.8930001258850098}"
+  },
+  {
+   "t": 40.088,
+   "label": "seg2-start"
+  },
+  {
+   "t": 41.574,
+   "label": "scroll"
+  },
+  {
+   "t": 44.981,
+   "label": "click-confirm"
+  },
+  {
+   "t": 48.215,
+   "label": "seg2-stop {\"frames\":158,\"dur\":6.466667,\"wall\":5.8440001010894775}"
+  },
+  {
+   "t": 50.736,
+   "label": "seg3-start"
+  },
+  {
+   "t": 52.196,
+   "label": "select-agent"
+  },
+  {
+   "t": 53.613,
+   "label": "click-add"
+  },
+  {
+   "t": 55.784,
+   "label": "click-start"
+  },
+  {
+   "t": 61.212,
+   "label": "seg3-stop {\"frames\":171,\"dur\":6.866667,\"wall\":6.702000141143799}"
+  },
+  {
+   "t": 69.426,
+   "label": "seg4-start"
+  },
+  {
+   "t": 71.675,
+   "label": "seg4-stop {\"frames\":1,\"dur\":3.133333,\"wall\":1.6010000705718994}"
+  }
+ ],
+ "segs": [
+  {
+   "file": "dx-seg1.mp4",
+   "frames": 103,
+   "dur": 4.666667,
+   "wall": 3.8930001258850098
+  },
+  {
+   "file": "dx-seg2.mp4",
+   "frames": 158,
+   "dur": 6.466667,
+   "wall": 5.8440001010894775
+  },
+  {
+   "file": "dx-seg3.mp4",
+   "frames": 171,
+   "dur": 6.866667,
+   "wall": 6.702000141143799
+  },
+  {
+   "file": "dx-seg4.mp4",
+   "frames": 1,
+   "dur": 3.133333,
+   "wall": 1.6010000705718994
+  }
+ ]
+}

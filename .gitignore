@@ -27,3 +27,15 @@ data/eval-official-only/*.jsonl.bak
 data/eval-official-only/draft.checkpoint.json
 data/eval-official-only/out/*
 node_modules/
+# 运行时状态与锁文件
+data/official-only/.graph-write.lock
+data/official-only/ops-status.json
+data/official-only/ops-status.lock
+# 本地安装的 agent 技能副本（由 skills-lock.json 声明）
+.agents/
+.claude/
+.grok/
+# 宣传片渲染 QA 帧
+video-promo/ink-press/out/qa/
+# WPS / Office 编辑锁文件
+.~*

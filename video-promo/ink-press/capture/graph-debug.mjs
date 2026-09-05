@@ -1,0 +1,12 @@
+import puppeteer from 'puppeteer';
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
+const page = await browser.newPage();
+await page.setViewport({ width: 1920, height: 1080 });
+page.on('response', async r => { if (r.url().includes('8000')) { const s = r.status(); let body = ''; if (s !== 200) body = (await r.text().catch(() => '')).slice(0, 300); console.log('api', s, r.url().replace('http://localhost:8000', ''), body); } });
+page.on('pageerror', e => console.log('pageerror', String(e).slice(0, 300)));
+page.on('console', m => { if (m.type() === 'error') console.log('console', m.text().slice(0, 300)); });
+await page.goto('http://localhost:3000/graph?job=job-2e05993e43fccbe5', { waitUntil: 'networkidle2', timeout: 60000 });
+await sleep(6000);
+console.log('nodes', await page.evaluate(() => document.querySelectorAll('.ring-skill-name').length), await page.evaluate(() => document.querySelector('.gw-version')?.innerText));
+await browser.close();

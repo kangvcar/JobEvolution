@@ -1,0 +1,50 @@
+import puppeteer from 'puppeteer';
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
+const page = await browser.newPage();
+await page.setViewport({ width: 1920, height: 1080, deviceScaleFactor: 1 });
+await page.setRequestInterception(true);
+page.on('request', (req) => { const u = req.url(); if (u.startsWith('http://localhost:8000/')) req.continue({ url: u.replace('http://localhost:8000/', 'http://localhost:8001/') }); else req.continue(); });
+const t0 = Date.now();
+page.on('response', r => { if (r.url().includes('8000')) console.log(((Date.now()-t0)/1000).toFixed(1)+'s api', r.status(), r.request().method(), r.url().replace('http://localhost:8000','')); });
+await page.goto('http://localhost:3000/diagnose', { waitUntil: 'networkidle2', timeout: 60000 });
+await sleep(1500);
+const input = await page.$('input[type=file]');
+await input.uploadFile('/Users/kangvcar/Documents/code/JobEvolution/docs/resume/柯蝶旋_Agent工程师_简历.pdf');
+await sleep(800);
+await page.screenshot({ path: '/tmp/je_promo/survey/dx1-upload.png' });
+await page.click('button.dx-btn.dx-primary');
+// wait for correct step
+await page.waitForFunction(() => document.body.innerText.includes('校对解析结果'), { timeout: 180000 });
+await sleep(1500);
+await page.screenshot({ path: '/tmp/je_promo/survey/dx2-correct.png' });
+await page.screenshot({ path: '/tmp/je_promo/survey/dx2-correct-full.png', fullPage: true });
+console.log('correct at', ((Date.now()-t0)/1000).toFixed(1));
+await page.evaluate(() => [...document.querySelectorAll('button.dx-btn.dx-primary')].find(b => b.textContent.includes('确认并选择岗位')).click());
+await page.waitForFunction(() => document.body.innerText.includes('选择对照岗位'), { timeout: 180000 });
+await sleep(1500);
+await page.screenshot({ path: '/tmp/je_promo/survey/dx3-choose.png' });
+await page.screenshot({ path: '/tmp/je_promo/survey/dx3-choose-full.png', fullPage: true });
+console.log('choose at', ((Date.now()-t0)/1000).toFixed(1));
+const chooseText = await page.evaluate(() => document.querySelector('.dx-body')?.innerText.slice(0, 1500));
+console.log(chooseText);
+// select first two recommended (checkbox/buttons?)
+const picked = await page.evaluate(() => { const els=[...document.querySelectorAll('.dx-body input[type=checkbox], .dx-body [role=checkbox], .dx-body .dx-card, .dx-body button')].filter(e=>!e.textContent.includes('返回')); const out=[]; for (const e of els.slice(0,2)) { e.click(); out.push(e.tagName+':'+(e.textContent||'').trim().slice(0,40)); } return out; });
+console.log('picked', picked);
+await sleep(800);
+await page.screenshot({ path: '/tmp/je_promo/survey/dx3-picked.png' });
+await page.evaluate(() => [...document.querySelectorAll('button.dx-btn.dx-primary')].find(b => b.textContent.includes('开始对照')).click());
+await sleep(1500);
+await page.screenshot({ path: '/tmp/je_promo/survey/dx4-run.png' });
+await page.waitForFunction(() => document.body.innerText.includes('再分析一次'), { timeout: 300000 });
+await sleep(2500);
+console.log('report at', ((Date.now()-t0)/1000).toFixed(1), page.url());
+await page.screenshot({ path: '/tmp/je_promo/survey/dx5-report.png' });
+await page.screenshot({ path: '/tmp/je_promo/survey/dx5-report-full.png', fullPage: true });
+for (const [key, label] of [['locate','定位'],['action','行动'],['evidence','依据']]) {
+  const ok = await page.evaluate((label) => { const b=[...document.querySelectorAll('button')].find(b=>b.textContent.trim()===label); if(b){b.click();return true} return false }, label);
+  await sleep(1200);
+  await page.screenshot({ path: `/tmp/je_promo/survey/dx5-report-${key}-full.png`, fullPage: true });
+  console.log('view', key, ok, await page.evaluate(() => document.documentElement.scrollHeight));
+}
+await browser.close();
