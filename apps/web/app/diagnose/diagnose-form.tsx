@@ -314,7 +314,13 @@ export function DiagnoseForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ skills: parsed.skills || [], profile: parsed.profile || {}, education_items: parsed.education_items || [], experiences: parsed.experiences || [], projects: parsed.projects || [], evidence_fragments: parsed.evidence_fragments || [], user_added: userAdded }),
       });
-      if (!saved.ok) { const body = await saved.json().catch(() => ({})); setError(body.error || "校对结果保存失败"); return; }
+      if (!saved.ok) {
+        const body = await saved.json().catch(() => ({}));
+        setError(body.error === "证据级不能超过简历原文支持的范围"
+          ? "这条证据的原文只能证明“提及”，不能改为“使用”或“结果”。请保留“提及”；只有引文明确写出实际操作（如“使用、开发、构建、维护”）时才能选“使用”，同时写出职责或量化成效时才能选“结果”。"
+          : body.error || "校对结果保存失败");
+        return;
+      }
       const response = await fetch(`${API}/diagnose/recommend`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ session_id: sessionId }) });
       const body = await response.json();
       if (!response.ok) { setError(body.error || "推荐岗位读取失败"); return; }
@@ -627,6 +633,7 @@ export function DiagnoseForm() {
 
               <section className="dx-section">
                 <h3>证据级校对 <small>{parsed.evidence_fragments?.length || 0} 条</small></h3>
+                <p className="dx-sub">请按引文原文判断，不要按自己的实际能力补充推断。提及 = 只出现技能名称或相关描述；使用 = 原文明确写出做过、用过或参与过；结果 = 原文还写出交付、改进或量化成效。系统不会接受高于引文能证明范围的选择。</p>
                 {(parsed.evidence_fragments || []).length === 0 ? <p className="dx-empty">未提取到证据片段。带明确结果的经历会在报告中单独标出。</p> : (
                   <ul className="dx-evidence-list">
                     {(parsed.evidence_fragments || []).map((fragment, index) => (
