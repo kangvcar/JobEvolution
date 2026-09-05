@@ -26,7 +26,6 @@ jobs:
           --health-retries 12
     env:
       TEST_NEO4J_URI: bolt://localhost:17687
-      ALIGN_THRESHOLD: "0.11"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -36,6 +35,8 @@ jobs:
           cache-dependency-path: apps/api/pyproject.toml
       - run: pip install -e "apps/api[dev]"
       - name: mock three-item eval
+        env:
+          ALIGN_THRESHOLD: "0.11"
         run: python -m app.eval report --mock --coverage 0
       - name: tests with coverage gate
         run: pytest --cov -q
