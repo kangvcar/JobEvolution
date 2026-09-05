@@ -33,7 +33,9 @@ def _decode(value):
 
 
 @write_guard
-def export_snapshot(path: str | Path) -> dict:
+def export_snapshot(path: str | Path, *, slim: bool = False) -> dict:
+    """导出整图。slim=True 时只保留公开指针指向那一份 GraphRelease 的预计算快照，
+    其余历史 release 节点保留 id / period / metadata 但清空 snapshot，避免文件膨胀到数百 MB。"""
     graph.init_graph()
     with graph._driver.session() as s:
         jobs = s.run("MATCH (j:Job) RETURN j{.*} AS row").data()
@@ -49,6 +51,11 @@ def export_snapshot(path: str | Path) -> dict:
         extra = {key: [row["row"] for row in s.run(f"MATCH (n:{label}) RETURN properties(n) AS row")]
                  for key, label in COLLECTIONS.items() if key in {"domains", "categories", "releases", "pointers", "proposals", "decisions", "bulk_decisions"}}
     evidence_rows = [x["row"] for x in evidence]
+    if slim:
+        public_id = next((row.get("release_id") for row in extra.get("pointers", []) if row.get("id") == "public"), None)
+        for row in extra.get("releases", []):
+            if row.get("id") != public_id:
+                row.pop("snapshot", None)
     payload = {
         "schema_version": SCHEMA,
         "git_commit": subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip(),
@@ -113,5 +120,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("mode", choices=("export", "import"))
     parser.add_argument("path")
+    parser.add_argument("--slim", action="store_true", help="export: keep only the public release's precomputed snapshot")
     args = parser.parse_args()
-    print(json.dumps(export_snapshot(args.path) if args.mode == "export" else import_snapshot(args.path), ensure_ascii=False))
+    print(json.dumps(export_snapshot(args.path, slim=args.slim) if args.mode == "export" else import_snapshot(args.path), ensure_ascii=False))

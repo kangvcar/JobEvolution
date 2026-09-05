@@ -21,3 +21,9 @@
 - LLM 供应商：已接入 DeepSeek、B.AI `deepseek-v4-flash-vision-exp` 和 Tuzi `gpt-5.6-luna`。B.AI 使用 `BAI_DISABLE_THINKING=1`，Tuzi 默认使用 `TUZI_REASONING_EFFORT=none` 降低长文本延迟；本机已完成 B.AI `/v1/models`/最小 JSON smoke 和 Tuzi 最小 JSON smoke，密钥均未写入仓库。
 - 评测并发：`EVAL_WORKERS` 可在 1–32 之间调节；DeepSeek JD 评测默认 2 路，B.AI 默认 8 路，Tuzi 默认 16 路，若供应商限流则降到 2–4 路，单条失败不应被半程结果替代，必须等待 100 条完整样本。
 - 浏览器验收（2026-09-02，系统 Chrome + Playwright）：首页、图谱、发现、诊断、管理均返回 200；最终路由复核无 API 4xx/5xx 和页面错误。PDF 上传成功进入校对，校对后推荐 3 个岗位并完成双岗报告；单岗报告显示 AI 简历分析、证据地图、换档模拟器和面试叙事入口；图谱/要求清单可切换；320px 下 `scrollWidth=320`，640px 视口模拟 200% 缩放无溢出；真实管理员口令登录返回 200、队列为空，错误口令显示「口令错误」；`.doc` 上传返回 400 中文提示。
+
+## 2026-09-05 快照重导出记录
+
+- 原因：`release-2026-09-02.json` 早于 09-05 导入器的关系端点校验，`proposals` / `decisions` 集合为空但关系引用它们，按当前代码导入报 `snapshot relationship has invalid type or missing endpoint`，已从仓库移除。
+- 新快照：`data/snapshot/release-2026-09-05.json` 与 `data/snapshot/reviewed.json` 字节一致，由产品图 `python -m app.graph_snapshot export <path> --slim` 导出；`--slim` 只保留公开指针指向那一份 GraphRelease 的预计算快照，其余 11 个历史 release 清空 `snapshot` 字段，文件约 87 MB。内含 12 个岗位、1646 项技能、3593 条证据、3905 个事件、223 个要求版本、9 个岗位定义、9 条声明、3757 个审核提案、3435 个审核决定、13778 条关系。
+- 验证：临时 Neo4j 空卷（堆 2G）导入成功；API 指向该卷后 `/meta` 解析公开 release `release-5a60dff52dd80ac49c151be2`（period 2026-09-04），`/jobs` 9 个公开岗位，`/discover` 候选 3 / 新兴 2 / 成型 7，`/graph/jobs/{id}` 返回要求边与 `period_delta`。导入要求目标图为空；Compose 默认 1G 堆已验证可导入，全量（非 --slim）快照才需要 2G。
