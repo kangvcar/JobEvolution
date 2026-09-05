@@ -19,7 +19,6 @@ data/jd/*.cache
 data/eval/out/*
 data/eval/*.jsonl.bak
 data/collect.lock
-data/official-only/jd/*.json
 data/official-only/jd/*.cache
 data/official-only/collect.lock
 data/official-only/collect.checkpoint.json
