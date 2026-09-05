@@ -970,8 +970,32 @@ def list_requires_history(job_id: str) -> list[dict]:
         return [dict(row) for row in rows]
 
 
+def _requirement_chains(rows: list[dict]) -> dict[str, list[list[dict]]]:
+    """按技能把版本行串成链：下一行在上一行关闭时刻（或之前）开始，就是同一条要求的延续。
+
+    校准（curation）替换版本、流水线重写签名都只是换行不换要求，不能算失效；
+    只有关闭之后一段时间才再出现的新行，才算一条新链。"""
+    by_skill: dict[str, list[dict]] = {}
+    for row in rows:
+        by_skill.setdefault(row["skill_id"], []).append(row)
+    chains: dict[str, list[list[dict]]] = {}
+    for skill_id, items in by_skill.items():
+        items.sort(key=lambda r: (r.get("valid_from") or "", r.get("valid_to") or "9999"))
+        skill_chains: list[list[dict]] = []
+        for row in items:
+            if skill_chains:
+                last = skill_chains[-1][-1]
+                open_or_touching = not last.get("valid_to") or (row.get("valid_from") or "") <= last["valid_to"]
+                if open_or_touching:
+                    skill_chains[-1].append(row)
+                    continue
+            skill_chains.append([row])
+        chains[skill_id] = skill_chains
+    return chains
+
+
 def period_delta(job_id: str) -> dict:
-    rows = [row for row in list_requires_history(job_id) if not row.get("curation_version")]
+    rows = [row for row in list_requires_history(job_id) if not row.get("retracted")]
     stamps = [
         (row.get("valid_from") or "")[:10]
         for row in rows
@@ -981,16 +1005,22 @@ def period_delta(job_id: str) -> dict:
     month = ((int(latest[5:7]) - 1) // 3) * 3 + 1
     start = f"{latest[:4]}-{month:02d}-01"
     added, expired = [], []
-    for row in rows:
-        if row.get("retracted"):
+    for skill_id, skill_chains in _requirement_chains(rows).items():
+        chain = skill_chains[-1]
+        if all(row.get("curation_version") for row in chain):
+            # 整条链都是校准动作（校准新增、或流水线行被校准剔除时打上标记）：数据清洗，不是市场变化
             continue
-        valid_from = row.get("valid_from") or ""
-        valid_to = row.get("valid_to") or ""
+        first, last = chain[0], chain[-1]
+        valid_from = first.get("valid_from") or ""
+        valid_to = last.get("valid_to") or ""
+        if valid_to and last.get("curation_version"):
+            # 链尾被校准关闭（排名截断剔除），同样不算市场失效
+            continue
         item = {
-            "skill_id": row["skill_id"],
-            "name": row["name"],
-            "category_id": row.get("category_id"),
-            "category": row.get("category"),
+            "skill_id": skill_id,
+            "name": last["name"],
+            "category_id": last.get("category_id"),
+            "category": last.get("category"),
         }
         if valid_to and valid_to[:10] >= start:
             expired.append(item)

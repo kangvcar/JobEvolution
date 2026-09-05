@@ -52,7 +52,7 @@ type Dossier = {
   events: Event[];
   aliases_in: { id: string; name: string }[];
   alias_of: { id: string; name: string } | null;
-  period_delta?: { added?: { name: string }[]; expired?: { name: string }[] };
+  period_delta?: { added?: { skill_id?: string; name: string }[]; expired?: { skill_id?: string; name: string }[] };
   neighbor?: { job_id: string; name: string; shared_requirements: string[]; unique_requirements: string[] } | null;
 };
 type Feed = {
@@ -348,8 +348,8 @@ export function DiscoverBoard() {
                 <h3>本周期变化</h3>
                 {dossier.period_delta?.added?.length || dossier.period_delta?.expired?.length ? (
                   <div className="chips">
-                    {dossier.period_delta?.added?.map((r) => <span key={`a-${r.name}`} className="chip rise">+ {r.name}</span>)}
-                    {dossier.period_delta?.expired?.map((r) => <span key={`e-${r.name}`} className="chip fall">− {r.name}</span>)}
+                    {dossier.period_delta?.added?.map((r, i) => <span key={`a-${r.skill_id ?? r.name}-${i}`} className="chip rise">+ {r.name}</span>)}
+                    {dossier.period_delta?.expired?.map((r, i) => <span key={`e-${r.skill_id ?? r.name}-${i}`} className="chip fall">− {r.name}</span>)}
                   </div>
                 ) : (
                   <p className="hint">本周期没有新增或失效的岗位要求。</p>
