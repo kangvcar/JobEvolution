@@ -320,7 +320,12 @@ def apply_requires(payload: dict) -> None:
             job_id=payload["job_id"], job_name=payload.get("job_name") or "",
             skill_id=payload["skill_id"], skill_name=payload.get("skill_name") or "",
         )
-        version_id = f"reqv-{payload['job_id']}-{payload['skill_id']}-{signature}"
+        current = session.run(
+            "MATCH (:Job {id:$job})-[:REQUIRES_VERSION {active:true}]->(v:RequirementVersion) "
+            "WHERE v.skill_id=$skill AND v.signature=$signature AND coalesce(v.retracted,false)=false RETURN v.id AS id",
+            job=payload["job_id"], skill=payload["skill_id"], signature=signature).single()
+        import uuid
+        version_id = current["id"] if current else f"reqv-{uuid.uuid4().hex}"
         session.run(
             """
             MATCH (j:Job {id: $job_id})
@@ -355,7 +360,7 @@ def apply_requires(payload: dict) -> None:
             job_id=payload["job_id"],
             skill_id=payload["skill_id"],
             kind=payload.get("kind_edge") or "required",
-            proficiency=payload.get("proficiency") or "able",
+            proficiency=payload.get("proficiency"),
             weight=float(payload.get("weight") or 1),
             levels=payload.get("levels") or ["junior", "mid", "senior"],
             layer=payload.get("layer") or "low",
@@ -396,7 +401,7 @@ def apply_requires(payload: dict) -> None:
             skill_id=payload["skill_id"],
             skill_name=payload.get("skill_name") or "",
             kind=payload.get("kind_edge") or "required",
-            proficiency=payload.get("proficiency") or "able",
+            proficiency=payload.get("proficiency"),
             weight=float(payload.get("weight") or 1),
             levels=payload.get("levels") or ["junior", "mid", "senior"],
             layer=payload.get("layer") or "low",
@@ -637,7 +642,7 @@ def apply_definition_claims(job_id: str, claims: list[dict], *, event_id: str) -
     with _driver.session() as session:
         session.run(
             "MERGE (v:JobDefinitionVersion {id: $id}) ON CREATE SET v.job_id = $job_id, v.created_at = datetime(), v.status = 'approved' "
-            "WITH v MATCH (j:Job {id: $job_id}) MERGE (j)-[:HAS_DEFINITION]->(v)",
+            "WITH v MATCH (j:Job {id: $job_id}) SET j.definition_id = $id MERGE (j)-[:HAS_DEFINITION]->(v)",
             id=version_id, job_id=job_id,
         )
         for claim in claims:
@@ -649,10 +654,10 @@ def apply_definition_claims(job_id: str, claims: list[dict], *, event_id: str) -
             session.run(
                 """
                 MERGE (c:DefinitionClaim {id: $id})
-                ON CREATE SET c.text = $text, c.type = $type, c.sources = $sources, c.review = 'approved'
+                ON CREATE SET c.text = $text, c.excerpt = $excerpt, c.type = $type, c.sources = $sources, c.review = 'approved'
                 WITH c MATCH (v:JobDefinitionVersion {id: $version_id}) MERGE (v)-[:HAS_CLAIM]->(c)
                 """,
-                id=claim_id, text=str(claim["text"]), type=claim_type, sources=sources, version_id=version_id,
+                id=claim_id, text=str(claim["text"]), excerpt=claim.get("excerpt") or str(claim["text"]), type=claim_type, sources=sources, version_id=version_id,
             )
 
 
@@ -662,7 +667,8 @@ def current_definition(job_id: str) -> list[dict]:
     with _driver.session() as session:
         rows = session.run(
             "MATCH (j:Job {id: $id})-[:HAS_DEFINITION]->(v:JobDefinitionVersion {status: 'approved'})-[:HAS_CLAIM]->(c:DefinitionClaim) "
-            "RETURN c.id AS id, c.text AS text, c.type AS type, c.sources AS sources ORDER BY c.type, c.id",
+            "WHERE v.id = j.definition_id OR (j.definition_id IS NULL AND NOT EXISTS { MATCH (j)-[:HAS_DEFINITION]->(newer:JobDefinitionVersion) WHERE newer.created_at > v.created_at }) "
+            "RETURN c.id AS id, c.text AS text, c.excerpt AS excerpt, c.type AS type, c.sources AS sources ORDER BY c.type, c.id",
             id=job_id,
         )
         return [dict(row) for row in rows]
@@ -675,15 +681,19 @@ def publish_graph_release(*, period: str = "", metadata: dict | None = None) -> 
     stamp = datetime.now().isoformat()
     raw = json.dumps({"period": period, "metadata": metadata or {}, "at": stamp}, ensure_ascii=False, sort_keys=True)
     release_id = "release-" + hashlib.sha256(raw.encode()).hexdigest()[:24]
+    from app.releases import capture
+    snapshot = capture()
+    snapshot["public_release"] = {"id": release_id, "period": period, "published_at": stamp, "metadata": metadata or {}}
     with _driver.session() as session:
         session.run(
             """
             MERGE (r:GraphRelease {id: $id})
-            ON CREATE SET r.period = $period, r.metadata = $metadata, r.created_at = datetime($at), r.status = 'ready'
+            ON CREATE SET r.period = $period, r.metadata = $metadata, r.snapshot = $snapshot, r.created_at = datetime($at), r.status = 'ready'
             MERGE (p:GraphPointer {id: 'public'})
             SET p.release_id = $id, p.updated_at = datetime($at)
             """,
             id=release_id, period=period, metadata=json.dumps(metadata or {}, ensure_ascii=False), at=stamp,
+            snapshot=json.dumps(snapshot, ensure_ascii=False, default=str),
         )
     return {"id": release_id, "period": period, "published_at": stamp}
 
@@ -692,7 +702,7 @@ def rollback_graph_release(release_id: str) -> dict | None:
     if _driver is None:
         return None
     with _driver.session() as session:
-        row = session.run("MATCH (r:GraphRelease {id: $id}) RETURN r.id AS id, r.period AS period", id=release_id).single()
+        row = session.run("MATCH (r:GraphRelease {id: $id}) WHERE r.snapshot IS NOT NULL RETURN r.id AS id, r.period AS period", id=release_id).single()
         if not row:
             return None
         session.run("MERGE (p:GraphPointer {id: 'public'}) SET p.release_id = $id, p.updated_at = datetime()", id=release_id)
@@ -852,10 +862,31 @@ def diagnostic_release(job_id: str, *, override_reason: str = "") -> dict:
         job_id=job_id,
         definition=current_definition(job_id),
         requires=list_requires(job_id),
-        evidence=list_job_evidence(job_id, include_retracted=True),
+        evidence=evidence_for_validation(job_id),
         previous_requires=previous,
         override_reason=override_reason or str(job.get("diagnostic_override_reason") or ""),
     )
+
+
+def evidence_for_validation(job_id: str) -> list[dict]:
+    from pathlib import Path
+    from app.eval.paths import repo_root
+    rows = list_job_evidence(job_id, include_retracted=True)
+    with _driver.session() as session:
+        paths = {row["id"]: row["path"] for row in session.run(
+            "MATCH (e:Evidence)-[:FOR]->(:Job {id:$id}) RETURN e.id AS id,e.path AS path", id=job_id)}
+    for row in rows:
+        raw = paths.get(row["id"])
+        if not raw or row.get("retracted"):
+            continue
+        path = Path(raw)
+        if not path.is_absolute():
+            path = repo_root() / path
+        try:
+            row["body"] = json.loads(path.read_text(encoding="utf-8")).get("body") or ""
+        except (OSError, ValueError):
+            row["body"] = ""
+    return rows
 
 
 def set_job_fields(job_id: str, **fields) -> None:
@@ -947,7 +978,8 @@ def period_delta(job_id: str) -> dict:
         if row.get("valid_from") or row.get("valid_to")
     ] + [(row.get("valid_to") or "")[:10] for row in rows if row.get("valid_to")]
     latest = max(stamps) if stamps else datetime.now().strftime("%Y-%m-%d")
-    start = f"{latest[:4]}-01-01"
+    month = ((int(latest[5:7]) - 1) // 3) * 3 + 1
+    start = f"{latest[:4]}-{month:02d}-01"
     added, expired = [], []
     for row in rows:
         if row.get("retracted"):
@@ -1358,3 +1390,15 @@ def build_feed() -> dict:
         "pending": pending,
         "barred": barred,
     }
+
+
+# 所有公开读取共享同一个请求快照，后台与管线保持工作图语义。
+from app.releases import GLOBAL_READS, JOB_READS, snapshot_read, write_guard
+for _read_name in (*GLOBAL_READS, *JOB_READS, "public_release"):
+    globals()[_read_name] = snapshot_read(globals()[_read_name])
+for _write_name in ("upsert_evidence_many", "delete_evidence_many", "upsert_job", "upsert_skill",
+                    "apply_skill_merge", "set_watching", "apply_requires", "upsert_event",
+                    "record_review_decision", "record_bulk_decision", "apply_definition_claims",
+                    "publish_graph_release", "rollback_graph_release", "link_evidence", "retract_event",
+                    "retract_evidence", "set_alias", "set_job_fields", "expire_absent_requires"):
+    globals()[_write_name] = write_guard(globals()[_write_name])

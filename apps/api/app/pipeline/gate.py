@@ -65,13 +65,14 @@ def automatic_review(payload: dict) -> tuple[bool, dict]:
     if payload.get("layer") != "high" or not payload.get("excerpt") or len(set(payload.get("sources") or [])) < 3 or not payload.get("valid_from"):
         return False, {"deterministic": False, "reason": "deterministic checks failed"}
     model = os.environ.get("LLM_REVIEW_MODEL", "")
-    extractor = os.environ.get("LLM_MODEL", "")
+    from app.llm.client import _provider_config
+    extractor = _provider_config()[3]
     if not model or model == extractor:
         return False, {"deterministic": True, "reason": "independent model unavailable"}
     try:
         from app.llm.client import complete_json
-        prompt = "review-v1"
-        result = complete_json([{"role": "system", "content": prompt}, {"role": "user", "content": json.dumps(payload, ensure_ascii=False)}])
+        prompt = "独立审核岗位事实。仅当摘录支持技能、性质、熟练级和定义且无推断时批准。返回 JSON {approved: boolean, reason: string}。"
+        result = complete_json([{"role": "system", "content": prompt}, {"role": "user", "content": json.dumps(payload, ensure_ascii=False)}], model=model)
         ok = isinstance(result, dict) and result.get("approved") is True
         return ok, {"deterministic": True, "model": model, "prompt": prompt, "reason": result.get("reason", "") if isinstance(result, dict) else "invalid response"}
     except Exception:
@@ -209,6 +210,10 @@ def record_extract_checkpoint(snapshot: dict, parsed: ExtractedJd) -> dict:
     return event
 
 
+from app.releases import write_guard
+
+
+@write_guard
 def apply_event(event_id: str, *, review: str, payload: dict | None = None) -> dict:
     from app import graph
 

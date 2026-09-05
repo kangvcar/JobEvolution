@@ -4,8 +4,9 @@ from concurrent.futures import ThreadPoolExecutor
 import ipaddress
 import re
 import socket
-from urllib.request import Request, build_opener, HTTPRedirectHandler
-from urllib.parse import quote, urlparse
+import ssl
+from http.client import HTTPConnection, HTTPSConnection
+from urllib.parse import quote, urlparse, urljoin
 
 from app.matching.bands import PATH_MAX
 from app.matching.score import WATCHING_COPY, compare_job
@@ -48,43 +49,53 @@ def _valid_url(value) -> str | None:
 
 
 def _verify_resource(url: str, skill: str) -> str | None:
-    parsed = urlparse(url)
     try:
-        host = parsed.hostname or ""
-        for info in socket.getaddrinfo(host, parsed.port or 443, type=socket.SOCK_STREAM):
-            address = ipaddress.ip_address(info[4][0])
-            if address.is_private or address.is_loopback or address.is_link_local:
+        for _ in range(4):
+            parsed = urlparse(url)
+            if parsed.scheme not in {"http", "https"} or not parsed.hostname or parsed.username or parsed.password:
                 return None
-    except (ValueError, OSError):
-        return None
-    class LimitedRedirect(HTTPRedirectHandler):
-        count = 0
-        def redirect_request(self, req, fp, code, msg, headers, newurl):
-            self.count += 1
-            if self.count > 3:
-                raise OSError("too many redirects")
-            return super().redirect_request(req, fp, code, msg, headers, newurl)
-    try:
-        response = build_opener(LimitedRedirect()).open(Request(url, headers={"User-Agent": "JobEvolution/1.0"}), timeout=5)
-        final = _valid_url(response.geturl())
-        body = response.read(1_000_001)
-        if not final or len(body) > 1_000_000:
-            return None
-        title = re.search(rb"<title[^>]*>(.*?)</title>", body, re.I | re.S)
-        text = re.sub(r"\s+", " ", title.group(1).decode("utf-8", "ignore")) if title else ""
-        return final if skill.casefold() in text.casefold() else None
+            port = parsed.port or (443 if parsed.scheme == "https" else 80)
+            if port not in {80, 443}:
+                return None
+            addresses = socket.getaddrinfo(parsed.hostname, port, type=socket.SOCK_STREAM)
+            if not addresses or any(not ipaddress.ip_address(row[4][0]).is_global for row in addresses):
+                return None
+            connection = (HTTPSConnection if parsed.scheme == "https" else HTTPConnection)(parsed.hostname, port, timeout=5)
+            try:
+                # 连接已校验的 IP；TLS 仍验证原域名，避免二次 DNS 解析和重定向访问内网。
+                connection.sock = socket.create_connection((addresses[0][4][0], port), timeout=5)
+                if parsed.scheme == "https":
+                    connection.sock = ssl.create_default_context().wrap_socket(connection.sock, server_hostname=parsed.hostname)
+                connection.request("GET", (parsed.path or "/") + ("?" + parsed.query if parsed.query else ""), headers={"User-Agent": "JobEvolution/1.0"})
+                response = connection.getresponse()
+                if response.status in {301, 302, 303, 307, 308}:
+                    location = response.getheader("Location")
+                    if not location:
+                        return None
+                    url = urljoin(url, location)
+                    continue
+                if response.status != 200:
+                    return None
+                body = response.read(1_000_001)
+                if len(body) > 1_000_000:
+                    return None
+                title = re.search(rb"<title[^>]*>(.*?)</title>", body, re.I | re.S)
+                text = re.sub(r"\s+", " ", title.group(1).decode("utf-8", "ignore")) if title else ""
+                return url if skill.casefold() in text.casefold() else None
+            finally:
+                connection.close()
     except (OSError, ValueError):
         return None
+    return None
 
 
 def lookup_resource(skill_id: str, name: str, complete_json=None) -> str:
-    key = f"resource:{skill_id}" if skill_id else ""
+    key = f"resource:v2:{skill_id}" if skill_id else ""
     if key:
         cached = cache_get(key)
         if cached:
             return cached
     url = _preset_url(name)
-    preset = url is not None
     if url is None:
         if complete_json is None:
             from app.llm.client import complete_json as complete_json
@@ -100,18 +111,17 @@ def lookup_resource(skill_id: str, name: str, complete_json=None) -> str:
             url = None
     if not url:
         return ""
-    if not preset:
-        url = _verify_resource(url, name or skill_id) or ""
-    if key:
+    url = _verify_resource(url, name or skill_id) or ""
+    if key and url:
         cache_set(key, url, RESOURCE_TTL)
     return url
 
 
 def revalidate_resource(skill_id: str, name: str) -> bool:
-    key = f"resource:{skill_id}" if skill_id else ""
+    key = f"resource:v2:{skill_id}" if skill_id else ""
     cached = cache_get(key) if key else None
-    if not cached or _preset_url(name):
-        return bool(cached)
+    if not cached:
+        return False
     if _verify_resource(cached, name):
         cache_set(key, cached, RESOURCE_TTL)
         return True
@@ -215,13 +225,17 @@ def direction_report(jobs: list[dict], resume: dict) -> dict:
         )
     if len(results) < 2:
         return {"direction": "insufficient", "jobs": results, "explanation": ""}
-    keys = ("band", "required_coverage", "job_specific_evidence", "transferable_engineering", "minimum_shift_skill_count")
-    direction = "无法区分方向" if all(results[0][key] == results[1][key] for key in keys) else ""
+    def direction_key(row):
+        coverage = row["required_coverage"]
+        return (BAND_ORDER.get(row["band"], 0), coverage["covered"] / coverage["total"] if coverage["total"] else 0,
+                row["job_specific_evidence"], row["transferable_engineering"], -row["minimum_shift_skill_count"])
+    left, right = map(direction_key, results)
+    direction = "无法区分方向" if left == right else ""
     if not direction:
-        left = (BAND_ORDER.get(results[0]["band"], 0), results[0]["required_coverage"]["covered"], results[0]["job_specific_evidence"], results[0]["transferable_engineering"], -results[0]["minimum_shift_skill_count"])
-        right = (BAND_ORDER.get(results[1]["band"], 0), results[1]["required_coverage"]["covered"], results[1]["job_specific_evidence"], results[1]["transferable_engineering"], -results[1]["minimum_shift_skill_count"])
         direction = results[0]["name"] if left > right else results[1]["name"]
-    return {"direction": direction, "jobs": results, "explanation": _direction_explanation(direction, results[0], results[1])}
+    added = [row.get("name") or row.get("skill_id") for row in resume.get("user_added") or []]
+    note = f" 你补充的技能（简历尚未证明，不计入匹配）：{'、'.join(added)}。" if added else ""
+    return {"direction": direction, "jobs": results, "explanation": _direction_explanation(direction, results[0], results[1]) + note}
 
 
 def evidence_map(requires: list[dict], resume: dict) -> list[dict]:
@@ -250,8 +264,9 @@ def evidence_map(requires: list[dict], resume: dict) -> list[dict]:
 def simulate_job(requires: list[dict], resume: dict, assumed_skill_ids: list[str]) -> dict:
     original = compare_job(requires, resume.get("skills") or [])
     by_id = {row.get("skill_id"): row for row in resume.get("skills") or []}
-    assumed = [sid for sid in dict.fromkeys(assumed_skill_ids) if sid not in by_id]
-    simulated_skills = [*(resume.get("skills") or []), *({"skill_id": sid, "name": sid, "proficiency": "able"} for sid in assumed)]
+    assumed = [sid for sid in dict.fromkeys(assumed_skill_ids) if sid in original["allowed_skill_ids"]]
+    simulated_skills = [row for sid, row in by_id.items() if sid not in assumed]
+    simulated_skills.extend({"skill_id": sid, "name": sid, "proficiency": "expert"} for sid in assumed)
     simulated = compare_job(requires, simulated_skills)
     return {
         "original_band": original["band"],
@@ -259,7 +274,7 @@ def simulate_job(requires: list[dict], resume: dict, assumed_skill_ids: list[str
         "original_score": original["score"],
         "simulated_score": simulated["score"],
         "shift_set": simulated.get("path") or [],
-        "allowed_skill_ids": list(original.get("shift_ids") or []),
+        "allowed_skill_ids": original["allowed_skill_ids"],
         "assumed_skill_ids": assumed,
     }
 
@@ -292,7 +307,8 @@ def market_signal_radar(watching: list[dict], jobs: list[dict], target_job_id: s
     for signal in watching:
         sid = signal.get("skill_id")
         matches = [job for job in jobs if sid in {row.get("skill_id") for row in job.get("requires") or []}]
-        evidence = [source for job in matches for source in job.get("sources") or []]
+        evidence = [str(source.get("company") or source.get("id") or "") if isinstance(source, dict) else str(source)
+                    for job in matches for source in job.get("sources") or []]
         rows.append(
             {
                 "skill_id": sid,
@@ -315,7 +331,7 @@ ANALYSIS_PROMPT = (
     "positioning: one paragraph on how this resume sits against the target job. "
     "rewrites: up to 5 items {original, problem, suggestion, facts_used, facts_to_add}. "
     "suggestion must rewrite the original, not copy it. Missing numbers go into facts_to_add as 待补 placeholders inside suggestion. "
-    "narrative: a spoken interview self-introduction for 2 to 5 minutes (about 500 to 1200 Chinese characters) "
+    "narrative: a spoken interview self-introduction for 45 to 60 seconds (about 180 to 250 Chinese characters) "
     "using the person's role, experience, projects, and numbers from the resume. "
     "If facts are too thin, write a shorter honest version. No slogans."
 )
@@ -456,19 +472,25 @@ def _build_narrative(job_name: str, resume: dict, strengths: list[dict], gaps: l
         gap_names = _join(_names(gaps, 6))
         paragraphs.append(f"对照{job_name}的正式要求，目前还缺{gap_names}的可核对证据。面试里我可以按项目把已有职责讲清楚，缺的结果数字我会在补简历时写上，而不是现场编造。")
     paragraphs.append("以上是按当前简历能核对的内容做的自我介绍。如果需要，我可以接着展开某一个项目的职责、规模和结果。")
-    return "\n\n".join(paragraphs)
+    text = "\n\n".join(paragraphs)
+    return text if len(text) <= 280 else text[:text.rfind("。", 0, 280) + 1] or paragraphs[0]
 
 
 def _sanitize_rewrite(row: dict, original: str) -> dict | None:
     suggestion = str(row.get("suggestion") or "").strip()
     source = str(row.get("original") or original or "").strip()
-    if not suggestion or not source or suggestion == source:
+    if not suggestion or not source or source not in original or suggestion == source:
         return None
-    allowed = source + "".join(str(item) for item in (row.get("facts_used") or []))
-    if _invented_numbers(suggestion, allowed + str(row.get("facts_to_add") or "")):
+    allowed = original
+    if _invented_numbers(suggestion, allowed):
         return None
     facts_to_add = [str(item).strip() for item in (row.get("facts_to_add") or []) if str(item).strip()]
     facts_used = [str(item).strip() for item in (row.get("facts_used") or []) if str(item).strip()] or [source]
+    if any(fact not in original for fact in facts_used):
+        return None
+    if not facts_to_add:
+        return None
+    suggestion = source.rstrip("。") + "。" + "；".join(f"【待补：{fact}】" for fact in facts_to_add)
     return {
         "original": source,
         "problem": str(row.get("problem") or "").strip() or "表达还可以更贴近岗位要求",
@@ -505,19 +527,13 @@ def _enrich_analysis(analysis: dict, *, job_name: str, resume: dict, core: dict,
     )
     if not isinstance(result, dict):
         return analysis
-    one = str(result.get("one_sentence") or "").strip()
-    if one and job_name in one and not _invented_numbers(one, str(payload)):
-        analysis["one_sentence"] = one
-    positioning = str(result.get("positioning") or "").strip()
-    if positioning and not _invented_numbers(positioning, str(payload)):
-        analysis["positioning"]["text"] = positioning
     model_rewrites = result.get("rewrites") if isinstance(result.get("rewrites"), list) else []
     merged = []
     originals = {row.get("original"): row for row in analysis.get("rewrites") or []}
     for row in model_rewrites:
         if not isinstance(row, dict):
             continue
-        cleaned = _sanitize_rewrite(row, str(row.get("original") or ""))
+        cleaned = _sanitize_rewrite(row, resume.get("preview_text") or "")
         if cleaned:
             merged.append(cleaned)
             originals.pop(cleaned["original"], None)
@@ -528,9 +544,7 @@ def _enrich_analysis(analysis: dict, *, job_name: str, resume: dict, core: dict,
     if merged:
         analysis["rewrites"] = merged
         analysis["actions"]["rewrite"] = merged[:5]
-    narrative = str(result.get("narrative") or "").strip()
-    if narrative and len(narrative) >= 180 and not _invented_numbers(narrative, str(payload)):
-        analysis["narrative"] = narrative
+    # 岗位判断和求职叙事由已核对事实生成；模型只补充待补事实的提示。
     return analysis
 
 
@@ -596,7 +610,7 @@ def resume_analysis(*, job: dict, requires: list[dict], resume: dict, core: dict
             "deliverable": f"一段可核对的{row.get('name') or '该技能'}项目描述，写明职责、规模和结果",
             "url": row.get("url") or "",
         }
-        for row in (core.get("gaps") or [])[:3]
+        for row in (core.get("path") or [])[:3]
     ]
     profile = resume.get("profile") if isinstance(resume.get("profile"), dict) else {}
     role = str(profile.get("role") or "").strip() or "未标注角色"
@@ -656,10 +670,7 @@ def resume_analysis(*, job: dict, requires: list[dict], resume: dict, core: dict
         "narrative": _build_narrative(job_name, resume, strengths, core.get("gaps") or [], covered_names),
     }
     if complete_json is not None:
-        try:
-            analysis = _enrich_analysis(analysis, job_name=job_name, resume=resume, core=core, complete_json=complete_json)
-        except Exception:
-            pass
+        analysis = _enrich_analysis(analysis, job_name=job_name, resume=resume, core=core, complete_json=complete_json)
     return analysis
 
 
@@ -726,7 +737,8 @@ def wrap_report(
         "metadata": {
             "graph_release": resume.get("graph_release"),
             "evidence_count": len({source for row in requires for source in row.get("sources") or []}),
-            "f1": {"jd": 0.749, "resume": 0.993, "match": 1.0},
+            "f1": None,
+            "evaluation_note": "本发布尚未绑定真实模型评测，不展示历史或模拟 F1",
             "formula": "required coverage + 0.3 × bonus coverage; experience/education excluded",
         },
         "preview_text": resume.get("preview_text") or "",
@@ -748,8 +760,9 @@ def wrap_report(
                 ),
                 "shift_set": [
                     {"skill_id": sid, "name": names.get(sid, sid)}
-                    for sid in core["shift_ids"][:PATH_MAX]
+                    for sid in core["shift_ids"] if len(core["shift_ids"]) <= PATH_MAX
                 ],
+                "minimum_shift_skill_count": len(core["shift_ids"]),
             },
             "locate": {
                 "neighbors": neighbors,

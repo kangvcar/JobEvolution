@@ -1,166 +1,66 @@
 from __future__ import annotations
 
-from app.matching.bands import PATH_MAX, band_of, cover_required, match_score, next_cut, shift_set
+from app.matching.bands import PATH_MAX, band_of, cover_required, match_score, shift_set
 
 WATCHING_COPY = "市场开始提，还没进要求，不算缺口"
 
 
 def compare_job(requires: list[dict], resume_skills: list[dict]) -> dict:
-    """requires: kind, skill_id, name, proficiency, excerpt.
-    resume_skills: skill_id, name, proficiency (optional).
-    """
     by_id = {row["skill_id"]: row for row in resume_skills if row.get("skill_id")}
-    required = [row for row in requires if row.get("kind") != "bonus"]
-    bonus = [row for row in requires if row.get("kind") == "bonus"]
-    groups: dict[str, list[dict]] = {}
-    for row in required:
-        if row.get("group_id"):
-            groups.setdefault(str(row["group_id"]), []).append(row)
-    group_member_ids = {m["skill_id"] for rows in groups.values() for m in rows}
-    standalone_ids = {
-        row["skill_id"] for row in required if not row.get("group_id") and row["skill_id"] not in group_member_ids
-    }
-    req_full = float(len(standalone_ids))
-    req_full += float(sum(max(1, int(rows[0].get("min_required") or 1)) for rows in groups.values()))
-    bonus_full = float(len(bonus))
-    req_cover = 0.0
-    bonus_cover = 0.0
-    gaps: list[dict] = []
-    half: list[dict] = []
-    covered: list[dict] = []
-    ledger: list[dict] = []
-    shift_items: list[dict] = []
-
-    seen_groups: set[str] = set()
-    for row in required:
-        group_id = str(row.get("group_id") or "")
-        if group_id:
-            if group_id in seen_groups:
-                continue
-            seen_groups.add(group_id)
-            members = groups[group_id]
-            member_values = [cover_required((by_id.get(m["skill_id"]) or {}).get("proficiency") if m["skill_id"] in by_id else None, m.get("proficiency"), m["skill_id"] in by_id) for m in members]
-            minimum = max(1, int(row.get("min_required") or 1))
-            value = min(1.0, sum(sorted(member_values, reverse=True)[:minimum]) / minimum)
-            req_cover += value
-            if value < 1:
-                item = {"skill_id": row["skill_id"], "name": row.get("name") or row["skill_id"], "excerpt": row.get("excerpt") or "", "cover": value, "group_id": group_id, "min_required": minimum, "category": row.get("category")}
-                gaps.append(item)
-                missing = max(0, minimum - sum(1 for member_value in member_values if member_value >= 1))
-                shift_items.extend({"id": m["skill_id"], "delta": (1.0 - value), "name": m.get("name") or m["skill_id"], "excerpt": m.get("excerpt") or "", "why": "要求组缺口"} for m in members if m["skill_id"] not in by_id for _ in range(missing))
+    grouped_ids = {row["skill_id"] for row in requires if row.get("group_id")}
+    units: dict[tuple, list[dict]] = {}
+    for row in requires:
+        if not row.get("group_id") and row["skill_id"] in grouped_ids:
+            continue
+        key = (row.get("kind", "required"), row.get("group_id") or row["skill_id"])
+        if not any(item["skill_id"] == row["skill_id"] for item in units.get(key, [])):
+            units.setdefault(key, []).append(row)
+    totals = {"required": 0.0, "bonus": 0.0}
+    covers = {"required": 0.0, "bonus": 0.0}
+    gaps, half, covered, ledger, shift_items, allowed = [], [], [], [], [], []
+    for (kind, _), members in units.items():
+        side = "bonus" if kind == "bonus" else "required"
+        minimum = int(members[0].get("min_required") or 1) if members[0].get("group_id") else 1
+        if not 1 <= minimum <= len(members):
+            raise ValueError("invalid requirement group minimum")
+        values = []
+        for row in members:
+            got = by_id.get(row["skill_id"])
+            value = float(got is not None) if side == "bonus" else cover_required(
+                (got or {}).get("proficiency"), row.get("proficiency"), got is not None)
+            values.append({**row, "name": row.get("name") or row["skill_id"],
+                           "excerpt": row.get("excerpt") or "", "cover": value,
+                           "category": row.get("category_id") or row.get("category"),
+                           "required_proficiency": row.get("proficiency"),
+                           "resume_proficiency": (got or {}).get("proficiency")})
+        selected = sorted(values, key=lambda row: (-row["cover"], row["skill_id"]))[:minimum]
+        value = sum(row["cover"] for row in selected)
+        totals[side] += minimum
+        covers[side] += value
+        ledger.extend({**row, "side": side, "counted": row in selected} for row in values)
+        covered.extend(row for row in values if row["cover"] == 1)
+        if side == "required" and value < minimum:
+            missing = [row for row in selected if row["cover"] < 1]
+            half.extend(row for row in missing if row["cover"] == 0.5)
+            if members[0].get("group_id"):
+                gaps.append({**missing[0], "cover": value / minimum,
+                             "missing_count": len(missing), "candidates": values})
             else:
-                covered.extend({"skill_id": m["skill_id"], "name": m.get("name") or m["skill_id"], "excerpt": m.get("excerpt") or "", "cover": 1.0, "group_id": group_id, "required_proficiency": m.get("proficiency"), "resume_proficiency": (by_id.get(m["skill_id"]) or {}).get("proficiency"), "category": m.get("category")} for m in members)
-            ledger.append({"skill_id": row["skill_id"], "name": row.get("name") or row["skill_id"], "cover": value, "side": "required", "group_id": group_id, "min_required": minimum})
-            continue
-        sid = row["skill_id"]
-        if sid in group_member_ids:
-            continue
-        got = by_id.get(sid)
-        value = cover_required(
-            None if got is None else got.get("proficiency"),
-            row.get("proficiency"),
-            got is not None,
-        )
-        req_cover += value
-        item = {
-            "skill_id": sid,
-            "name": row.get("name") or sid,
-            "excerpt": row.get("excerpt") or "",
-            "cover": value,
-            "required_proficiency": row.get("proficiency"),
-            "resume_proficiency": got.get("proficiency") if got else None,
-            "category": row.get("category"),
-        }
-        ledger.append({**item, "side": "required"})
-        if value == 0:
-            gaps.append(item)
-            shift_items.append({"id": sid, "delta": 1.0, **item, "why": "缺口"})
-        elif value == 0.5:
-            half.append(item)
-            gaps.append(item)
-            shift_items.append({"id": sid, "delta": 0.5, **item, "why": "半档"})
-        else:
-            covered.append(item)
-
-    for row in bonus:
-        sid = row["skill_id"]
-        got = by_id.get(sid)
-        if got is not None:
-            bonus_cover += 1.0
-            covered.append(
-                {
-                    "skill_id": sid,
-                    "name": row.get("name") or sid,
-                    "excerpt": row.get("excerpt") or "",
-                    "cover": 1.0,
-                    "required_proficiency": row.get("proficiency"),
-                    "resume_proficiency": got.get("proficiency") if got else None,
-                    "category": row.get("category"),
-                }
-            )
-        ledger.append(
-            {
-                "skill_id": sid,
-                "name": row.get("name") or sid,
-                "cover": 1.0 if got is not None else 0.0,
-                "side": "bonus",
-            }
-        )
-
-    score = match_score(
-        req_cover=req_cover,
-        bonus_cover=bonus_cover,
-        req_full=req_full,
-        bonus_full=bonus_full,
-    )
-    order = shift_set(
-        shift_items,
-        req_cover=req_cover,
-        bonus_cover=bonus_cover,
-        req_full=req_full,
-        bonus_full=bonus_full,
-        score=score,
-    )
+                gaps.extend(missing)
+            allowed.extend(row["skill_id"] for row in values if row["cover"] < 1)
+            shift_items.extend({**row, "id": row["skill_id"], "delta": 1 - row["cover"]} for row in missing)
+    scoring = dict(req_cover=covers["required"], bonus_cover=covers["bonus"],
+                   req_full=totals["required"], bonus_full=totals["bonus"])
+    score = match_score(**scoring)
+    order = shift_set(shift_items, **scoring, score=score)
     by_shift = {row["id"]: row for row in shift_items}
-    target = next_cut(score)
-    path = []
-    for sid in order[:PATH_MAX]:
-        row = by_shift[sid]
-        why = row["why"]
-        if target is not None:
-            lifted = match_score(
-                req_cover=req_cover + row["delta"],
-                bonus_cover=bonus_cover,
-                req_full=req_full,
-                bonus_full=bonus_full,
-            )
-            if lifted / 100.0 >= target:
-                why = "换档"
-        path.append(
-            {
-                "skill_id": sid,
-                "name": row["name"],
-                "excerpt": row.get("excerpt") or "",
-                "why": why,
-                "url": "",
-            }
-        )
-    extra = [
-        row
-        for row in resume_skills
-        if row.get("skill_id") and row["skill_id"] not in {r["skill_id"] for r in requires}
-    ]
-    return {
-        "score": score,
-        "band": band_of(score),
-        "req_cover": req_cover,
-        "req_full": req_full,
-        "half": half,
-        "gaps": gaps,
-        "covered": covered,
-        "path": path,
-        "shift_ids": order,
-        "ledger": ledger,
-        "extra": extra,
-        "watching_copy": WATCHING_COPY,
-    }
+    # 不把被截断的集合当成已验证的换档条件。
+    path = [{"skill_id": sid, "name": by_shift[sid]["name"],
+             "excerpt": by_shift[sid]["excerpt"], "why": "换档", "url": ""}
+            for sid in order] if len(order) <= PATH_MAX else []
+    return {"score": score, "band": band_of(score), "req_cover": covers["required"],
+            "req_full": totals["required"], "half": half, "gaps": gaps, "covered": covered,
+            "path": path, "shift_ids": order, "allowed_skill_ids": sorted(set(allowed)),
+            "ledger": ledger, "extra": [row for row in resume_skills if row.get("skill_id") not in
+                                      {item["skill_id"] for item in requires}],
+            "watching_copy": WATCHING_COPY}

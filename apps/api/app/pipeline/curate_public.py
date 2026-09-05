@@ -113,6 +113,10 @@ def _definition_claim(job_name: str, events: list[dict], evidence_ids: set[str])
     return [{"type": "responsibility", "text": text[:360], "sources": sorted(sources)}]
 
 
+from app.releases import write_guard
+
+
+@write_guard
 def curate_public_jobs(*, dry_run: bool = False, period: str = "", publish_release: bool = True) -> dict:
     from app import graph
 

@@ -47,8 +47,32 @@ def validate_diagnostic_release(
         if not source_ids:
             missing.append(row.get("skill_id") or row.get("name") or "")
         for source_id in source_ids:
+            if source_id not in by_evidence:
+                missing.append(row.get("skill_id") or source_id)
             if by_evidence.get(source_id, {}).get("retracted"):
                 retracted.append(source_id)
+        excerpt = (row.get("excerpt") or "").strip()
+        if not excerpt or not any(excerpt in (by_evidence.get(sid, {}).get("body") or "") for sid in source_ids):
+            missing.append(row.get("skill_id") or "excerpt")
+    for claim in claims:
+        ids = claim.get("sources") or []
+        excerpt = (claim.get("excerpt") or claim.get("text") or "").strip()
+        if not ids or any(sid not in by_evidence or by_evidence[sid].get("retracted") for sid in ids):
+            missing.append(claim.get("id") or "definition")
+        else:
+            # 旧版已批准定义用固定前缀连接原文，逐个核对其原文声明。
+            fragments = excerpt.split("的招聘信息主要围绕：", 1)[-1].split("；")
+            if any(not fragment or not any(fragment in (by_evidence[sid].get("body") or "") for sid in ids)
+                   for fragment in fragments):
+                missing.append(claim.get("id") or "definition_excerpt")
+    groups = defaultdict(list)
+    for row in requires:
+        if row.get("group_id"):
+            groups[row["group_id"]].append(row)
+    for gid, rows in groups.items():
+        minima = {int(row.get("min_required") or 1) for row in rows}
+        if len(minima) != 1 or not 1 <= next(iter(minima)) <= len(rows) or len({row.get("kind") for row in rows}) != 1:
+            errors.append({"code": "invalid_requirement_group", "group_id": gid})
     if missing:
         errors.append({"code": "evidence_missing", "items": sorted(set(missing))})
     if retracted:
@@ -70,7 +94,7 @@ def validate_diagnostic_release(
     if previous_requires and formal_delta > max(5, previous_formal * 0.5):
         errors.append({"code": "formal_delta_anomaly", "delta": formal_delta, "previous": previous_formal})
 
-    anomaly_codes = {"required_delta_anomaly", "formal_delta_anomaly"}
+    anomaly_codes = {"required_delta_anomaly", "formal_delta_anomaly", "required_count_exceeded", "formal_count_exceeded"}
     overridden = bool(override_reason.strip())
     if overridden:
         errors = [error for error in errors if error.get("code") not in anomaly_codes]

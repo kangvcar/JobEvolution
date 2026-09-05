@@ -3,6 +3,9 @@ from __future__ import annotations
 import io
 import hashlib
 import re
+import subprocess
+import sys
+from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 
 from app.pipeline.align import align_skill, split_composite
@@ -16,6 +19,19 @@ class ResumeError(ValueError):
 
 
 def extract_text(data: bytes, filename: str) -> str:
+    if len(data) > 10 * 1024 * 1024:
+        raise ResumeError("文件不能超过 10 MB")
+    try:
+        result = subprocess.run([sys.executable, "-m", "app.matching.resume", filename],
+                                input=data, capture_output=True, timeout=15, cwd=Path(__file__).resolve().parents[2])
+    except subprocess.TimeoutExpired as exc:
+        raise ResumeError("文档解析超时，请简化文件后重试") from exc
+    if result.returncode:
+        raise ResumeError(result.stderr.decode("utf-8", "replace")[-200:] or "文档无法读取或超过解析资源限制")
+    return result.stdout.decode("utf-8")
+
+
+def _extract_document(data: bytes, filename: str) -> str:
     name = (filename or "").lower()
     if name.endswith(".doc") and not name.endswith(".docx"):
         raise ResumeError("不支持 .doc，请上传 PDF 或 docx")
@@ -156,7 +172,7 @@ def parse_resume(
 ) -> dict:
     if complete_json is None:
         from app.llm.client import complete_json as complete_json
-    blob = (text or "")[:16000]
+    blob = re.sub(r"[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}|(?<!\d)1[3-9]\d{9}(?!\d)", "[联系方式已隐藏]", text or "")
     vocab = "、".join(row.get("name") or "" for row in index if row.get("name"))
     info_messages = [
         {"role": "system", "content": INFO_PROMPT},
@@ -181,10 +197,10 @@ def parse_resume(
         skill_f = pool.submit(_call, skill_messages)
         info = info_f.result()
         raw_skills = skill_f.result()
-    skills = _merge_skills(
-        _align_skills(raw_skills.get("skills") or [], index, threshold=threshold),
-        skills_from_text(text, index, threshold=threshold),
-    )
+    skills = _align_skills(raw_skills.get("skills") or [], index, threshold=threshold)
+    # 词表命中不能直接证明技能。只保留模型识别且能定位到简历原文的项。
+    grounded = {row["skill_id"] for row in _evidence_fragments(text, skills, index)}
+    skills = [row for row in skills if row["skill_id"] in grounded]
     for row in skills:
         if not _marks_level_for_skill(text, row.get("name") or ""):
             row["proficiency"] = None
@@ -241,7 +257,7 @@ def date_conflicts(text: str) -> list[dict]:
         if end < start:
             ranges.append({"text": match.group(0), "reason": "结束时间早于开始时间"})
         ranges.append({"start": start, "end": end, "text": match.group(0)})
-    conflicts = []
+    conflicts = [row for row in ranges if "reason" in row]
     for i, left in enumerate(ranges):
         for right in ranges[i + 1 :]:
             if "start" in left and "start" in right and max(left["start"], right["start"]) <= min(left["end"], right["end"]):
@@ -349,3 +365,15 @@ def skills_from_text(text: str, index: list[dict], *, threshold: float | None = 
             }
         )
     return found
+
+
+if __name__ == "__main__":
+    import resource
+    resource.setrlimit(resource.RLIMIT_CPU, (10, 10))
+    if sys.platform == "linux":
+        resource.setrlimit(resource.RLIMIT_AS, (768 * 1024 * 1024, 768 * 1024 * 1024))
+    try:
+        sys.stdout.write(_extract_document(sys.stdin.buffer.read(10 * 1024 * 1024 + 1), sys.argv[1]))
+    except Exception as exc:
+        sys.stderr.write(exc.detail if isinstance(exc, ResumeError) else "文档已损坏或格式无效，请重新导出 PDF 或 docx")
+        sys.exit(1)

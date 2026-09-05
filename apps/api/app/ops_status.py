@@ -3,10 +3,11 @@ from __future__ import annotations
 import json
 import os
 import time
+import fcntl
 from pathlib import Path
 from urllib.request import Request, urlopen
 
-PATH = Path(os.environ.get("OPS_STATUS_PATH", "/tmp/jobevolution-ops.json"))
+PATH = Path(os.environ.get("OPS_STATUS_PATH", str(Path(os.environ.get("DATA_DIR", "/tmp")) / "ops-status.json")))
 
 
 def read() -> dict:
@@ -17,10 +18,16 @@ def read() -> dict:
 
 
 def record(kind: str, status: str, **extra) -> dict:
-    state = read()
-    state[kind] = {"status": status, "at": time.time(), **extra}
     PATH.parent.mkdir(parents=True, exist_ok=True)
-    PATH.write_text(json.dumps(state, ensure_ascii=False), encoding="utf-8")
+    with PATH.with_suffix(".lock").open("a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        state = read()
+        previous = state.get(kind, {})
+        success_at = time.time() if status == "success" else previous.get("last_success_at", previous.get("at") if previous.get("status") == "success" else None)
+        state[kind] = {"status": status, "at": time.time(), "last_success_at": success_at, **extra}
+        temporary = PATH.with_suffix(".tmp")
+        temporary.write_text(json.dumps(state, ensure_ascii=False), encoding="utf-8")
+        temporary.replace(PATH)
     if status == "failed":
         hook = os.environ.get("OPS_WEBHOOK_URL")
         if hook:
@@ -33,5 +40,7 @@ def record(kind: str, status: str, **extra) -> dict:
 
 def stale() -> bool:
     pipeline = read().get("pipeline", {})
-    at = pipeline.get("at", 0)
-    return pipeline.get("status") == "failed" or not at or time.time() - at > 48 * 3600
+    if pipeline.get("status") == "failed":
+        return True
+    at = pipeline.get("last_success_at") or (pipeline.get("at") if pipeline.get("status") == "success" else 0)
+    return not at or time.time() - at > 48 * 3600

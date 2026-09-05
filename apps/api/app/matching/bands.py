@@ -38,7 +38,7 @@ def match_score(*, req_cover: float, bonus_cover: float, req_full: float, bonus_
 def cover_required(resume_prof: str | None, job_prof: str | None, aligned: bool) -> float:
     if not aligned:
         return 0.0
-    if not resume_prof:
+    if not resume_prof or not job_prof:
         return 1.0
     need = PROF_RANK.get(job_prof or "able", 2)
     have = PROF_RANK.get(resume_prof, 2)
@@ -59,40 +59,14 @@ def shift_set(
     """items: {id, delta} for gaps (1.0) and half-bands (0.5)."""
     target = next_cut(score)
     if target is None:
-        return [row["id"] for row in items]
-    singles: list[dict] = []
-    rest: list[dict] = []
-    for row in items:
-        lifted = match_score(
-            req_cover=req_cover + row["delta"],
-            bonus_cover=bonus_cover,
-            req_full=req_full,
-            bonus_full=bonus_full,
-        )
-        if lifted / 100.0 >= target:
-            singles.append(row)
-        else:
-            rest.append(row)
-    ordered = list(singles)
-    used: set[str] = set()
-    for i, left in enumerate(rest):
-        if left["id"] in used:
+        return []
+    selected = []
+    for row in sorted(items, key=lambda item: (-item["delta"], item["id"])):
+        if row["id"] in selected:
             continue
-        paired = False
-        for right in rest[i + 1 :]:
-            if right["id"] in used:
-                continue
-            lifted = match_score(
-                req_cover=req_cover + left["delta"] + right["delta"],
-                bonus_cover=bonus_cover,
-                req_full=req_full,
-                bonus_full=bonus_full,
-            )
-            if lifted / 100.0 >= target:
-                ordered.extend([left, right])
-                used.add(left["id"])
-                used.add(right["id"])
-                break
-    leftover = [row for row in rest if row["id"] not in used]
-    ordered.extend(leftover)
-    return [row["id"] for row in ordered]
+        selected.append(row["id"])
+        req_cover += row["delta"]
+        if match_score(req_cover=req_cover, bonus_cover=bonus_cover,
+                       req_full=req_full, bonus_full=bonus_full) + 1e-9 >= target * 100:
+            return selected
+    return []

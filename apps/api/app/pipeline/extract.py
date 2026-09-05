@@ -53,11 +53,11 @@ SYSTEM_PROMPT = (
     "broad_domain、unknown。"
     "vote 只能 required_explicit、bonus_explicit、unmarked；kind 仅为兼容字段，可为 required 或 bonus；"
     "为保证输出可靠，skills 最多 40 条；excerpt 只保留包含技能名的最短原文片段，最多 80 字；不得重复。"
-    "proficiency 只能 aware、able、expert；"
+    "proficiency 只能 aware、able、expert 或 null，原文未标时必须为 null；"
     "section 只能 duty 或 requirement；category 必须是："
     + ", ".join(SKILL_CATEGORIES)
     + "。confidence 为 0-1。excerpt 是包含该技能点的最短原文片段。"
-    "字段拿不准时给保守默认值（kind=required、proficiency=able、confidence=0.5、candidate_type=unknown），"
+    "性质拿不准时 vote=unmarked，不能根据所在段落推断必备；熟练级拿不准时 proficiency=null。"
     "但正文里写出的技能点一个都不能因为字段拿不准而漏掉。"
     "不要发明枚举值。"
 )
@@ -212,12 +212,12 @@ def augment_extracted_skills(parsed: ExtractedJd, text: str, index: list[dict], 
             ExtractedSkill(
                 name=hit["name"],
                 kind="required",
-                proficiency="able",
+                proficiency=None,
                 confidence=0.65,
                 excerpt=hit["surface"],
                 section=hit["section"],
                 candidate_type=classify_skill_candidate(hit["name"]),
-                vote="required_explicit" if hit["section"] == "requirement" else "unmarked",
+                vote="unmarked",
             )
         )
         existing.add(hit["id"])
@@ -237,7 +237,7 @@ def brand_action_skill(name: str, action: str, context: str = "") -> str | None:
 class ExtractedSkill(BaseModel):
     name: str
     kind: Literal["required", "bonus"]
-    proficiency: Literal["aware", "able", "expert"]
+    proficiency: Literal["aware", "able", "expert"] | None = None
     confidence: float = Field(ge=0, le=1)
     excerpt: str = ""
     section: Literal["duty", "requirement", "benefit", "intro"] = "requirement"
@@ -300,8 +300,6 @@ def requirement_vote(value, *, excerpt: str = "", section: str = "requirement") 
     raw = str(value or "").strip().casefold()
     if raw in _VOTE:
         vote = _VOTE[raw]
-    elif section == "requirement":
-        vote = "required_explicit"
     else:
         vote = "unmarked"
     if vote == "required_explicit" and section != "requirement":
@@ -334,7 +332,7 @@ def coerce_extracted(payload: dict) -> dict:
             {
                 "name": name,
                 "kind": _alias(_KIND, raw.get("kind"), "required"),
-                "proficiency": _alias(_PROF, raw.get("proficiency"), "able"),
+                "proficiency": _alias(_PROF, raw.get("proficiency"), "") or None,
                 "confidence": _confidence(raw.get("confidence")),
                 "excerpt": str(raw.get("excerpt") or "").strip(),
                 "section": _alias(_SECTION, raw.get("section"), "requirement"),
@@ -355,7 +353,7 @@ def coerce_extracted(payload: dict) -> dict:
                     "unknown",
                 ),
                 "vote": requirement_vote(
-                    raw.get("vote") or raw.get("kind"),
+                    raw.get("vote"),
                     excerpt=str(raw.get("excerpt") or "").strip(),
                     section=_alias(_SECTION, raw.get("section"), "requirement"),
                 ),

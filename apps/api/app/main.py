@@ -18,10 +18,11 @@ from fastapi import FastAPI, File, Form, Header, HTTPException, Query, Request, 
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.responses import Response, StreamingResponse
+from starlette.concurrency import run_in_threadpool
 
 from app import graph
 from app.matching.report import direction_report, evidence_map, market_signal_radar, migration_map, neighbor_name, recommend_jobs, simulate_job, wrap_report
-from app.matching.resume import ResumeError, date_conflicts, evidence_level, extract_text, parse_resume
+from app.matching.resume import ResumeError, date_conflicts, evidence_level, extract_text, parse_resume, _name_in_text, _evidence_fragments, _marks_level_for_skill
 from app.matching.session import TTL as SESSION_TTL
 from app.matching.session import load as load_session
 from app.matching.session import save as save_session, update as update_session
@@ -34,6 +35,10 @@ _parse_attempts: dict[str, list[float]] = {}
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     graph.init_graph()
+    if os.environ.get("NEO4J_TEST") != "1":
+        from app.releases import load as load_release
+        if load_release() is None:
+            graph.publish_graph_release(period=graph.public_release().get("period") or "initial")
     yield
     graph.close_graph()
 
@@ -47,8 +52,31 @@ _diagnose_attempts: dict[str, list[float]] = {}
 async def request_logging(request: Request, call_next):
     started = time.perf_counter()
     request_id = request.headers.get("X-Request-ID") or uuid.uuid4().hex
-    response = await call_next(request)
-    _request_log.info("request", extra={"request_id": request_id, "route": request.url.path, "status": response.status_code, "latency_ms": round((time.perf_counter() - started) * 1000, 1)})
+    from app.releases import load as load_release, view
+    snapshot = None
+    if not request.url.path.startswith("/admin") and graph._driver is not None and os.environ.get("NEO4J_TEST") != "1":
+        session_id = request.query_params.get("session_id")
+        if request.method == "PATCH" and request.url.path.startswith("/sessions/"):
+            session_id = request.url.path.rsplit("/", 1)[-1]
+        if request.method == "POST" and "application/json" in request.headers.get("content-type", ""):
+            try:
+                session_id = (await request.json()).get("session_id")
+            except (ValueError, AttributeError):
+                pass
+        session = await run_in_threadpool(load_session, session_id) if session_id else None
+        snapshot = await run_in_threadpool(load_release, (session or {}).get("graph_release"))
+        if session and session.get("graph_release") and snapshot is None:
+            return JSONResponse({"error": "会话图谱版本不可用，请重新上传简历"}, status_code=409)
+    token = view.set(snapshot)
+    try:
+        response = await call_next(request)
+    except (RuntimeError, ValueError) as exc:
+        _request_log.warning("request_failed", extra={"error_type": type(exc).__name__})
+        response = JSONResponse({"error": "服务暂时不可用，请稍后重试"}, status_code=503)
+    finally:
+        view.reset(token)
+    route = getattr(request.scope.get("route"), "path", "/unknown")
+    _request_log.info("request", extra={"request_id": request_id, "route": route, "status": response.status_code, "latency_ms": round((time.perf_counter() - started) * 1000, 1)})
     response.headers["X-Request-ID"] = request_id
     return response
 app.add_middleware(
@@ -206,7 +234,7 @@ async def create_session(request: Request, file: UploadFile = File(...), consent
     _parse_attempts[ip] = recent + [now]
     if file.content_type not in {"application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"}:
         raise HTTPException(400, "仅支持带文本层的 PDF 或 docx")
-    data = await file.read()
+    data = await file.read(10 * 1024 * 1024 + 1)
     if len(data) > 10 * 1024 * 1024:
         raise HTTPException(413, "文件不能超过 10 MB")
     name = (file.filename or "").lower()
@@ -215,11 +243,11 @@ async def create_session(request: Request, file: UploadFile = File(...), consent
     if not consent:
         raise HTTPException(400, "请先确认外部模型处理说明")
     try:
-        text = extract_text(data, file.filename or "")
+        text = await run_in_threadpool(extract_text, data, file.filename or "")
     except ResumeError as exc:
         raise HTTPException(400, exc.detail) from exc
     try:
-        parsed = parse_resume(text, graph.list_skills())
+        parsed = await run_in_threadpool(parse_resume, text, graph.list_skills(), strict=True)
     except Exception as exc:
         # 外部模型余额、限流或短暂故障不应变成无说明的 500。
         _request_log.warning("resume_parse_failed", extra={"error_type": type(exc).__name__})
@@ -280,14 +308,32 @@ def update_resume_session(session_id: str, body: SessionUpdateBody):
     session = load_session(session_id)
     if session is None:
         raise HTTPException(404, "session expired")
+    text = session.get("preview_text") or ""
+    vocabulary = {row["id"]: row for row in graph.list_skills(with_embed=False)}
+    for row in session.get("skills") or []:
+        vocabulary.setdefault(row["skill_id"], {"id": row["skill_id"], "name": row.get("name") or row["skill_id"]})
     cleaned = []
     for skill in body.skills:
         if not isinstance(skill, dict) or not skill.get("skill_id"):
             continue
         proficiency = skill.get("proficiency")
         if proficiency not in (None, "aware", "able", "expert"):
-            proficiency = None
-        cleaned.append({"skill_id": str(skill["skill_id"]), "name": str(skill.get("name") or skill["skill_id"]), "proficiency": proficiency})
+            raise HTTPException(400, "熟练级无效")
+        known = vocabulary.get(str(skill["skill_id"]))
+        if known is None:
+            raise HTTPException(400, "请选择图谱中的技能；原文外技能请放入补充栏")
+        names = [known["name"], *(known.get("synonyms") or [])]
+        supported = any(_name_in_text(name, text) for name in names)
+        original = next((row for row in session.get("skills") or [] if row["skill_id"] == skill["skill_id"]), {})
+        if not supported and not any(row.get("skill_id") == skill["skill_id"] and row.get("text") in text
+                                     for row in session.get("evidence_fragments") or []):
+            raise HTTPException(400, "该技能缺少简历原文依据，请使用补充技能")
+        if proficiency and proficiency != original.get("proficiency"):
+            import re
+            markers = {"aware": "了解|aware", "able": "熟练|able|proficient", "expert": "精通|expert"}
+            if not any(re.search(rf"(?:{markers[proficiency]})\s*(?:掌握|使用)?\W{{0,12}}{re.escape(name)}", text, re.I) for name in names):
+                raise HTTPException(400, "熟练级必须由简历原文明确标注")
+        cleaned.append({"skill_id": str(skill["skill_id"]), "name": known["name"], "proficiency": proficiency})
     original_ids = {str(skill.get("skill_id")) for skill in session.get("skills") or [] if skill.get("skill_id")}
     fragments = []
     for fragment in body.evidence_fragments:
@@ -296,11 +342,16 @@ def update_resume_session(session_id: str, body: SessionUpdateBody):
         sid = str(fragment.get("skill_id") or "")
         text = str(fragment.get("text") or "").strip()
         level = str(fragment.get("evidence_level") or "mention")
-        if sid not in original_ids or not text or text not in (session.get("preview_text") or ""):
+        if sid not in {row["skill_id"] for row in cleaned}:
+            continue
+        known = vocabulary[sid]
+        if not text or text not in (session.get("preview_text") or "") or not any(
+            _name_in_text(name, text) for name in [known["name"], *(known.get("synonyms") or [])]
+        ):
             raise HTTPException(400, "证据片段必须来自当前简历原文")
         if level not in ("mention", "use", "result"):
             raise HTTPException(400, "证据级无效")
-        inferred = evidence_level(text, str(fragment.get("name") or sid))
+        inferred = evidence_level(text, known["name"])
         order = {"mention": 0, "use": 1, "result": 2}
         if order[level] > order[inferred]:
             raise HTTPException(400, "证据级不能超过简历原文支持的范围")
@@ -310,12 +361,24 @@ def update_resume_session(session_id: str, body: SessionUpdateBody):
     for item in body.user_added:
         if isinstance(item, dict) and item.get("skill_id") and str(item["skill_id"]) not in original_ids:
             added.append({"skill_id": str(item["skill_id"]), "name": str(item.get("name") or item["skill_id"]), "reason": "你补充的，简历尚未证明"})
+    for field in ("profile", "education_items", "experiences", "projects"):
+        previous = session.get(field) or ({} if field == "profile" else [])
+        updated = getattr(body, field)
+        if updated == previous:
+            continue
+        values = list(updated.values()) if isinstance(updated, dict) else [value for row in updated for value in row.values()]
+        old_values = list(previous.values()) if isinstance(previous, dict) else [value for row in previous for value in row.values()]
+        for value in values:
+            if value and value not in old_values and str(value) not in (session.get("preview_text") or ""):
+                raise HTTPException(400, "校对内容必须能回到简历原文")
     session["skills"] = cleaned
     session["profile"] = body.profile
     session["education_items"] = body.education_items
     session["experiences"] = body.experiences
     session["projects"] = body.projects
-    session["evidence_fragments"] = fragments or session.get("evidence_fragments") or []
+    session["experience"] = body.profile.get("experience") or "简历未标"
+    session["education"] = "；".join(str(row.get("text") or "") for row in body.education_items) or "简历未标"
+    session["evidence_fragments"] = fragments or _evidence_fragments(session.get("preview_text") or "", cleaned, list(vocabulary.values()))
     session["user_added"] = added
     session["date_conflicts"] = date_conflicts(session.get("preview_text") or "")
     if not update_session(session_id, session):
@@ -882,7 +945,7 @@ def admin_approve_all(
         job_id=job_id,
         definition=graph.current_definition(job_id),
         requires=base + proposals,
-        evidence=graph.list_job_evidence(job_id, include_retracted=True),
+        evidence=graph.evidence_for_validation(job_id),
         previous_requires=[row for row in graph.list_requires_history(job_id) if row.get("valid_to")],
         override_reason=body.override_reason,
     )

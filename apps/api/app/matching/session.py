@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import time
 import uuid
 
@@ -12,19 +13,21 @@ PREFIX = "session:"
 _mem: dict[str, tuple[float, str]] = {}
 
 
-def _redis():
+def _redis(key: str = ""):
     try:
-        client = connect_redis()
+        client = connect_redis(os.environ.get("SESSION_REDIS_URL") if key.startswith(PREFIX) else None)
         client.ping()
         return client
     except Exception:
+        if os.environ.get("NEO4J_TEST") != "1":
+            raise RuntimeError("临时存储不可用，请稍后重试")
         return None
 
 
 def cache_get(key: str) -> str | None:
     if not key:
         return None
-    client = _redis()
+    client = _redis(key)
     if client is not None:
         raw = client.get(key)
         return raw if isinstance(raw, str) else None
@@ -38,7 +41,7 @@ def cache_get(key: str) -> str | None:
 def cache_set(key: str, value: str, ttl: int) -> None:
     if not key:
         return
-    client = _redis()
+    client = _redis(key)
     if client is not None:
         client.set(key, value, ex=ttl)
         return
@@ -47,17 +50,24 @@ def cache_set(key: str, value: str, ttl: int) -> None:
 
 def save(payload: dict) -> str:
     sid = uuid.uuid4().hex
+    payload = {**payload, "expires_at": time.time() + TTL}
     cache_set(PREFIX + sid, json.dumps(payload, ensure_ascii=False), TTL)
     return sid
 
 
 def load(sid: str) -> dict | None:
     raw = cache_get(PREFIX + sid) if sid else None
-    return json.loads(raw) if raw else None
+    payload = json.loads(raw) if raw else None
+    return payload if payload and payload.get("expires_at", 0) > time.time() else None
 
 
 def update(sid: str, payload: dict) -> bool:
-    if not sid or cache_get(PREFIX + sid) is None:
+    original = load(sid)
+    if original is None:
         return False
-    cache_set(PREFIX + sid, json.dumps(payload, ensure_ascii=False), TTL)
+    remaining = int(original["expires_at"] - time.time())
+    if remaining <= 0:
+        return False
+    payload = {**payload, "expires_at": original["expires_at"]}
+    cache_set(PREFIX + sid, json.dumps(payload, ensure_ascii=False), remaining)
     return True

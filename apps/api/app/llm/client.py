@@ -9,7 +9,26 @@ from datetime import date
 
 _cached = None
 _cached_signature = None
-_usage = {"day": date.today(), "calls": 0, "cost": 0.0}
+def _reserve(messages, max_tokens: int) -> None:
+    from app.collectors.sink import connect_redis
+
+    # ponytail: conservative reservation counts failed requests too; reconcile provider bills if tighter budgets are needed.
+    tokens = len(json.dumps(messages, ensure_ascii=False).encode()) + max_tokens
+    cost = tokens / 1_000_000 * float(os.environ.get("LLM_COST_PER_MILLION", "1"))
+    client = connect_redis()
+    allowed = client.eval("""
+        local calls = tonumber(redis.call('HGET', KEYS[1], 'calls') or '0')
+        local cost = tonumber(redis.call('HGET', KEYS[1], 'cost') or '0')
+        if calls + 1 > tonumber(ARGV[1]) or cost + tonumber(ARGV[3]) > tonumber(ARGV[2]) then return 0 end
+        redis.call('HINCRBY', KEYS[1], 'calls', 1)
+        redis.call('HINCRBYFLOAT', KEYS[1], 'cost', ARGV[3])
+        redis.call('EXPIRE', KEYS[1], 172800)
+        return 1
+    """, 1, f"llm-quota:{date.today().isoformat()}",
+        int(os.environ.get("LLM_DAILY_CALL_CAP", "1000")),
+        float(os.environ.get("LLM_DAILY_COST_CAP", "100")), cost)
+    if not allowed:
+        raise RuntimeError("daily model quota exceeded")
 
 
 def _parse_json_content(content) -> dict:
@@ -78,13 +97,9 @@ def _client():
     return _cached
 
 
-def complete_json(messages) -> dict:
-    today = date.today()
-    if _usage["day"] != today:
-        _usage.update(day=today, calls=0, cost=0.0)
-    if _usage["calls"] >= int(os.environ.get("LLM_DAILY_CALL_CAP", "1000")) or _usage["cost"] >= float(os.environ.get("LLM_DAILY_COST_CAP", "100")):
-        raise RuntimeError("daily model quota exceeded")
-    provider, _, _, model = _provider_config()
+def complete_json(messages, *, model: str | None = None) -> dict:
+    provider, _, _, configured_model = _provider_config()
+    model = model or configured_model
     try:
         max_tokens = max(1024, min(16_384, int(os.environ.get("LLM_MAX_OUTPUT_TOKENS", "4096"))))
     except (TypeError, ValueError):
@@ -114,12 +129,9 @@ def complete_json(messages) -> dict:
             disable_thinking = os.environ.get("BAI_DISABLE_THINKING", "1") != "0"
             if provider == "deepseek" or (provider == "bai" and disable_thinking):
                 request["extra_body"] = {"thinking": {"type": "disabled"}}
+            _reserve(request_messages, request["max_tokens"])
             raw = _client().chat.completions.create(**request)
             content = raw.choices[0].message.content or "{}"
-            usage = getattr(raw, "usage", None)
-            tokens = int(getattr(usage, "total_tokens", 0) or 0)
-            _usage["calls"] += 1
-            _usage["cost"] += tokens / 1_000_000 * float(os.environ.get("LLM_COST_PER_MILLION", "1"))
             return _parse_json_content(content)
         except Exception as exc:
             last = exc

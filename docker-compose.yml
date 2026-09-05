@@ -49,6 +49,16 @@ services:
       timeout: 3s
       retries: 10
 
+  sessions:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory", "128mb", "--maxmemory-policy", "volatile-ttl"]
+    tmpfs: [/data]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   api:
     build: ./apps/api
     ports:
@@ -73,6 +83,7 @@ services:
       NEO4J_USER: ${NEO4J_USER:-neo4j}
       NEO4J_PASSWORD: ${NEO4J_PASSWORD:-jobevolution}
       REDIS_URL: redis://redis:6379/0
+      SESSION_REDIS_URL: redis://sessions:6379/0
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-change-me}
       NEXT_PUBLIC_SHOW_ADMIN_PASSWORD: ${NEXT_PUBLIC_SHOW_ADMIN_PASSWORD:-0}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:3001}
@@ -85,6 +96,8 @@ services:
       neo4j:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      sessions:
         condition: service_healthy
     healthcheck:
       test:

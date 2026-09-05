@@ -23,7 +23,7 @@ def test_complete_json_compacts_after_truncated_response(monkeypatch):
 
     monkeypatch.setattr(client, "_cached", type("FakeClient", (), {"chat": type("Chat", (), {"completions": FakeCompletions()})()})())
     monkeypatch.setattr(client, "_cached_signature", ("deepseek", "", "https://api.deepseek.com"))
-    client._usage.update(day=client.date.today(), calls=0, cost=0.0)
+    monkeypatch.setattr(client, "_reserve", lambda *args: None)
     assert client.complete_json([{"role": "user", "content": "test"}]) == {"skills": []}
     assert len(calls) == 2
     assert "压缩输出" in calls[1]["messages"][-1]["content"]
@@ -55,7 +55,7 @@ def test_bai_request_disables_thinking_by_default(monkeypatch):
     monkeypatch.delenv("BAI_DISABLE_THINKING", raising=False)
     monkeypatch.setattr(client, "_cached", type("FakeClient", (), {"chat": type("Chat", (), {"completions": FakeCompletions()})()})())
     monkeypatch.setattr(client, "_cached_signature", ("bai", "test", "https://api.b.ai/v1"))
-    client._usage.update(day=client.date.today(), calls=0, cost=0.0)
+    monkeypatch.setattr(client, "_reserve", lambda *args: None)
     assert client.complete_json([{"role": "user", "content": "test"}]) == {}
     assert calls[0]["extra_body"] == {"thinking": {"type": "disabled"}}
 
@@ -85,7 +85,7 @@ def test_tuzi_request_uses_no_provider_extension(monkeypatch):
     monkeypatch.delenv("TUZI_REASONING_EFFORT", raising=False)
     monkeypatch.setattr(client, "_cached", type("FakeClient", (), {"chat": type("Chat", (), {"completions": FakeCompletions()})()})())
     monkeypatch.setattr(client, "_cached_signature", ("tuzi", "test", "https://api.tu-zi.com/v1"))
-    client._usage.update(day=client.date.today(), calls=0, cost=0.0)
+    monkeypatch.setattr(client, "_reserve", lambda *args: None)
     assert client.complete_json([{"role": "user", "content": "test"}]) == {}
     assert calls[0]["reasoning_effort"] == "none"
     assert "extra_body" not in calls[0]
